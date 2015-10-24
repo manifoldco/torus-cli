@@ -1,0 +1,20 @@
+{
+  "name": "arigato-node-sdk",
+  "version": "1.0.0",
+  "description": "Node SDK for Arigato which includes the cli tool and library",
+  "main": "index.js",
+  "bin": "bin/arigato",
+  "scripts": {
+    "test": "gulp test"
+  },
+  "author": "Ian Livingsotne",
+  "license": "MIT",
+  "dependencies": {
+    "cli-color": "^1.1.0",
+    "lodash": "^3.10.1",
+    "yargs": "^3.29.0"
+  },
+  "devDependencies": {
+    "jshint": "^2.8.0"
+  }
+}
