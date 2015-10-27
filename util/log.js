@@ -2,27 +2,34 @@
 
 var _ = require('lodash');
 
+function prependArguments (args, param) {
+  args = Array.prototype.slice.apply(args);
+  args.unshift(param);
+
+  return args;
+}
+
 function Logger (name) {
   this.name = name;
 }
 module.exports.Logger = Logger;
 
 Logger.prototype.error = function () {
-  arguments.unshift('error');
-  this.log.apply(this, arguments);
+  var args = prependArguments(arguments, 'error');
+  this.print.apply(this, args);
 };
 
 Logger.prototype.warn = function () {
-  arguments.unshift('warn');
-  this.log.apply(this, arguments);
+  var args = prependArguments(arguments, 'warn');
+  this.print.apply(this, args);
 };
 
 Logger.prototype.debug = function () {
   arguments.unshift('debug');
-  this.log.apply(this, arguments);
+  this.print.apply(this, arguments);
 };
 
-Logger.prototype.log = function () {
+Logger.prototype.print = function () {
   console.log.apply(this, arguments);
 };
 

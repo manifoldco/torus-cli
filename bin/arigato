@@ -4,31 +4,28 @@
 var _ = require('lodash');
 var yargs = require('yargs');
 
+var log = require('../util/log').get('main');
 var cmds = require('../cmds');
 
 function main () {
   var argv = yargs.argv;
 
   if (argv._.length === 0) {
-    return run('help', argv);
+    argv._ = ['help'];
   }
 
-  route(argv);
-}
+  var cmd = argv._[0].toLowerCase();
+  argv._.shift();
 
-function route () {
-  return;
-}
-
-function run (command, argv) {
-  if (!cmds[command]) {
-    log.error('Invalid Command Provided');
-    return cmds.help(argv);
+  if (!cmds[cmd]) {
+    log.error('Invalid Command Provided: ', cmd);
+    cmd = 'help';
   }
 
-  return cmds[command].command(argv);
+  return cmds[cmd].command(argv, cmds);
 }
 
 if (require.main === module) {
-  main();
+  var exitCode = main();
+  process.exit((typeof exitCode === 'Number' ? exitCode : -1));
 }
