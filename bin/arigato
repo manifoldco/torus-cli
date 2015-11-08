@@ -22,10 +22,17 @@ function main () {
     cmd = 'help';
   }
 
-  return cmds[cmd].command(argv, cmds);
+  var exitCode = 0;
+  try {
+    exitCode = cmds[cmd].command(argv, cmds);
+  } catch (err) {
+    log.error('Error', err)
+    exitCode = 1;
+  }
+
+  return exitCode;
 }
 
 if (require.main === module) {
-  var exitCode = main();
-  process.exit((typeof exitCode === 'Number' ? exitCode : -1));
+  process.exit(main());
 }
