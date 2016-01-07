@@ -8,6 +8,11 @@ var log = require('../lib/util/log').get('main');
 var cmds = require('../lib/cmds');
 
 function main () {
+
+  // TODO: Separate error processing and returning a non zero exit code.
+  //
+  // Push responsibility for determing error code up and have the Command
+  // return the proper exit code.
   cmds.load().then(() => {
     return cmds.process(yargs.argv);
   }).catch((err) => {
