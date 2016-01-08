@@ -2,7 +2,6 @@
   "name": "arigato",
   "version": "1.0.0",
   "description": "Argiato CLI tooling and node sdk",
-  "main": "index.js",
   "bin": "bin/arigato",
   "scripts": {
     "test": "gulp test"
@@ -17,6 +16,10 @@
     "yargs": "3.29.0"
   },
   "devDependencies": {
-    "jshint": "2.8.0"
+    "gulp": "3.9.0",
+    "gulp-jshint": "2.0.0",
+    "gulp-mocha": "2.2.0",
+    "jshint": "2.8.0",
+    "mocha": "2.3.4"
   }
 }
