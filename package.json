@@ -14,7 +14,12 @@
     "cli-color": "1.1.0",
     "email-validator": "1.0.3",
     "inquirer": "0.11.1",
+    "kbpgp": "2.0.50",
     "lodash": "3.10.1",
+    "netrc": "0.1.4",
+    "request": "2.67.0",
+    "triplesec": "3.0.25",
+    "uuid": "2.0.1",
     "yargs": "3.29.0"
   },
   "devDependencies": {
