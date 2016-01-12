@@ -19,6 +19,7 @@
     "request": "2.67.0",
     "triplesec": "3.0.25",
     "uuid": "2.0.1",
+    "yamljs": "0.2.4",
     "yargs": "3.29.0"
   },
   "devDependencies": {
