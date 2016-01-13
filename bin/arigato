@@ -11,11 +11,15 @@ function main () {
   cmds.load().then(() => {
     return cmds.process(yargs.argv);
   }).then((success) => {
-    if (typeof success !== 'boolean') {
+    if (typeof success !== 'boolean' && typeof success !== 'number') {
       throw new Error('A command must return a boolean');
     }
 
-    process.exit((success) ? 0 : 1);
+    if (typeof success === 'boolean') {
+      return process.exit((success) ? 0 : 1);
+    }
+
+    process.exit(success);
   }).catch((err) => {
     log.error('An error happened..');
     console.error((err instanceof Error) ? err.stack : err);
