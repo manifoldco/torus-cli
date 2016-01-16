@@ -12,7 +12,7 @@
     "cbwrap": "1.0.2",
     "cli-color": "1.1.0",
     "email-validator": "1.0.3",
-    "event-regulator": "0.1.0",
+    "event-regulator": "0.2.0",
     "inquirer": "0.11.1",
     "kbpgp": "2.0.50",
     "lodash": "3.10.1",
