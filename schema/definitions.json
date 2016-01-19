@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema#",
+  "description": "schema for storing commonly used definitions",
+  "service": {
+    "type": "string",
+    "format": "slug"
+  },
+  "semver": {
+    "type": "string",
+    "pattern": "^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$"
+  },
+  "uriPath": {
+    "type": "string",
+    "format": "uri"
+  },
+  "credentialType": {
+    "type": "string",
+    "pattern": "^[a-zA-Z_]{3,64}$"
+  },
+  "permissions": {
+    "$oneOf": [
+      {
+        "type": "string",
+        "enum": ["*"]
+      },
+      { "$ref": "#/permissionName" },
+      {
+        "type": "array",
+        "items": { "$ref": "#/permissionName" }
+      }
+    ]  
+  },
+  "permissionName": {
+    "type": "string",
+    "pattern": "^[a-zA-Z0-9\.\-_ ]{3,64}$"
+  },
+  "sharing": {
+    "type": "string",
+    "enum": [ "unique", "shared" ]
+  },
+  "location": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+          "format": "slug"
+      },
+      "uri": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "required": [
+      "name",
+      "uri"
+    ],
+    "additionalProperties": false
+  }
+}

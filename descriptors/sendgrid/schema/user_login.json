@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "SendGrid User Credential Definition",
+  "type": "object",
+  "properties": {
+    "username": {
+      "description": "Username",
+      "type": "string"
+    },
+    "password": {
+      "description": "Password"
+      "type": "string"
+    }
+  },
+  "required": [
+    "username",
+    "password"
+  ],
+  "additionalProperties": false
+}
