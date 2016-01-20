@@ -15,7 +15,7 @@
       "properties": {
         "provided": { "$ref": "service/provided.json#" },
         "environments": { "$ref": "service/suggestion.json#" }
-      }
+      },
       "additionalProperties": false
     }
   },

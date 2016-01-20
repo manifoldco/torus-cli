@@ -8,7 +8,7 @@
       "type": "string"
     },
     "password": {
-      "description": "Password"
+      "description": "Password",
       "type": "string"
     }
   },

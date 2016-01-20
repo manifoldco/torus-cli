@@ -14,7 +14,8 @@
     },
     "locations": {
       "type": "array",
-      "items": { $ref": "definitions.json#/location" }
+      "items": { "$ref": "definitions.json#/location" },
+      "minLength": 1
     },
     "descriptors": {
       "type": "object",
@@ -35,11 +36,15 @@
       "required": [
         "default",
         "supported"
-      ]
+      ],
       "additionalProperties": false
     }
   },
   "required": [
-    ""
+    "name",
+    "description",
+    "type",
+    "locations",
+    "descriptors"
   ]
 }

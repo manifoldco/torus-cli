@@ -42,8 +42,8 @@
     "type": "object",
     "properties": {
       "name": {
-        "type": "string"
-          "format": "slug"
+        "type": "string",
+        "format": "slug"
       },
       "uri": {
         "type": "string",
