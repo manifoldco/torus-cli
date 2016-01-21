@@ -13,11 +13,8 @@
     },
     "services": {
       "type": "array",
-      "items": {
-        "type": "string",
-        "format": "slug"
-       },
-       "uniqueItems": true
+      "items": { "$ref": "definitions.json#/service" },
+      "uniqueItems": true
     }
   },
   "required": [

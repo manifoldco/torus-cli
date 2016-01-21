@@ -6,6 +6,18 @@
     "name": {
       "type": "string",
       "format": "slug"
+    },
+    "obj": {
+      "type": "object",
+      "properties": {
+        "a": { "type": "string" }
+      }
+    },
+    "list": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [

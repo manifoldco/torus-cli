@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema#",
+  "title": "Suggestion for how to allocate creds to an environment",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name": { "$ref": "../definitions.json#/environment" },
+      "credential": { "$ref": "../definitions.json#/credentialType" },
+      "permissions": { "$ref": "../definitions.json#/permissions" },
+      "sharing": { "$ref": "../definitions.json#/sharing" }
+    },
+    "required": [
+      "name",
+      "credential",
+      "permission",
+      "sharing"
+    ]
+  }, 
+  "minLength": 2
+}
