@@ -8,5 +8,5 @@ locations:
 descriptors:
     default: 0.0.1
     supported:
-        - name: 0.0.1
+        - version: 0.0.1
           url: "file://$ARIGATO_INSTALL/descriptors/sendgrid/service.yml"

@@ -17,7 +17,7 @@ credentials:
         - "alerts.read"
 
 default:
-    master:
+    provided:
         - type: user_login
           description: "Credentials for your master sendgrid account"
     environments:

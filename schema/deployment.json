@@ -24,7 +24,7 @@
         "supported": {
           "type": "array",
           "items": {
-            "name": { "$ref": "definitions.json#/semver" },
+            "version": { "$ref": "definitions.json#/semver" },
             "url": {
               "type": "string",
               "format": "uri"

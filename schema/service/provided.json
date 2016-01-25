@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema#",
+  "title": "sub schema for whats required from the user",
+  "type": "object",
+  "properties": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "type": { "$ref": "../definitions.json#/credentialName" },
+        "description": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "type",
+        "description"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
