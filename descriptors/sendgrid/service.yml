@@ -18,8 +18,9 @@ credentials:
 
 default:
     provided:
-        - type: user_login
-          description: "Credentials for your master sendgrid account"
+        master_credentials:
+            type: user_login
+            description: "Credentials for your master sendgrid account"
     environments:
         - name: production
           credential: api_key

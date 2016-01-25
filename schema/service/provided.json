@@ -3,22 +3,24 @@
   "title": "sub schema for whats required from the user",
   "type": "object",
   "properties": {
-    "type": "array",
-    "items": {
-      "type": "object",
-      "properties": {
-        "type": { "$ref": "../definitions.json#/credentialName" },
-        "description": {
-          "type": "string",
-          "minLength": 10,
-          "maxLength": 100
-        }
+    "type": "object",
+    "patternProperties": {
+      "^[a-zA-Z0-9\\-_]{3,64}$": {
+        "type": "object",
+        "properties": {
+          "type": { "$ref": "../definitions.json#/credentialName" },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "type",
+          "description"
+        ],
+        "additionalProperties": false
       },
-      "required": [
-        "type",
-        "description"
-      ],
-      "additionalProperties": false
     }
   }
 }
