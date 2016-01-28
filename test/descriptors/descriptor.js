@@ -103,6 +103,17 @@ describe('Descriptor', function() {
       });
     });
 
+    it('takes in a map and sets', function () {
+      return descriptor.set({ name: 'hii', 'obj.a': 'boo' }).then((data) => {
+        assert.deepEqual(data, {
+          name: 'hii',
+          obj: {
+            a: 'boo'
+          }
+        });
+      }); 
+    });
+
     it('returns error if invalid', function() {
       return descriptor.set('name', 1).catch((errors) => {
         assert.ok(Array.isArray(errors));

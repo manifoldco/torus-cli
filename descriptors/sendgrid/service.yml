@@ -1,6 +1,6 @@
 name: sendgrid
 version: 0.0.1
-basePath: "/api/v1"
+basePath: "/v3"
 credentials:
     - name: user_login
       existence: multiple
@@ -9,8 +9,13 @@ credentials:
       permissions: "*"
     - name: api_key
       existence: multiple
-      creation: generated
       schema: "file://$DESCRIPTOR_HOME/schema/api_key.json"
+      creation: generated
+      methods:
+        - type: create
+          input: master_credentials
+          output: api_key
+          src: "file://$DESCRIPTOR_HOME/create.js"
       permissions:
         - "mail.send"
         - "alerts.create"
@@ -22,10 +27,6 @@ default:
             type: user_login
             description: "Credentials for your master sendgrid account"
     environments:
-        - name: production
-          credential: api_key
-          permissions: "*"
-          sharing: unique
         - name: development
           credential: api_key
           permission: "*"

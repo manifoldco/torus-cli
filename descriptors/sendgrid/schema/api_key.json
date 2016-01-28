@@ -1,11 +1,11 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$schema": "https://json-schema.org/draft-04/schema#",
   "title": "SendGrid API Key Definition",
   "type": "object",
   "properties": {
     "api_key":{
       "type": "string",
-      "pattern": "^SG\\.[a-zA-Z0-9]*\\.[a-zA-Z0-9]*$"
+      "pattern": "^SG\\.[a-zA-Z0-9\\-_]*\\.[a-zA-Z0-9\\-_]*$"
     },
     "api_key_id": {
       "type": "string"

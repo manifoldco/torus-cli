@@ -3,7 +3,7 @@
   "description": "schema for storing commonly used definitions",
   "service": {
     "type": "string",
-    "format": "slug"
+    "pattern": "^[a-zA-Z\-]{3,64}$"
   },
   "semver": {
     "type": "string",
@@ -15,7 +15,7 @@
   },
   "credentialType": {
     "type": "string",
-    "pattern": "^[a-zA-Z_]{3,64}$"
+    "pattern": "^[a-z_]{3,64}$"
   },
   "permissions": {
     "$oneOf": [
