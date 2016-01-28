@@ -3,7 +3,7 @@
   "description": "schema for storing commonly used definitions",
   "service": {
     "type": "string",
-    "pattern": "^[a-zA-Z\-]{3,64}$"
+    "pattern": "^[a-z\-]{3,64}$"
   },
   "semver": {
     "type": "string",
@@ -28,11 +28,11 @@
         "type": "array",
         "items": { "$ref": "#/permissionName" }
       }
-    ]  
+    ]
   },
   "permissionName": {
     "type": "string",
-    "pattern": "^[a-zA-Z0-9\.\-_ ]{3,64}$"
+    "pattern": "^[a-z0-9\.\-_ ]{3,64}$"
   },
   "sharing": {
     "type": "string",
