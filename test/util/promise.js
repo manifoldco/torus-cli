@@ -43,4 +43,85 @@ describe('promise util', function() {
       });
     });
   });
+
+  describe('.series', function() {
+  
+    it('executes in order', function() {
+      var x = 0;
+      function fn () {
+        return new Promise((resolve) => {
+          setTimeout(function() {
+            x += 1;
+            resolve(x-1);
+          }, Math.random()*25);
+        });
+      }
+
+      return promise.series([fn, fn, fn]).then((results) => {
+        assert.deepEqual([0,1,2], results);
+      });
+    });
+
+    it('immediately returns an error', function() {
+      var x = 0;
+      function fn () {
+        return new Promise((resolve, reject) => {
+          setTimeout(function() {
+            x += 1;
+
+            if (x ===  2) {
+              return reject(new Error('woo'));
+            } else {
+              return resolve(x-1);
+            }
+          }, Math.random()*25);
+        });
+      }
+
+      return promise.series([fn, fn, fn]).then(() => {
+        assert.ok(false, 'this shoudlnt be called');
+      }, (err) => {
+        assert.ok(err instanceof Error);
+        assert.strictEqual(err.message, 'woo');
+      });
+
+    });
+  });
+
+  describe('.seriesMap', function() {
+    it('maintains object.keys order', function() {
+      var x = 0;
+      function fn () {
+        return new Promise((resolve) => {
+          x = x + 1;
+          resolve(x);
+        });
+      }
+
+      return promise.seriesMap({ a: fn, b: fn, c: fn }).then((results) => {
+        assert.deepEqual({ a: 1, b: 2, c: 3 }, results);
+      });
+    });
+
+    it('returns on an error', function () {
+      var x = 0;
+      function fn () {
+        return new Promise((resolve, reject) => {
+          x = x + 1;
+          if (x == 2) {
+            return reject(new Error('hi'));
+          } else {
+            return resolve(x);
+          }
+        });
+      }
+
+      return promise.seriesMap({ a: fn, b: fn, c: fn }).then(() => {
+        assert.ok(false, 'this shoudlnt happen');
+      }, (err) => {
+        assert.ok(err instanceof Error);
+        assert.strictEqual(err.message, 'hi');
+      });
+    });
+  });
 });
