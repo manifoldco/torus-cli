@@ -1,0 +1,32 @@
+name: stripe
+version: 0.0.1
+basePath: "/v1"
+credentials:
+    - name: testkey
+      existence: singular
+      creation: manual
+      schema: "file://$DESCRIPTOR_HOME/schema/testkey.json"
+      permissions: "*"
+
+    - name: livekey
+      existence: singular
+      creation: manual
+      schema: "file://$DESCRIPTOR_HOME/schema/livekey.json"
+      permissions: "*"
+
+default:
+    provided:
+        livekey:
+            type: livekey
+            description: "Your stripe live secret and publishable keys"
+        testkey:
+            type: testkey
+            description: "Your stripe testing secret and publishable keys"
+
+    environments:
+        - name: production
+          source: livekey
+          sharing: shared
+        - name: development
+          source: testkey
+          sharing: shared

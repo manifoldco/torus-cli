@@ -3,19 +3,38 @@
   "title": "Suggestion for how to allocate creds to an environment",
   "type": "array",
   "items": {
-    "type": "object",
-    "properties": {
-      "name": { "$ref": "../definitions.json#/environment" },
-      "credential": { "$ref": "../definitions.json#/credentialType" },
-      "permissions": { "$ref": "../definitions.json#/permissions" },
-      "sharing": { "$ref": "../definitions.json#/sharing" }
-    },
-    "required": [
-      "name",
-      "credential",
-      "permission",
-      "sharing"
+    "oneOf": [
+      {
+        "description": "auto-generated credentials using user provided creds",
+        "type": "object",
+        "properties": {
+          "name": { "$ref": "../definitions.json#/environment" },
+          "credential": { "$ref": "../definitions.json#/credentialType" },
+          "permissions": { "$ref": "../definitions.json#/permissions" },
+          "sharing": { "$ref": "../definitions.json#/sharing" }
+        },
+        "required": [
+          "name",
+          "credential",
+          "permission",
+          "sharing"
+        ]
+      },
+      {
+        "description": "",
+        "type": "object",
+        "properties": {
+          "name": { "$ref": "../definitions.json#/environment" },
+          "source": { "$ref": "../definitions.json#/credentialName" },
+          "sharing": { "$ref": "../definitions.json#/sharing" }
+        },
+        "required": [
+          "name",
+          "source",
+          "sharing"
+        ]
+      }
     ]
-  }, 
+  },
   "minLength": 2
 }
