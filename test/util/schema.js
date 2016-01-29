@@ -48,6 +48,22 @@ describe('schema', function() {
         assert.strictEqual(data.name, 'abcd');
       });
     });
+
+    it('allows you to pass in object as schema', function () {
+      var mySchema = {
+        '$schema': 'https://json-schema.org/draft-04/schema#',
+        title: 'my test schema',
+        type: 'object',
+        properties: {
+          a: { type: 'string' }
+        },
+        required: [ 'a' ]
+      };
+
+      return schema.validate(mySchema, { a: 'b'}, (data) => {
+        assert.strictEqual(data.a, 'b');
+      });
+    });
   });
 
   describe('formats', function() {

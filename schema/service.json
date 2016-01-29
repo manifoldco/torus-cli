@@ -5,7 +5,7 @@
   "properties": {
     "name": { "$ref": "definitions.json#/service" },
     "version": { "$ref": "definitions.json#/semver" },
-    "path": { "$ref": "definitions.json#/uriPath" },
+    "basePath": { "$ref": "definitions.json#/uriPath" },
     "credentials": {
       "type": "array",
       "items": { "$ref": "service/credentials.json" }
@@ -22,7 +22,7 @@
   "required": [
     "name",
     "version",
-    "path",
+    "basePath",
     "default"
   ],
   "additionalProperties": false
