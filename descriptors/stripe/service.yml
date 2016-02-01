@@ -5,13 +5,15 @@ credentials:
     - name: testkey
       existence: singular
       creation: manual
-      schema: "file://$DESCRIPTOR_HOME/schema/testkey.json"
+      schema:
+        "$ref": "./schema/testkey.json"
       permissions: "*"
 
     - name: livekey
       existence: singular
       creation: manual
-      schema: "file://$DESCRIPTOR_HOME/schema/livekey.json"
+      schema: 
+        "$ref": "./schema/livekey.json"
       permissions: "*"
 
 default:
