@@ -5,7 +5,7 @@
   "items": {
     "type": "object",
     "properties": {
-      "type": { "$ref": "../definitions.json#/credentialType" },
+      "type": { "$ref": "../definitions.json#/credentialName" },
       "description": {
         "type": "string",
         "minLength": 5,

@@ -5,15 +5,19 @@
     "type": "string",
     "pattern": "^[a-z_]{3,64}$"
   },
+  "environment": {
+    "type": "string",
+    "pattern": "^[a-z_]{3,64}$"
+  },
   "semver": {
     "type": "string",
-    "pattern": "^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$"
+    "pattern": "^([0-9]+)\\.([0-9]+)\\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+)?$"
   },
   "uriPath": {
     "type": "string",
     "format": "uri"
   },
-  "credentialType": {
+  "credentialName": {
     "type": "string",
     "pattern": "^[a-z_]{3,64}$"
   },
@@ -59,14 +63,14 @@
         "type": "string",
         "format": "slug"
       },
-      "uri": {
+      "url": {
         "type": "string",
         "format": "uri"
       }
     },
     "required": [
       "name",
-      "uri"
+      "url"
     ],
     "additionalProperties": false
   }

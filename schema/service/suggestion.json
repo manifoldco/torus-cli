@@ -9,14 +9,14 @@
         "type": "object",
         "properties": {
           "name": { "$ref": "../definitions.json#/environment" },
-          "credential": { "$ref": "../definitions.json#/credentialType" },
+          "credential": { "$ref": "../definitions.json#/credentialName" },
           "permissions": { "$ref": "../definitions.json#/permissions" },
           "sharing": { "$ref": "../definitions.json#/sharing" }
         },
         "required": [
           "name",
           "credential",
-          "permission",
+          "permissions",
           "sharing"
         ]
       },

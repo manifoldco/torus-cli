@@ -3,18 +3,18 @@
   "title": "schema for arigato's service.yml standard",
   "type": "object",
   "properties": {
-    "name": { "$ref": "definitions.json#/service" },
-    "version": { "$ref": "definitions.json#/semver" },
-    "basePath": { "$ref": "definitions.json#/uriPath" },
+    "name": { "$ref": "./definitions.json#/service" },
+    "version": { "$ref": "./definitions.json#/semver" },
+    "basePath": { "$ref": "./definitions.json#/uriPath" },
     "credentials": {
       "type": "array",
-      "items": { "$ref": "service/credentials.json" }
+      "items": { "$ref": "./service/credential.json" }
     },
     "default": {
       "type": "object",
       "properties": {
-        "provided": { "$ref": "service/provided.json#" },
-        "environments": { "$ref": "service/suggestion.json#" }
+        "provided": { "$ref": "./service/provided.json" },
+        "environments": { "$ref": "./service/suggestion.json" }
       },
       "additionalProperties": false
     }

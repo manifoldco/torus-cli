@@ -42,7 +42,7 @@ describe('schema', function() {
     });
 
     it('passes if data is valid', function() {
-      var input = { name: 'abcd' };
+      var input = { name: 'abcd', data: 'boo' };
 
       return schema.validate(schemaPath, input).then(function(data) {
         assert.strictEqual(data.name, 'abcd');
@@ -62,6 +62,26 @@ describe('schema', function() {
 
       return schema.validate(mySchema, { a: 'b'}, (data) => {
         assert.strictEqual(data.a, 'b');
+      });
+    });
+
+    it('errors if missing schema', function() {
+      var mySchema = {
+        '$schema': 'https://json-schema.org/draft-04/schema#',
+        title: 'ref missing schema',
+        type: 'object',
+        properties: {
+          a: { type: 'string' },
+          b: { '$ref': './test.json' }
+        },
+        required: ['a', 'b'],
+        additionalProperties: false
+      };
+
+      return schema.validate(mySchema, { a: 'b', b: 'd' }).then(cannotResolve, 
+                                                                (errors) => {
+        assert.ok(Array.isArray(errors));
+        assert.strictEqual(errors.length, 1);
       });
     });
   });

@@ -4,11 +4,11 @@ const assert = require('assert');
 const fs = require('fs');
 
 const sinon = require('sinon');
+
 const Descriptor = require('../../lib/descriptors/descriptor').Descriptor;
 
 const SCHEMA_PATH = '../test/data/schema';
 const FILE_PATH = '/tmp/testdata.yml';
-
 
 describe('Descriptor', function() {
 
@@ -32,7 +32,7 @@ describe('Descriptor', function() {
     it('sets the schema, path and contents', function() {
       descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {});
 
-      assert.strictEqual(descriptor.schema, SCHEMA_PATH);
+      assert.strictEqual(descriptor.schemaName, SCHEMA_PATH);
       assert.strictEqual(descriptor.path, FILE_PATH);
       assert.deepEqual(descriptor.contents, {});
     });
@@ -53,42 +53,6 @@ describe('Descriptor', function() {
       });
 
       assert.strictEqual(descriptor.get('a.b.c.'), 1);
-    });
-
-    it('returns segment type if its an object an undefined', function() {
-      descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {
-        name: 'hi'
-      });
-
-      assert.deepEqual(descriptor.get('obj'), {});
-    });
-
-    it('returns segment type if its an array and undefined', function() {
-      descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {});
-
-      assert.deepEqual(descriptor.get('list'), []);
-    });
-
-    it('returns null if its a primitive', function() {
-      descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {});
-
-      assert.strictEqual(descriptor.get('name'), null);
-    });
-
-    it('throws a ReferenceError if property is unknown', function() {
-      descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {});
-
-      assert.throws(function() {
-        descriptor.get('a.b.c.d');
-      }, ReferenceError);
-    });
-
-    it('doesn\'t support getting deep properties that are not set', function() {
-      descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {});
-
-      assert.throws(function() {
-        descriptor.get('obj.a');
-      }, ReferenceError);
     });
   });
 

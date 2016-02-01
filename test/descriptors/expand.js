@@ -8,6 +8,7 @@ var sinon = require('sinon');
 var expand = require('../../lib/descriptors/expand');
 
 const FILE_PATH = path.join(__dirname, '../data/ref.json');
+const FILE_PATH_DEPTH = path.join(__dirname, '../data/depth.json');
 
 describe('expand', function() {
   var sandbox;
@@ -19,7 +20,7 @@ describe('expand', function() {
     sandbox.restore();
   });
 
-  it('loads the file properly', function() {
+  it('loads the file properly -- no sub references', function() {
     return expand(FILE_PATH).then((data) => {
       assert.deepEqual(data, {
         a: 'b',
@@ -34,9 +35,33 @@ describe('expand', function() {
     });
   });
 
+  it('loads the file properly with all sub references', function() {
+     return expand(FILE_PATH_DEPTH).then((data) => {
+      assert.deepEqual(data, {
+        a: 'b',
+        c: {
+          a: 'b',
+          c: { d: true },
+          d: [
+            'a',
+            'b',
+            { d: true },
+            { b: 1, d: { d: true } }
+          ]
+        },
+        d: [
+          'a',
+          'b',
+          { d: true },
+          { b: 1, d: { d: true } }
+        ]
+      });
+    });
+  });
+
   it('returns an error if non-json data', function() {
     sandbox.stub(fs, 'readFile').yields(null, '\hi');
-    
+
     return expand(FILE_PATH).then(() => {
       assert.ok(false, 'shouldnt have succeeded');
     }, (err) => {

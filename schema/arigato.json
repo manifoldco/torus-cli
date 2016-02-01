@@ -13,7 +13,7 @@
     },
     "services": {
       "type": "array",
-      "items": { "$ref": "definitions.json#/service" },
+      "items": { "$ref": "./definitions.json#/service" },
       "uniqueItems": true
     }
   },
