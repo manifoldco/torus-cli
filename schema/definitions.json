@@ -38,6 +38,20 @@
     "type": "string",
     "enum": [ "unique", "shared" ]
   },
+  "json-ref": {
+    "type": "object",
+    "description": "json reference to location of schema",
+    "properties": {
+      "$ref": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "required": [
+      "$ref"
+    ],
+    "additionalProperties": false
+  },
   "location": {
     "type": "object",
     "properties": {

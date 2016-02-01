@@ -24,10 +24,13 @@
         "supported": {
           "type": "array",
           "items": {
-            "version": { "$ref": "definitions.json#/semver" },
-            "url": {
-              "type": "string",
-              "format": "uri"
+            "type": "object",
+            "properties": {
+              "version": { "$ref": "definitions.json#/semver" },
+              "src": {
+                "type": "string",
+                "format": "uri"
+              }
             }
           },
           "minLength": 1

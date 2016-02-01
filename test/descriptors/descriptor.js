@@ -7,7 +7,7 @@ const sinon = require('sinon');
 const Descriptor = require('../../lib/descriptors/descriptor').Descriptor;
 
 const SCHEMA_PATH = '../test/data/schema';
-const FILE_PATH = '/tmp/testdata';
+const FILE_PATH = '/tmp/testdata.yml';
 
 
 describe('Descriptor', function() {
@@ -99,7 +99,7 @@ describe('Descriptor', function() {
 
     it('sets the value and returns if valid', function() {
       return descriptor.set('name', 'bcd').then((data) => {
-        assert.strictEqual(data.name, 'bcd'); 
+        assert.strictEqual(data.name, 'bcd');
       });
     });
 
@@ -111,7 +111,7 @@ describe('Descriptor', function() {
             a: 'boo'
           }
         });
-      }); 
+      });
     });
 
     it('returns error if invalid', function() {
@@ -134,7 +134,7 @@ describe('Descriptor', function() {
   describe('#validate', function() {
     beforeEach(function() {
       descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {
-        name: 'woo'                          
+        name: 'woo'
       });
     });
 
@@ -157,7 +157,7 @@ describe('Descriptor', function() {
 
     beforeEach(function() {
       descriptor = new Descriptor(SCHEMA_PATH, FILE_PATH, {
-        name: 'woo'                          
+        name: 'woo'
       });
     });
 
@@ -185,7 +185,7 @@ describe('Descriptor', function() {
     it('writes an obj to disk', function() {
       sandbox.stub(fs, 'writeFile').yields();
 
-      return Descriptor.create(Descriptor, SCHEMA_PATH, FILE_PATH, { 
+      return Descriptor.create(Descriptor, SCHEMA_PATH, FILE_PATH, {
         name: 'abc' }).then(() => {
         sinon.assert.calledOnce(fs.writeFile);
         sinon.assert.calledWith(fs.writeFile, FILE_PATH, 'name: abc\n');
@@ -204,7 +204,7 @@ describe('Descriptor', function() {
   });
 
   describe('.read', function() {
-    
+
     it('reads valid data', function() {
       sandbox.stub(fs, 'readFile').yields(null, 'name: woo\n');
 
