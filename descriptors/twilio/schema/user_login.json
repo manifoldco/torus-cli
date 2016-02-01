@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema#",
+  "title": "Twilio Account Credential Definition",
+  "type": "object",
+  "properties": {
+    "account_sid": {
+      "description": "Account SID",
+      "type": "string",
+      "pattern": "^AC[a-z0-9]+$",
+      "x-input-type": "input"
+    },
+    "token": {
+      "description": "Token",
+      "type": "string",
+      "x-input-type": "password"
+    }
+  },
+  "required": [
+    "account_sid",
+    "token"
+  ],
+  "additionalProperties": false
+}
