@@ -230,13 +230,13 @@ describe('Descriptor', function() {
       });
     });
 
-    it('returns error if data is not valid yaml', function() {
+    it('returns error if data is not valid yaml or json', function() {
       sandbox.stub(fs, 'readFile').yields(null, '{"a":1}');
 
       return Descriptor.read(Descriptor, SCHEMA_PATH, FILE_PATH)
       .catch((errors) => {
         assert.ok(Array.isArray(errors));
-        assert.strictEqual(errors.length, 1);
+        assert.strictEqual(errors.length, 2);
       });
     });
 
