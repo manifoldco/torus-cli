@@ -18,9 +18,11 @@
       "items": {
         "type": "string"
       }
-    }
+    },
+    "data": { "$ref": "./subschema.json#/data" }
   },
   "required": [
     "name"
-  ]
+  ],
+  "additionalProperties": false
 }

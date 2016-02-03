@@ -31,5 +31,5 @@ default:
     environments:
         - name: development
           credential: api_key
-          permission: "*"
+          permissions: "*"
           sharing: unique

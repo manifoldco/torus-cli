@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema#",
+  "title": "my test sub schema",
+  "data": {
+    "type": "string"
+  }
+}
