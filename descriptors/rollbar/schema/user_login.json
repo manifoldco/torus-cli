@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft-04/schema#",
+  "title": "Twilio Account Credential Definition",
+  "type": "object",
+  "properties": {
+    "access_token_read": {
+      "description": "Access token (read)",
+      "type": "string",
+      "minLength": "3",
+      "maxLength": "64",
+      "x-input-type": "input"
+    },
+    "access_token_write": {
+      "description": "Access token (write)",
+      "type": "string",
+      "minLength": "3",
+      "maxLength": "64",
+      "x-input-type": "input"
+    }
+  },
+  "required": [
+    "access_token_write",
+    "access_token_read"
+  ],
+  "additionalProperties": false
+}

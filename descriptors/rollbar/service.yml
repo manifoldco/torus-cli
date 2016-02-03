@@ -1,0 +1,32 @@
+name: rollbar
+version: 0.0.1
+basePath: "/api/1"
+credentials:
+    - name: user_login
+      existence: multiple
+      creation: manual
+      schema:
+        "$ref": "./schema/user_login.json"
+      permissions: "*"
+    - name: project
+      existence: multiple
+      schema:
+        "$ref": "./schema/project.json"
+      creation: generated
+      methods:
+        - type: create
+          input: master_credentials
+          output: project
+          src: "./create.js"
+      permissions: "*"
+
+default:
+    provided:
+        master_credentials:
+            type: user_login
+            description: "Access tokens for your Rollbar account"
+    environments:
+        - name: development
+          credential: project
+          permissions: "*"
+          sharing: unique
