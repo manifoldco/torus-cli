@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft-04/schema#",
-  "title": "Twilio Account Credential Definition",
+  "title": "Rollbar account credentials",
   "type": "object",
   "properties": {
     "access_token_read": {

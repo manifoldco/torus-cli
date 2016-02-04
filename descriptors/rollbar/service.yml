@@ -2,11 +2,11 @@ name: rollbar
 version: 0.0.1
 basePath: "/api/1"
 credentials:
-    - name: user_login
+    - name: account
       existence: multiple
       creation: manual
       schema:
-        "$ref": "./schema/user_login.json"
+        "$ref": "./schema/account.json"
       permissions: "*"
     - name: project
       existence: multiple
@@ -23,7 +23,7 @@ credentials:
 default:
     provided:
         master_credentials:
-            type: user_login
+            type: account
             description: "Access tokens for your Rollbar account"
     environments:
         - name: development
