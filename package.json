@@ -4,7 +4,8 @@
   "description": "Argiato CLI tooling and node sdk",
   "bin": "bin/arigato",
   "scripts": {
-    "test": "gulp test"
+    "test": "gulp test",
+    "demo": "./bin/delete-sendgrid-keys"
   },
   "author": "Ian Livingsotne",
   "license": "MIT",
