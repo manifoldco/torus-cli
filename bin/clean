@@ -1,0 +1,55 @@
+#!/usr/bin/env node
+'use strict';
+
+const yargs = require('yargs');
+const async = require('async');
+const request = require('request');
+
+function main() {
+  var auth = {
+    username: yargs.argv.username,
+    password: yargs.argv.password,
+    sendImmediately: true
+  };
+
+  console.log('retrieving keys list');
+  var opts = {
+    method: 'GET',
+    url: 'https://api.sendgrid.com/v3/api_keys',
+    auth: auth,
+    json: true
+  };
+  request(opts, function(err, res, body) {
+    if (err) {
+      console.error(err);
+      throw new Error('Request failure');
+    }
+    if (!body.result) {
+      throw new Error('Invalid request');
+    }
+
+    console.log('deleting ' + body.result.length + ' keys');
+    async.each(body.result, function(key, next) {
+      var opts = {
+        method: 'DELETE',
+        url: `https://api.sendgrid.com/v3/api_keys/${key.api_key_id}`,
+        auth: auth,
+        json: true
+      };
+
+      console.log('deleting key', key.api_key_id);
+      request(opts, next);
+    }, function(err) {
+      if (err) {
+        console.error(err);
+        throw new Error('Failed to delete keys');
+      }
+
+      process.exit();
+    });
+  });
+}
+
+if (require.main === module) {
+  main();
+}

@@ -23,6 +23,7 @@
     "yargs": "3.29.0"
   },
   "devDependencies": {
+    "async": "1.5.2",
     "gulp": "3.9.0",
     "gulp-jshint": "2.0.0",
     "gulp-mocha": "2.2.0",
