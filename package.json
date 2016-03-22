@@ -1,36 +1,23 @@
 {
   "name": "arigato",
-  "version": "1.0.0",
-  "description": "Argiato CLI tooling and node sdk",
+  "version": "0.0.1",
+  "description": "Argiato CLI and Daemon",
   "bin": "bin/arigato",
   "scripts": {
     "test": "gulp test"
   },
-  "author": "Ian Livingsotne",
+  "author": "Arigato.sh",
+  "contributors": [
+    "Ian Livingstone <ian@arigato.sh>",
+    "Jeff Andersen <jeff@arigato.sh>"
+  ],
   "license": "MIT",
-  "dependencies": {
-    "cbwrap": "1.0.2",
-    "cli-color": "1.1.0",
-    "clone": "1.0.2",
-    "email-validator": "1.0.3",
-    "event-regulator": "0.2.0",
-    "inquirer": "0.11.1",
-    "kbpgp": "2.0.50",
-    "lodash": "3.10.1",
-    "netrc": "0.1.4",
-    "request": "2.67.0",
-    "triplesec": "3.0.25",
-    "tv4": "1.2.7",
-    "uuid": "2.0.1",
-    "yamljs": "0.2.4",
-    "yargs": "3.29.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "gulp": "3.9.0",
     "gulp-jshint": "2.0.0",
     "gulp-mocha": "2.2.0",
     "jshint": "2.8.0",
     "mocha": "2.3.4",
-    "sinon": "1.17.2"
   }
 }
