@@ -1,0 +1,14 @@
+Usage: <%= program.name %> <command> [params] [-OPTIONS]
+
+To view additional details for a command type <%= program.name %> help <command>.
+
+The following commands are supported:
+
+<%
+  var commands = '';
+  _.each(program.groups, function (group, name) {
+    commands+='  '+_.padEnd(group[name].usage, 20)+' '+group[name].description+'\n';  
+  });
+
+  print(commands);
+%>
