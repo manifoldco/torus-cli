@@ -1,0 +1,30 @@
+Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
+
+<%
+  print(cmd.description);
+  if (cmd.options.length > 0) {
+    print('The following options are supported by this command:');
+  }
+
+  var options = '';
+  _.each(cmd.options, function (opt) {
+    options += '  '+_.padEnd(opt.usage, 20)+' '+opt.description+'\n';
+  });
+
+  print(options);
+
+  if (cmd.example) {
+    print('\n\nExample:\n\n'+cmd.example+'\n\n');
+  }
+
+  if (_.keys(program.groups[cmd.group]).length > 1 && cmd.group === cmd.slug) {
+    print('\n\nThe following sub-commands are supported:\n\n');
+
+    var subcmds = '';
+    _.each(program.groups[cmd.group], function (subcmd, name) {
+      subcmds += '  '+_.padEnd(subcmd.usage, 20)+' '+subcmd.description+'\n';
+    });
+    print(subcmds+'\n');
+    print('Use '+program.name+' help [command] to view additional information');
+  }
+%>

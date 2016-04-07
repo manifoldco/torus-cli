@@ -63,7 +63,8 @@
       "afterEach",
       "expect",
       "setTimeout",
-      "clearTimeout"
+      "clearTimeout",
+      "-Promise"
     ],
     "maxlen": 80
 }

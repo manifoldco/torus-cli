@@ -12,12 +12,18 @@
     "Jeff Andersen <jeff@arigato.sh>"
   ],
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "es6-promise": "3.1.2",
+    "glob": "7.0.3",
+    "lodash": "4.8.1",
+    "minimist": "1.2.0"
+  },
   "devDependencies": {
     "gulp": "3.9.0",
     "gulp-jshint": "2.0.0",
     "gulp-mocha": "2.2.0",
     "jshint": "2.8.0",
     "mocha": "2.3.4",
+    "sinon": "1.17.3"
   }
 }

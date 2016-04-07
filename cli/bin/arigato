@@ -1,0 +1,23 @@
+#!/usr/bin/env node
+// vim: set filetype=javascript;
+'use strict';
+
+function main () {
+  var arigato = require('../lib/arigato');
+  process.title = 'Arigato CLI';
+
+  arigato.run(process.argv).then(function (success) {
+    process.exit((success) ? 0 : 1);
+  }, function (err) {
+
+    if (err) {
+      console.error(err.stack ? err.stack : err);
+    }
+
+    process.exit(1);
+  });
+}
+
+if (require.main === module) {
+  main();
+}
