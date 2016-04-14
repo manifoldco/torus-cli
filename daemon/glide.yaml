@@ -1,0 +1,3 @@
+package: github.com/arigatomachine/cli/daemon
+import:
+- package: github.com/satori/go.uuid
