@@ -15,8 +15,8 @@ func NewRouter(client Client, session Session) *Router {
 
 func (r *Router) process() {
 	defer func() {
-		if p := recover(); r != nil {
-			log.Printf("Client[%s] caught a panic: %s", r.client, p)
+		if p := recover(); p != nil {
+			log.Printf("Client[%s] caught a panic: %v", r.client, p)
 
 			// TODO: Use our own internal error objects so we can filter out
 			// errors properly
@@ -71,9 +71,12 @@ func (r *Router) process() {
 }
 
 func (r *Router) status(m *Message) error {
+	hasToken := r.session.HasToken()
+	hasPassphrase := r.session.HasPassphrase()
+
 	reply := CreateReply(m)
-	reply.Body.HasToken = r.session.HasToken()
-	reply.Body.HasPassphrase = r.session.HasPassphrase()
+	reply.Body.HasToken = &hasToken
+	reply.Body.HasPassphrase = &hasPassphrase
 
 	log.Printf(
 		"Client[%s] has retrieved session status: %s", r.client, r.session)

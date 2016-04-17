@@ -3,12 +3,15 @@ package main
 import "github.com/satori/go.uuid"
 
 type Body struct {
-	Message       string `json:"message,omitempty"`
-	Version       string `json:"version,omitempty"`
-	Passphrase    string `json:"passphrase,omitempty"`
-	Token         string `json:"token,omitempty"`
-	HasToken      bool   `json:"has_token,omitempty"`
-	HasPassphrase bool   `json:"has_passphrase,omitempty"`
+	Message    string `json:"message,omitempty"`
+	Version    string `json:"version,omitempty"`
+	Passphrase string `json:"passphrase,omitempty"`
+	Token      string `json:"token,omitempty"`
+
+	// Use a pointer to a bool so we can omit it if the value is
+	// not set
+	HasToken      *bool `json:"has_token,omitempty"`
+	HasPassphrase *bool `json:"has_passphrase,omitempty"`
 }
 
 type Headers struct {
@@ -19,7 +22,7 @@ type Headers struct {
 type Message struct {
 	Type    string   `json:"type"`
 	Id      string   `json:"id"`
-	Command string   `json:"command"`
+	Command string   `json:"command,omitempty"`
 	Headers *Headers `json:"headers"`
 	Body    *Body    `json:"body,omitempty"`
 }

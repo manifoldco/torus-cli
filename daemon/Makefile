@@ -4,7 +4,7 @@ VERSION := $(shell git describe --always --long --dirty)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 
-all: run
+all: server
 
 server:
 	go build -i -v -o ${OUT} -ldflags="-X main.version=${VERSION}" ${PKG}
@@ -22,9 +22,6 @@ lint:
 
 static: vet lint
 	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X main.version=${VERSION}" ${PKG}
-
-run: server
-	./${OUT}
 
 clean:
 	-@rm ${OUT} ${OUT}-v*
