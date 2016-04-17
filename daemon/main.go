@@ -49,7 +49,7 @@ func shutdown(server *Server) {
 	}
 
 	if r := recover(); r != nil {
-		log.Printf("Failed shutting down; caught panic")
+		log.Printf("Failed shutting down; caught panic: %v", r)
 		panic(r)
 	}
 }
