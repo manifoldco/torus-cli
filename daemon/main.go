@@ -4,16 +4,18 @@ import "os"
 import "log"
 import "os/signal"
 
-var version = "development"
-
 func main() {
 
-	path := os.Getenv("SOCKET_PATH")
-	server, err := NewServer(path)
+	cfg, err := NewConfig(os.Getenv("ARIGATO_ROOT"))
+	if err != nil {
+		log.Fatalf("Failed to start: %s", err)
+	}
+
+	server, err := NewServer(cfg)
 	session := NewSession()
 
 	if err != nil {
-		log.Fatalf("Failed to listen: %s", err)
+		log.Fatalf("Failed to construct server: %s", err)
 	}
 
 	defer shutdown(server)
@@ -26,7 +28,7 @@ func main() {
 			log.Fatalf("Accept Error: %s", err)
 		}
 
-		router := NewRouter(client, session)
+		router := NewRouter(client, cfg, session)
 		go router.process()
 	}
 }
