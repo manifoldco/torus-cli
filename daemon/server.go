@@ -29,6 +29,12 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
+	// Does not guarantee security; BSD ignores file permissions for sockets
+	// see https://github.com/arigatomachine/cli/issues/76 for details
+	if err = os.Chmod(cfg.SocketPath, 0700); err != nil {
+		return nil, err
+	}
+
 	return &Server{listener: l, config: cfg, clientCount: 0}, nil
 }
 
