@@ -7,10 +7,11 @@ var Promise = require('es6-promise').Promise;
 var pkg = require('../../package.json');
 var Program = require('./cli/program');
 var cmds = require('./cmds');
+var config = require('./middleware/config');
 
 var arigato = exports;
 
-arigato.run = function (argv) {
+arigato.run = function (opts) {
   return new Promise(function (resolve, reject) {
     var templates = {
       program: fs.readFileSync(
@@ -20,10 +21,12 @@ arigato.run = function (argv) {
     };
 
     var program = new Program('arigato', pkg.version, templates);
-    cmds.get().then(function(cmdList) { 
+    program.use(config.middleware(opts.arigatoRoot));
+
+    cmds.get().then(function(cmdList) {
       cmdList.forEach(program.command.bind(program));
 
-      program.run(argv).then(resolve).catch(reject);
+      program.run(opts.argv).then(resolve).catch(reject);
     }).catch(reject);
   });
 };
