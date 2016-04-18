@@ -1,13 +1,13 @@
 package main
 
-import "errors"
+import "os"
 import "net"
 import "path/filepath"
 
 type Server struct {
 	clientCount int
 	listener    net.Listener
-	socketPath  string
+	config      *Config
 }
 
 type Listener interface {
@@ -17,12 +17,9 @@ type Listener interface {
 	String() string
 }
 
-func NewServer(socketPath string) (*Server, error) {
-	if len(socketPath) == 0 {
-		return nil, errors.New("Provided socket path is empty")
-	}
+func NewServer(cfg *Config) (*Server, error) {
 
-	absPath, err := filepath.Abs(socketPath)
+	absPath, err := filepath.Abs(cfg.SocketPath)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +29,13 @@ func NewServer(socketPath string) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{listener: l, socketPath: absPath, clientCount: 0}, nil
+	// Does not guarantee security; BSD ignores file permissions for sockets
+	// see https://github.com/arigatomachine/cli/issues/76 for details
+	if err = os.Chmod(cfg.SocketPath, 0700); err != nil {
+		return nil, err
+	}
+
+	return &Server{listener: l, config: cfg, clientCount: 0}, nil
 }
 
 func (s *Server) Accept() (Client, error) {

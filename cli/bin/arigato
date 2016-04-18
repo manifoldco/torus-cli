@@ -6,7 +6,12 @@ function main () {
   var arigato = require('../lib/arigato');
   process.title = 'Arigato CLI';
 
-  arigato.run(process.argv).then(function (success) {
+  var opts = {
+    arigatoRoot: process.env.ARIGATO_ROOT,
+    argv: process.argv
+  };
+
+  arigato.run(opts).then(function (success) {
     process.exit((success) ? 0 : 1);
   }, function (err) {
 

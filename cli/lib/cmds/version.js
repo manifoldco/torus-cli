@@ -6,7 +6,7 @@ var version = new Command(
   'version',
   'displays versions of the cli and daemon',
   function (ctx) {
-    console.log('Version: '+ctx.program.version);
+    console.log('Version: '+ctx.config.version);
     return Promise.resolve(true);
   }
 );

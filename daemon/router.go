@@ -7,10 +7,11 @@ import "fmt"
 type Router struct {
 	client  Client
 	session Session
+	config  *Config
 }
 
-func NewRouter(client Client, session Session) *Router {
-	return &Router{client: client, session: session}
+func NewRouter(client Client, cfg *Config, session Session) *Router {
+	return &Router{client: client, config: cfg, session: session}
 }
 
 func (r *Router) process() {
@@ -124,6 +125,7 @@ func (r *Router) version(m *Message) error {
 	reply := CreateReply(m)
 	reply.Body.Version = version
 
-	log.Printf("Client[%s] has asked for the version: %s", r.client, version)
+	log.Printf(
+		"Client[%s] has asked for the version: %s", r.client, r.config.Version)
 	return r.client.Write(reply)
 }
