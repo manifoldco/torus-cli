@@ -1,6 +1,8 @@
 hash: f73fa24b236d93147ea11707d494a4423d558c231ea32d0cfb29fbe4c72f49af
-updated: 2016-04-14T18:12:12.031920633-03:00
+updated: 2016-04-18T13:54:31.033959296-03:00
 imports:
+- name: github.com/nightlyone/lockfile
+  version: b30dcbfa86e3a1eaa4e6622de2ce57be2c138c10
 - name: github.com/satori/go.uuid
   version: f9ab0dce87d815821e221626b772e3475a0d2749
 devImports: []

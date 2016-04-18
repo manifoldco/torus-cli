@@ -24,6 +24,21 @@ func NewServer(cfg *Config) (*Server, error) {
 		return nil, err
 	}
 
+	// Stat the socket path to determine if it exists or not. Guarding against
+	// a server already running is outside the scope of this module.
+	_, err = os.Stat(cfg.SocketPath)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	// If file exist then we can remove it!
+	if !os.IsNotExist(err) {
+		err = os.Remove(cfg.SocketPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	l, err := net.Listen("unix", absPath)
 	if err != nil {
 		return nil, err
