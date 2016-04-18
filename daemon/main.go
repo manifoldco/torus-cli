@@ -4,50 +4,38 @@ import "os"
 import "log"
 import "os/signal"
 
+var hasShutdown = false
+
 func main() {
-
-	cfg, err := NewConfig(os.Getenv("ARIGATO_ROOT"))
+	daemon, err := NewDaemon(os.Getenv("ARIGATO_ROOT"))
 	if err != nil {
-		log.Fatalf("Failed to start: %s", err)
+		log.Fatalf("Failed to create daemon: %s", err)
 	}
 
-	server, err := NewServer(cfg)
-	session := NewSession()
+	go watch(daemon)
+	defer daemon.Shutdown()
 
+	log.Printf("Daemon is now listening on %s", daemon.server.Addr())
+	err = daemon.Run()
 	if err != nil {
-		log.Fatalf("Failed to construct server: %s", err)
-	}
-
-	defer shutdown(server)
-	go watch(server)
-
-	log.Printf("Listening on %s", server.Addr())
-	for {
-		client, err := server.Accept()
-		if err != nil {
-			log.Fatalf("Accept Error: %s", err)
-		}
-
-		router := NewRouter(client, cfg, session)
-		go router.process()
+		log.Printf("Error while running daemon: %s", err)
 	}
 }
 
-func watch(server *Server) {
+func watch(daemon *Daemon) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, os.Kill)
 	s := <-c
 
 	log.Printf("Caught a signal: %s", s)
-	shutdown(server)
+	shutdown(daemon)
 }
 
-func shutdown(server *Server) {
-	log.Printf("Shutting down server")
-
-	if err := server.Close(); err != nil {
-		log.Fatalf("Could not shutdown server: %s", err)
+func shutdown(daemon *Daemon) {
+	err := daemon.Shutdown()
+	if err != nil {
+		log.Printf("Did not shutdown cleanly, error: %s", err)
 	}
 
 	if r := recover(); r != nil {
