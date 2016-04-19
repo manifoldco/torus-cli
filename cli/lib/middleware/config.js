@@ -3,6 +3,7 @@
 var fs = require('fs');
 var path = require('path');
 
+var Config = require('../config');
 var Promise = require('es6-promise').Promise;
 
 var config = {};
@@ -55,11 +56,3 @@ config.middleware = function (arigatoRoot) {
     });
   };
 };
-
-function Config (arigatoRoot, version) {
-  this.arigatoRoot = arigatoRoot;
-  this.socketPath = path.join(arigatoRoot, 'daemon.socket');
-  this.pidPath = path.join(arigatoRoot, 'daemon.pid');
-  this.version = version;
-}
-config.Config = Config;
