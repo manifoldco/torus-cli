@@ -6,7 +6,6 @@ var Promise = require('es6-promise').Promise;
 
 var Program = require('../../lib/cli/program');
 var Command = require('../../lib/cli/command');
-var Context = require('../../lib/cli/context');
 
 describe('Program', function() {
  

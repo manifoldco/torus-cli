@@ -36,7 +36,7 @@ Option.prototype.name = function () {
 
 Option.prototype.shortcut = function () {
   return this.short.replace(/^\-/, '');
-}
+};
 
 Option.prototype.evaluate = function (ctx, args) {
   ctx.props[this.name()] = this;

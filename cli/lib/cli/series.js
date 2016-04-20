@@ -1,3 +1,7 @@
+'use strict';
+
+var Promise = require('es6-promise').Promise;
+
 module.exports = function (list) {
   function iter (list, results) {
     var item = list.shift();

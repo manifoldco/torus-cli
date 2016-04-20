@@ -3,7 +3,6 @@
 var net = require('net');
 var assert = require('assert');
 
-var Promise = require('es6-promise').Promise;
 var sinon = require('sinon');
 
 var Client = require('../../lib/daemon/client');
@@ -85,7 +84,7 @@ describe('Daemon Client', function() {
 
     it('catches bad msg: missing type', function () {
       return client.send({ id: 'banana', command: 'request' }).then(function() {
-        assert.ok(false, 'shouldnt happen')
+        assert.ok(false, 'shouldnt happen');
       }).catch(function(err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'Message missing required properties');
@@ -94,7 +93,7 @@ describe('Daemon Client', function() {
 
     it('catches bad msg: missing command', function () {
       return client.send({ id: 'banana', type: 'request' }).then(function() {
-        assert.ok(false, 'shouldnt happen')
+        assert.ok(false, 'shouldnt happen');
       }).catch(function(err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'Message missing required properties');

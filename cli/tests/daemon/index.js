@@ -4,6 +4,7 @@ var fs = require('fs');
 var child_process = require('child_process');
 var assert = require('assert');
 
+var Promise = require('es6-promise').Promise;
 var sinon = require('sinon');
 
 var Config = require('../../lib/config');
@@ -28,7 +29,7 @@ describe('Daemon API', function() {
         exists: false,
         pid: null
       }));
-    
+
       return daemon.get(cfg).then(function(d) {
         assert.strictEqual(d, null);
       });
@@ -43,7 +44,7 @@ describe('Daemon API', function() {
 
       return daemon.get(cfg).then(function(d) {
         assert.ok(d instanceof Daemon);
-       
+
         sinon.assert.calledOnce(d.connect);
       });
     });
@@ -76,7 +77,7 @@ describe('Daemon API', function() {
       sandbox.stub(child_process, 'spawn', function() {
         return {
           unref: unrefSpy
-        }
+        };
       });
       sandbox.stub(daemon, 'get').returns(Promise.resolve(new Daemon(cfg)));
 
@@ -97,7 +98,7 @@ describe('Daemon API', function() {
       sandbox.stub(child_process, 'spawn', function() {
         return {
           unref: unrefSpy
-        }
+        };
       });
       sandbox.stub(daemon, 'get').returns(Promise.resolve(null));
 
@@ -106,7 +107,7 @@ describe('Daemon API', function() {
       }).catch(function(err) {
         sinon.assert.calledOnce(child_process.spawn);
         sinon.assert.calledOnce(unrefSpy);
-        
+
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'Daemon did not start');
       });
@@ -188,9 +189,9 @@ describe('Daemon API', function() {
     it('returns error if kill fails for reason other than ESRCH', function() {
       sandbox.stub(fs, 'readFile').yields(null, '23119');
       sandbox.stub(process, 'kill').throws(new Error('boo'));
-      
+
       return daemon.status(cfg).then(function() {
-        assert.ok(false, 'should error');   
+        assert.ok(false, 'should error');
       }).catch(function(err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'boo');

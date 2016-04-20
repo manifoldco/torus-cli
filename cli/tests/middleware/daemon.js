@@ -14,7 +14,7 @@ var middleware = require('../../lib/middleware/daemon');
 describe('daemon middleware', function() {
 
   var sandbox;
-  var ctx
+  var ctx;
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
     ctx = new Context({});
@@ -32,7 +32,7 @@ describe('daemon middleware', function() {
       return middleware.preHook()(ctx).then(function() {
         assert.ok(ctx.daemon instanceof Daemon);
         assert.strictEqual(ctx.daemon, d);
-      }); 
+      });
     });
 
     it('starts daemon if its not running', function() {

@@ -6,7 +6,7 @@ var minimist = require('minimist');
 
 var util = require('util');
 
-var Command = require('./command');;
+var Command = require('./command');
 var Context = require('./context');
 var Runnable = require('./runnable');
 
@@ -88,7 +88,7 @@ Program.prototype._rootHelp = function root (ctx) {
   return Promise.resolve(false);
 };
 
-Program.prototype._cmdHelp = function cmd (ctx, cmd) {
+Program.prototype._cmdHelp = function (ctx, cmd) {
   console.log(this.templates.command({
     program: this,
     ctx: ctx,

@@ -1,6 +1,8 @@
 'use strict';
 
 var util = require('util');
+
+var Promise = require('es6-promise').Promise;
 var EventRegulator = require('event-regulator').EventRegulator;
 var uuid = require('node-uuid');
 
@@ -32,7 +34,7 @@ Daemon.prototype.connect = function () {
   var self = this;
   return new Promise(function (resolve, reject) {
     self.client.connect().then(function() {
-      resolve(); 
+      resolve();
     }).catch(reject);
   });
 };
@@ -67,7 +69,7 @@ Daemon.prototype.status = function () {
 };
 
 Daemon.prototype.get = function () {
-  return this._command('get');  
+  return this._command('get');
 };
 
 Daemon.prototype.set = function (data) {
@@ -87,8 +89,8 @@ Daemon.prototype.set = function (data) {
       passphrase: data.passphrase
     }
   };
-  var p = self._wrap(id);
-  self.client.send(msg).catch(p.reject);
+  var p = this._wrap(id);
+  this.client.send(msg).catch(p.reject);
 
   return p;
 };
@@ -135,18 +137,18 @@ Daemon.prototype._wrap = function (id) {
         reject.apply(null, arguments);
       }
     };
-  });  
+  });
 };
 
 Daemon.prototype._onMessage = function (msg) {
- 
+
   // If the corresponding request doesn't exist then there is a bug in either
   // the daemon or the cli code, so we throw an error.
   var req = this.requests[msg.headers['reply_id']];
   if (!req) {
     throw new Error('Unknown message: '+msg.headers['reply_id']);
   }
-  
+
   // XXX: Only support replies from the daemon now; anything else gets junked.
   switch (msg.type) {
     case 'reply':

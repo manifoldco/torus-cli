@@ -1,7 +1,6 @@
 'use strict';
 
 var util = require('util');
-var Promise = require('es6-promise').Promise;
 
 var wrap = require('./wrap');
 var Option = require('./option');

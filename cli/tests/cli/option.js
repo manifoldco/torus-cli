@@ -6,7 +6,7 @@ var Context =  require('../../lib/cli/context');
 var Option = require('../../lib/cli/option');
 
 describe('Option', function() {
-  
+
   describe('constructor', function() {
     it('sets required if required', function() {
       var o = new Option('-p, --pretty <name>', 'description');
@@ -47,14 +47,14 @@ describe('Option', function() {
 
     it('errors if optional are before required', function() {
       assert.throws(function() {
+        /*jshint unused: false*/
         var o = new Option('-p, --pretty [name] <longname>');
-        /*jshint unused: true*/
       }, /Required must come before/);
     });
 
     it('handles boolean', function () {
       var o = new Option('-s, --save', 'our description');
-      
+
       assert.strictEqual(o.hasParam, false, 'hasParam');
       assert.strictEqual(o.bool, true, 'bool');
       assert.strictEqual(o.defaultValue, false);
@@ -74,11 +74,11 @@ describe('Option', function() {
     var c;
     beforeEach(function() {
       c = new Context({});
-    })
+    });
 
     it('sets the value', function() {
       var o = new Option('-n, --name <name>', 'set name');
-      
+
       o.evaluate(c, {name: 'hi'});
 
       assert.strictEqual(o.value, 'hi');
