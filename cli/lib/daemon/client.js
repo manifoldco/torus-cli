@@ -82,6 +82,10 @@ Client.prototype.end = function () {
   this.socket.end();
 };
 
+Client.prototype.connected = function () {
+  return this.socket.writable;
+};
+
 Client.prototype._onData = function (buf) {
   this.buf += buf.toString('utf-8');
   if (this.buf.indexOf('\n') === -1) {

@@ -149,7 +149,10 @@ Program.prototype.run = function (argv) {
   ctx.cmd = cmd;
   this._parseArgs(ctx, cmd, argv);
 
-  return this.runMiddleware(ctx).then(function() {
-    return cmd.run.call(cmd, ctx);
+  var self = this;
+  return self.runHooks('pre', ctx).then(function() {
+    return cmd.run.call(cmd, ctx).then(function() {
+      return self.runHooks('post', ctx);
+    });
   });
 };

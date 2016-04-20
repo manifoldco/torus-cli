@@ -27,7 +27,7 @@ describe('config middleware', function() {
     sandbox.stub(fs, 'stat').yields(err);
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config.middleware('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function() {
       sinon.assert.calledOnce(fs.stat);
       sinon.assert.calledWith(fs.stat, '/tmp/folder', sinon.match.any);
 
@@ -48,8 +48,8 @@ describe('config middleware', function() {
     sandbox.stub(fs, 'stat').yields(err);
     sandbox.stub(fs, 'mkdir').yields(new Error('hi'));
 
-    return config.middleware('/tmp/folder')(ctx).then(function() {
-      assert.ok(false, 'shouldnt happen');  
+    return config('/tmp/folder')(ctx).then(function() {
+      assert.ok(false, 'shouldnt happen');
     }).catch(function(err) {
       assert.ok(err instanceof Error);
       assert.strictEqual(err.message, 'hi');
@@ -63,7 +63,7 @@ describe('config middleware', function() {
     });
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config.middleware('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function() {
       sinon.assert.calledOnce(fs.stat);
       sinon.assert.calledWith(fs.stat, '/tmp/folder', sinon.match.any);
       sinon.assert.notCalled(fs.mkdir);
@@ -77,7 +77,7 @@ describe('config middleware', function() {
     });
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config.middleware('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function() {
       assert.ok(false, 'shouldnt happen');
     }).catch(function(err) {
       assert.ok(err instanceof Error);
@@ -92,7 +92,7 @@ describe('config middleware', function() {
     });
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config.middleware('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function() {
       assert.ok(false, 'shouldnt happen');
     }).catch(function(err) {
       assert.ok(err instanceof Error);

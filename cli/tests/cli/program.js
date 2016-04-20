@@ -167,5 +167,19 @@ describe('Program', function() {
         sinon.assert.calledWith(console.log, 'Unknown Command: g2');
       });
     });
+
+    it('runs pre/post hooks', function() {
+
+      var preSpy = sinon.spy();
+      var postSpy = sinon.spy();
+
+      p.hook('pre', preSpy);
+      p.hook('post', postSpy);
+
+      return p.run(['x', 'x', 'hi']).then(function() {
+        sinon.assert.calledOnce(preSpy);
+        sinon.assert.calledOnce(postSpy);
+      });
+    });
   });
 });

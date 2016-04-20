@@ -3,15 +3,13 @@
 var fs = require('fs');
 var path = require('path');
 
+var Config = require('../config');
 var Promise = require('es6-promise').Promise;
-
-var config = {};
-module.exports = config;
 
 var FOLDER_PERM_STRING = '0700';
 var FOLDER_PERM = 0o700;
 
-config.middleware = function (arigatoRoot) {
+module.exports = function (arigatoRoot) {
 
   arigatoRoot = arigatoRoot || path.join(process.env.HOME, '.arigato');
 
@@ -55,11 +53,3 @@ config.middleware = function (arigatoRoot) {
     });
   };
 };
-
-function Config (arigatoRoot, version) {
-  this.arigatoRoot = arigatoRoot;
-  this.socketPath = path.join(arigatoRoot, 'daemon.socket');
-  this.pidPath = path.join(arigatoRoot, 'daemon.pid');
-  this.version = version;
-}
-config.Config = Config;

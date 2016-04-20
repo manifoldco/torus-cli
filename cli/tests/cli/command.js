@@ -83,16 +83,20 @@ describe('Command', function() {
 
   describe('#run', function() {
     
-    it('runs the middleware', function() {
-      var spy = sinon.spy();
+    it('runs the pre/post middleware', function() {
+      var preSpy = sinon.spy();
+      var postSpy = sinon.spy();
       var ctx = new Context({});
 
       c = new Command('envs', 'do something', function() {});
-      c.use(spy);
+      c.hook('pre', preSpy);
+      c.hook('post', postSpy);
 
       return c.run(ctx).then(function() {
-        sinon.assert.calledOnce(spy);
-        sinon.assert.calledWith(spy, ctx);
+        sinon.assert.calledOnce(preSpy);
+        sinon.assert.calledWith(postSpy, ctx);
+        sinon.assert.calledOnce(postSpy);
+        sinon.assert.calledWith(postSpy, ctx);
       });
     });
 
