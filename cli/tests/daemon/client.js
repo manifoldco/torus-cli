@@ -8,7 +8,7 @@ var sinon = require('sinon');
 
 var Client = require('../../lib/daemon/client');
 
-describe('Client', function() {
+describe('Daemon Client', function() {
 
   var client;
   describe('constructor', function() {
