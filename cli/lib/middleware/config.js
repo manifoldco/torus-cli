@@ -6,13 +6,10 @@ var path = require('path');
 var Config = require('../config');
 var Promise = require('es6-promise').Promise;
 
-var config = {};
-module.exports = config;
-
 var FOLDER_PERM_STRING = '0700';
 var FOLDER_PERM = 0o700;
 
-config.middleware = function (arigatoRoot) {
+module.exports = function (arigatoRoot) {
 
   arigatoRoot = arigatoRoot || path.join(process.env.HOME, '.arigato');
 

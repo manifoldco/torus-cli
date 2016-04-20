@@ -21,7 +21,7 @@ arigato.run = function (opts) {
     };
 
     var program = new Program('arigato', pkg.version, templates);
-    program.use(config.middleware(opts.arigatoRoot));
+    program.hook('pre', config(opts.arigatoRoot));
 
     cmds.get().then(function(cmdList) {
       cmdList.forEach(program.command.bind(program));
