@@ -3,6 +3,14 @@
 Simple go service for storing passwords in guarded memory using libsodium
 through c-go. Communicates with clients using a local unix socket.
 
+## Setup
+
+Ensure you have go1.6 and your `$GOPATH` setup. This is all done for you if you
+use the [vagrant imagine](https://github.com/arigatomachine/vagrant).
+
+Then run `glide install` inside the daemon folder. Once complete you should be
+able to run `make` to compile the binary.
+
 ## Building and Linting
 
 You can build the daemon using make with `make build`. You can install
