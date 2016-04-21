@@ -39,7 +39,8 @@ module.exports = function (arigatoRoot) {
           return reject(
             new Error('Arigato Root must be a directory: '+arigatoRoot));
         }
-    
+
+        /*jshint bitwise: false*/
         var fileMode = '0' + (stat.mode & parseInt('777',8)).toString(8);
         if (fileMode !== FOLDER_PERM_STRING) {
           return reject(new Error(

@@ -8,7 +8,7 @@ var Middleware = require('../../lib/cli/middleware');
 var Runnable = require('../../lib/cli/runnable');
 
 describe('Runnable', function() {
-  
+
   var r;
   beforeEach(function() {
     r = new Runnable();
@@ -53,7 +53,7 @@ describe('Runnable', function() {
       r.hook('pre', spy);
       r.hook('pre', spyTwo);
 
-      return r.runHooks('pre', c).then(function(results) {
+      return r.runHooks('pre', c).then(function() {
         sinon.assert.calledOnce(spy);
         sinon.assert.calledOnce(spyTwo);
 
@@ -70,7 +70,7 @@ describe('Runnable', function() {
       r.hook('post', spy);
       r.hook('post', spyTwo);
 
-      return r.runHooks('post', c).then(function(results) {
+      return r.runHooks('post', c).then(function() {
         sinon.assert.calledOnce(spy);
         sinon.assert.calledOnce(spyTwo);
 

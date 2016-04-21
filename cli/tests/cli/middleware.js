@@ -17,7 +17,7 @@ describe('Middleware', function() {
     });
 
     it('constructs with a function', function() {
-      m = new Middleware(function(ctx) {
+      m = new Middleware(function() {
         console.log('hi');
       });
 

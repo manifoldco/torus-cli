@@ -11,7 +11,7 @@ describe('Command', function() {
 
   var c;
   describe('constructor', function() {
-    
+
     it('throws error if usage is not a string', function() {
       assert.throws(function() {
         c = new Command(false);
@@ -82,7 +82,7 @@ describe('Command', function() {
   });
 
   describe('#run', function() {
-    
+
     it('runs the pre/post middleware', function() {
       var preSpy = sinon.spy();
       var postSpy = sinon.spy();
@@ -122,6 +122,6 @@ describe('Command', function() {
         sinon.assert.calledOnce(o.run);
         sinon.assert.calledWith(o.run, ctx);
       });
-    })
+    });
   });
 });
