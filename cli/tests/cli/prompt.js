@@ -54,7 +54,7 @@ describe('Prompt', function() {
       assert.deepEqual(p.aggregate, {});
       assert.strictEqual(p._stageAttempts, 0);
       assert.strictEqual(p._stageFailed, false);
-      assert.strictEqual(p._maxStageAttempts, 3);
+      assert.strictEqual(p._maxStageAttempts, 2);
     });
   });
 

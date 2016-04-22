@@ -1,108 +1,36 @@
 'use strict';
 
-var _ = require('lodash');
-var validator = require('validator');
 var Promise = require('es6-promise').Promise;
-var utils = require('common/utils');
 
-var Client = require('../../api/client');
 var Prompt = require('../../cli/prompt');
 var Command = require('../../cli/command');
-var userCrypto = require('../../cli/crypto/user');
 
-var client = new Client();
+var user = require('../../cli/user');
 
 module.exports = new Command(
   'signup',
   'create an arigato account',
   function() {
     return new Promise(function(resolve, reject) {
-      /**
-       * Question stages
-       */
-      var stages = function (ctx) {
-        return [
-          // Stage one
-          [
-            {
-              name: 'name',
-              message: 'Full name',
-              validate: function(input) {
-                /**
-                 * TODO: Change js validation for json schema
-                 */
-                var error = 'Please provide your full name';
-                return input.length < 3 || input.length > 64? error : true;
-              }
-            },
-            {
-              name: 'email',
-              message: 'Email',
-              validate: function(input) {
-                var error = 'Please enter a valid email address';
-                return validator.isEmail(input)? true : error;
-              },
-            },
-          ],
-          // Stage two
-          [
-            {
-              type: 'password',
-              name: 'passphrase',
-              message: 'Passphrase',
-              validate: function(input) {
-                var error = 'Passphrase must be at least 8 characters';
-                return input.length < 8? error : true;
-              },
-            },
-            {
-              type: 'password',
-              name: 'confirm_passphrase',
-              message: 'Confirm Passphrase',
-              validate: function(input, answers) {
-                var error = 'Passphrase must match';
-                var failed = input !== answers.passphrase;
-                // When failed, tell prompt which stage failed to recurse
-                // if the maximum attempts has been reached
-                return failed? ctx.failed(1, error) : true;
-              },
-            },
-          ]
-        ];
-      };
 
-      var object = {
-        id: utils.id('user') // generate user-object id
-      };
+      // Create prompt from user questions
+      var prompt = new Prompt(user.questions);
 
-      var prompt = new Prompt(stages);
+      // Begin asking questions
       prompt.start().then(function(userInput) {
-        // TODO: Should be created with user class
-        // Issue: https://github.com/arigatomachine/cli/issues/124
-        object.body = _.extend(object.body, {
-          name: userInput.name,
-          email: userInput.email,
-        });
-        return userInput;
-      }).then(function(userInput) {
-        // Encrypt the password, generate the master key
-        return userCrypto.encryptPassword(userInput.passphrase)
-          .then(function(result) {
-            // Append the master and password objects to body
-            object.body = _.extend(object.body, result);
-            return object;
-          });
-      }).then(function() {
-        return client.post({
-          url: '/users',
-          json: object
-        });
+
+        // Create user object from input
+        return user.create(userInput);
+
+      // Success, account created
       }).then(function() {
         // TODO: Proper output module for errors and banner messages
         console.log('');
         console.log('Your account has been created!');
         console.log('');
         resolve();
+
+      // Account creation failed
       }).catch(function(err) {
         err.type = err.type || 'unknown';
 

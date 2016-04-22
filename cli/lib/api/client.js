@@ -1,8 +1,12 @@
 'use strict';
 
+var client = exports;
+
 var _ = require('lodash');
 var request = require('request');
 var Promise = require('es6-promise').Promise;
+
+var CLI_VERSION = require('../../../package.json').version;
 
 var HTTP_VERBS = [
   'post',
@@ -12,8 +16,25 @@ var HTTP_VERBS = [
   'delete'
 ];
 
-var CLI_VERSION = require('../../../package.json').version;
+client.client = null;
 
+/**
+ * Create new api client with opts
+ *
+ * @param {object} opts
+ */
+client.create = function(opts) {
+  if (!client.client) {
+    client.client = new Client(opts);
+  }
+  return client.client;
+};
+
+/**
+ * Arigato API client
+ *
+ * @param {object} opts
+ */
 function Client(opts) {
   opts = opts || {};
   this.endpoint = opts.endpoint || 'https://arigato.tools';
@@ -127,4 +148,4 @@ Client.prototype._statusSuccess = function(res) {
   return Math.floor(res.statusCode / 100) === 2;
 };
 
-module.exports = Client;
+client.Client = Client;
