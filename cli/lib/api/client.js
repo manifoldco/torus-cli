@@ -61,6 +61,9 @@ Client.prototype._req = function(verb, opts) {
       method: verb,
       url: self.endpoint + opts.url,
       headers: self._headers(opts),
+      strictSSL: false, // TODO: proper development cert
+      time: true,
+      gzip: true,
     });
 
     request(opts, function(err, res, body) {

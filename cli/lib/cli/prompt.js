@@ -16,7 +16,7 @@ function Prompt(stages, opts) {
   this.aggregate = {};
   this._stageAttempts = 0;
   this._stageFailed = false;
-  this._maxStageAttempts = opts.maxStageAttempts || 3;
+  this._maxStageAttempts = opts.maxStageAttempts || 2;
   this._inquirer = inquirer;
 }
 

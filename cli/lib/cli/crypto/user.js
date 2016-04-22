@@ -12,18 +12,24 @@ var base64url = require('common/utils/base64url');
 /**
  * Generate both the password and master objects for user.body
  *
+ * A 128bit salt is generated / used to encrypt the plaintext password
+ * The encrypted password buffer is sliced [192] and encoded in base64
+ * A 1024bit key is generated as used as the master key
+ * The encrypted password buffer is sliced [0,192] / used to encrypt master key
+ * The encrypted+encoded values are stored on the server
+ *
  * @param {string} password - Plaintext password value
  */
 user.encryptPassword = function(password) {
   var data = {};
 
-  // Randombytes for passworld salt
-  return utils.randomBytes(128)
+  // Generate 128 bit (16 byte) salt for password
+  return utils.randomBytes(16)
     // Construct the password object
     .then(function(passwordSalt) {
       data.password = {
         salt: passwordSalt,
-        alg: algos.value('Scrypt'), // 0x23
+        alg: algos.value('scrypt'), // 0x23
       };
       // Create password buffer
       return kdf.generate(password, passwordSalt).then(function(buf) {
@@ -35,10 +41,10 @@ user.encryptPassword = function(password) {
     // Construct the master object from the password buffer
     }).then(function(passwordBuf) {
       data.master = {
-        alg: algos.value('TripleSec v3'), // 0x22
+        alg: algos.value('triplesec v3'), // 0x22
       };
 
-      // Generate master key random bytes
+      // Generate 1024 bit (256 byte) master key
       return utils.randomBytes(256, false).then(function(masterKeyBuf) {
         // Encrypt master key using the password buffer
         return triplesec.encrypt({
@@ -67,12 +73,10 @@ user.decryptMasterKey = function(password, userObject) {
     var value = base64url.decode(userObject.body.master.value);
     // Use the password buffer to decrypt the master key
     var masterKey = buf.slice(0, 192);
+    // Returns masterKey buffer for use with encrypting
     return triplesec.decrypt({
       data: value,
       key: masterKey,
-    }).then(function(masterKeyBuf) {
-      // Return base64url encoded master key
-      return base64url.encode(masterKeyBuf);
     });
   });
 };

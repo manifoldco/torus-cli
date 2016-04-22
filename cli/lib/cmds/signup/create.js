@@ -5,12 +5,10 @@ var validator = require('validator');
 var Promise = require('es6-promise').Promise;
 var utils = require('common/utils');
 
-var Client = require('../../cli/client');
+var Client = require('../../api/client');
 var Prompt = require('../../cli/prompt');
 var Command = require('../../cli/command');
 var userCrypto = require('../../cli/crypto/user');
-
-var DEFAULT_USER_STATE = 'unverified';
 
 var client = new Client();
 
@@ -79,11 +77,11 @@ module.exports = new Command(
 
       var prompt = new Prompt(stages);
       prompt.start().then(function(userInput) {
-        // Basic user information for object body
+        // TODO: Should be created with user class
+        // Issue: https://github.com/arigatomachine/cli/issues/124
         object.body = _.extend(object.body, {
           name: userInput.name,
           email: userInput.email,
-          state: DEFAULT_USER_STATE
         });
         return userInput;
       }).then(function(userInput) {
@@ -127,7 +125,7 @@ module.exports = new Command(
         }
         console.error('');
 
-        reject();
+        reject(err);
       });
     });
   }
