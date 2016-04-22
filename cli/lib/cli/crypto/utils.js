@@ -4,20 +4,18 @@ var utils = exports;
 
 var _ = require('lodash');
 var crypto = require('crypto');
-var base64url = require('common/utils/base64url');
 var Promise = require('es6-promise').Promise;
 
-utils.randomBytes = function(length, encode) {
-  if (!_.isNumber(length) && length < 1) {
+utils.randomBytes = function(length) {
+  if (!_.isNumber(length) || parseInt(length, 10) < 1) {
     throw new Error('length required');
   }
-  encode = (typeof encode === 'undefined')? true : !!encode;
   return new Promise(function(resolve, reject) {
     crypto.randomBytes(length, function(err, buf) {
       if (err) {
         return reject(err);
       }
-      resolve(encode? base64url.encode(buf) : buf);
+      resolve(buf);
     });
   });
 };

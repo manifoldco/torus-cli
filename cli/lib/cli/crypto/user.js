@@ -28,7 +28,7 @@ user.encryptPassword = function(password) {
     // Construct the password object
     .then(function(passwordSalt) {
       data.password = {
-        salt: passwordSalt,
+        salt: base64url.encode(passwordSalt),
         alg: algos.value('scrypt'), // 0x23
       };
       // Create password buffer
@@ -45,7 +45,7 @@ user.encryptPassword = function(password) {
       };
 
       // Generate 1024 bit (256 byte) master key
-      return utils.randomBytes(256, false).then(function(masterKeyBuf) {
+      return utils.randomBytes(256).then(function(masterKeyBuf) {
         // Encrypt master key using the password buffer
         return triplesec.encrypt({
           data: masterKeyBuf,
