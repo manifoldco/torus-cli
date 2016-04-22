@@ -2,9 +2,21 @@
 // vim: set filetype=javascript;
 'use strict';
 
+var EventRegulator = require('event-regulator').EventRegulator;
+
+function handleSignal () {
+  process.exit(1);
+}
+
 function main () {
   var arigato = require('../lib/arigato');
   process.title = 'Arigato CLI';
+
+  var subscriptions = new EventRegulator([
+    [process, 'SIGTERM', handleSignal, true],
+    [process, 'SIGINT', handleSignal, true],
+    [process, 'SIGHUP', handleSignal, true]
+  ]);
 
   var opts = {
     arigatoRoot: process.env.ARIGATO_ROOT,
