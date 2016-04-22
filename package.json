@@ -22,6 +22,7 @@
     "lodash": "4.8.1",
     "minimist": "1.2.0",
     "node-uuid": "1.4.7",
+    "request": "2.72.0",
     "triplesec": "3.0.25",
     "validator": "5.2.0"
   },
