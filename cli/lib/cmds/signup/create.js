@@ -5,11 +5,14 @@ var validator = require('validator');
 var Promise = require('es6-promise').Promise;
 var utils = require('common/utils');
 
+var Client = require('../../cli/client');
 var Prompt = require('../../cli/prompt');
 var Command = require('../../cli/command');
 var userCrypto = require('../../cli/crypto/user');
 
 var DEFAULT_USER_STATE = 'unverified';
+
+var client = new Client();
 
 module.exports = new Command(
   'signup',
@@ -91,7 +94,41 @@ module.exports = new Command(
             object.body = _.extend(object.body, result);
             return object;
           });
-      }).then(resolve).catch(reject);
+      }).then(function() {
+        return client.post({
+          url: '/users',
+          json: object
+        });
+      }).then(function() {
+        // TODO: Proper output module for errors and banner messages
+        console.log('');
+        console.log('Your account has been created!');
+        console.log('');
+        resolve();
+      }).catch(function(err) {
+        err.type = err.type || 'unknown';
+
+        var message = err.message;
+        var messages = Array.isArray(message)? message : [message];
+
+        console.error('');
+        switch (err.type) {
+          // TODO: Graceful re-start of prompt for invalid input
+          case 'invalid_request':
+            if (messages.indexOf('resource exists') > -1) {
+              console.error('Email address in use, please try again');
+            } else {
+              console.error('Whoops! Something went wrong. Please try again');
+            }
+          break;
+          default:
+            console.error('Signup failed, please try again');
+          break;
+        }
+        console.error('');
+
+        reject();
+      });
     });
   }
 );

@@ -23,7 +23,7 @@ user.encryptPassword = function(password) {
     .then(function(passwordSalt) {
       data.password = {
         salt: passwordSalt,
-        algo: algos.value('Scrypt'), // 0x23
+        alg: algos.value('Scrypt'), // 0x23
       };
       // Create password buffer
       return kdf.generate(password, passwordSalt).then(function(buf) {
@@ -35,7 +35,7 @@ user.encryptPassword = function(password) {
     // Construct the master object from the password buffer
     }).then(function(passwordBuf) {
       data.master = {
-        algo: algos.value('TripleSec v3'), // 0x22
+        alg: algos.value('TripleSec v3'), // 0x22
       };
 
       // Generate master key random bytes
