@@ -6,6 +6,7 @@ var child_process = require('child_process');
 
 var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
+var Backoff = require('backo');
 
 var Daemon = require('./object').Daemon;
 var Config = require('../config');
@@ -34,7 +35,7 @@ daemon.get = function (cfg) {
       var d = new Daemon(cfg);
       return d.connect().then(function() {
         resolve(d);
-      });
+      }).catch(reject);
     }).catch(reject);
   });
 };
@@ -50,6 +51,22 @@ daemon.start = function (cfg) {
   return new Promise(function (resolve, reject) {
     if (!(cfg instanceof Config)) {
       return reject(new TypeError('cfg must be a Config object'));
+    }
+
+    function retry (backoff) {
+      if (backoff.attempts > 3) {
+        return reject(new Error('Daemon did not start'));
+      }
+
+      setTimeout(function() {
+        daemon.get(cfg).then(function(d) {
+          if (!d) {
+            return retry(backoff);
+          }
+
+          resolve(d);
+        }).catch(reject);
+      }, backoff.duration());
     }
 
     daemon.status(cfg).then(function(status) {
@@ -72,15 +89,9 @@ daemon.start = function (cfg) {
       child.unref();
 
       // XXX: Wait a second before trying to connect to the daemon
-      setTimeout(function() {
-        daemon.get(cfg).then(function(d) {
-          if (!d) {
-            return reject(new Error('Daemon did not start'));
-          }
-
-          resolve(d);
-        }).catch(reject);
-      }, 1000);
+      var backoff = new Backoff({
+        min: 100, max: 1000, jitter: 0.75, factor: 2});
+      retry(backoff);
     }).catch(reject);
   });
 };
