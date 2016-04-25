@@ -5,7 +5,7 @@ var Promise = require('es6-promise').Promise;
 var Prompt = require('../../cli/prompt');
 var Command = require('../../cli/command');
 
-var user = require('../../cli/user');
+var user = require('../../user');
 
 module.exports = new Command(
   'signup',

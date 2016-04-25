@@ -2,9 +2,9 @@
 
 var user = exports;
 
-var kdf = require('./kdf');
-var utils = require('./utils');
-var triplesec = require('./triplesec');
+var kdf = require('../crypto/kdf');
+var utils = require('../crypto/utils');
+var triplesec = require('../crypto/triplesec');
 
 var algos = require('common/types/algos');
 var base64url = require('common/utils/base64url');

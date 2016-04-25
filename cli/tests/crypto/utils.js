@@ -2,7 +2,7 @@
 
 var assert = require('assert');
 
-var utils = require('../../../lib/cli/crypto/utils');
+var utils = require('../../lib/crypto/utils');
 
 describe('Crypto', function() {
   describe('utils', function() {

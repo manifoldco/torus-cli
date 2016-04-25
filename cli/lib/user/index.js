@@ -6,8 +6,9 @@ var _ = require('lodash');
 var utils = require('common/utils');
 var validator = require('validator');
 
-var userCrypto = require('../crypto/user');
-var client = require('../../api/client').create();
+var client = require('../api/client').create();
+
+user.crypto = require('./crypto');
 
 /**
  * Signup prompt questions
@@ -80,7 +81,7 @@ user.create = function(userInput) {
   };
 
   // Encrypt the password, generate the master key
-  return userCrypto.encryptPassword(userInput.passphrase)
+  return user.crypto.encryptPassword(userInput.passphrase)
     .then(function(result) {
       // Append the master and password objects to body
       object.body = _.extend(object.body, result);

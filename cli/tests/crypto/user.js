@@ -5,10 +5,10 @@ var assert = require('assert');
 var Promise = require('es6-promise').Promise;
 var base64url = require('common/utils/base64url');
 
-var kdf = require('../../../lib/cli/crypto/kdf');
-var user = require('../../../lib/cli/crypto/user');
-var utils = require('../../../lib/cli/crypto/utils');
-var triplesec = require('../../../lib/cli/crypto/triplesec');
+var kdf = require('../../lib/crypto/kdf');
+var user = require('../../lib/user/crypto');
+var utils = require('../../lib/crypto/utils');
+var triplesec = require('../../lib/crypto/triplesec');
 
 var PLAINTEXT = 'password';
 var BUFFER = new Buffer('buffering');
