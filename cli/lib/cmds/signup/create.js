@@ -1,10 +1,15 @@
 'use strict';
 
+var _ = require('lodash');
 var validator = require('validator');
 var Promise = require('es6-promise').Promise;
+var utils = require('common/utils');
 
-var Command = require('../../cli/command');
 var Prompt = require('../../cli/prompt');
+var Command = require('../../cli/command');
+var userCrypto = require('../../cli/crypto/user');
+
+var DEFAULT_USER_STATE = 'unverified';
 
 module.exports = new Command(
   'signup',
@@ -65,12 +70,28 @@ module.exports = new Command(
         ];
       };
 
+      var object = {
+        id: utils.id('user') // generate user-object id
+      };
+
       var prompt = new Prompt(stages);
-      prompt.start().then(function(result) {
-        resolve(result);
-      }).catch(function(err) {
-        reject(err);
-      });
+      prompt.start().then(function(userInput) {
+        // Basic user information for object body
+        object.body = _.extend(object.body, {
+          name: userInput.name,
+          email: userInput.email,
+          state: DEFAULT_USER_STATE
+        });
+        return userInput;
+      }).then(function(userInput) {
+        // Encrypt the password, generate the master key
+        return userCrypto.encryptPassword(userInput.passphrase)
+          .then(function(result) {
+            // Append the master and password objects to body
+            object.body = _.extend(object.body, result);
+            return object;
+          });
+      }).then(resolve).catch(reject);
     });
   }
 );
