@@ -20,7 +20,8 @@
     "lodash": "4.8.1",
     "minimist": "1.2.0",
     "node-uuid": "1.4.7",
-    "validator": "5.2.0"
+    "validator": "5.2.0",
+    "backo": "1.1.0"
   },
   "devDependencies": {
     "gulp": "3.9.0",
