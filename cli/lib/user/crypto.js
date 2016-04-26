@@ -7,7 +7,7 @@ var utils = require('../crypto/utils');
 var triplesec = require('../crypto/triplesec');
 
 var algos = require('common/types/algos');
-var base64url = require('common/utils/base64url');
+var base64url = require('base64url');
 
 /**
  * Generate both the password and master objects for user.body
@@ -20,7 +20,7 @@ var base64url = require('common/utils/base64url');
  *
  * @param {string} password - Plaintext password value
  */
-user.encryptPassword = function(password) {
+user.encryptPasswordObject = function(password) {
   var data = {};
 
   // Generate 128 bit (16 byte) salt for password
@@ -31,10 +31,11 @@ user.encryptPassword = function(password) {
         salt: base64url.encode(passwordSalt),
         alg: algos.value('scrypt'), // 0x23
       };
+
       // Create password buffer
       return kdf.generate(password, passwordSalt).then(function(buf) {
         // Append the base64url value
-        data.password.value = base64url.encode(buf.slice(192));
+        data.password.value = user.pwh(buf);
         return buf;
       });
 
@@ -60,6 +61,15 @@ user.encryptPassword = function(password) {
 };
 
 /**
+ * Slice password and encode
+ *
+ * @param {buffer} password
+ */
+user.pwh = function(password) {
+  return base64url.encode(password.slice(192));
+};
+
+/**
  * Decrypt the master key from user object using password
  *
  * @param {string} password - Plaintext password
@@ -70,7 +80,7 @@ user.decryptMasterKey = function(password, userObject) {
   var passwordSalt = userObject.body.password.salt;
   return kdf.generate(password, passwordSalt).then(function(buf) {
     // Decode master value from base64url
-    var value = base64url.decode(userObject.body.master.value);
+    var value = base64url.toBuffer(userObject.body.master.value);
     // Use the password buffer to decrypt the master key
     var masterKey = buf.slice(0, 192);
     // Returns masterKey buffer for use with encrypting

@@ -19,3 +19,11 @@ utils.randomBytes = function(length) {
     });
   });
 };
+
+utils.hmac = function(contents, key) {
+  return new Promise(function(resolve) {
+    var hmac = crypto.createHmac('sha512', key);
+    hmac.update(contents);
+    resolve(hmac.digest());
+  });
+};
