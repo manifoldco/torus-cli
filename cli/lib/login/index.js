@@ -70,7 +70,7 @@ login.attempt = function(userInput) {
       // Re-authorize the api client for subsequent requests
       var authToken = result.body.auth_token;
       client.auth(authToken);
-      // TODO: store the auth token in the daemon
+      return authToken;
     });
   });
 };

@@ -10,7 +10,7 @@ var login = require('../../login');
 module.exports = new Command(
   'login',
   'log in to your Arigato account',
-  function() {
+  function(ctx) {
     return new Promise(function(resolve, reject) {
 
       // Create prompt from login questions
@@ -23,6 +23,10 @@ module.exports = new Command(
         return login.attempt(userInput);
 
       // Success, account created
+      }).then(function(token) {
+        return ctx.daemon.set({
+          token: token
+        });
       }).then(function() {
         // TODO: Proper output module for errors and banner messages
         console.log('');
@@ -33,15 +37,9 @@ module.exports = new Command(
       // Account creation failed
       }).catch(function(err) {
         err.type = err.type || 'unknown';
-
-        var message = err.message;
-        var messages = Array.isArray(message)? message : [message];
-        console.log(messages);
-
         console.error('');
         console.error('Login failed, please try again');
         console.error('');
-
         reject(err);
       });
     });

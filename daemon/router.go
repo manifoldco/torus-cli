@@ -85,7 +85,7 @@ func (r *Router) status(m *Message) error {
 }
 
 func (r *Router) set(m *Message) error {
-	if len(m.Body.Passphrase) == 0 || len(m.Body.Token) == 0 {
+	if len(m.Body.Passphrase) == 0 && len(m.Body.Token) == 0 {
 		return r.client.Write(CreateError("Missing value", m))
 	}
 
