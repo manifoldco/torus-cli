@@ -11,25 +11,32 @@ var utils = require('../../lib/crypto/utils');
 var triplesec = require('../../lib/crypto/triplesec');
 
 var PLAINTEXT = 'password';
-var BUFFER = new Buffer('buffering');
 
 describe('Crypto', function() {
   before(function() {
     this.sandbox = sinon.sandbox.create();
   });
   describe('users', function() {
+    var pwBytes, mkBytes, pwCipher, mkCipher;
+    beforeEach(function() {
+      pwBytes = new Buffer(16);
+      mkBytes = new Buffer(256);
+      pwCipher = new Buffer(224);
+      mkCipher = new Buffer('masterkey cipher');
+      this.sandbox.stub(kdf, 'generate')
+        .returns(Promise.resolve(pwCipher));
+      this.sandbox.stub(utils, 'randomBytes')
+        .onFirstCall().returns(Promise.resolve(pwBytes))
+        .onSecondCall().returns(Promise.resolve(mkBytes));
+      this.sandbox.stub(triplesec, 'encrypt')
+        .returns(Promise.resolve(mkCipher));
+    });
     afterEach(function() {
       this.sandbox.restore();
     });
 
     describe('#encryptPasswordObject', function() {
       it('generates 16byte salt for password', function() {
-        this.sandbox.stub(kdf, 'generate')
-          .returns(Promise.resolve(BUFFER));
-        this.sandbox.stub(utils, 'randomBytes')
-          .returns(Promise.resolve(BUFFER));
-        this.sandbox.stub(triplesec, 'encrypt')
-          .returns(Promise.resolve(BUFFER));
         return user.encryptPasswordObject(PLAINTEXT).then(function() {
           sinon.assert.calledTwice(utils.randomBytes);
           var firstCall = utils.randomBytes.firstCall;
@@ -38,29 +45,15 @@ describe('Crypto', function() {
       });
 
       it('encrypts plaintext password with generated salt', function() {
-        var value = new Buffer('this is the value');
-        this.sandbox.stub(kdf, 'generate')
-          .returns(Promise.resolve(BUFFER));
-        this.sandbox.stub(utils, 'randomBytes')
-          .returns(Promise.resolve(value));
-        this.sandbox.stub(triplesec, 'encrypt')
-          .returns(Promise.resolve(BUFFER));
         return user.encryptPasswordObject(PLAINTEXT).then(function() {
           sinon.assert.calledOnce(kdf.generate);
           var firstCall = kdf.generate.firstCall;
           assert.strictEqual(firstCall.args[0], PLAINTEXT);
-          assert.strictEqual(firstCall.args[1], value);
+          assert.strictEqual(firstCall.args[1], pwBytes);
         });
       });
 
       it('generates 256byte key for master key', function() {
-        var value = new Buffer('this is the value');
-        this.sandbox.stub(kdf, 'generate')
-          .returns(Promise.resolve(BUFFER));
-        this.sandbox.stub(utils, 'randomBytes')
-          .returns(Promise.resolve(value));
-        this.sandbox.stub(triplesec, 'encrypt')
-          .returns(Promise.resolve(BUFFER));
         return user.encryptPasswordObject(PLAINTEXT).then(function() {
           sinon.assert.calledTwice(utils.randomBytes);
           var secondCall = utils.randomBytes.secondCall;
@@ -69,36 +62,17 @@ describe('Crypto', function() {
       });
 
       it('encrypts master key with password slice', function() {
-        var value = new Buffer('this is the value');
-        this.sandbox.stub(kdf, 'generate')
-          .returns(Promise.resolve(BUFFER));
-        this.sandbox.stub(utils, 'randomBytes')
-          .returns(Promise.resolve(value));
-        this.sandbox.stub(triplesec, 'encrypt')
-          .returns(Promise.resolve(BUFFER));
         return user.encryptPasswordObject(PLAINTEXT).then(function() {
           sinon.assert.calledOnce(triplesec.encrypt);
           var firstCall = triplesec.encrypt.firstCall;
           assert.deepEqual(firstCall.args[0], {
-            data: value,
-            key: BUFFER.slice(0, 192)
+            data: mkBytes,
+            key: pwCipher.slice(0, 192)
           });
         });
       });
 
       it('returns password and master objects', function() {
-        var pwBytes = new Buffer('this is the password');
-        var mkBytes = new Buffer('this is master key');
-        var pwCipher = new Buffer('password cipher');
-        var mkCipher = new Buffer('masterkey cipher');
-        this.sandbox.stub(kdf, 'generate')
-          .returns(Promise.resolve(pwCipher));
-        this.sandbox.stub(utils, 'randomBytes')
-          .onFirstCall().returns(Promise.resolve(pwBytes))
-          .onSecondCall().returns(Promise.resolve(mkBytes));
-        this.sandbox.stub(triplesec, 'encrypt')
-          .returns(Promise.resolve(mkCipher));
-
         return user.encryptPasswordObject(PLAINTEXT).then(function(obj) {
           assert.deepEqual(obj, {
             password: {
@@ -111,6 +85,18 @@ describe('Crypto', function() {
               value: base64url.encode(mkCipher)
             }
           });
+        });
+      });
+
+      it('fails when byte length is incorrect', function(done) {
+        kdf.generate.restore();
+        this.sandbox.stub(kdf, 'generate')
+          .returns(Promise.resolve(new Buffer(1)));
+        user.encryptPasswordObject(PLAINTEXT).then(function() {
+          done(new Error('should not call'));
+        }).catch(function(err) {
+          assert.equal(err.message, 'invalid buffer length');
+          done();
         });
       });
     });

@@ -8,7 +8,7 @@ var kdf = exports;
 var SCRYPT_N = Math.pow(2, 15); // factor to control cpu/mem suage (2^15)
 var SCRYPT_R = 8; // block size factor
 var SCRYPT_P = 1; // parallelism factor
-var SCRYPT_DKLEN = 224; // generate 224 bit key
+var SCRYPT_DKLEN = 224; // generate 224 byte key
 
 kdf.generate = function (key, salt, hook) {
   return new Promise(function(resolve, reject) {
