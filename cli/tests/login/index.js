@@ -27,6 +27,11 @@ var LOGIN_TOKEN_RESPONSE = {
   }
 };
 
+var DAEMON = {
+  set: sinon.stub(),
+  get: sinon.stub()
+};
+
 describe('Login', function() {
   before(function() {
     this.sandbox = sinon.sandbox.create();
@@ -44,7 +49,7 @@ describe('Login', function() {
       this.sandbox.restore();
     });
     it('requests a loginToken from the registry', function() {
-      return login.attempt({
+      return login.attempt(DAEMON, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {
@@ -59,7 +64,7 @@ describe('Login', function() {
       });
     });
     it('derives a high entropy password from plaintext pw', function() {
-      return login.attempt({
+      return login.attempt(DAEMON, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {
@@ -69,7 +74,7 @@ describe('Login', function() {
       });
     });
     it('generates an hmac of the pwh and loginToken', function() {
-      return login.attempt({
+      return login.attempt(DAEMON, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {
@@ -78,7 +83,7 @@ describe('Login', function() {
       });
     });
     it('exchanges loginToken and pwh_hmac for authToken', function() {
-      return login.attempt({
+      return login.attempt(DAEMON, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {
@@ -87,7 +92,7 @@ describe('Login', function() {
         assert.deepEqual(secondCall.args[0], {
           url: '/login',
           json: {
-            pwh_hmac: base64url.encode(BUFFER)
+            login_token_hmac: base64url.encode(BUFFER)
           }
         });
       });

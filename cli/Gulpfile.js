@@ -4,7 +4,8 @@ var gulp = require('gulp');
 var jshint = require('gulp-jshint');
 var mocha = require('gulp-mocha');
 
-gulp.task('default', ['lint','mocha']);
+gulp.task('test', ['lint', 'mocha']);
+gulp.task('default', ['test']);
 
 gulp.task('mocha', function () {
   return gulp.src('./tests/**/*.js', { read: false })

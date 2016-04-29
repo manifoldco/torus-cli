@@ -19,14 +19,10 @@ module.exports = new Command(
       // Begin asking questions
       prompt.start().then(function(userInput) {
 
-        // Create user object from input
-        return login.attempt(userInput);
+        // Attempt login from user input
+        return login.attempt(ctx.daemon, userInput);
 
-      // Success, account created
-      }).then(function(token) {
-        return ctx.daemon.set({
-          token: token
-        });
+      // Success, session created
       }).then(function() {
         // TODO: Proper output module for errors and banner messages
         console.log('');

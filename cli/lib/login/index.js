@@ -35,9 +35,10 @@ login.questions = function(/*ctx*/) {
 /**
  * Attempt log with supplied credentials
  *
+ * @param {object} daemon - Daemon object
  * @param {object} userInput
  */
-login.attempt = function(userInput) {
+login.attempt = function(daemon, userInput) {
   client.reset(); // Clear any existing authorization
 
   var salt;
@@ -48,6 +49,10 @@ login.attempt = function(userInput) {
       email: userInput.email
     }
   }).then(function(result) {
+    // Catch invalid data should API not return proper error status
+    if (!result.body.salt || !result.body.login_token) {
+      throw new Error('invalid response from api');
+    }
     // Derive a higher entropy password from plaintext passphrase
     salt = base64url.toBuffer(result.body.salt);
     loginToken = result.body.login_token;
@@ -57,20 +62,22 @@ login.attempt = function(userInput) {
       });
   }).then(function(pwh) {
     // Generate hmac of password hash
-    return crypto.utils.hmac(pwh, loginToken);
+    return crypto.utils.hmac(loginToken, pwh);
   }).then(function(result) {
     // Use the login token to make an authenticated login attempt
     client.auth(loginToken);
     return client.post({
       url: '/login',
       json: {
-        pwh_hmac: base64url.encode(result)
+        login_token_hmac: base64url.encode(result)
       }
     }).then(function(result) {
       // Re-authorize the api client for subsequent requests
       var authToken = result.body.auth_token;
       client.auth(authToken);
-      return authToken;
+      return daemon.set({
+        token: authToken
+      });
     });
   });
 };
