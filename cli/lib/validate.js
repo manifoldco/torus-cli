@@ -7,6 +7,7 @@ var validator = require('validator');
 validate.name = function(input) {
   /**
    * TODO: Change js validation for json schema
+   * https://github.com/arigatomachine/cli/issues/134
    */
   var error = 'Please provide your full name';
   return input.length < 3 || input.length > 64? error : true;
