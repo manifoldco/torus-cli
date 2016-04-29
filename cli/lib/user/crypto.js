@@ -12,7 +12,7 @@ var base64url = require('base64url');
 var SALT_BYTES = 16;
 var MASTER_KEY_BYTES = 256;
 var SLICE_LENGTH_BYTES = 192;
-var REMAINDER_SLICE_LENGTH_BYTES = 32;
+var PASSWORD_BUFFER_LENGTH = 224;
 
 /**
  * Generate both the password and master objects for user.body
@@ -39,6 +39,9 @@ user.encryptPasswordObject = function(password) {
 
       // Create password buffer
       return kdf.generate(password, passwordSalt).then(function(buf) {
+        if (buf.length !== PASSWORD_BUFFER_LENGTH) {
+          throw new Error('invalid buffer length');
+        }
         // Append the base64url value
         data.password.value = user.pwh(buf);
         return buf;
@@ -52,11 +55,8 @@ user.encryptPasswordObject = function(password) {
 
       // Generate 1024 bit (256 byte) master key
       return utils.randomBytes(MASTER_KEY_BYTES).then(function(masterKeyBuf) {
-        var passwordBufSlice = passwordBuf.slice(0, SLICE_LENGTH_BYTES);
         // Ensure the buffer used to encrypt is 192 bytes
-        if (passwordBufSlice.length !== SLICE_LENGTH_BYTES) {
-          throw new Error('invalid buffer length');
-        }
+        var passwordBufSlice = passwordBuf.slice(0, SLICE_LENGTH_BYTES);
         // Encrypt master key using the password buffer
         return triplesec.encrypt({
           data: masterKeyBuf,
@@ -78,9 +78,6 @@ user.encryptPasswordObject = function(password) {
 user.pwh = function(passwordBuf) {
   // pwh is created from last 32 byte / 256 bit of password buffer
   var passwordBufSlice = passwordBuf.slice(SLICE_LENGTH_BYTES);
-  if (passwordBufSlice.length !== REMAINDER_SLICE_LENGTH_BYTES) {
-    throw new Error('invalid buffer length');
-  }
   return base64url.encode(passwordBufSlice);
 };
 

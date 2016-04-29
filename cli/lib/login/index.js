@@ -61,7 +61,7 @@ login.attempt = function(daemon, userInput) {
         return user.crypto.pwh(buf);
       });
   }).then(function(pwh) {
-    // Generate hmac of password hash
+    // Generate hmac of login token
     return crypto.utils.hmac(loginToken, pwh);
   }).then(function(result) {
     // Use the login token to make an authenticated login attempt
