@@ -13,6 +13,8 @@ var Daemon = require('../../lib/daemon/object').Daemon;
 
 describe('Daemon API', function() {
 
+  this.timeout(10000);
+
   var cfg;
   var sandbox;
   beforeEach(function() {
