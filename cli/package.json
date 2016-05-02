@@ -5,7 +5,9 @@
   "bin": "cli/bin/arigato",
   "repository": "git@github.com:arigatomachine/cli.git",
   "scripts": {
-    "test": "gulp test"
+    "test": "./scripts/test.sh",
+    "build": "./scripts/build.sh",
+    "build-container": "./scripts/build-container.sh"
   },
   "author": "Arigato.sh",
   "contributors": [
