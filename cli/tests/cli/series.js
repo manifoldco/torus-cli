@@ -10,7 +10,7 @@ describe('.series', function() {
   it('executes in order', function() {
     var x = 0;
     function fn () {
-      return new Promise((resolve) => {
+      return new Promise(function (resolve) {
         setTimeout(function() {
           x += 1;
           resolve(x-1);
@@ -18,7 +18,7 @@ describe('.series', function() {
       });
     }
 
-    return series([fn, fn, fn]).then((results) => {
+    return series([fn, fn, fn]).then(function (results) {
       assert.deepEqual([0,1,2], results);
     });
   });
@@ -26,7 +26,7 @@ describe('.series', function() {
   it('immediately returns an error', function() {
     var x = 0;
     function fn () {
-      return new Promise((resolve, reject) => {
+      return new Promise(function (resolve, reject) {
         setTimeout(function() {
           x += 1;
 
@@ -39,9 +39,9 @@ describe('.series', function() {
       });
     }
 
-    return series([fn, fn, fn]).then(() => {
+    return series([fn, fn, fn]).then(function () {
       assert.ok(false, 'this shoudlnt be called');
-    }, (err) => {
+    }, function (err) {
       assert.ok(err instanceof Error);
       assert.strictEqual(err.message, 'woo');
     });

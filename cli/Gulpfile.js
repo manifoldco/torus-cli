@@ -6,6 +6,8 @@ var mocha = require('gulp-mocha');
 
 gulp.task('default', ['lint','mocha']);
 
+gulp.task('test', ['default']);
+
 gulp.task('mocha', function () {
   return gulp.src('./tests/**/*.js', { read: false })
     .pipe(mocha({ reporter: 'spec' }));

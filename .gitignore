@@ -2,5 +2,6 @@ node_modules*
 .DS_Store
 npm-debug*
 daemon/ag-daemon
+travis/id_rsa*
 
 *.sw[mnop]
