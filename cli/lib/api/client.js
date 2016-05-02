@@ -60,6 +60,13 @@ Client.prototype.auth = function(authToken) {
 };
 
 /**
+ * Remove the authtoken property
+ */
+Client.prototype.reset = function() {
+  this.authToken = undefined;
+};
+
+/**
  * Initialize verb-specific methods
  */
 Client.prototype._initialize = function() {

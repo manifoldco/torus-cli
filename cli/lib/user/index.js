@@ -4,9 +4,9 @@ var user = exports;
 
 var _ = require('lodash');
 var utils = require('common/utils');
-var validator = require('validator');
 
 var client = require('../api/client').create();
+var validate = require('../validate');
 
 user.crypto = require('./crypto');
 
@@ -22,21 +22,12 @@ user.questions = function(ctx) {
       {
         name: 'name',
         message: 'Full name',
-        validate: function(input) {
-          /**
-           * TODO: Change js validation for json schema
-           */
-          var error = 'Please provide your full name';
-          return input.length < 3 || input.length > 64? error : true;
-        }
+        validate: validate.name,
       },
       {
         name: 'email',
         message: 'Email',
-        validate: function(input) {
-          var error = 'Please enter a valid email address';
-          return validator.isEmail(input)? true : error;
-        },
+        validate: validate.email,
       },
     ],
     // Stage two
@@ -45,10 +36,7 @@ user.questions = function(ctx) {
         type: 'password',
         name: 'passphrase',
         message: 'Passphrase',
-        validate: function(input) {
-          var error = 'Passphrase must be at least 8 characters';
-          return input.length < 8? error : true;
-        },
+        validate: validate.passphrase,
       },
       {
         type: 'password',
@@ -81,7 +69,7 @@ user.create = function(userInput) {
   };
 
   // Encrypt the password, generate the master key
-  return user.crypto.encryptPassword(userInput.passphrase)
+  return user.crypto.encryptPasswordObject(userInput.passphrase)
     .then(function(result) {
       // Append the master and password objects to body
       object.body = _.extend(object.body, result);

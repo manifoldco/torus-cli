@@ -9,7 +9,7 @@ var user = require('../../user');
 
 module.exports = new Command(
   'signup',
-  'create an arigato account',
+  'create an Arigato account',
   function() {
     return new Promise(function(resolve, reject) {
 
