@@ -2,7 +2,8 @@
   "name": "arigato",
   "version": "0.0.1",
   "description": "Argiato CLI and Daemon",
-  "bin": "bin/arigato",
+  "bin": "cli/bin/arigato",
+  "repository": "git@github.com:arigatomachine/cli.git",
   "scripts": {
     "test": "gulp test"
   },
@@ -15,7 +16,8 @@
   "dependencies": {
     "backo": "1.1.0",
     "base64url": "1.0.6",
-    "cbwrap": "1.0.2",
+    "cbwrap": "1.1.0",
+    "common": "git+ssh://git@github.com/arigatomachine/common.git#master",
     "es6-promise": "3.1.2",
     "event-regulator": "0.2.0",
     "glob": "7.0.3",

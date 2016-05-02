@@ -1,0 +1,19 @@
+language: node_js
+
+node_js:
+  - '6'
+  - '4.4'
+
+matrix:
+  fast_finish: true
+
+cache:
+  apt: true
+  directories:
+    - node_modules
+    - $HOME/.npm
+
+before_script:
+  - npm install -g gulp
+
+script: ./travis/run.sh

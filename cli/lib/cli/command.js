@@ -6,7 +6,7 @@ var wrap = require('./wrap');
 var Option = require('./option');
 var Runnable = require('./runnable');
 
-const COMMAND_REGEX =
+var COMMAND_REGEX =
   /^[a-z]{2,16}(:[a-z]{2,16})?\s*(<[a-z]{2,16}> ?)*\s*(\[[a-z]{2,16}\] ?)*$/;
 
 function Command (usage, description, handler) {
