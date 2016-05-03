@@ -22,3 +22,8 @@ validate.passphrase = function(input) {
   var error = 'Passphrase must be at least 8 characters';
   return input.length < 8? error : true;
 };
+
+validate.code = function(input) {
+  var error = 'Verification code must be exactly 9 characters';
+  return input.length !== 9? error : true;
+};
