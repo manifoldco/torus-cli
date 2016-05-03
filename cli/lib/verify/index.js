@@ -123,7 +123,7 @@ verify._execute = function(daemon, userInput) {
       url: '/users/verify',
       json: {
         // Trim spaces if provided in input
-        code: userInput.code.replace(/\s/g, ''),
+        code: userInput.code.replace(/\s/g, '').toUpperCase(),
       }
     }).then(function(result) {
       return result.user;
