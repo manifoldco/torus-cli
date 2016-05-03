@@ -36,9 +36,10 @@ module.exports = new Command(
 
       }).then(function() {
         user.output.success();
-        verify.output.intermediate();
+        verify.output.intermediate(true);
         return verify.subcommand(ctx).then(function(result) {
           verify.output.success();
+          login.output.success(true);
           return result;
         });
 

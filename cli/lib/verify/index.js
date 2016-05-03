@@ -13,29 +13,30 @@ verify.output = {};
 /**
  * Intermediate output
  */
-verify.output.intermediate = function() {
+verify.output.intermediate = function(noTopPadding, noBottomPadding) {
+  if (!noTopPadding) { console.log(''); }
   console.log('We have sent a verification code to your email.');
-  console.log('Please paste your code here');
-  console.log('');
+  console.log('Please enter your code below:');
+  if (!noBottomPadding) { console.log(''); }
 };
 
 /**
  * Success output
  */
-verify.output.success = function() {
+verify.output.success = function(noTopPadding, noBottomPadding) {
   // TODO: Proper output module for errors and banner messages
-  console.log('');
-  console.log('Your account is now verified');
-  console.log('');
+  if (!noTopPadding) { console.log(''); }
+  console.log('Your account is now verified.');
+  if (!noBottomPadding) { console.log(''); }
 };
 
 /**
  * Failure output
  */
-verify.output.failure = function() {
-  console.error('');
-  console.error('Email verification failed, please try again');
-  console.error('');
+verify.output.failure = function(noTopPadding, noBottomPadding) {
+  if (!noTopPadding) { console.log(''); }
+  console.error('Email verification failed, please try again.');
+  if (!noBottomPadding) { console.log(''); }
 };
 
 /**

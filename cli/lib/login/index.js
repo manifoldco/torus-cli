@@ -15,17 +15,17 @@ var user = require('../user');
 
 login.output = {};
 
-login.output.success = function() {
+login.output.success = function(noTopPadding, noBottomPadding) {
   // TODO: Proper output module for errors and banner messages
-  console.log('');
-  console.log('You are now authenticated');
-  console.log('');
+  if (!noTopPadding) { console.log(''); }
+  console.log('You are now authenticated.');
+  if (!noBottomPadding) { console.log(''); }
 };
 
-login.output.failure = function() {
-  console.error('');
-  console.error('Login failed, please try again');
-  console.error('');
+login.output.failure = function(noTopPadding, noBottomPadding) {
+  if (!noTopPadding) { console.log(''); }
+  console.error('Login failed, please try again.');
+  if (!noBottomPadding) { console.log(''); }
 };
 
 /**
@@ -52,7 +52,7 @@ login.questions = function(/*ctx*/) {
 
 /**
  * Create prompt for login
- * 
+ *
  * @param {object} ctx - Command context
  * @param {object} inputs - Optional user inputs
  */
