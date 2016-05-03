@@ -61,8 +61,7 @@ login.execute = function(ctx, inputs) {
   if (inputs) {
     retrieveInput = Promise.resolve(inputs);
   } else {
-    var prompt = new Prompt(login.questions);
-    retrieveInput = prompt.start();
+    retrieveInput = login._prompt();
   }
 
   return retrieveInput.then(function(userInput) {
@@ -85,6 +84,14 @@ login.subcommand = function(ctx, inputs) {
       reject(err);
     });
   });
+};
+
+/**
+ * Create prompt object
+ */
+login._prompt = function() {
+  var prompt = new Prompt(login.questions);
+  return prompt.start();
 };
 
 /**
