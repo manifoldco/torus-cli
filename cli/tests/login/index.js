@@ -80,7 +80,6 @@ describe('Login', function() {
     });
     it('calls the failure output when rejecting', function(done) {
       var inputs = {};
-      this.sandbox.stub(login.output, 'failure');
       login.subcommand(CTX, inputs).then(function() {
         done(new Error('should not call'));
       }).catch(function() {
@@ -90,7 +89,6 @@ describe('Login', function() {
     });
     it('flags err output false on rejection', function(done) {
       var inputs = {};
-      this.sandbox.stub(login.output, 'failure');
       login.subcommand(CTX, inputs).then(function() {
         done(new Error('should not call'));
       }).catch(function(err) {

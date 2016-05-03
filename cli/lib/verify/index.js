@@ -72,8 +72,7 @@ verify.execute = function(ctx) {
 
   // No code passed as param, request from user
   } else {
-    var prompt = new Prompt(verify.questions);
-    retrieveInput = prompt.start();
+    retrieveInput = verify._prompt();
   }
 
   return retrieveInput.then(function(userInput) {
@@ -95,6 +94,14 @@ verify.subcommand = function(ctx) {
       reject(err);
     });
   });
+};
+
+/**
+ * Create prompt object
+ */
+verify._prompt = function() {
+  var prompt = new Prompt(verify.questions);
+  return prompt.start();
 };
 
 /**
@@ -129,6 +136,7 @@ verify._execute = function(daemon, userInput) {
  * @param {array} params
  */
 verify._codeFromParams = function(params) {
+  params = params || [];
   var code;
   if (params.length === 3) {
     code = params.join('');
