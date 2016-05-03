@@ -3,12 +3,30 @@
 var login = exports;
 
 var base64url = require('base64url');
+var Promise = require('es6-promise').Promise;
+
+var Prompt = require('../cli/prompt');
 
 var client = require('../api/client').create();
 var validate = require('../validate');
 var crypto = require('../crypto');
 var kdf = require('../crypto/kdf');
 var user = require('../user');
+
+login.output = {};
+
+login.output.success = function() {
+  // TODO: Proper output module for errors and banner messages
+  console.log('');
+  console.log('You are now authenticated');
+  console.log('');
+};
+
+login.output.failure = function() {
+  console.error('');
+  console.error('Login failed, please try again');
+  console.error('');
+};
 
 /**
  * Login prompt questions
@@ -33,12 +51,49 @@ login.questions = function(/*ctx*/) {
 };
 
 /**
+ * Create prompt for login
+ * 
+ * @param {object} ctx - Command context
+ * @param {object} inputs - Optional user inputs
+ */
+login.execute = function(ctx, inputs) {
+  var retrieveInput;
+  if (inputs) {
+    retrieveInput = Promise.resolve(inputs);
+  } else {
+    var prompt = new Prompt(login.questions);
+    retrieveInput = prompt.start();
+  }
+
+  return retrieveInput.then(function(userInput) {
+    return login._execute(ctx.daemon, userInput);
+  });
+};
+
+/**
+ * Process login
+ *
+ * @param {object} ctx - Command context
+ * @param {object} inputs - Optional user inputs
+ */
+login.subcommand = function(ctx, inputs) {
+  ctx.params = [];
+  return new Promise(function(resolve, reject) {
+    login.execute(ctx, inputs).then(resolve).catch(function(err) {
+      login.output.failure();
+      err.output = false;
+      reject(err);
+    });
+  });
+};
+
+/**
  * Attempt log with supplied credentials
  *
  * @param {object} daemon - Daemon object
  * @param {object} userInput
  */
-login.attempt = function(daemon, userInput) {
+login._execute = function(daemon, userInput) {
   client.reset(); // Clear any existing authorization
 
   var salt;

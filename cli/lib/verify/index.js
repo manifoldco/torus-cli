@@ -2,8 +2,41 @@
 
 var verify = exports;
 
-var client = require('../api/client').create();
+var Promise = require('es6-promise').Promise;
+
 var validate = require('../validate');
+var Prompt = require('../cli/prompt');
+var client = require('../api/client').create();
+
+verify.output = {};
+
+/**
+ * Intermediate output
+ */
+verify.output.intermediate = function() {
+  console.log('We have sent a verification code to your email.');
+  console.log('Please paste your code here');
+  console.log('');
+};
+
+/**
+ * Success output
+ */
+verify.output.success = function() {
+  // TODO: Proper output module for errors and banner messages
+  console.log('');
+  console.log('Your account is now verified');
+  console.log('');
+};
+
+/**
+ * Failure output
+ */
+verify.output.failure = function() {
+  console.error('');
+  console.error('Email verification failed, please try again');
+  console.error('');
+};
 
 /**
  * Login prompt questions
@@ -23,12 +56,54 @@ verify.questions = function(/*ctx*/) {
 };
 
 /**
+ * Create prompt for verify
+ *
+ * @param {object} ctx - Command context
+ */
+verify.execute = function(ctx) {
+  var retrieveInput;
+  var code = verify._codeFromParams(ctx.params);
+
+  // Code found as param, attempt verification
+  if (code) {
+    retrieveInput = Promise.resolve({
+      code: code
+    });
+
+  // No code passed as param, request from user
+  } else {
+    var prompt = new Prompt(verify.questions);
+    retrieveInput = prompt.start();
+  }
+
+  return retrieveInput.then(function(userInput) {
+    return verify._execute(ctx.daemon, userInput);
+  });
+};
+
+/**
+ * Process verification
+ *
+ * @param {object} ctx - Command context
+ */
+verify.subcommand = function(ctx) {
+  ctx.params = [];
+  return new Promise(function(resolve, reject) {
+    verify.execute(ctx).then(resolve).catch(function(err) {
+      verify.output.failure();
+      err.output = false;
+      reject(err);
+    });
+  });
+};
+
+/**
  * Attempt log with supplied credentials
  *
  * @param {object} daemon - Daemon object
  * @param {object} userInput
  */
-verify.attempt = function(daemon, userInput) {
+verify._execute = function(daemon, userInput) {
   return daemon.get('token').then(function(result) {
     client.auth(result.token);
 
@@ -46,4 +121,19 @@ verify.attempt = function(daemon, userInput) {
       return result.user;
     });
   });
+};
+
+/**
+ * Identify code from params
+ *
+ * @param {array} params
+ */
+verify._codeFromParams = function(params) {
+  var code;
+  if (params.length === 3) {
+    code = params.join('');
+  } else if (params.length === 1) {
+    code = params[0];
+  }
+  return code;
 };

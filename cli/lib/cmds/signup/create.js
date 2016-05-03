@@ -6,11 +6,13 @@ var Prompt = require('../../cli/prompt');
 var Command = require('../../cli/command');
 
 var user = require('../../user');
+var login = require('../../login');
+var verify = require('../../verify');
 
 module.exports = new Command(
   'signup',
   'create an Arigato account',
-  function() {
+  function(ctx) {
     return new Promise(function(resolve, reject) {
 
       // Create prompt from user questions
@@ -20,39 +22,36 @@ module.exports = new Command(
       prompt.start().then(function(userInput) {
 
         // Create user object from input
-        return user.create(userInput);
+        return user.create(userInput).then(function() {
+          return userInput;
+        });
 
-      // Success, account created
+      // Success, account created but now login
+      }).then(function(userInput) {
+        var params = {
+          email: userInput.email,
+          passphrase: userInput.passphrase,
+        };
+        return login.subcommand(ctx, params);
+
       }).then(function() {
-        // TODO: Proper output module for errors and banner messages
-        console.log('');
-        console.log('Your account has been created!');
-        console.log('');
+        user.output.success();
+        verify.output.intermediate();
+        return verify.subcommand(ctx).then(function(result) {
+          verify.output.success();
+          return result;
+        });
+
+      // Flow complete
+      }).then(function() {
         resolve();
 
       // Account creation failed
       }).catch(function(err) {
-        err.type = err.type || 'unknown';
-
-        var message = err.message;
-        var messages = Array.isArray(message)? message : [message];
-
-        console.error('');
-        switch (err.type) {
-          // TODO: Graceful re-start of prompt for invalid input
-          case 'invalid_request':
-            if (messages.indexOf('resource exists') > -1) {
-              console.error('Email address in use, please try again');
-            } else {
-              console.error('Whoops! Something went wrong. Please try again');
-            }
-          break;
-          default:
-            console.error('Signup failed, please try again');
-          break;
+        if (err && err.output !== false) {
+          err.type = err.type || 'unknown';
+          user.output.failure(err);
         }
-        console.error('');
-
         reject(err);
       });
     });
