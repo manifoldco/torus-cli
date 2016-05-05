@@ -6,7 +6,7 @@ var _ = require('lodash');
 var request = require('request');
 var Promise = require('es6-promise').Promise;
 
-var CLI_VERSION = require('../../../package.json').version;
+var CLI_VERSION = require('../../package.json').version;
 
 var HTTP_VERBS = [
   'post',
@@ -54,7 +54,7 @@ function Client(opts) {
 Client.prototype.auth = function(authToken) {
   if (typeof authToken !== 'string') {
     throw new Error('auth token must be a string');
-  } 
+  }
 
   this.authToken = authToken;
 };

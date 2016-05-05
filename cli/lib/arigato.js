@@ -4,7 +4,7 @@ var path = require('path');
 var fs = require('fs');
 var Promise = require('es6-promise').Promise;
 
-var pkg = require('../../package.json');
+var pkg = require('../package.json');
 var Program = require('./cli/program');
 var cmds = require('./cmds');
 

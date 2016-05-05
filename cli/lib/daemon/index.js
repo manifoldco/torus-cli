@@ -12,7 +12,10 @@ var Daemon = require('./object').Daemon;
 var Config = require('../config');
 
 var daemon = exports;
-daemon.DAEMON_PATH = path.join(__dirname, '../../../daemon/ag-daemon');
+
+// The daemon binary is placed in the cli's `bin` folder during the build
+// process.
+daemon.DAEMON_PATH = path.join(__dirname, '../../bin/ag-daemon');
 
 /**
  * Retrieves a deamon object, returns null if the daemon is not running

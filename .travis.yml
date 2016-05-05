@@ -1,8 +1,15 @@
-language: node_js
+sudo: required
 
+language: node_js
 node_js:
-  - '6'
   - '4.4'
+  - '6'
+services:
+  - docker
+
+before_install:
+- sudo apt-get update
+- sudo apt-get -o Dpkg::Options::="--force-confnew" install -y docker-engine
 
 matrix:
   fast_finish: true
@@ -13,7 +20,16 @@ cache:
     - node_modules
     - $HOME/.npm
 
-before_script:
-  - npm install -g gulp
+script:
+- ./travis/run.sh
 
-script: ./travis/run.sh
+env:
+  global:
+  - secure: RSsSd7RQ1brmoJcd4tIGu+B8cfYDI1tN8FHgf5TkhOF6FZ0LjwwrOVLyAxPII6Zi71nVrgeZIsKYwIUgsue8vmQd47jcL+7wyxEgY+UKlDQoqGgnuaoESMEvnewoSB+SYnlVKJaBIkV/qyFn+UGpgV1WmiQlp566kLORE/m8WeucDPCpd0sbrh30t6gYVTjqpd8Xf9W6g1qLM7hUzhmqpAR1z93mGu1l8RONjzye83d66gJ4bvIS/e/NUpxgUhDbs+sU6qV2H0YwStG/DXiUDUWHewHkAZY1Oiv7USkY32ndOzDKvnIs772kAT8HJ3cKnvw9Ha4E58Y3COARxwGty3fZKrSgDfV4PbUeqpa9pQtE7HDMmmCAfayemEljgp95HRgcOWcmnP0/QbYZEVARI2LklRa9KQeNeBNAFySV1tUbhmHHPzKeSam+mEcWu3Mkr6MWhj2uUhb1VbxGV42eQbZgZ8R+k0Ae6KPAZWkW/nRxXwlfaKZG83IyjBYGJjhWo1KwPK60C9XmPGQBjo9xzyHunF5zKCB4nY53zLEL3kMbSCPrg2kfyx5bdWHvN8aFyvzRn/eUfYE7HELBL98ds/ZxPUs3a3CHHa7jn/3G/N/GzrvnGx51Pa5U+FzuLN6vqGN7pnKauL7guQhOUrn3kwUMldK5GqGn5L6EB+Tgo8w=
+  - secure: MhtdP29fIGIwr/y6wLkPI1CKA0XrNCtraWY+Iv5wK99w8fI0lq14bJ3ADzu+HLFzfzjO18tmz3Jiew0EpzzRlQiDQaLHNz1Z0H0aTikjQY/Jr9FkQQfYvB57heCuXN0XYoIKEEfoWbt6uq3gdYOt+a36rzD7kvqRQPlllOx7r935bAQCLcq9qC7EP9BKrh/sPN+HoOq8eqmIAMzC2fChcu8mie23zaSVIdUXkeDnQhZf3Uhzz8LOJOTC3lNNOCSSQPTGTLo9cVO56NzUKIskGtXrgGeruH4nSnSGQZfRYeq/zcGl0aZC3nuAguFYxRKqko4Us7/wKwv34PcaupqRHD8eTDl6YrERsSb3bUVdDw/z6LeQuB/h2NnZg3JjWQ+BjemodytX4Xt0LRZAu8Dpp0LpZqdM+mkRKYK+WV97VEYOc/FKwAHLN91bcATIo+h3OSp1Dzvt1f9ECxsm4HtWU4m9amZ5Ppd7h6ykTZGF2HbD9Fy+kbgZovMx9S2VCgxHM7Clb/YLhrmNicS4ONtZCIU6NtN5DdewCOyp1faPLz41IeUkVd0dSao61eUTaJkWU9lSmtbO4E1jknCEytQocxOA8AB9QY6lFZavht5cLuB3GSuhkZxAA/HHxBbyNkvw66Y3TXLWclKBGKgTXjGZ4xY7La2xQ5br+yH2LkleAQI=
+  - secure: YS40BdeZUax0NI4z72sL5/yYijCKLX7QkJMIwpqgSGubkWlEOC8iI0JzZu4YWMuIO/3hZc8jwhnXZaR53m5GUEuj2hyeCVt2IyfM6kSwy9w5WC3lJYbZimvoiXd87S2EwpBqCxDZIY4Ay+glIdSYJqG15rq3kaUcQeAwCrp+7tzWX4IZctT98AmWYsMq0YDqyD9HBO0g/dSesYoQUSZNPDUx8kgdZY98i24SeHXY8sVXbfrSw2FHMsOOMOoAQBEMfTGj4V5Gx1DDQlPyYEkmEtxwpUHmGK3Y6uNE2kkgYjcIsu86zLQJvLS13mB78h/eQJk2jswb060jprUOUJCfvAI2mAxH131ZkCugPepns4SzNb9NW8Oevyj+ovF1OP92BOjIU/vBJKrMOMR8xYu8i8Fg1y9RG+bWowC2U1EtfLNRgAWodx0fWA7gVNP3zgHhlFg7/j+SiGzvRmxPbPvZNoyAYxPvOT0WXfrbt7WO+ANKIc/1lrwXSthGG1zrVeCzOlcPK8uV8M7osKQ7k0zAkK1yuuC5RrqAYjk1/m+o2xvS1QsKnlv+4Zdt+wBYOJ5BjOabLpE0OIcdEmBXJU1Qu49zZ5QKreq95s3TxBhyeUzWESVP5zpe9kLs1umHWA4+tHCzjRvQA/DenewMpkyrOiU+C7L4rHxet18tC2aeAmc=
+
+notifications:
+  slack:
+    # dev-notifications token for slack
+    secure: LAGJ3KbeZnkJATzIpYCKu83Og8UxWDusS7wEb11GDlNfu0dfUBxKSIHe3/77eUQBLKPzkDrJ5mBXUAQ5su3bAhEewbQEOZoebER0L/R/pCw0jyJlYZ3AC8/g3eVsISSwBJfDHXpiFa94imqBkcszFaFc/m5X397rKE8oIsgJaIqELIm5S//VbAGKi+hWgQ0voFS1IMqu0n5FG/RFeOI+0a3l3AJAUXg5kBGZ8VPzFwPlM5MjEJt8RR7vWy5LlU0gtVzVehoA54idpSPbtcnpJE8TA1I/lTSVgCe0t+wR3WBbp0al7yy7j/7rxCSTQaP92ezBQTlVFKTF7wAKsvGNErbJ2vYeesLCS4ETyU4TPVXrqAR1mCvGh4P//hGFnKQNhMr2gByv2/s9RLywt/aO7IfzzU2QniYvdI+vlB6cMujPzKkAJt34CwYehJyuxB/eB7l5AkcTX3Q6lGnUwrlvYLUDJ+sxqZ3qF3ND+tGHqduqQ9Lr1bhwwb0CB6k7N1Rup9tMjyTS0dZiFzQQTK3YZiqN6LQsESv7vNMXuDACR2wYlONaKFkd+LfuLvvBrKKhTaod4eDVXnvfq8WaYxLE/XHx/byDcWvAaCm9u+rslEZYvBzzyuOKTs2DenohAM2ALD+w5BLzYN9akZr9XXnGRVV4DZ/pXThxD8tx2C5GVrY=

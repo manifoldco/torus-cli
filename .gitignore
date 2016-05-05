@@ -1,7 +1,9 @@
-node_modules*
+cli/node_modules*
 .DS_Store
 npm-debug*
 daemon/ag-daemon
+cli/bin/ag-daemon
 travis/id_rsa*
+builds/*
 
 *.sw[mnop]
