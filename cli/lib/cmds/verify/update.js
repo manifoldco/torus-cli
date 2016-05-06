@@ -4,21 +4,21 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../../cli/command');
 
-var login = require('../../login');
+var verify = require('../../verify');
 
 module.exports = new Command(
-  'login',
-  'log in to your Arigato account',
+  'verify',
+  'verify your account\'s email address',
   function(ctx) {
     return new Promise(function(resolve, reject) {
-      login.execute(ctx).then(function() {
-        login.output.success();
+      verify.execute(ctx).then(function() {
+        verify.output.success();
         resolve();
 
       // Account creation failed
       }).catch(function(err) {
         err.type = err.type || 'unknown';
-        login.output.failure();
+        verify.output.failure(err);
         reject(err);
       });
     });

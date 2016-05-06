@@ -3,12 +3,30 @@
 var login = exports;
 
 var base64url = require('base64url');
+var Promise = require('es6-promise').Promise;
+
+var Prompt = require('../cli/prompt');
 
 var client = require('../api/client').create();
 var validate = require('../validate');
 var crypto = require('../crypto');
 var kdf = require('../crypto/kdf');
 var user = require('../user');
+
+login.output = {};
+
+login.output.success = function(noTopPadding, noBottomPadding) {
+  // TODO: Proper output module for errors and banner messages
+  if (!noTopPadding) { console.log(''); }
+  console.log('You are now authenticated.');
+  if (!noBottomPadding) { console.log(''); }
+};
+
+login.output.failure = function(noTopPadding, noBottomPadding) {
+  if (!noTopPadding) { console.log(''); }
+  console.error('Login failed, please try again.');
+  if (!noBottomPadding) { console.log(''); }
+};
 
 /**
  * Login prompt questions
@@ -33,12 +51,56 @@ login.questions = function(/*ctx*/) {
 };
 
 /**
+ * Create prompt for login
+ *
+ * @param {object} ctx - Command context
+ * @param {object} inputs - Optional user inputs
+ */
+login.execute = function(ctx, inputs) {
+  var retrieveInput;
+  if (inputs) {
+    retrieveInput = Promise.resolve(inputs);
+  } else {
+    retrieveInput = login._prompt();
+  }
+
+  return retrieveInput.then(function(userInput) {
+    return login._execute(ctx, userInput);
+  });
+};
+
+/**
+ * Process login
+ *
+ * @param {object} ctx - Command context
+ * @param {object} inputs - Optional user inputs
+ */
+login.subcommand = function(ctx, inputs) {
+  ctx.params = [];
+  return new Promise(function(resolve, reject) {
+    login.execute(ctx, inputs).then(resolve).catch(function(err) {
+      login.output.failure();
+      err.output = false;
+      reject(err);
+    });
+  });
+};
+
+/**
+ * Create prompt object
+ */
+login._prompt = function() {
+  var prompt = new Prompt(login.questions);
+  return prompt.start();
+};
+
+/**
  * Attempt log with supplied credentials
  *
- * @param {object} daemon - Daemon object
+ * @param {object} ctx - Context object
  * @param {object} userInput
  */
-login.attempt = function(daemon, userInput) {
+login._execute = function(ctx, userInput) {
   client.reset(); // Clear any existing authorization
 
   var salt;
@@ -75,7 +137,7 @@ login.attempt = function(daemon, userInput) {
       // Re-authorize the api client for subsequent requests
       var authToken = result.body.auth_token;
       client.auth(authToken);
-      return daemon.set({
+      return ctx.daemon.set({
         token: authToken
       });
     });
