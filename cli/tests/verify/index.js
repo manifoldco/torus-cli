@@ -7,6 +7,10 @@ var Promise = require('es6-promise').Promise;
 
 var verify = require('../../lib/verify');
 var client = require('../../lib/api/client').create();
+var tokenMiddleware = require('../../lib/middleware/token');
+var Config = require('../../lib/config');
+var Context = require('../../lib/cli/context');
+var Daemon = require('../../lib/daemon/object').Daemon;
 
 var USER = {
   id: uuid.v4(),
@@ -20,20 +24,8 @@ var VERIFY_RESPONSE = {
   user: USER
 };
 
-var DAEMON = {
-  set: sinon.stub().returns(Promise.resolve()),
-  get: sinon.stub().returns(Promise.resolve({ token: 'this is a token' })),
-};
-
-var DAEMON_EMPTY = {
-  set: sinon.stub().returns(Promise.resolve()),
-  get: sinon.stub().returns(Promise.resolve({ token: '' })),
-};
-
-var CTX = {
-  daemon: DAEMON,
-  params: ['ABC123ABC']
-};
+var CTX_DAEMON_EMPTY;
+var CTX;
 
 describe('Verify', function() {
   before(function() {
@@ -45,6 +37,33 @@ describe('Verify', function() {
     this.sandbox.stub(client, 'post')
       .returns(Promise.resolve(VERIFY_RESPONSE));
     this.sandbox.spy(client, 'auth');
+
+    // Context stub when no token set
+    CTX_DAEMON_EMPTY = new Context({});
+    CTX_DAEMON_EMPTY.config = new Config(process.cwd());
+    CTX_DAEMON_EMPTY.daemon = new Daemon(CTX_DAEMON_EMPTY.config);
+
+    // Context stub with token set
+    CTX = new Context({});
+    CTX.config = new Config(process.cwd());
+    CTX.daemon = new Daemon(CTX.config);
+    CTX.params = ['ABC123ABC'];
+
+    // Empty daemon
+    this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
+      .returns(Promise.resolve());
+    this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'get')
+      .returns(Promise.resolve({ token: '' }));
+    // Daemon with token
+    this.sandbox.stub(CTX.daemon, 'set')
+      .returns(Promise.resolve());
+    this.sandbox.stub(CTX.daemon, 'get')
+      .returns(Promise.resolve({ token: 'this is a token' }));
+    // Run the token middleware to populate the context object
+    return Promise.all([
+      tokenMiddleware.preHook()(CTX),
+      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY),
+    ]);
   });
   afterEach(function() {
     this.sandbox.restore();
@@ -96,13 +115,13 @@ describe('Verify', function() {
   describe('_execute', function() {
     it('authorizes the client', function() {
       var input = { code: 'ABC123ABC' };
-      return verify._execute(DAEMON, input).then(function() {
+      return verify._execute(CTX.token, input).then(function() {
         sinon.assert.calledOnce(client.auth);
       });
     });
     it('fails if token not found in daemon', function(done) {
       var input = { code: 'ABC123ABC' };
-      verify._execute(DAEMON_EMPTY, input).then(function() {
+      verify._execute(CTX_DAEMON_EMPTY.token, input).then(function() {
         done(new Error('dont call'));
       }).catch(function(err) {
         assert.equal(err.message, 'must authenticate first');
@@ -111,7 +130,7 @@ describe('Verify', function() {
     });
     it('sends api request to verify', function() {
       var input = { code: 'ABC123ABC' };
-      return verify._execute(DAEMON, input).then(function() {
+      return verify._execute(CTX.token, input).then(function() {
         sinon.assert.calledOnce(client.post);
         var firstCall = client.post.firstCall;
         var args = firstCall.args;

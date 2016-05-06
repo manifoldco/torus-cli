@@ -65,7 +65,7 @@ login.execute = function(ctx, inputs) {
   }
 
   return retrieveInput.then(function(userInput) {
-    return login._execute(ctx.daemon, userInput);
+    return login._execute(ctx, userInput);
   });
 };
 
@@ -97,10 +97,10 @@ login._prompt = function() {
 /**
  * Attempt log with supplied credentials
  *
- * @param {object} daemon - Daemon object
+ * @param {object} ctx - Context object
  * @param {object} userInput
  */
-login._execute = function(daemon, userInput) {
+login._execute = function(ctx, userInput) {
   client.reset(); // Clear any existing authorization
 
   var salt;
@@ -137,7 +137,7 @@ login._execute = function(daemon, userInput) {
       // Re-authorize the api client for subsequent requests
       var authToken = result.body.auth_token;
       client.auth(authToken);
-      return daemon.set({
+      return ctx.daemon.set({
         token: authToken
       });
     });

@@ -11,6 +11,10 @@ var utils = require('../../lib/crypto/utils');
 var login = require('../../lib/login');
 var client = require('../../lib/api/client').create();
 
+var Config = require('../../lib/config');
+var Context = require('../../lib/cli/context');
+var Daemon = require('../../lib/daemon/object').Daemon;
+
 var PLAINTEXT = 'password';
 var EMAIL = 'jeff@example.com';
 var BUFFER = new Buffer('buffering');
@@ -27,14 +31,9 @@ var LOGIN_TOKEN_RESPONSE = {
   }
 };
 
-var DAEMON = {
-  set: sinon.stub(),
-  get: sinon.stub()
-};
-
-var CTX = {
-  daemon: DAEMON
-};
+var CTX = new Context({});
+CTX.config = new Config(process.cwd());
+CTX.daemon = new Daemon(CTX.config);
 
 describe('Login', function() {
   before(function() {
@@ -46,6 +45,8 @@ describe('Login', function() {
     this.sandbox.stub(client, 'post')
       .onFirstCall().returns(Promise.resolve(LOGIN_TOKEN_RESPONSE))
       .onSecondCall().returns(Promise.resolve(AUTH_TOKEN_RESPONSE));
+    this.sandbox.stub(CTX.daemon, 'get').returns(Promise.resolve());
+    this.sandbox.stub(CTX.daemon, 'set').returns(Promise.resolve());
   });
   afterEach(function() {
     this.sandbox.restore();
@@ -104,7 +105,7 @@ describe('Login', function() {
       this.sandbox.stub(user, 'pwh').returns(PWH);
     });
     it('requests a loginToken from the registry', function() {
-      return login._execute(DAEMON, {
+      return login._execute(CTX, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {
@@ -119,7 +120,7 @@ describe('Login', function() {
       });
     });
     it('derives a high entropy password from plaintext pw', function() {
-      return login._execute(DAEMON, {
+      return login._execute(CTX, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {
@@ -129,7 +130,7 @@ describe('Login', function() {
       });
     });
     it('generates an hmac of the pwh and loginToken', function() {
-      return login._execute(DAEMON, {
+      return login._execute(CTX, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {
@@ -138,7 +139,7 @@ describe('Login', function() {
       });
     });
     it('exchanges loginToken and pwh_hmac for authToken', function() {
-      return login._execute(DAEMON, {
+      return login._execute(CTX, {
         password: PLAINTEXT,
         email: EMAIL
       }).then(function() {

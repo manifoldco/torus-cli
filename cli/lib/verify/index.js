@@ -77,7 +77,7 @@ verify.execute = function(ctx) {
   }
 
   return retrieveInput.then(function(userInput) {
-    return verify._execute(ctx.daemon, userInput);
+    return verify._execute(ctx.token, userInput);
   });
 };
 
@@ -108,26 +108,26 @@ verify._prompt = function() {
 /**
  * Attempt log with supplied credentials
  *
- * @param {object} daemon - Daemon object
+ * @param {string} token - Auth token
  * @param {object} userInput
  */
-verify._execute = function(daemon, userInput) {
-  return daemon.get('token').then(function(result) {
-    client.auth(result.token);
+verify._execute = function(token, userInput) {
+  return new Promise(function(resolve, reject) {
+    client.auth(token);
 
     if (!client.authToken) {
-      throw new Error('must authenticate first');
+      return reject(new Error('must authenticate first'));
     }
 
-    return client.post({
+    client.post({
       url: '/users/verify',
       json: {
         // Trim spaces if provided in input
         code: userInput.code.replace(/\s/g, '').toUpperCase(),
       }
     }).then(function(result) {
-      return result.user;
-    });
+      resolve(result.user);
+    }).catch(reject);
   });
 };
 
