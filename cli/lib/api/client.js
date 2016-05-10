@@ -92,6 +92,7 @@ Client.prototype._req = function(verb, opts) {
       strictSSL: false, // TODO: proper development cert
       time: true,
       gzip: true,
+      timeout: 3000
     });
 
     request(opts, function(err, res, body) {
