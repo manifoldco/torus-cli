@@ -37,7 +37,7 @@ client.create = function(opts) {
  */
 function Client(opts) {
   opts = opts || {};
-  this.endpoint = opts.endpoint || 'https://api.arigato.tools';
+  this.endpoint = opts.endpoint || 'https://arigato.tools';
   this.authToken = opts.authToken || null;
   this.version = {
     cli: CLI_VERSION,
