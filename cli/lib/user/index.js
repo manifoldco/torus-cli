@@ -67,6 +67,7 @@ user.questions = function(ctx) {
         name: 'passphrase',
         message: 'Passphrase',
         validate: validate.passphrase,
+        retryMessage: 'Passwords did not match. Please re-enter your password',
       },
       {
         type: 'password',

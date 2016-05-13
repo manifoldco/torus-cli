@@ -54,7 +54,7 @@ describe('Prompt', function() {
       assert.deepEqual(p.aggregate, {});
       assert.strictEqual(p._stageAttempts, 0);
       assert.strictEqual(p._stageFailed, false);
-      assert.strictEqual(p._maxStageAttempts, 2);
+      assert.strictEqual(p._maxStageAttempts, 1);
     });
   });
 
@@ -132,8 +132,9 @@ describe('Prompt', function() {
           .onSecondCall().returns(Promise.resolve(answers.second));
 
         return p.ask(promise, ['0', '1']).then(function() {
-          assert.strictEqual(p._hasFailed.callCount, 2, '_hasFailed twice');
-          assert.strictEqual(p._questions.callCount, 2, '_questions twice');
+          assert.strictEqual(p._hasFailed.callCount, 2, '_hasFailed once');
+          // Twice for questions, once for retry message
+          assert.strictEqual(p._questions.callCount, 3, '_questions once');
           assert.strictEqual(p._stageAttempts, 0);
           assert.deepEqual(p.aggregate, {
             name: 'Jim Smith',

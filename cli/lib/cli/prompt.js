@@ -16,7 +16,7 @@ function Prompt(stages, opts) {
   this.aggregate = {};
   this._stageAttempts = 0;
   this._stageFailed = false;
-  this._maxStageAttempts = opts.maxStageAttempts || 2;
+  this._maxStageAttempts = opts.maxStageAttempts || 1;
   this._inquirer = inquirer;
 }
 
@@ -49,6 +49,7 @@ Prompt.prototype.ask = function(promise, stage) {
       if (self._hasFailed()) {
         var retryStage = self._stageFailed;
         self._reset();
+        self._retryMessage(retryStage);
         // Recurse until answered properly
         return self.ask(promise, retryStage);
       }
@@ -56,6 +57,15 @@ Prompt.prototype.ask = function(promise, stage) {
       return self.aggregate;
     });
   });
+};
+
+Prompt.prototype._retryMessage = function(stageNumber) {
+  var stage = this._questions(stageNumber);
+  var firstQuestion = stage[0] || {};
+  var message = firstQuestion.retryMessage || 'Please try again';
+  console.log('');
+  console.log(message);
+  console.log('');
 };
 
 Prompt.prototype._hasFailed = function() {
