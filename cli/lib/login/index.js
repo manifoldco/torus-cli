@@ -139,6 +139,8 @@ login._execute = function(ctx, userInput) {
       client.auth(authToken);
       return ctx.daemon.set({
         token: authToken
+      }).then(function() {
+        return authToken;
       });
     });
   });

@@ -34,8 +34,11 @@ module.exports = new Command(
         };
         return login.subcommand(ctx, params);
 
-      }).then(function() {
+      }).then(function(authToken) {
         user.output.success();
+
+        ctx.token = authToken;
+
         verify.output.intermediate(true);
         return verify.subcommand(ctx).then(function(result) {
           verify.output.success();
