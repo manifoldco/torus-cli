@@ -78,10 +78,10 @@ describe('Crypto', function() {
             password: {
               salt: base64url.encode(pwBytes),
               value: base64url.encode(pwCipher.slice(192)),
-              alg: '0x23',
+              alg: '23',
             },
             master: {
-              alg: '0x22',
+              alg: '22',
               value: base64url.encode(mkCipher)
             }
           });
