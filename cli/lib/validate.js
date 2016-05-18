@@ -4,13 +4,19 @@ var validate = exports;
 
 var validator = require('validator');
 
+/**
+ * TODO: Change js validation for json schema
+ * https://github.com/arigatomachine/cli/issues/134
+ */
+
 validate.name = function(input) {
-  /**
-   * TODO: Change js validation for json schema
-   * https://github.com/arigatomachine/cli/issues/134
-   */
   var error = 'Please provide your full name';
   return input.length < 3 || input.length > 64? error : true;
+};
+
+validate.slug = function(input) {
+  var error = 'Only alphanumeric, hyphens and underscores are allowed';
+  return validator.matches(input, /^[a-zA-Z0-9\\_\\-]+$/)? true : error;
 };
 
 validate.email = function(input) {
