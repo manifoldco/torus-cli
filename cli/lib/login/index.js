@@ -13,6 +13,9 @@ var crypto = require('../crypto');
 var kdf = require('../crypto/kdf');
 var user = require('../user');
 
+var TYPE_LOGIN = 'login';
+var TYPE_AUTH = 'auth';
+
 login.output = {};
 
 login.output.success = function(noTopPadding, noBottomPadding) {
@@ -106,8 +109,9 @@ login._execute = function(ctx, userInput) {
   var salt;
   var loginToken;
   return client.post({
-    url: '/login/session',
+    url: '/session',
     json: {
+      type: TYPE_LOGIN,
       email: userInput.email
     }
   }).then(function(result) {
@@ -129,8 +133,9 @@ login._execute = function(ctx, userInput) {
     // Use the login token to make an authenticated login attempt
     client.auth(loginToken);
     return client.post({
-      url: '/login',
+      url: '/session',
       json: {
+        type: TYPE_AUTH,
         login_token_hmac: base64url.encode(result)
       }
     }).then(function(result) {
