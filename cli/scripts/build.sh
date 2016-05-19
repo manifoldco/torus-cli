@@ -8,7 +8,7 @@ SRC=$DIR/../..
 pushd $SRC > /dev/null
     # TODO: Derive the right values for GOOS and GOARCH based on `uname -a` and
     # pass them into the build process.
-    docker run \
+    docker run --name cli --rm \
         -v $SRC:/go/src/github.com/arigatomachine/cli -v $SRC/builds:/builds \
         arigato/cli:latest build
 popd > /dev/null

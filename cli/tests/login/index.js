@@ -30,12 +30,14 @@ var LOGIN_TOKEN_RESPONSE = {
     login_token: 'can I pass?',
   }
 };
+var TYPE_LOGIN = 'login';
+var TYPE_AUTH = 'auth';
 
 var CTX = new Context({});
 CTX.config = new Config(process.cwd());
 CTX.daemon = new Daemon(CTX.config);
 
-describe('Login', function() {
+describe('Session', function() {
   before(function() {
     this.sandbox = sinon.sandbox.create();
   });
@@ -112,8 +114,9 @@ describe('Login', function() {
         sinon.assert.calledTwice(client.post);
         var firstCall = client.post.firstCall;
         assert.deepEqual(firstCall.args[0], {
-          url: '/login/session',
+          url: '/session',
           json: {
+            type: TYPE_LOGIN,
             email: EMAIL
           }
         });
@@ -146,8 +149,9 @@ describe('Login', function() {
         sinon.assert.calledTwice(client.post);
         var secondCall = client.post.secondCall;
         assert.deepEqual(secondCall.args[0], {
-          url: '/login',
+          url: '/session',
           json: {
+            type: TYPE_AUTH,
             login_token_hmac: base64url.encode(BUFFER)
           }
         });
