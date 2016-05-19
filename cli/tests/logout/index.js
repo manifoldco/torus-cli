@@ -25,6 +25,8 @@ describe('Logout', function() {
   beforeEach(function() {
     this.sandbox.stub(CTX.daemon, 'logout');
     this.sandbox.stub(client, 'post');
+    this.sandbox.stub(client, 'get');
+    this.sandbox.stub(client, 'delete');
     this.sandbox.stub(client, 'auth');
     this.sandbox.stub(client, 'reset');
   });
@@ -39,7 +41,7 @@ describe('Logout', function() {
 
     return logout(CTX).then(function() {
       sinon.assert.calledWith(client.auth, CTX.token);
-      sinon.assert.calledWith(client.post, { url: '/logout' });
+      sinon.assert.calledWith(client.delete, { url: '/session/' + CTX.token });
       sinon.assert.calledOnce(CTX.daemon.logout);
       sinon.assert.calledOnce(client.reset);
     });
@@ -64,7 +66,7 @@ describe('Logout', function() {
     return logout(CTX).catch(function() {
       sinon.assert.calledWith(client.auth, CTX.token);
 
-      sinon.assert.calledWith(client.post, { url: '/logout' });
+      sinon.assert.calledWith(client.delete, { url: '/session/' + CTX.token });
       sinon.assert.calledOnce(client.reset);
     });
   });

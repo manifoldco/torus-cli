@@ -101,7 +101,8 @@ Client.prototype._req = function(verb, opts) {
       }
 
       try {
-        body = (typeof body === 'string')? JSON.parse(body) : body;
+        body = _.isString(body) && body.length > 0? JSON.parse(body) : body;
+        body = _.isString(body) && body.length === 0? null : body;
         res.body = body;
       } catch(err) {
         return reject(new Error('invalid json returned from API'));
