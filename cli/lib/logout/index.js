@@ -13,8 +13,10 @@ module.exports = function(ctx) {
 
   var resetClient = client.reset.bind(client);
 
-  return Promise.all([ ctx.daemon.logout(), client.post({ url: '/logout' })])
-    .then(resetClient)
+  return Promise.all([
+    ctx.daemon.logout(),
+    client.delete({ url: '/session/' + ctx.token })
+  ]).then(resetClient)
     .catch(function(err) {
       resetClient();
       throw err;
