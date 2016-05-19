@@ -39,24 +39,36 @@ serviceCreate.questions = function(/*ctx*/) {
   ];
 };
 
+var validator = validate.build({
+  name: validate.slug
+});
+
 /**
  * Create prompt for service create
  *
  * @param {object} ctx - Command context
  */
 serviceCreate.execute = function(ctx) {
-  var retrieveInput;
-  var name = ctx.params[0];
-  if (name) {
-    retrieveInput = Promise.resolve({
-      name: name
-    });
-  } else {
-    retrieveInput = serviceCreate._prompt();
-  }
+  return new Promise(function(resolve, reject) {
+    var retrieveInput;
+    var name = ctx.params[0];
 
-  return retrieveInput.then(function(userInput) {
-    return serviceCreate._execute(ctx.token, userInput);
+    var errors = validator({ name: name });
+    if (errors.length > 0) {
+      return reject(errors[0]);
+    }
+
+    if (name) {
+      retrieveInput = Promise.resolve({
+        name: name
+      });
+    } else {
+      retrieveInput = serviceCreate._prompt();
+    }
+
+    retrieveInput.then(function(userInput) {
+      return serviceCreate._execute(ctx.token, userInput);
+    }).then(resolve).catch(reject);
   });
 };
 
