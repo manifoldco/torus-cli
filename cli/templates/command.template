@@ -8,7 +8,7 @@ Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
 
   var options = '';
   _.each(cmd.options, function (opt) {
-    options += '  '+_.padEnd(opt.usage, 20)+' '+opt.description+'\n';
+    options += '  '+_.padEnd(opt.usage, 28)+' '+opt.description+'\n';
   });
 
   print(options);
@@ -22,7 +22,7 @@ Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
 
     var subcmds = '';
     _.each(program.groups[cmd.group], function (subcmd, name) {
-      subcmds += '  '+_.padEnd(subcmd.usage, 20)+' '+subcmd.description+'\n';
+      subcmds += '  '+_.padEnd(subcmd.usage, 28)+' '+subcmd.description+'\n';
     });
     print(subcmds+'\n');
     print('Use '+program.name+' help [command] to view additional information');
