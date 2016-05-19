@@ -30,7 +30,7 @@ var SERVICE = {
 var CTX_DAEMON_EMPTY;
 var CTX;
 
-describe('Services', function() {
+describe('Services Create', function() {
   before(function() {
     this.sandbox = sinon.sandbox.create();
   });
