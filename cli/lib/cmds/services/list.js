@@ -1,0 +1,17 @@
+'use strict';
+
+var Promise = require('es6-promise').Promise;
+
+var Command = require('../../cli/command');
+
+var services = require('../../services');
+
+module.exports = new Command(
+  'services',
+  'list services for your org',
+  function(ctx) {
+    return new Promise(function(resolve) {
+      resolve();
+    });
+  }
+);
