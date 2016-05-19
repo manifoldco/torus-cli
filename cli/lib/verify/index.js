@@ -4,6 +4,7 @@ var verify = exports;
 
 var Promise = require('es6-promise').Promise;
 
+var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
 var client = require('../api/client').create();
@@ -13,34 +14,27 @@ verify.output = {};
 /**
  * Intermediate output
  */
-verify.output.intermediate = function(noTopPadding, noBottomPadding) {
-  if (!noTopPadding) { console.log(''); }
+verify.output.intermediate = output.create(function() {
   console.log('We have sent a verification code to your email.');
   console.log('Please enter your code below:');
-  if (!noBottomPadding) { console.log(''); }
-};
+});
 
 /**
  * Success output
  */
-verify.output.success = function(noTopPadding, noBottomPadding) {
-  // TODO: Proper output module for errors and banner messages
-  if (!noTopPadding) { console.log(''); }
+verify.output.success = output.create(function() {
   console.log('Your account is now verified.');
-  if (!noBottomPadding) { console.log(''); }
-};
+});
 
 /**
  * Failure output
  */
-verify.output.failure = function(noTopPadding, noBottomPadding) {
-  if (!noTopPadding) { console.log(''); }
+verify.output.failure = output.create(function() {
   console.error('Email verification failed, please try again.');
-  if (!noBottomPadding) { console.log(''); }
-};
+});
 
 /**
- * Login prompt questions
+ * Verify prompt questions
  *
  * @param {object} ctx - Prompt context
  */

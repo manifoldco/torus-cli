@@ -39,10 +39,10 @@ module.exports = new Command(
 
         ctx.token = authToken;
 
-        verify.output.intermediate(true);
+        verify.output.intermediate({ top: false });
         return verify.subcommand(ctx).then(function(result) {
           verify.output.success();
-          login.output.success(true);
+          login.output.success({ top: false });
           return result;
         });
 

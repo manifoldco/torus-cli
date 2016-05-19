@@ -6,7 +6,7 @@ var base64url = require('base64url');
 var Promise = require('es6-promise').Promise;
 
 var Prompt = require('../cli/prompt');
-
+var output = require('../cli/output');
 var client = require('../api/client').create();
 var validate = require('../validate');
 var crypto = require('../crypto');
@@ -18,18 +18,13 @@ var TYPE_AUTH = 'auth';
 
 login.output = {};
 
-login.output.success = function(noTopPadding, noBottomPadding) {
-  // TODO: Proper output module for errors and banner messages
-  if (!noTopPadding) { console.log(''); }
+login.output.success = output.create(function() {
   console.log('You are now authenticated.');
-  if (!noBottomPadding) { console.log(''); }
-};
+});
 
-login.output.failure = function(noTopPadding, noBottomPadding) {
-  if (!noTopPadding) { console.log(''); }
+login.output.failure = output.create(function() {
   console.error('Login failed, please try again.');
-  if (!noBottomPadding) { console.log(''); }
-};
+});
 
 /**
  * Login prompt questions

@@ -7,37 +7,35 @@ var utils = require('common/utils');
 
 var client = require('../api/client').create();
 var validate = require('../validate');
+var output = require('../cli/output');
 
 user.crypto = require('./crypto');
 
 user.output = {};
 
-user.output.success = function() {
-  // TODO: Proper output module for errors and banner messages
-  console.log('');
+user.output.success = output.create(function() {
   console.log('Your account has been created!');
-  console.log('');
-};
+});
 
 user.output.failure = function(err) {
   var message = err.message;
   var messages = Array.isArray(message)? message : [message];
 
-  console.error('');
-  switch (err.type) {
-    // TODO: Graceful re-start of prompt for invalid input
-    case 'invalid_request':
-      if (messages.indexOf('resource exists') > -1) {
-        console.error('Email address in use, please try again');
-      } else {
-        console.error('Whoops! Something went wrong. Please try again');
-      }
-    break;
-    default:
-      console.error('Signup failed, please try again');
-    break;
-  }
-  console.error('');
+  output.create.call(null, function() {
+    switch (err.type) {
+      // TODO: Graceful re-start of prompt for invalid input
+      case 'invalid_request':
+        if (messages.indexOf('resource exists') > -1) {
+          console.error('Email address in use, please try again');
+        } else {
+          console.error('Whoops! Something went wrong. Please try again');
+        }
+      break;
+      default:
+        console.error('Signup failed, please try again');
+      break;
+    }
+  });
 };
 
 /**
