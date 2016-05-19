@@ -7,7 +7,7 @@ The following commands are supported:
 <%
   var commands = '';
   _.each(program.groups, function (group, name) {
-    commands+='  '+_.padEnd(group[name].usage, 20)+' '+group[name].description+'\n';  
+    commands+='  '+_.padEnd(group[name].usage, 28)+' '+group[name].description+'\n';
   });
 
   print(commands);
