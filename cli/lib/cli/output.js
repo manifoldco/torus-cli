@@ -21,8 +21,8 @@ output.create = function(fn) {
     if (_.isUndefined(opts.top) || opts.top === true) { console.log(''); }
 
     // Pass all args after padding preferences to the output function
-    var args = Array.prototype.slice(arguments, 1);
-    fn.call(null, args);
+    var args = Array.prototype.slice.call(arguments, 1);
+    fn.apply(null, args);
 
     if (_.isUndefined(opts.bottom) || opts.bottom === true) { console.log(''); }
   };
