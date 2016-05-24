@@ -6,7 +6,7 @@ var Command = require('../../cli/command');
 
 var envs = require('../../envs');
 
-module.exports = new Command(
+var createEnv = new Command(
   'envs:create [name]',
   'create an environment for a service',
   function (ctx) {
@@ -22,3 +22,11 @@ module.exports = new Command(
     });
   }
 );
+
+createEnv.option(
+  '-s, --service [service]',
+  'Name of the service to create env for',
+  undefined
+);
+
+module.exports = createEnv;
