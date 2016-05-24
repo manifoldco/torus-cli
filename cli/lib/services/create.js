@@ -52,17 +52,17 @@ var validator = validate.build({
 serviceCreate.execute = function(ctx) {
   return new Promise(function(resolve, reject) {
     var retrieveInput;
+
     var name = ctx.params[0];
-
-    var errors = validator({ name: name });
-    if (errors.length > 0) {
-      return reject(errors[0]);
-    }
-
     if (name) {
-      retrieveInput = Promise.resolve({
-        name: name
-      });
+      var errors = validator({ name: name });
+      if (errors.length > 0) {
+        retrieveInput = Promise.reject(errors[0]);
+      } else {
+        retrieveInput = Promise.resolve({
+          name: name
+        });
+      }
     } else {
       retrieveInput = serviceCreate._prompt();
     }
