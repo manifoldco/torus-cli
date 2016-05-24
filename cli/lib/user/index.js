@@ -40,10 +40,9 @@ user.output.failure = function(err) {
 
 /**
  * Signup prompt questions
- *
- * @param {object} ctx - Prompt context
  */
-user.questions = function(ctx) {
+user.questions = function() {
+  var self = this;
   return [
     // Stage one
     [
@@ -76,7 +75,7 @@ user.questions = function(ctx) {
           var failed = input !== answers.passphrase;
           // When failed, tell prompt which stage failed to recurse
           // if the maximum attempts has been reached
-          return failed? ctx.failed(1, error) : true;
+          return failed? self.failed(1, error) : true;
         },
       },
     ]

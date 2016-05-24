@@ -39,18 +39,24 @@ describe('Prompt', function() {
   describe('constructor', function() {
     it('throws error if stages is not a function', function() {
       assert.throws(function() {
-        p = new Prompt('nope');
+        p = new Prompt({
+          stages: 'nope'
+        });
       }, /stages must be a function/);
     });
 
     it('throws error if stages does not return array', function() {
       assert.throws(function() {
-        p = new Prompt(function() { return null; });
+        p = new Prompt({
+          stages: function() { return null; }
+        });
       }, /stages must return array/);
     });
 
     it('sets default opts', function() {
-      p = new Prompt(function() { return []; });
+      p = new Prompt({
+        stages: function() { return []; }
+      });
       assert.deepEqual(p.aggregate, {});
       assert.strictEqual(p._stageAttempts, 0);
       assert.strictEqual(p._stageFailed, false);
@@ -60,7 +66,9 @@ describe('Prompt', function() {
 
   describe('prompt', function() {
     beforeEach(function() {
-      p = new Prompt(MOCK_STAGES);
+      p = new Prompt({
+        stages: MOCK_STAGES
+      });
       promise = Promise.resolve();
     });
 

@@ -38,7 +38,7 @@ verify.output.failure = output.create(function() {
  *
  * @param {object} ctx - Prompt context
  */
-verify.questions = function(/*ctx*/) {
+verify.questions = function() {
   return [
     [
       {
@@ -95,7 +95,9 @@ verify.subcommand = function(ctx) {
  * Create prompt object
  */
 verify._prompt = function() {
-  var prompt = new Prompt(verify.questions);
+  var prompt = new Prompt({
+    stages: verify.questions
+  });
   return prompt.start();
 };
 
