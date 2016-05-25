@@ -39,15 +39,10 @@ envCreate.questions = function(services) {
   ];
 };
 
-var validator = {
-  id: validate.build({
-    name: validate.slug,
-  }),
-  name: validate.build({
-    name: validate.slug,
-    service: validate.slug,
-  }),
-};
+var validator = validate.build({
+  name: validate.slug,
+  service: validate.slug,
+});
 
 /**
  * Create prompt for env create
@@ -83,8 +78,7 @@ envCreate.execute = function(ctx) {
         data = _.mapValues(data, _.toString);
 
         // Validate inputs from params/options
-        var validateData = data.service? validator.name : validator.id;
-        var errors = validateData(data);
+        var errors = validator(data);
         if (errors.length) {
           return reject(errors[0]);
         }
