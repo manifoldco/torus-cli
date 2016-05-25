@@ -21,9 +21,17 @@ Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
     print('\n\nThe following sub-commands are supported:\n\n');
 
     var subcmds = '';
-    _.each(program.groups[cmd.group], function (subcmd, name) {
+
+    var group = program.groups[cmd.group];
+    var keys = _.sortBy(_.keys(group), function (key) {
+      return group[key].slug;
+    });
+
+    keys.forEach(function(key) {
+      var subcmd = program.groups[cmd.group][key];
       subcmds += '  '+_.padEnd(subcmd.usage, 28)+' '+subcmd.description+'\n';
     });
+
     print(subcmds+'\n');
     print('Use '+program.name+' help [command] to view additional information');
   }
