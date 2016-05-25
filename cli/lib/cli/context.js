@@ -10,11 +10,11 @@ function Context (program) {
   this.cmd = null;
   this.program = program;
   this.params = [];
-  this.props = {};
+  this.options = {};
 }
 
-Context.prototype.prop = function (name) {
-  return this.props[name];
+Context.prototype.option = function (name) {
+  return this.options[name];
 };
 
 module.exports = Context;

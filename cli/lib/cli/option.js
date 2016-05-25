@@ -1,6 +1,31 @@
 'use strict';
 
+var FLAG_REGEX =
+  /^\-{1}[a-z]{1}, \-\-[a-z\-]{2,16}\s*(\[[a-z]+\]|<[a-z]+>)?$/;
+
+/**
+ * Represents an Option supported by a Command.
+ *
+ * @param {String} Flags string of flags supporting the flag grammar
+ * @param {String} description defaults ot an empty string
+ * @param {*} defaultValue default value
+ *
+ * Flag Grammar:
+ *
+ *  -p, --pretty [name]   parameter has optional value provided
+ *  -p, --pretty <name>   parameter is required
+ *  -n, --no-x            flag that defauls to true if not provided
+ *  -i, --invite          flag that defaults to false if not provided
+ */
 function Option (flags, description, defaultValue) {
+
+  if (typeof flags !== 'string') {
+    throw new TypeError('flags must be a string');
+  }
+
+  if (!flags.match(FLAG_REGEX)) {
+    throw new Error('Flags do not match the regex');
+  }
 
   this.flags = flags;
   this.required = (flags.indexOf('<') > -1);
@@ -11,11 +36,6 @@ function Option (flags, description, defaultValue) {
   this.defaultValue = defaultValue;
   this._value = undefined;
 
-
-  if (this.required && this.optional &&
-      (flags.indexOf('[') < flags.indexOf('<'))) {
-    throw new Error('Required must come before optional params: '+flags);
-  }
 
   flags = flags.split(/[ ,|]+/);
   if (flags.length > 1 && !/^[[<]/.test(flags[1])) {
@@ -39,7 +59,7 @@ Option.prototype.shortcut = function () {
 };
 
 Option.prototype.evaluate = function (ctx, args) {
-  ctx.props[this.name()] = this;
+  ctx.options[this.name()] = this;
   this.ctx = ctx;
 
   var value = args[this.shortcut()] || args[this.name()];

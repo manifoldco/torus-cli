@@ -33,23 +33,18 @@ describe('Option', function() {
       assert.strictEqual(o.shortcut(), 'p');
     });
 
-    it('sets both optional and required', function() {
-      var o = new Option('-p, --pretty <name> [longname]');
-
-      assert.strictEqual(o.required, true);
-      assert.strictEqual(o.optional, true);
-      assert.strictEqual(o.hasParam, true);
-      assert.strictEqual(o.bool, false);
-
-      assert.strictEqual(o.name(), 'pretty');
-      assert.strictEqual(o.shortcut(), 'p');
+    it('throws an error if flags is not a string', function() {
+      assert.throws(function() {
+        var o = new Option(false);
+        /*jshint unused:false*/
+      }, /flags must be a string/);
     });
 
-    it('errors if optional are before required', function() {
+    it('throws an error for bad flag input', function() {
       assert.throws(function() {
-        /*jshint unused: false*/
-        var o = new Option('-p, --pretty [name] <longname>');
-      }, /Required must come before/);
+        var o = new Option('-x [name]');
+        /*jshint unused:false*/
+      }, /Flags do not match the regex/);
     });
 
     it('handles boolean', function () {
@@ -82,7 +77,7 @@ describe('Option', function() {
       o.evaluate(c, {name: 'hi'});
 
       assert.strictEqual(o.value, 'hi');
-      assert.strictEqual(c.prop('name'), o);
+      assert.strictEqual(c.option('name'), o);
     });
 
     it('sets the value with shortcut', function() {
@@ -90,7 +85,7 @@ describe('Option', function() {
 
       o.evaluate(c, {n: 'hi'});
       assert.strictEqual(o.value, 'hi');
-      assert.strictEqual(c.prop('name'), o);
+      assert.strictEqual(c.option('name'), o);
     });
 
     it('sets the default value', function() {
@@ -99,16 +94,16 @@ describe('Option', function() {
       o.evaluate(c, {});
 
       assert.strictEqual(o.value, 'joe');
-      assert.strictEqual(c.prop('name'), o);
+      assert.strictEqual(c.option('name'), o);
     });
 
     it('sets as undefined if not bool', function() {
-      var o = new Option('n, --name [name]', 'set name');
+      var o = new Option('-n, --name [name]', 'set name');
 
       o.evaluate(c, {});
 
       assert.strictEqual(o.value, undefined);
-      assert.strictEqual(c.prop('name'), o);
+      assert.strictEqual(c.option('name'), o);
     });
 
     it('sets as false if bool', function() {
@@ -117,7 +112,7 @@ describe('Option', function() {
       o.evaluate(c, {});
 
       assert.strictEqual(o.value, false);
-      assert.strictEqual(c.prop('no'), o);
+      assert.strictEqual(c.option('no'), o);
     });
 
     it('sets as true if no-bool', function() {
@@ -125,7 +120,7 @@ describe('Option', function() {
 
       o.evaluate(c, {});
       assert.strictEqual(o.value, true);
-      assert.strictEqual(c.prop('x'), o);
+      assert.strictEqual(c.option('x'), o);
     });
   });
 });
