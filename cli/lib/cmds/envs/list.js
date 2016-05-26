@@ -1,11 +1,34 @@
 'use strict';
 
-var Command = require('../../cli/command');
+var Promise = require('es6-promise').Promise;
 
-module.exports = new Command(
+var Command = require('../../cli/command');
+var envs = require('../../envs');
+var auth = require('../../middleware/auth');
+
+var listEnv = new Command(
   'envs',
-  'list all environments for this application',
-  function () {
-    console.log('listing all envs here');
+  'list environments',
+  function (ctx) {
+    return new Promise(function (resolve, reject) {
+      envs.list.execute(ctx).then(function (payload) {
+        envs.list.output.success(null, payload);
+
+        resolve(true);
+      }).catch(function (err) {
+        envs.list.output.failure();
+        reject(err);
+      });
+    });
   }
 );
+
+listEnv.option(
+  '-s, --service [service]',
+  'List environments for a particular service',
+  null
+);
+
+listEnv.hook('pre', auth());
+
+module.exports = listEnv;

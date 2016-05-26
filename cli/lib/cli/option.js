@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require('lodash');
+
 var FLAG_REGEX =
   /^\-{1}[a-z]{1}, \-\-[a-z\-]{2,16}\s*(\[[a-z]+\]|<[a-z]+>)?$/;
 
@@ -62,6 +64,14 @@ Option.prototype.evaluate = function (ctx, args) {
   this.ctx = ctx;
 
   var value = args[this.shortcut()] || args[this.name()];
+
+  // reset to the default value when val is a bool, and default is not
+  if (_.isBoolean(value) && !_.isBoolean(this.defaultValue) && !this.bool) {
+    value = this.defaultValue;
+  }
+
+  // but defaultValue isn't a bool then reset to default or value
+
   if (value === undefined && this.defaultValue !== undefined) {
     value = this.defaultValue;
   }
