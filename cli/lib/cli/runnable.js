@@ -1,6 +1,7 @@
 'use strict';
 
 var Promise = require('es6-promise').Promise;
+
 var Middleware = require('./middleware');
 
 function Runnable() {

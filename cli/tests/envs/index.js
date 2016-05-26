@@ -8,7 +8,7 @@ var Promise = require('es6-promise').Promise;
 
 var envs = require('../../lib/envs/create');
 var client = require('../../lib/api/client').create();
-var tokenMiddleware = require('../../lib/middleware/token');
+var sessionMiddleware = require('../../lib/middleware/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Daemon = require('../../lib/daemon/object').Daemon;
@@ -53,12 +53,12 @@ describe('Envs Create', function () {
       .returns(Promise.resolve({ body: [ENV] }));
     this.sandbox.spy(client, 'auth');
 
-    // Context stub when no token set
+    // Context stub when no session set
     CTX_DAEMON_EMPTY = new Context({});
     CTX_DAEMON_EMPTY.config = new Config(process.cwd());
     CTX_DAEMON_EMPTY.daemon = new Daemon(CTX_DAEMON_EMPTY.config);
 
-    // Context stub with token set
+    // Context stub with session set
     CTX = new Context({});
     CTX.config = new Config(process.cwd());
     CTX.daemon = new Daemon(CTX.config);
@@ -68,16 +68,18 @@ describe('Envs Create', function () {
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
       .returns(Promise.resolve());
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'get')
-      .returns(Promise.resolve({ token: '' }));
+      .returns(Promise.resolve({ token: '', passphrase: '' }));
+
     // Daemon with token
     this.sandbox.stub(CTX.daemon, 'set')
       .returns(Promise.resolve());
     this.sandbox.stub(CTX.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token' }));
-    // Run the token middleware to populate the context object
+      .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
+
+      // Run the session middleware to populate the context object
     return Promise.all([
-      tokenMiddleware.preHook()(CTX),
-      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY)
+      sessionMiddleware()(CTX),
+      sessionMiddleware()(CTX_DAEMON_EMPTY)
     ]);
   });
   afterEach(function () {
@@ -163,22 +165,22 @@ describe('Envs Create', function () {
   describe('_execute', function () {
     it('authorizes the client', function () {
       var input = { name: 'staging', owner_id: SERVICE.id };
-      return envs._execute(CTX.token, input).then(function () {
+      return envs._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.auth);
       });
     });
-    it('fails if token not found in daemon', function (done) {
+    it('fails if session does not exist', function (done) {
       var input = { name: 'staging', owner_id: SERVICE.id };
-      envs._execute(CTX_DAEMON_EMPTY.token, input).then(function () {
+      envs._execute(CTX_DAEMON_EMPTY.session, input).then(function () {
         done(new Error('dont call'));
       }).catch(function (err) {
-        assert.equal(err.message, 'must authenticate first');
+        assert.equal(err.message, 'Session object missing on Context');
         done();
       });
     });
     it('sends api request to envs', function () {
       var input = { name: 'staging', owner_id: SERVICE.id };
-      return envs._execute(CTX.token, input).then(function () {
+      return envs._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.post);
         var firstCall = client.post.firstCall;
         var args = firstCall.args;

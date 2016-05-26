@@ -7,15 +7,12 @@ var assert = require('assert');
 var Promise = require('es6-promise').Promise;
 var utils = require('common/utils');
 
+var Session = require('../../lib/session');
 var status = require('../../lib/user/status');
 var client = require('../../lib/api/client').create();
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Daemon = require('../../lib/daemon/object').Daemon;
-
-var CTX = new Context({});
-CTX.config = new Config(process.cwd());
-CTX.daemon = new Daemon(CTX.config);
 
 var USER_RESPONSE = {
   body: [
@@ -33,7 +30,13 @@ describe('Session', function () {
   before(function () {
     this.sandbox = sinon.sandbox.create();
   });
+
+  var ctx;
   beforeEach(function () {
+    ctx = new Context({});
+    ctx.config = new Config(process.cwd());
+    ctx.daemon = new Daemon(ctx.config);
+    ctx.session = new Session({ token: 'aa', passphrase: 'safsd' });
     this.sandbox.stub(status.output, 'success');
     this.sandbox.stub(status.output, 'failure');
     this.sandbox.stub(client, 'get')
@@ -44,35 +47,31 @@ describe('Session', function () {
   });
   describe('execute', function () {
     beforeEach(function () {
-      CTX.token = undefined;
+      ctx.token = undefined;
     });
 
     describe('unauthenticated', function () {
       it('resolves a null user when no token present', function () {
-        return status.execute(CTX).then(function (identity) {
+        ctx.session = null;
+        return status.execute(ctx).then(function (identity) {
           assert.strictEqual(identity.user, null);
         });
       });
 
       it('returns null user when unauthorized', function () {
-        CTX.token = 'this is defined';
         client.get.restore();
         this.sandbox.stub(client, 'get')
           .returns(Promise.reject({ type: 'unauthorized' }));
 
-        return status.execute(CTX).then(function (identity) {
+        return status.execute(ctx).then(function (identity) {
           assert.strictEqual(identity.user, null);
         });
       });
     });
 
     describe('authenticated', function () {
-      beforeEach(function () {
-        CTX.token = 'this is defined';
-      });
-
       it('calls /users/self api endpoint', function () {
-        return status.execute(CTX).then(function () {
+        return status.execute(ctx).then(function () {
           sinon.assert.calledWith(client.get, {
             url: '/users/self'
           });
@@ -84,7 +83,7 @@ describe('Session', function () {
         this.sandbox.stub(client, 'get')
           .returns(Promise.reject({ type: 'not_found' }));
 
-        return status.execute(CTX).then(function (identity) {
+        return status.execute(ctx).then(function (identity) {
           assert.strictEqual(identity.user, null);
         });
       });

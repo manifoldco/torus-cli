@@ -4,6 +4,7 @@ var serviceInfo = exports;
 
 var Promise = require('es6-promise').Promise;
 
+var Session = require('../session');
 var output = require('../cli/output');
 var validate = require('../validate');
 var client = require('../api/client').create();
@@ -35,11 +36,12 @@ serviceInfo.execute = function (ctx) {
       return reject(errors[0]);
     }
 
-    if (!ctx.token) {
-      return reject(new Error('must authenticate first'));
+    if (!(ctx.session instanceof Session)) {
+      throw new TypeError('Session object missing on Context');
     }
 
-    client.auth(ctx.token);
+    client.auth(ctx.session.token);
+
     return client.get({ url: '/services/' + name }).then(function (results) {
       if (!results.body || results.body.length !== 1) {
         return reject(new Error('service not found'));

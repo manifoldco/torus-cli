@@ -5,8 +5,9 @@ var Promise = require('es6-promise').Promise;
 var Command = require('../../cli/command');
 
 var verify = require('../../verify');
+var auth = require('../../middleware/auth');
 
-module.exports = new Command(
+var cmd = new Command(
   'verify',
   'verify your account\'s email address',
   function (ctx) {
@@ -24,3 +25,7 @@ module.exports = new Command(
     });
   }
 );
+
+cmd.hook('pre', auth());
+
+module.exports = cmd;

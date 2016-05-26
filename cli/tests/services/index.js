@@ -9,10 +9,10 @@ var Promise = require('es6-promise').Promise;
 
 var services = require('../../lib/services/create');
 var client = require('../../lib/api/client').create();
-var tokenMiddleware = require('../../lib/middleware/token');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Daemon = require('../../lib/daemon/object').Daemon;
+var sessionMiddleware = require('../../lib/middleware/session');
 
 var ORG = {
   id: utils.id('org'),
@@ -58,16 +58,19 @@ describe('Services Create', function () {
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
       .returns(Promise.resolve());
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'get')
-      .returns(Promise.resolve({ token: '' }));
+      .returns(Promise.resolve({ token: '', passphrase: '' }));
     // Daemon with token
     this.sandbox.stub(CTX.daemon, 'set')
       .returns(Promise.resolve());
     this.sandbox.stub(CTX.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token' }));
+      .returns(Promise.resolve({
+        token: 'this is a token',
+        passphrase: 'a passphrase'
+      }));
     // Run the token middleware to populate the context object
     return Promise.all([
-      tokenMiddleware.preHook()(CTX),
-      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY)
+      sessionMiddleware()(CTX),
+      sessionMiddleware()(CTX_DAEMON_EMPTY)
     ]);
   });
   afterEach(function () {
@@ -92,22 +95,25 @@ describe('Services Create', function () {
   describe('_execute', function () {
     it('authorizes the client', function () {
       var input = { name: 'api-1' };
-      return services._execute(CTX.token, input).then(function () {
+      return services._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.auth);
       });
     });
-    it('fails if token not found in daemon', function (done) {
-      var input = { name: 'api-1' };
-      services._execute(CTX_DAEMON_EMPTY.token, input).then(function () {
-        done(new Error('dont call'));
+
+    it('errors if session is missing', function () {
+      var session = CTX_DAEMON_EMPTY.session;
+      var input = {};
+      return services._execute(session, input).then(function () {
+        assert.ok(false, 'should error');
       }).catch(function (err) {
-        assert.equal(err.message, 'must authenticate first');
-        done();
+        assert.ok(err);
+        assert.strictEqual(err.message, 'Session object missing on Context');
       });
     });
+
     it('sends api request to services', function () {
       var input = { name: 'api-1' };
-      return services._execute(CTX.token, input).then(function () {
+      return services._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.post);
         var firstCall = client.post.firstCall;
         var args = firstCall.args;

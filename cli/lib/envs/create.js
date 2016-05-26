@@ -2,13 +2,15 @@
 
 var envCreate = exports;
 
+var Promise = require('es6-promise').Promise;
 var _ = require('lodash');
 
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
-var Promise = require('es6-promise').Promise;
 var services = require('../services/list');
+var Session = require('../session');
+
 var client = require('../api/client').create();
 
 envCreate.output = {};
@@ -106,7 +108,7 @@ envCreate.execute = function (ctx) {
     // Create the env in the
     })
     .then(function (userInput) {
-      return envCreate._execute(ctx.token, userInput);
+      return envCreate._execute(ctx.session, userInput);
     })
     .then(resolve)
     .catch(reject);
@@ -131,17 +133,16 @@ envCreate._prompt = function (defaults, serviceNames) {
 /**
  * Run the create request
  *
- * @param {string} token
+ * @param {Session} session
  * @param {object} data
  */
-envCreate._execute = function (token, data) {
+envCreate._execute = function (session, data) {
   return new Promise(function (resolve, reject) {
-    // Authenticate the API client
-    client.auth(token);
-
-    if (!client.authToken) {
-      throw new Error('must authenticate first');
+    if (!(session instanceof Session)) {
+      throw new TypeError('Session object missing on Context');
     }
+
+    client.auth(session.token);
 
     client.post({
       url: '/envs',

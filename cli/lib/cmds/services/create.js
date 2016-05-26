@@ -5,8 +5,9 @@ var Promise = require('es6-promise').Promise;
 var Command = require('../../cli/command');
 
 var services = require('../../services');
+var auth = require('../../middleware/auth');
 
-module.exports = new Command(
+var cmd = new Command(
   'services:create [name]',
   'create a new service for your org',
   function (ctx) {
@@ -24,3 +25,7 @@ module.exports = new Command(
     });
   }
 );
+
+cmd.hook('pre', auth());
+
+module.exports = cmd;

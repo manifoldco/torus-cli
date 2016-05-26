@@ -4,6 +4,7 @@ var verify = exports;
 
 var Promise = require('es6-promise').Promise;
 
+var Session = require('../session');
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
@@ -71,7 +72,7 @@ verify.execute = function (ctx) {
   }
 
   return retrieveInput.then(function (userInput) {
-    return verify._execute(ctx.token, userInput);
+    return verify._execute(ctx.session, userInput);
   });
 };
 
@@ -104,18 +105,17 @@ verify._prompt = function () {
 /**
  * Attempt log with supplied credentials
  *
- * @param {string} token - Auth token
+ * @param {object} session - Session object
  * @param {object} userInput
  */
-verify._execute = function (token, userInput) {
+verify._execute = function (session, userInput) {
   return new Promise(function (resolve, reject) {
-    client.auth(token);
-
-    if (!client.authToken) {
-      return reject(new Error('must authenticate first'));
+    if (!(session instanceof Session)) {
+      throw new TypeError('Session is not on Context object');
     }
 
-    return client.post({
+    client.auth(session.token);
+    client.post({
       url: '/users/verify',
       json: {
         // Trim spaces if provided in input

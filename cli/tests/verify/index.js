@@ -9,7 +9,7 @@ var Promise = require('es6-promise').Promise;
 
 var verify = require('../../lib/verify');
 var client = require('../../lib/api/client').create();
-var tokenMiddleware = require('../../lib/middleware/token');
+var sessionMiddleware = require('../../lib/middleware/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Daemon = require('../../lib/daemon/object').Daemon;
@@ -55,16 +55,19 @@ describe('Verify', function () {
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
       .returns(Promise.resolve());
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'get')
-      .returns(Promise.resolve({ token: '' }));
+      .returns(Promise.resolve({ token: '', passphrase: '' }));
     // Daemon with token
     this.sandbox.stub(CTX.daemon, 'set')
       .returns(Promise.resolve());
     this.sandbox.stub(CTX.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token' }));
+      .returns(Promise.resolve({
+        token: 'this is a token',
+        passphrase: 'sadfsadf'
+      }));
     // Run the token middleware to populate the context object
     return Promise.all([
-      tokenMiddleware.preHook()(CTX),
-      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY)
+      sessionMiddleware()(CTX),
+      sessionMiddleware()(CTX_DAEMON_EMPTY)
     ]);
   });
   afterEach(function () {
@@ -117,22 +120,22 @@ describe('Verify', function () {
   describe('_execute', function () {
     it('authorizes the client', function () {
       var input = { code: 'ABC123ABC' };
-      return verify._execute(CTX.token, input).then(function () {
+      return verify._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.auth);
       });
     });
     it('fails if token not found in daemon', function (done) {
       var input = { code: 'ABC123ABC' };
-      verify._execute(CTX_DAEMON_EMPTY.token, input).then(function () {
+      verify._execute(CTX_DAEMON_EMPTY.session, input).then(function () {
         done(new Error('dont call'));
       }).catch(function (err) {
-        assert.equal(err.message, 'must authenticate first');
+        assert.equal(err.message, 'Session is not on Context object');
         done();
       });
     });
     it('sends api request to verify', function () {
       var input = { code: 'ABC123ABC' };
-      return verify._execute(CTX.token, input).then(function () {
+      return verify._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.post);
         var firstCall = client.post.firstCall;
         var args = firstCall.args;

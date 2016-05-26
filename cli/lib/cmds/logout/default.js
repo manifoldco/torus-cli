@@ -4,22 +4,18 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../../cli/command');
 var logout = require('../../logout');
+var auth = require('../../middleware/auth');
 
 function output(msg) {
   console.log('\n ' + msg + ' \n');
 }
 
-module.exports = new Command(
+var cmd = new Command(
   'logout',
   'logout of your Arigato account',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      if (!ctx.token) {
-        output('You must be logged-in, to log-out.');
-        return resolve();
-      }
-
-      return logout(ctx)
+      logout(ctx)
         .then(function () {
           output('You have successfully logged-out. o/');
           resolve();
@@ -31,3 +27,7 @@ module.exports = new Command(
     });
   }
 );
+
+cmd.hook('pre', auth());
+
+module.exports = cmd;
