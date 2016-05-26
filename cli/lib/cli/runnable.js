@@ -1,6 +1,6 @@
 'use strict';
 
-var series = require('./series');
+var Promise = require('es6-promise').Promise;
 var Middleware = require('./middleware');
 
 function Runnable() {
@@ -28,5 +28,21 @@ Runnable.prototype.runHooks = function (type, ctx) {
     return mw.run.bind(mw, ctx);
   });
 
-  return series(middleware);
+
+  function runHooks(list) {
+    var item = list.shift();
+    if (!item) {
+      return Promise.resolve(true);
+    }
+
+    return item().then(function (success) {
+      if (success === false) {
+        return false;
+      }
+
+      return runHooks(list);
+    });
+  }
+
+  return runHooks(middleware);
 };

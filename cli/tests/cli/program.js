@@ -181,5 +181,35 @@ describe('Program', function () {
         sinon.assert.calledOnce(postSpy);
       });
     });
+
+    it('resolves success as false if pre middleware fails', function () {
+      var failStub = sinon.stub().returns(Promise.resolve(false));
+      var passStub = sinon.stub().returns(Promise.resolve(false));
+
+      p.hook('pre', failStub);
+      p.hook('pre', passStub);
+
+      return p.run(['x', 'x', 'hi']).then(function (success) {
+        assert.strictEqual(success, false);
+
+        sinon.assert.calledOnce(failStub);
+        sinon.assert.notCalled(passStub);
+      });
+    });
+
+    it('resolves success as false if post middleware fails', function () {
+      var failStub = sinon.stub().returns(Promise.resolve(false));
+      var passStub = sinon.stub().returns(Promise.resolve(false));
+
+      p.hook('post', failStub);
+      p.hook('post', passStub);
+
+      return p.run(['x', 'x', 'hi']).then(function (success) {
+        assert.strictEqual(success, false);
+
+        sinon.assert.calledOnce(failStub);
+        sinon.assert.notCalled(passStub);
+      });
+    });
   });
 });

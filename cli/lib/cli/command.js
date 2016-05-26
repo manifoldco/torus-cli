@@ -60,8 +60,11 @@ Command.prototype.run = function (ctx) {
     return wrap(self._handler.run.bind(self._handler, ctx));
   }
 
+  return self.runHooks('pre', ctx).then(function (success) {
+    if (success === false) {
+      return false;
+    }
 
-  return self.runHooks('pre', ctx).then(function () {
     return call().then(function () {
       return self.runHooks('post', ctx);
     });

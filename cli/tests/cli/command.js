@@ -4,6 +4,7 @@
 
 var assert = require('assert');
 var sinon = require('sinon');
+var Promise = require('es6-promise').Promise;
 
 var Context = require('../../lib/cli/context');
 var Option = require('../../lib/cli/option');
@@ -98,6 +99,43 @@ describe('Command', function () {
         sinon.assert.calledWith(postSpy, ctx);
       });
     });
+
+    it('resolves success as false if pre middleware fails', function () {
+      var failStub = sinon.stub().returns(Promise.resolve(false));
+      var passStub = sinon.stub().returns(Promise.resolve(false));
+      var ctx = new Context({});
+
+      c = new Command('envs', 'do something', function () {});
+
+      c.hook('pre', failStub);
+      c.hook('pre', passStub);
+
+      return c.run(ctx).then(function (success) {
+        assert.strictEqual(success, false);
+
+        sinon.assert.calledOnce(failStub);
+        sinon.assert.notCalled(passStub);
+      });
+    });
+
+    it('resolves success as false if post middleware fails', function () {
+      var failStub = sinon.stub().returns(Promise.resolve(false));
+      var passStub = sinon.stub().returns(Promise.resolve(false));
+      var ctx = new Context({});
+
+      c = new Command('envs', 'do something', function () {});
+
+      c.hook('post', failStub);
+      c.hook('post', passStub);
+
+      return c.run(ctx).then(function (success) {
+        assert.strictEqual(success, false);
+
+        sinon.assert.calledOnce(failStub);
+        sinon.assert.notCalled(passStub);
+      });
+    });
+
 
     it('runs a function', function () {
       var spy = sinon.spy();
