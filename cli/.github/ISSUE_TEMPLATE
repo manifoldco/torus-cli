@@ -1,10 +1,18 @@
-# Discussion Issue Template (remove this line)
+# Discussion Issue Template [Remove this line]
 
 ### Background
 
-write out the background here; what's the problem? why does it matter?
+[Write out the background here; what's the problem? why does it matter?]
+
+### Decisions
+
+[Outline the outcome the discussion]
 
 ### Relevant Documents and Discussion
 
-- Google Document (Master Document)
-- Links to other discussions
+- [Google Document (Master Document)]
+- [Links to other discussions]
+
+### Changelog [Update this conversation regularly; maintain a log]
+
+- [May 27, 2016 (@matt_creager) - Added a changelog section to the `ISSUE_TEMPLATE`]
