@@ -8,7 +8,7 @@ var client = require('../api/client').create();
  *
  * @param {object} ctx - Prompt context
  */
-module.exports = function(ctx) {
+module.exports = function (ctx) {
   client.auth(ctx.token);
 
   var resetClient = client.reset.bind(client);
@@ -17,7 +17,7 @@ module.exports = function(ctx) {
     ctx.daemon.logout(),
     client.delete({ url: '/session/' + ctx.token })
   ]).then(resetClient)
-    .catch(function(err) {
+    .catch(function (err) {
       resetClient();
       throw err;
     });

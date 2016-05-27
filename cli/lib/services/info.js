@@ -10,13 +10,13 @@ var client = require('../api/client').create();
 
 serviceInfo.output = {};
 
-serviceInfo.output.success = output.create(function(service) {
-  console.log('Service '+service.body.name+':');
+serviceInfo.output.success = output.create(function (service) {
+  console.log('Service ' + service.body.name + ':');
   console.log('');
   console.log('Nothing here yet! Work in progress :)');
 });
 
-serviceInfo.output.failure = output.create(function() {
+serviceInfo.output.failure = output.create(function () {
   console.log('Retrieval of service failed!');
 });
 
@@ -28,7 +28,7 @@ var validator = validate.build({
  * Retrieve a specific service by name
  */
 serviceInfo.execute = function (ctx) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     var name = ctx.params[0];
     var errors = validator({ name: name });
     if (errors.length > 0) {
@@ -40,12 +40,12 @@ serviceInfo.execute = function (ctx) {
     }
 
     client.auth(ctx.token);
-    client.get({ url: '/services/'+name }).then(function(results) {
+    return client.get({ url: '/services/' + name }).then(function (results) {
       if (!results.body || results.body.length !== 1) {
         return reject(new Error('service not found'));
       }
 
-      resolve(results.body[0]);
+      return resolve(results.body[0]);
     }).catch(reject);
   });
 };

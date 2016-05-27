@@ -16,20 +16,6 @@ var HTTP_VERBS = [
   'delete'
 ];
 
-client.client = null;
-
-/**
- * Create new api client with opts
- *
- * @param {object} opts
- */
-client.create = function(opts) {
-  if (!client.client) {
-    client.client = new Client(opts);
-  }
-  return client.client;
-};
-
 /**
  * Arigato API client
  *
@@ -51,7 +37,7 @@ function Client(opts) {
  *
  * @param {string} authToken
  */
-Client.prototype.auth = function(authToken) {
+Client.prototype.auth = function (authToken) {
   if (typeof authToken !== 'string') {
     throw new Error('auth token must be a string');
   }
@@ -62,16 +48,16 @@ Client.prototype.auth = function(authToken) {
 /**
  * Remove the authtoken property
  */
-Client.prototype.reset = function() {
+Client.prototype.reset = function () {
   this.authToken = undefined;
 };
 
 /**
  * Initialize verb-specific methods
  */
-Client.prototype._initialize = function() {
+Client.prototype._initialize = function () {
   var self = this;
-  HTTP_VERBS.forEach(function(verb) {
+  HTTP_VERBS.forEach(function (verb) {
     self[verb] = self._req.bind(self, verb);
   });
 };
@@ -82,9 +68,9 @@ Client.prototype._initialize = function() {
  * @param {string} verb
  * @param {object} opts
  */
-Client.prototype._req = function(verb, opts) {
+Client.prototype._req = function (verb, opts) {
   var self = this;
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     opts = _.extend({}, opts, {
       method: verb,
       url: self.endpoint + opts.url,
@@ -95,16 +81,16 @@ Client.prototype._req = function(verb, opts) {
       timeout: 3000
     });
 
-    request(opts, function(err, res, body) {
+    request(opts, function (err, res, body) {
       if (err) {
         return reject(err);
       }
 
       try {
-        body = _.isString(body) && body.length > 0? JSON.parse(body) : body;
-        body = _.isString(body) && body.length === 0? null : body;
+        body = _.isString(body) && body.length > 0 ? JSON.parse(body) : body;
+        body = _.isString(body) && body.length === 0 ? null : body;
         res.body = body;
-      } catch(err) {
+      } catch (e) {
         return reject(new Error('invalid json returned from API'));
       }
 
@@ -112,7 +98,7 @@ Client.prototype._req = function(verb, opts) {
         return reject(self._extractError(body));
       }
 
-      resolve(res);
+      return resolve(res);
     });
   });
 };
@@ -122,7 +108,7 @@ Client.prototype._req = function(verb, opts) {
  *
  * @param {object} opts
  */
-Client.prototype._headers = function(opts) {
+Client.prototype._headers = function (opts) {
   var headers = {
     'User-Agent': 'Arigato CLI ' + this.version.cli,
     'Content-Type': 'application/json'
@@ -132,7 +118,7 @@ Client.prototype._headers = function(opts) {
     headers['x-arigato-version'] = this.version.api;
   }
   if (this.authToken) {
-    headers['Authorization'] = 'Bearer ' + this.authToken;
+    headers.Authorization = 'Bearer ' + this.authToken;
   }
   return _.extend({}, opts.headers, headers);
 };
@@ -142,7 +128,7 @@ Client.prototype._headers = function(opts) {
  *
  * @param {object} body
  */
-Client.prototype._extractError = function(body) {
+Client.prototype._extractError = function (body) {
   var err = new Error(body.error);
   err.type = body.type;
   return err;
@@ -153,8 +139,22 @@ Client.prototype._extractError = function(body) {
  *
  * @param {object} res
  */
-Client.prototype._statusSuccess = function(res) {
+Client.prototype._statusSuccess = function (res) {
   return Math.floor(res.statusCode / 100) === 2;
 };
 
 client.Client = Client;
+
+client.client = null;
+
+/**
+ * Create new api client with opts
+ *
+ * @param {object} opts
+ */
+client.create = function (opts) {
+  if (!client.client) {
+    client.client = new Client(opts);
+  }
+  return client.client;
+};

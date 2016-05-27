@@ -9,7 +9,7 @@ var Runnable = require('./runnable');
 var COMMAND_REGEX =
   /^[a-z]{2,16}(:[a-z]{2,16})?\s*(<[a-z]{2,16}> ?)*\s*(\[[a-z]{2,16}\] ?)*$/;
 
-function Command (usage, description, handler) {
+function Command(usage, description, handler) {
   Runnable.call(this);
 
   if (typeof usage !== 'string') {
@@ -52,7 +52,7 @@ Command.prototype.option = function (usage, description, defaultValue) {
 Command.prototype.run = function (ctx) {
   var self = this;
 
-  function call () {
+  function call() {
     if (typeof self._handler === 'function') {
       return wrap(self._handler.bind(self._handler, ctx));
     }
@@ -62,7 +62,7 @@ Command.prototype.run = function (ctx) {
 
 
   return self.runHooks('pre', ctx).then(function () {
-    return call().then(function() {
+    return call().then(function () {
       return self.runHooks('post', ctx);
     });
   });

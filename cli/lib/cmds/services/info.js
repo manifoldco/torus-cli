@@ -9,12 +9,12 @@ module.exports = new Command(
   'services:info [name]',
   'view information about a service',
   function (ctx) {
-    return new Promise(function(resolve, reject) {
-      services.info.execute(ctx).then(function(service) {
+    return new Promise(function (resolve, reject) {
+      services.info.execute(ctx).then(function (service) {
         services.info.output.success(null, service);
 
         resolve(true);
-      }).catch(function(err) {
+      }).catch(function (err) {
         services.info.output.failure();
         reject(err);
       });

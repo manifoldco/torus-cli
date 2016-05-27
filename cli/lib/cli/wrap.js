@@ -2,7 +2,7 @@
 
 var Promise = require('es6-promise').Promise;
 
-module.exports = function wrap (fn) {
+module.exports = function wrap(fn) {
   var result;
   try {
     result = fn();

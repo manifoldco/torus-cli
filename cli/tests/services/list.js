@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var assert = require('assert');
@@ -36,59 +38,58 @@ var SERVICES = [
 ];
 
 
-describe('Services List', function() {
-
+describe('Services List', function () {
   var sandbox;
   var ctx;
-  beforeEach(function() {
+  beforeEach(function () {
     sandbox = sinon.sandbox.create();
     ctx = new Context({});
     ctx.token = 'abcdefgh';
     ctx.params = ['hi-there'];
   });
 
-  afterEach(function() {
+  afterEach(function () {
     sandbox.restore();
   });
 
-  describe('#execute', function() {
-    it('requires an auth token', function() {
+  describe('#execute', function () {
+    it('requires an auth token', function () {
       ctx.token = null;
 
-      return serviceList.execute(ctx).then(function() {
+      return serviceList.execute(ctx).then(function () {
         assert.ok(false, 'should not resolve');
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err);
         assert.strictEqual(err.message, 'must authenticate first');
       });
     });
 
-    it('does not throw if the user has no services', function() {
+    it('does not throw if the user has no services', function () {
       sandbox.stub(client, 'get').returns(Promise.resolve({ body: [] }));
 
-      return serviceList.execute(ctx).then(function(services) {
+      return serviceList.execute(ctx).then(function (services) {
         assert.deepEqual(services.body, []);
-      }).catch(function() {
+      }).catch(function () {
         assert.ok(false, 'should not resolve');
       });
     });
 
-    it('handles not found from api', function() {
+    it('handles not found from api', function () {
       var err = new Error('service not found');
       err.type = 'not_found';
       sandbox.stub(client, 'get').returns(Promise.reject(err));
 
-      return serviceList.execute(ctx).then(function() {
+      return serviceList.execute(ctx).then(function () {
         assert.ok(false, 'should not resolve');
-      }).catch(function(err) {
-        assert.strictEqual(err.type, 'not_found');
+      }).catch(function (e) {
+        assert.strictEqual(e.type, 'not_found');
       });
     });
 
-    it('resolves with an array of services', function() {
+    it('resolves with an array of services', function () {
       sandbox.stub(client, 'get').returns(Promise.resolve(SERVICES));
 
-      return serviceList.execute(ctx).then(function(service) {
+      return serviceList.execute(ctx).then(function (service) {
         assert.deepEqual(service, SERVICES);
       });
     });

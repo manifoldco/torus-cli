@@ -9,17 +9,17 @@ var client = require('../api/client').create();
 
 servicesList.output = {};
 
-servicesList.output.success = output.create(function(services) {
+servicesList.output.success = output.create(function (services) {
   var length = services.length;
 
-  var msg = services.map(function(service) {
+  var msg = services.map(function (service) {
     return _.padStart(service.body.name, service.body.name.length + 1);
   }).join('\n');
 
   console.log(' total (' + length + ')\n ---------\n' + msg);
 });
 
-servicesList.output.failure = output.create(function() {
+servicesList.output.failure = output.create(function () {
   console.log('Retrieval of services failed!');
 });
 
@@ -29,8 +29,8 @@ servicesList.output.failure = output.create(function() {
  * @param {string} token - Auth token
  * @param {object} userInput
  */
-servicesList.execute = function(ctx) {
-  return new Promise(function(resolve, reject) {
+servicesList.execute = function (ctx) {
+  return new Promise(function (resolve, reject) {
     if (!ctx.token) {
       return reject(new Error('must authenticate first'));
     }

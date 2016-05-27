@@ -17,8 +17,7 @@ var FLAG_REGEX =
  *  -n, --no-x            flag that defauls to true if not provided
  *  -i, --invite          flag that defaults to false if not provided
  */
-function Option (flags, description, defaultValue) {
-
+function Option(flags, description, defaultValue) {
   if (typeof flags !== 'string') {
     throw new TypeError('flags must be a string');
   }
@@ -46,12 +45,12 @@ function Option (flags, description, defaultValue) {
 
   // If option is --no-* then set to true
   if (this.bool) {
-    this.defaultValue = (this.long.indexOf('-no-') > -1) ? true : false;
+    this.defaultValue = this.long.indexOf('-no-') > -1;
   }
 }
 
 Option.prototype.name = function () {
-  return this.long.replace('--','').replace('no-', '');
+  return this.long.replace('--', '').replace('no-', '');
 };
 
 Option.prototype.shortcut = function () {
@@ -67,7 +66,7 @@ Option.prototype.evaluate = function (ctx, args) {
     value = this.defaultValue;
   }
 
-  value = (value === undefined && this.defaultValue !== undefined ) ?
+  value = (value === undefined && this.defaultValue !== undefined) ?
     this.defaultValue : value;
 
   this.value = value;

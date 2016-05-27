@@ -32,11 +32,14 @@
     "validator": "5.2.0"
   },
   "devDependencies": {
+    "eslint": "2.10.2",
+    "eslint-config-airbnb-base": "3.0.1",
+    "eslint-plugin-import": "1.8.1",
     "gulp": "3.9.0",
-    "gulp-jshint": "2.0.0",
+    "gulp-eslint": "2.0.0",
     "gulp-mocha": "2.2.0",
-    "jshint": "2.8.0",
     "mocha": "2.3.4",
+    "run-sequence": "1.2.1",
     "sinon": "1.17.3",
     "uuid": "2.0.2"
   }

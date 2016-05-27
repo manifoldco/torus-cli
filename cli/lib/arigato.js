@@ -29,7 +29,7 @@ arigato.run = function (opts) {
     program.hook('pre', token.preHook());
     program.hook('post', daemon.postHook());
 
-    cmds.get().then(function(cmdList) {
+    cmds.get().then(function (cmdList) {
       cmdList.forEach(program.command.bind(program));
 
       program.run(opts.argv).then(resolve).catch(reject);

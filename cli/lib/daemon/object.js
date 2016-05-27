@@ -33,7 +33,7 @@ object.Daemon = Daemon;
 Daemon.prototype.connect = function () {
   var self = this;
   return new Promise(function (resolve, reject) {
-    self.client.connect().then(function() {
+    self.client.connect().then(function () {
       resolve();
     }).catch(reject);
   });
@@ -46,21 +46,21 @@ Daemon.prototype.disconnect = function () {
       return reject(new Error('Already disconnected'));
     }
 
+    var subscriptions = new EventRegulator([
+      [self.client, 'error', onTerminal], // eslint-disable-line
+      [self.client, 'close', onTerminal]  // eslint-disable-line
+    ]);
+
     function onTerminal(err) {
       subscriptions.destroy();
       if (err instanceof Error) {
         return reject(err);
       }
 
-      resolve();
+      return resolve();
     }
 
-    var subscriptions = new EventRegulator([
-      [self.client, 'error', onTerminal],
-      [self.client, 'close', onTerminal]
-    ]);
-
-    self.client.end();
+    return self.client.end();
   });
 };
 
@@ -123,16 +123,15 @@ Daemon.prototype.connected = function () {
 
 Daemon.prototype._wrap = function (id) {
   var self = this;
-  return new Promise(function(resolve, reject) {
-
+  return new Promise(function (resolve, reject) {
     // TODO: Add a timeout here so if we don't get a res back in X seconds we
     // return an error.
     self.requests[id] = {
-      resolve: function() {
+      resolve: function () {
         delete self.requests[id];
         resolve.apply(null, arguments);
       },
-      reject: function() {
+      reject: function () {
         delete self.requests[id];
         reject.apply(null, arguments);
       }
@@ -141,12 +140,11 @@ Daemon.prototype._wrap = function (id) {
 };
 
 Daemon.prototype._onMessage = function (msg) {
-
   // If the corresponding request doesn't exist then there is a bug in either
   // the daemon or the cli code, so we throw an error.
-  var req = this.requests[msg.headers['reply_id']];
+  var req = this.requests[msg.headers.reply_id];
   if (!req) {
-    throw new Error('Unknown message: '+msg.headers['reply_id']);
+    throw new Error('Unknown message: ' + msg.headers.reply_id);
   }
 
   // XXX: Only support replies from the daemon now; anything else gets junked.
@@ -154,28 +152,28 @@ Daemon.prototype._onMessage = function (msg) {
     case 'reply':
       return req.resolve(msg.body);
     case 'error':
-      return req.reject(new DaemonError(msg.body.message));
+      return req.reject(new DaemonError(msg.body.message)); // eslint-disable-line
     default:
-      throw new Error('Unsupported message type: '+msg.type);
+      throw new Error('Unsupported message type: ' + msg.type);
   }
 };
 
 Daemon.prototype._onError = function (err) {
   var self = this;
-  Object.keys(this.requests).forEach(function(k) {
-     self.requests[k].reject(err);
+  Object.keys(this.requests).forEach(function (k) {
+    self.requests[k].reject(err);
   });
 };
 
 Daemon.prototype._onClose = function () {
   var err = new Error('Socket closed');
   var self = this;
-  Object.keys(this.requests).forEach(function(k) {
-     self.requests[k].reject(err);
+  Object.keys(this.requests).forEach(function (k) {
+    self.requests[k].reject(err);
   });
 };
 
-function DaemonError (message, code) {
+function DaemonError(message, code) {
   Error.captureStackTrace(this, this.constructor);
   this.name = this.constructor.name;
   this.message = message || 'Empty Error Message';

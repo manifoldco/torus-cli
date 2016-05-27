@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var sinon = require('sinon');
@@ -16,13 +18,12 @@ CTX.config = new Config(process.cwd());
 CTX.daemon = new Daemon(CTX.config);
 CTX.token = 'aToken';
 
-describe('Logout', function() {
-
-  before(function() {
+describe('Logout', function () {
+  before(function () {
     this.sandbox = sinon.sandbox.create();
   });
 
-  beforeEach(function() {
+  beforeEach(function () {
     this.sandbox.stub(CTX.daemon, 'logout');
     this.sandbox.stub(client, 'post');
     this.sandbox.stub(client, 'get');
@@ -31,15 +32,15 @@ describe('Logout', function() {
     this.sandbox.stub(client, 'reset');
   });
 
-  afterEach(function() {
+  afterEach(function () {
     this.sandbox.restore();
   });
 
-  it('sends a logout request to the registry and daemon', function() {
+  it('sends a logout request to the registry and daemon', function () {
     client.post.returns(Promise.resolve());
     CTX.daemon.logout.returns(Promise.resolve());
 
-    return logout(CTX).then(function() {
+    return logout(CTX).then(function () {
       sinon.assert.calledWith(client.auth, CTX.token);
       sinon.assert.calledWith(client.delete, { url: '/session/' + CTX.token });
       sinon.assert.calledOnce(CTX.daemon.logout);
@@ -47,11 +48,11 @@ describe('Logout', function() {
     });
   });
 
-  it('reports an error and destroys the token on client failure', function() {
+  it('reports an error and destroys the token on client failure', function () {
     client.post.returns(Promise.reject(new Error('err')));
     CTX.daemon.logout.returns(Promise.resolve());
 
-    return logout(CTX).catch(function() {
+    return logout(CTX).catch(function () {
       sinon.assert.calledWith(client.auth, CTX.token);
 
       sinon.assert.calledOnce(CTX.daemon.logout);
@@ -59,11 +60,11 @@ describe('Logout', function() {
     });
   });
 
-  it('reports an error and destroys the token on daemon failure', function() {
+  it('reports an error and destroys the token on daemon failure', function () {
     client.post.returns(Promise.resolve());
     CTX.daemon.logout.returns(Promise.reject(new Error('err')));
 
-    return logout(CTX).catch(function() {
+    return logout(CTX).catch(function () {
       sinon.assert.calledWith(client.auth, CTX.token);
 
       sinon.assert.calledWith(client.delete, { url: '/session/' + CTX.token });

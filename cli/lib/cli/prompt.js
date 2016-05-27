@@ -8,7 +8,7 @@ function Prompt(stages, opts) {
   if (!_.isFunction(stages)) {
     throw new Error('stages must be a function');
   }
-  opts = _.isPlainObject(opts)? opts : {};
+  opts = _.isPlainObject(opts) ? opts : {};
   this.stages = stages(this);
   if (!_.isArray(this.stages)) {
     throw new Error('stages must return array');
@@ -23,10 +23,10 @@ function Prompt(stages, opts) {
 /**
  * Initiate the prompt, asking all stages
  */
-Prompt.prototype.start = function() {
+Prompt.prototype.start = function () {
   var self = this;
   var promise = Promise.resolve();
-  return promise.then(function() {
+  return promise.then(function () {
     return self.ask(promise, _.keys(self.stages));
   });
 };
@@ -37,11 +37,11 @@ Prompt.prototype.start = function() {
  * @param {object} promise - Promise chain
  * @param {array} stage - Array of stage indexes
  */
-Prompt.prototype.ask = function(promise, stage) {
+Prompt.prototype.ask = function (promise, stage) {
   var self = this;
-  return promise.then(function() {
+  return promise.then(function () {
     var questions = self._questions(stage);
-    return inquirer.prompt(questions).then(function(result) {
+    return inquirer.prompt(questions).then(function (result) {
       // Keep track of aggregate answers
       self._aggregate(result);
 
@@ -59,7 +59,7 @@ Prompt.prototype.ask = function(promise, stage) {
   });
 };
 
-Prompt.prototype._retryMessage = function(stageNumber) {
+Prompt.prototype._retryMessage = function (stageNumber) {
   var stage = this._questions(stageNumber);
   var firstQuestion = stage[0] || {};
   var message = firstQuestion.retryMessage || 'Please try again';
@@ -68,21 +68,21 @@ Prompt.prototype._retryMessage = function(stageNumber) {
   console.log('');
 };
 
-Prompt.prototype._hasFailed = function() {
+Prompt.prototype._hasFailed = function () {
   return this._stageFailed !== false;
 };
 
-Prompt.prototype._questions = function(stage) {
+Prompt.prototype._questions = function (stage) {
   var self = this;
   var questions = [];
-  stage = _.isArray(stage)? stage : [stage];
-  _.each(stage, function(stg) {
+  stage = _.isArray(stage) ? stage : [stage];
+  _.each(stage, function (stg) {
     questions = questions.concat(self.stages[stg]);
   });
   return questions;
 };
 
-Prompt.prototype.failed = function(stageKey, message) {
+Prompt.prototype.failed = function (stageKey, message) {
   this._stageAttempts++;
   if (this._stageAttempts > this._maxStageAttempts) {
     this._stageFailed = stageKey.toString();
@@ -91,11 +91,11 @@ Prompt.prototype.failed = function(stageKey, message) {
   return message;
 };
 
-Prompt.prototype._aggregate = function(result) {
+Prompt.prototype._aggregate = function (result) {
   this.aggregate = _.extend({}, this.aggregate, result);
 };
 
-Prompt.prototype._reset = function() {
+Prompt.prototype._reset = function () {
   this._stageAttempts = 0;
   this._stageFailed = false;
 };

@@ -18,11 +18,11 @@ var TYPE_AUTH = 'auth';
 
 login.output = {};
 
-login.output.success = output.create(function() {
+login.output.success = output.create(function () {
   console.log('You are now authenticated.');
 });
 
-login.output.failure = output.create(function() {
+login.output.failure = output.create(function () {
   console.error('Login failed, please try again.');
 });
 
@@ -31,18 +31,18 @@ login.output.failure = output.create(function() {
  *
  * @param {object} ctx - Prompt context
  */
-login.questions = function(/*ctx*/) {
+login.questions = function () {
   return [
     [
       {
         name: 'email',
         message: 'Email',
-        validate: validate.email,
+        validate: validate.email
       },
       {
         type: 'password',
         name: 'passphrase',
-        message: 'Passphrase',
+        message: 'Passphrase'
       }
     ]
   ];
@@ -54,7 +54,7 @@ login.questions = function(/*ctx*/) {
  * @param {object} ctx - Command context
  * @param {object} inputs - Optional user inputs
  */
-login.execute = function(ctx, inputs) {
+login.execute = function (ctx, inputs) {
   var retrieveInput;
   if (inputs) {
     retrieveInput = Promise.resolve(inputs);
@@ -62,7 +62,7 @@ login.execute = function(ctx, inputs) {
     retrieveInput = login._prompt();
   }
 
-  return retrieveInput.then(function(userInput) {
+  return retrieveInput.then(function (userInput) {
     return login._execute(ctx, userInput);
   });
 };
@@ -73,10 +73,10 @@ login.execute = function(ctx, inputs) {
  * @param {object} ctx - Command context
  * @param {object} inputs - Optional user inputs
  */
-login.subcommand = function(ctx, inputs) {
+login.subcommand = function (ctx, inputs) {
   ctx.params = [];
-  return new Promise(function(resolve, reject) {
-    login.execute(ctx, inputs).then(resolve).catch(function(err) {
+  return new Promise(function (resolve, reject) {
+    login.execute(ctx, inputs).then(resolve).catch(function (err) {
       login.output.failure();
       err.output = false;
       reject(err);
@@ -87,7 +87,7 @@ login.subcommand = function(ctx, inputs) {
 /**
  * Create prompt object
  */
-login._prompt = function() {
+login._prompt = function () {
   var prompt = new Prompt(login.questions);
   return prompt.start();
 };
@@ -98,7 +98,7 @@ login._prompt = function() {
  * @param {object} ctx - Context object
  * @param {object} userInput
  */
-login._execute = function(ctx, userInput) {
+login._execute = function (ctx, userInput) {
   client.reset(); // Clear any existing authorization
 
   var salt;
@@ -109,7 +109,8 @@ login._execute = function(ctx, userInput) {
       type: TYPE_LOGIN,
       email: userInput.email
     }
-  }).then(function(result) {
+  })
+  .then(function (result) {
     // Catch invalid data should API not return proper error status
     if (!result.body.salt || !result.body.login_token) {
       throw new Error('invalid response from api');
@@ -118,13 +119,15 @@ login._execute = function(ctx, userInput) {
     salt = base64url.toBuffer(result.body.salt);
     loginToken = result.body.login_token;
     return kdf.generate(userInput.passphrase, salt)
-      .then(function(buf) {
+      .then(function (buf) {
         return user.crypto.pwh(buf);
       });
-  }).then(function(pwh) {
+  })
+  .then(function (pwh) {
     // Generate hmac of login token
     return crypto.utils.hmac(loginToken, pwh);
-  }).then(function(result) {
+  })
+  .then(function (result) {
     // Use the login token to make an authenticated login attempt
     client.auth(loginToken);
     return client.post({
@@ -133,13 +136,13 @@ login._execute = function(ctx, userInput) {
         type: TYPE_AUTH,
         login_token_hmac: base64url.encode(result)
       }
-    }).then(function(result) {
+    }).then(function (result) { // eslint-disable-line
       // Re-authorize the api client for subsequent requests
       var authToken = result.body.auth_token;
       client.auth(authToken);
       return ctx.daemon.set({
         token: authToken
-      }).then(function() {
+      }).then(function () {
         return authToken;
       });
     });

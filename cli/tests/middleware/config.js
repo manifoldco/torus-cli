@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var fs = require('fs');
@@ -8,31 +10,31 @@ var assert = require('assert');
 var config = require('../../lib/middleware/config');
 var Context = require('../../lib/cli/context');
 
-describe('config middleware', function() {
-
+describe('config middleware', function () {
   var ctx;
   var sandbox;
-  beforeEach(function() {
+
+  beforeEach(function () {
     ctx = new Context({ version: 'banana' });
     sandbox = sinon.sandbox.create();
   });
-  afterEach(function() {
+  afterEach(function () {
     sandbox.restore();
   });
 
-  it('creates folder if does not exist', function() {
+  it('creates folder if does not exist', function () {
     var err = new Error('hi');
     err.code = 'ENOENT';
 
     sandbox.stub(fs, 'stat').yields(err);
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function () {
       sinon.assert.calledOnce(fs.stat);
       sinon.assert.calledWith(fs.stat, '/tmp/folder', sinon.match.any);
 
       sinon.assert.calledOnce(fs.mkdir);
-      sinon.assert.calledWith(fs.mkdir, '/tmp/folder', 0o700, sinon.match.any);
+      sinon.assert.calledWith(fs.mkdir, '/tmp/folder', 448, sinon.match.any);
 
       assert.strictEqual(ctx.config.arigatoRoot, '/tmp/folder');
       assert.strictEqual(ctx.config.socketPath, '/tmp/folder/daemon.socket');
@@ -41,60 +43,60 @@ describe('config middleware', function() {
     });
   });
 
-  it('errors if create fails', function() {
+  it('errors if create fails', function () {
     var err = new Error('hi');
     err.code = 'ENOENT';
 
     sandbox.stub(fs, 'stat').yields(err);
     sandbox.stub(fs, 'mkdir').yields(new Error('hi'));
 
-    return config('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function () {
       assert.ok(false, 'shouldnt happen');
-    }).catch(function(err) {
-      assert.ok(err instanceof Error);
+    }).catch(function (e) {
+      assert.ok(e instanceof Error);
       assert.strictEqual(err.message, 'hi');
     });
   });
 
-  it('resolves if folder exists', function() {
+  it('resolves if folder exists', function () {
     sandbox.stub(fs, 'stat').yields(null, {
-      isDirectory: function() { return true; },
+      isDirectory: function () { return true; },
       mode: 16832 // 0700
     });
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function () {
       sinon.assert.calledOnce(fs.stat);
       sinon.assert.calledWith(fs.stat, '/tmp/folder', sinon.match.any);
       sinon.assert.notCalled(fs.mkdir);
     });
   });
 
-  it('errors if folder exists and bad permissions', function() {
+  it('errors if folder exists and bad permissions', function () {
     sandbox.stub(fs, 'stat').yields(null, {
-      isDirectory: function() { return true; },
+      isDirectory: function () { return true; },
       mode: 16882 // 0700
     });
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function () {
       assert.ok(false, 'shouldnt happen');
-    }).catch(function(err) {
+    }).catch(function (err) {
       assert.ok(err instanceof Error);
       assert.ok(err.message.match(/Arigato root file permission/));
     });
   });
 
-  it('errors if exists but is not a directory', function() {
+  it('errors if exists but is not a directory', function () {
     sandbox.stub(fs, 'stat').yields(null, {
-      isDirectory: function() { return false; },
+      isDirectory: function () { return false; },
       mode: 16832 // 0700
     });
     sandbox.stub(fs, 'mkdir').yields();
 
-    return config('/tmp/folder')(ctx).then(function() {
+    return config('/tmp/folder')(ctx).then(function () {
       assert.ok(false, 'shouldnt happen');
-    }).catch(function(err) {
+    }).catch(function (err) {
       assert.ok(err instanceof Error);
       assert.ok(err.message.match(/Arigato Root must be a directory/));
     });

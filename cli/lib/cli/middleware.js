@@ -2,7 +2,7 @@
 
 var wrap = require('./wrap');
 
-function Middleware (fn) {
+function Middleware(fn) {
   if (typeof fn !== 'function') {
     throw new TypeError('Middleware must be a function');
   }

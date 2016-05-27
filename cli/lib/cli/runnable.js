@@ -3,7 +3,7 @@
 var series = require('./series');
 var Middleware = require('./middleware');
 
-function Runnable () {
+function Runnable() {
   this.preHooks = [];
   this.postHooks = [];
 }
@@ -11,7 +11,7 @@ module.exports = Runnable;
 
 Runnable.prototype.hook = function (type, fn) {
   if (type !== 'pre' && type !== 'post') {
-    throw new TypeError('Unknown hook type: '+type);
+    throw new TypeError('Unknown hook type: ' + type);
   }
 
   var hookList = (type === 'pre') ? this.preHooks : this.postHooks;
@@ -20,7 +20,7 @@ Runnable.prototype.hook = function (type, fn) {
 
 Runnable.prototype.runHooks = function (type, ctx) {
   if (type !== 'pre' && type !== 'post') {
-    throw new TypeError('Unknown hook type: '+type);
+    throw new TypeError('Unknown hook type: ' + type);
   }
 
   var hookList = (type === 'pre') ? this.preHooks : this.postHooks;
