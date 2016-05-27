@@ -1,6 +1,7 @@
 'use strict';
-module.exports = {
-  kdf: require('./kdf'),
-  utils: require('./utils'),
-  triplesec: require('./triplesec'),
-};
+
+var crypto = exports;
+
+crypto.kdf = require('./kdf');
+crypto.utils = require('./utils');
+crypto.triplesec = require('./triplesec');

@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var net = require('net');
@@ -7,18 +9,17 @@ var sinon = require('sinon');
 
 var Client = require('../../lib/daemon/client');
 
-describe('Daemon Client', function() {
-
+describe('Daemon Client', function () {
   var client;
-  describe('constructor', function() {
 
-    it('throws an error on bad socketpath', function() {
-      assert.throws(function() {
+  describe('constructor', function () {
+    it('throws an error on bad socketpath', function () {
+      assert.throws(function () {
         client = new Client(false);
       }, /socketPath string must be provided/);
     });
 
-    it('creates a socket and sets up subscriptions', function() {
+    it('creates a socket and sets up subscriptions', function () {
       client = new Client('/tmp/socket');
 
       assert.strictEqual(client.socketPath, '/tmp/socket');
@@ -28,27 +29,26 @@ describe('Daemon Client', function() {
     });
   });
 
-  describe('#connect', function() {
-
-    beforeEach(function() {
+  describe('#connect', function () {
+    beforeEach(function () {
       client = new Client('/tmp/socket');
     });
 
     it('propagates the error', function () {
-      sinon.stub(client.socket, 'connect', function(obj, cb) {
+      sinon.stub(client.socket, 'connect', function (obj, cb) {
         cb(new Error('hi'));
       });
 
-      return client.connect().then(function() {
+      return client.connect().then(function () {
         assert.ok(false, 'shouldnt have succeeded');
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'hi');
       });
     });
 
     it('returns successfully', function () {
-      sinon.stub(client.socket, 'connect', function(obj, cb) {
+      sinon.stub(client.socket, 'connect', function (obj, cb) {
         cb();
       });
 
@@ -57,50 +57,50 @@ describe('Daemon Client', function() {
   });
 
   describe('#send', function () {
-    beforeEach(function() {
+    beforeEach(function () {
       client = new Client('/tmp/socket');
-      sinon.stub(client.socket, 'write', function(data, cb) {
+      sinon.stub(client.socket, 'write', function (data, cb) {
         cb();
       });
     });
 
-    it('catches bad msg: missing msg', function() {
-      return client.send(false).then(function() {
+    it('catches bad msg: missing msg', function () {
+      return client.send(false).then(function () {
         assert.ok(false, 'shouldnt happen');
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'Message missing required properties');
       });
     });
 
-    it('catches bad msg: missing id', function() {
-      return client.send({ type: 'request' }).then(function() {
+    it('catches bad msg: missing id', function () {
+      return client.send({ type: 'request' }).then(function () {
         assert.ok(false, 'shouldnt happen');
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'Message missing required properties');
       });
     });
 
     it('catches bad msg: missing type', function () {
-      return client.send({ id: 'banana', command: 'request' }).then(function() {
+      return client.send({ id: 'banana', command: 'request' }).then(function () {
         assert.ok(false, 'shouldnt happen');
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'Message missing required properties');
       });
     });
 
     it('catches bad msg: missing command', function () {
-      return client.send({ id: 'banana', type: 'request' }).then(function() {
+      return client.send({ id: 'banana', type: 'request' }).then(function () {
         assert.ok(false, 'shouldnt happen');
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'Message missing required properties');
       });
     });
 
-    it('sends the msg as json', function() {
+    it('sends the msg as json', function () {
       var msg = {
         id: 'baba',
         command: 'sdf',
@@ -108,15 +108,15 @@ describe('Daemon Client', function() {
       };
       var msgStr = JSON.stringify(msg);
 
-      return client.send(msg).then(function() {
+      return client.send(msg).then(function () {
         sinon.assert.calledOnce(client.socket.write);
         sinon.assert.calledWith(client.socket.write, msgStr, sinon.match.any);
       });
     });
   });
 
-  describe('#end', function() {
-    it('ends the socket', function() {
+  describe('#end', function () {
+    it('ends the socket', function () {
       client = new Client('/tmp/socket');
       sinon.stub(client.socket, 'end');
 
@@ -126,21 +126,20 @@ describe('Daemon Client', function() {
     });
   });
 
-  describe('#_onData', function() {
-
-    beforeEach(function() {
+  describe('#_onData', function () {
+    beforeEach(function () {
       client = new Client('/tmp/socket');
       sinon.spy(client, 'emit');
     });
 
-    it('handles empty buffer', function() {
-      client._onData(JSON.stringify({"a":"b"})+'\n');
+    it('handles empty buffer', function () {
+      client._onData(JSON.stringify({ a: 'b' }) + '\n');
 
       sinon.assert.calledOnce(client.emit);
       sinon.assert.calledWith(client.emit, 'message', { a: 'b' });
     });
 
-    it('handles half-split messages', function() {
+    it('handles half-split messages', function () {
       client.buf = '{"a"';
 
       client._onData(':"b"}\n');
@@ -149,13 +148,13 @@ describe('Daemon Client', function() {
       sinon.assert.calledWith(client.emit, 'message', { a: 'b' });
     });
 
-    it('pushes remainder onto buffer', function() {
+    it('pushes remainder onto buffer', function () {
       client._onData('{"a":"b"}\n{"c":');
 
       assert.strictEqual(client.buf, '{"c":');
     });
 
-    it('throws an error on bad json', function() {
+    it('throws an error on bad json', function () {
       var spy = sinon.spy();
 
       client.on('error', spy);
@@ -170,8 +169,8 @@ describe('Daemon Client', function() {
     });
   });
 
-  describe('#_onTimeout', function() {
-    it('destroys the socket and emits an error', function() {
+  describe('#_onTimeout', function () {
+    it('destroys the socket and emits an error', function () {
       var spy = sinon.spy();
 
       client = new Client('/tmp/socket');
@@ -188,8 +187,8 @@ describe('Daemon Client', function() {
     });
   });
 
-  describe('#_onError', function() {
-    it('destroys the socket and emits an error', function() {
+  describe('#_onError', function () {
+    it('destroys the socket and emits an error', function () {
       var spy = sinon.spy();
 
       client = new Client('/tmp/socket');

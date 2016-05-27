@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var assert = require('assert');
@@ -6,18 +8,17 @@ var sinon = require('sinon');
 var Context = require('../../lib/cli/context');
 var Middleware = require('../../lib/cli/middleware');
 
-describe('Middleware', function() {
-
+describe('Middleware', function () {
   var m;
-  describe('constructor', function() {
-    it('throws error if a fn is not provided', function() {
-      assert.throws(function() {
+  describe('constructor', function () {
+    it('throws error if a fn is not provided', function () {
+      assert.throws(function () {
         m = new Middleware('a');
       }, /Middleware must be a function/);
     });
 
-    it('constructs with a function', function() {
-      m = new Middleware(function() {
+    it('constructs with a function', function () {
+      m = new Middleware(function () {
         console.log('hi');
       });
 
@@ -26,18 +27,17 @@ describe('Middleware', function() {
     });
   });
 
-  describe('#run', function() {
-
+  describe('#run', function () {
     var spy;
-    beforeEach(function() {
+    beforeEach(function () {
       spy = sinon.spy();
     });
 
-    it('runs the function and passes in a context', function() {
+    it('runs the function and passes in a context', function () {
+      m = new Middleware(spy);
       var c = new Context({});
-      var m = new Middleware(spy);
 
-      return m.run(c).then(function() {
+      return m.run(c).then(function () {
         sinon.assert.calledOnce(spy);
         sinon.assert.calledWith(spy, c);
       });

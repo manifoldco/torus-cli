@@ -1,7 +1,6 @@
 'use strict';
 
-function Context (program) {
-
+function Context(program) {
   if (!program) {
     throw new TypeError('A program must be provided');
   }

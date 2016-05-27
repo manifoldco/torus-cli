@@ -12,46 +12,47 @@ var verify = require('../../verify');
 module.exports = new Command(
   'signup',
   'create an Arigato account',
-  function(ctx) {
-    return new Promise(function(resolve, reject) {
-
+  function (ctx) {
+    return new Promise(function (resolve, reject) {
       // Create prompt from user questions
       var prompt = new Prompt(user.questions);
 
       // Begin asking questions
-      prompt.start().then(function(userInput) {
-
+      prompt.start().then(function (userInput) {
         // Create user object from input
-        return user.create(userInput).then(function() {
+        return user.create(userInput).then(function () {
           return userInput;
         });
 
       // Success, account created but now login
-      }).then(function(userInput) {
+      })
+      .then(function (userInput) {
         var params = {
           email: userInput.email,
-          passphrase: userInput.passphrase,
+          passphrase: userInput.passphrase
         };
         return login.subcommand(ctx, params);
-
-      }).then(function(authToken) {
+      })
+      .then(function (authToken) {
         user.output.success();
 
         ctx.token = authToken;
 
         verify.output.intermediate({ top: false });
-        return verify.subcommand(ctx).then(function(result) {
+        return verify.subcommand(ctx).then(function (result) {
           verify.output.success();
           login.output.success({ top: false });
           return result;
         });
 
       // Flow complete
-      }).then(function() {
+      })
+      .then(function () {
         resolve();
 
       // Account creation failed
-      }).catch(function(err) {
+      })
+      .catch(function (err) {
         if (err && err.output !== false) {
           err.type = err.type || 'unknown';
           user.output.failure(err);

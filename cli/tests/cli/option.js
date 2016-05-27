@@ -1,14 +1,15 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var assert = require('assert');
 
-var Context =  require('../../lib/cli/context');
+var Context = require('../../lib/cli/context');
 var Option = require('../../lib/cli/option');
 
-describe('Option', function() {
-
-  describe('constructor', function() {
-    it('sets required if required', function() {
+describe('Option', function () {
+  describe('constructor', function () {
+    it('sets required if required', function () {
       var o = new Option('-p, --pretty <name>', 'description');
 
       assert.strictEqual(o.required, true, 'required');
@@ -21,7 +22,7 @@ describe('Option', function() {
       assert.strictEqual(o.shortcut(), 'p');
     });
 
-    it('sets optional if optioned', function() {
+    it('sets optional if optioned', function () {
       var o = new Option('-p, --pretty [name]');
 
       assert.strictEqual(o.required, false);
@@ -33,17 +34,15 @@ describe('Option', function() {
       assert.strictEqual(o.shortcut(), 'p');
     });
 
-    it('throws an error if flags is not a string', function() {
-      assert.throws(function() {
-        var o = new Option(false);
-        /*jshint unused:false*/
+    it('throws an error if flags is not a string', function () {
+      assert.throws(function () {
+        var o = new Option(false); // eslint-disable-line
       }, /flags must be a string/);
     });
 
-    it('throws an error for bad flag input', function() {
-      assert.throws(function() {
-        var o = new Option('-x [name]');
-        /*jshint unused:false*/
+    it('throws an error for bad flag input', function () {
+      assert.throws(function () {
+        var o = new Option('-x [name]'); // eslint-disable-line
       }, /Flags do not match the regex/);
     });
 
@@ -55,7 +54,7 @@ describe('Option', function() {
       assert.strictEqual(o.defaultValue, false);
     });
 
-    it('handles boolean with --no-*', function() {
+    it('handles boolean with --no-*', function () {
       var o = new Option('-n, --no-save', 'no saving');
 
       assert.strictEqual(o.hasParam, false);
@@ -64,31 +63,30 @@ describe('Option', function() {
     });
   });
 
-  describe('#evaluate', function() {
-
+  describe('#evaluate', function () {
     var c;
-    beforeEach(function() {
+    beforeEach(function () {
       c = new Context({});
     });
 
-    it('sets the value', function() {
+    it('sets the value', function () {
       var o = new Option('-n, --name <name>', 'set name');
 
-      o.evaluate(c, {name: 'hi'});
+      o.evaluate(c, { name: 'hi' });
 
       assert.strictEqual(o.value, 'hi');
       assert.strictEqual(c.option('name'), o);
     });
 
-    it('sets the value with shortcut', function() {
+    it('sets the value with shortcut', function () {
       var o = new Option('-n, --name <name>', 'set name');
 
-      o.evaluate(c, {n: 'hi'});
+      o.evaluate(c, { n: 'hi' });
       assert.strictEqual(o.value, 'hi');
       assert.strictEqual(c.option('name'), o);
     });
 
-    it('sets the default value', function() {
+    it('sets the default value', function () {
       var o = new Option('-n, --name [name]', 'set name', 'joe');
 
       o.evaluate(c, {});
@@ -97,7 +95,7 @@ describe('Option', function() {
       assert.strictEqual(c.option('name'), o);
     });
 
-    it('sets as undefined if not bool', function() {
+    it('sets as undefined if not bool', function () {
       var o = new Option('-n, --name [name]', 'set name');
 
       o.evaluate(c, {});
@@ -106,7 +104,7 @@ describe('Option', function() {
       assert.strictEqual(c.option('name'), o);
     });
 
-    it('sets as false if bool', function() {
+    it('sets as false if bool', function () {
       var o = new Option('-n, --no', 'stuff');
 
       o.evaluate(c, {});
@@ -115,7 +113,7 @@ describe('Option', function() {
       assert.strictEqual(c.option('no'), o);
     });
 
-    it('sets as true if no-bool', function() {
+    it('sets as true if no-bool', function () {
       var o = new Option('-x, --no-x', 'stuff');
 
       o.evaluate(c, {});

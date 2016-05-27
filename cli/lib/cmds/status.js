@@ -9,11 +9,11 @@ module.exports = new Command(
   'status',
   'shows your current cli status',
   function (ctx) {
-    return new Promise(function(resolve, reject) {
-      status.execute(ctx).then(function(identity) {
+    return new Promise(function (resolve, reject) {
+      status.execute(ctx).then(function (identity) {
         status.output.success(null, identity);
         resolve();
-      }).catch(function(err) {
+      }).catch(function (err) {
         status.output.failure(err);
         reject(err);
       });

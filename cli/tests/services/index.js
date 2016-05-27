@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var sinon = require('sinon');
@@ -30,11 +32,11 @@ var SERVICE = {
 var CTX_DAEMON_EMPTY;
 var CTX;
 
-describe('Services Create', function() {
-  before(function() {
+describe('Services Create', function () {
+  before(function () {
     this.sandbox = sinon.sandbox.create();
   });
-  beforeEach(function() {
+  beforeEach(function () {
     this.sandbox.stub(services.output, 'success');
     this.sandbox.stub(services.output, 'failure');
     this.sandbox.stub(client, 'post')
@@ -65,47 +67,47 @@ describe('Services Create', function() {
     // Run the token middleware to populate the context object
     return Promise.all([
       tokenMiddleware.preHook()(CTX),
-      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY),
+      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY)
     ]);
   });
-  afterEach(function() {
+  afterEach(function () {
     this.sandbox.restore();
   });
-  describe('execute', function() {
-    it('calls _execute with inputs', function() {
+  describe('execute', function () {
+    it('calls _execute with inputs', function () {
       this.sandbox.stub(services, '_prompt').returns(Promise.resolve());
       this.sandbox.stub(services, '_execute').returns(Promise.resolve());
-      return services.execute(CTX).then(function() {
+      return services.execute(CTX).then(function () {
         sinon.assert.calledOnce(services._execute);
       });
     });
-    it('skips the prompt when inputs are supplied', function() {
+    it('skips the prompt when inputs are supplied', function () {
       this.sandbox.stub(services, '_prompt').returns(Promise.resolve());
       this.sandbox.stub(services, '_execute').returns(Promise.resolve());
-      return services.execute(CTX).then(function() {
+      return services.execute(CTX).then(function () {
         sinon.assert.notCalled(services._prompt);
       });
     });
   });
-  describe('_execute', function() {
-    it('authorizes the client', function() {
+  describe('_execute', function () {
+    it('authorizes the client', function () {
       var input = { name: 'api-1' };
-      return services._execute(CTX.token, input).then(function() {
+      return services._execute(CTX.token, input).then(function () {
         sinon.assert.calledOnce(client.auth);
       });
     });
-    it('fails if token not found in daemon', function(done) {
+    it('fails if token not found in daemon', function (done) {
       var input = { name: 'api-1' };
-      services._execute(CTX_DAEMON_EMPTY.token, input).then(function() {
+      services._execute(CTX_DAEMON_EMPTY.token, input).then(function () {
         done(new Error('dont call'));
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.equal(err.message, 'must authenticate first');
         done();
       });
     });
-    it('sends api request to services', function() {
+    it('sends api request to services', function () {
       var input = { name: 'api-1' };
-      return services._execute(CTX.token, input).then(function() {
+      return services._execute(CTX.token, input).then(function () {
         sinon.assert.calledOnce(client.post);
         var firstCall = client.post.firstCall;
         var args = firstCall.args;

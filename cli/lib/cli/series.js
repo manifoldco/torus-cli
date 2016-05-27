@@ -3,7 +3,8 @@
 var Promise = require('es6-promise').Promise;
 
 module.exports = function (list) {
-  function iter (list, results) {
+  // eslint-disable-next-line
+  function iter(list, results) {
     var item = list.shift();
     if (!item) {
       return Promise.resolve(results);
