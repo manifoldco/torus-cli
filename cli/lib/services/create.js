@@ -14,27 +14,27 @@ serviceCreate.output = {};
 /**
  * Success output
  */
-serviceCreate.output.success = output.create(function() {
+serviceCreate.output.success = output.create(function () {
   console.log('Service created.');
 });
 
 /**
  * Failure output
  */
-serviceCreate.output.failure = output.create(function() {
+serviceCreate.output.failure = output.create(function () {
   console.log('Service creation failed, please try again');
 });
 
 /**
  * Service prompt questions
  */
-serviceCreate.questions = function() {
+serviceCreate.questions = function () {
   return [
     [
       {
         name: 'name',
         message: 'Service name',
-        validate: validate.slug,
+        validate: validate.slug
       }
     ]
   ];
@@ -49,8 +49,8 @@ var validator = validate.build({
  *
  * @param {object} ctx - Command context
  */
-serviceCreate.execute = function(ctx) {
-  return new Promise(function(resolve, reject) {
+serviceCreate.execute = function (ctx) {
+  return new Promise(function (resolve, reject) {
     var retrieveInput;
 
     var name = ctx.params[0];
@@ -67,7 +67,7 @@ serviceCreate.execute = function(ctx) {
       retrieveInput = serviceCreate._prompt();
     }
 
-    retrieveInput.then(function(userInput) {
+    return retrieveInput.then(function (userInput) {
       return serviceCreate._execute(ctx.token, userInput);
     }).then(resolve).catch(reject);
   });
@@ -79,15 +79,15 @@ serviceCreate.execute = function(ctx) {
  * @param {string} token - Auth token
  * @param {object} userInput
  */
-serviceCreate._execute = function(token, userInput) {
-  return new Promise(function(resolve, reject) {
+serviceCreate._execute = function (token, userInput) {
+  return new Promise(function (resolve, reject) {
     client.auth(token);
 
     if (!client.authToken) {
       return reject(new Error('must authenticate first'));
     }
 
-    client.post({
+    return client.post({
       url: '/services',
       json: {
         body: {
@@ -101,7 +101,7 @@ serviceCreate._execute = function(token, userInput) {
 /**
  * Create prompt promise
  */
-serviceCreate._prompt = function() {
+serviceCreate._prompt = function () {
   var prompt = new Prompt({
     stages: serviceCreate.questions
   });

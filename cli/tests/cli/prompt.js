@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 'use strict';
 
 var _ = require('lodash');
@@ -7,15 +9,15 @@ var Promise = require('es6-promise').Promise;
 
 var Prompt = require('../../lib/cli/prompt');
 
-var MOCK_STAGES = function() {
+var MOCK_STAGES = function () {
   return [
     [
       {
         name: 'name',
         message: 'Full name',
-        validate: function(input) {
+        validate: function (input) {
           var error = 'Name too short';
-          return input.length < 3? error : true;
+          return input.length < 3 ? error : true;
         }
       }
     ],
@@ -24,38 +26,36 @@ var MOCK_STAGES = function() {
         name: 'passphrase',
         type: 'password',
         message: 'Passphrase',
-        validate: function(input) {
+        validate: function (input) {
           var error = 'Password too short';
-          return input.length < 8? error : true;
+          return input.length < 8 ? error : true;
         }
       }
-    ],
+    ]
   ];
 };
 
-describe('Prompt', function() {
+describe('Prompt', function () {
   var p;
   var promise;
-  describe('constructor', function() {
-    it('throws error if stages is not a function', function() {
-      assert.throws(function() {
-        p = new Prompt({
-          stages: 'nope'
-        });
+  describe('constructor', function () {
+    it('throws error if stages is not a function', function () {
+      assert.throws(function () {
+        p = new Prompt('nope');
       }, /stages must be a function/);
     });
 
-    it('throws error if stages does not return array', function() {
-      assert.throws(function() {
+    it('throws error if stages does not return array', function () {
+      assert.throws(function () {
         p = new Prompt({
-          stages: function() { return null; }
+          stages: function () { return null; }
         });
       }, /stages must return array/);
     });
 
-    it('sets default opts', function() {
+    it('sets default opts', function () {
       p = new Prompt({
-        stages: function() { return []; }
+        stages: function () { return []; }
       });
       assert.deepEqual(p.aggregate, {});
       assert.strictEqual(p._stageAttempts, 0);
@@ -64,28 +64,28 @@ describe('Prompt', function() {
     });
   });
 
-  describe('prompt', function() {
-    beforeEach(function() {
+  describe('prompt', function () {
+    beforeEach(function () {
       p = new Prompt({
         stages: MOCK_STAGES
       });
       promise = Promise.resolve();
     });
 
-    afterEach(function() {
+    afterEach(function () {
       if (p._inquirer.prompt.restore) {
         p._inquirer.prompt.restore();
       }
     });
 
-    describe('#start', function() {
-      it('calls #ask with all stages', function() {
+    describe('#start', function () {
+      it('calls #ask with all stages', function () {
         sinon.stub(p, 'ask').returns(Promise.resolve());
-        return p.start().then(function() {
+        return p.start().then(function () {
           assert.strictEqual(p.ask.callCount, 1);
 
-          var promise = p.ask.firstCall.args[0];
           var stage = p.ask.firstCall.args[1];
+          promise = p.ask.firstCall.args[0];
 
           assert.ok(promise instanceof Promise, 'should provide a promise');
           assert.deepEqual(stage, ['0', '1'], 'called with all stages');
@@ -93,34 +93,34 @@ describe('Prompt', function() {
       });
     });
 
-    describe('#ask', function() {
-      it('compiles a list of questions', function() {
+    describe('#ask', function () {
+      it('compiles a list of questions', function () {
         sinon.spy(p, '_questions');
         sinon.stub(p._inquirer, 'prompt').returns(Promise.resolve());
-        return p.ask(promise, _.keys(p.stages)).then(function() {
+        return p.ask(promise, _.keys(p.stages)).then(function () {
           assert.strictEqual(p._questions.callCount, 1);
-          sinon.assert.calledWith(p._questions, ['0','1']);
+          sinon.assert.calledWith(p._questions, ['0', '1']);
           var returning = p._questions.firstCall.returnValue;
           assert.deepEqual(returning.length, 2);
         });
       });
 
-      it('aggregates responses', function() {
+      it('aggregates responses', function () {
         sinon.spy(p, '_aggregate');
         var answers = { name: 'John Smith' };
         sinon.stub(p._inquirer, 'prompt').returns(Promise.resolve(answers));
-        return p.ask(promise, _.keys(p.stages)).then(function() {
+        return p.ask(promise, _.keys(p.stages)).then(function () {
           assert.strictEqual(p._aggregate.callCount, 1);
           sinon.assert.calledWith(p._aggregate, answers);
           assert.deepEqual(p.aggregate, answers);
         });
       });
 
-      it('recurses if stageFailed is not false', function() {
+      it('recurses if stageFailed is not false', function () {
         var answers = {
           first: {
             name: 'John Smith',
-            number: 2,
+            number: 2
           },
           second: {
             name: 'Jim Smith'
@@ -132,14 +132,20 @@ describe('Prompt', function() {
          */
         sinon.stub(p, '_questions')
           .returns([]);
-        sinon.stub(p, '_hasFailed')
-          .onFirstCall().returns('1')
-          .onSecondCall().returns(false);
-        sinon.stub(p._inquirer, 'prompt')
-          .onFirstCall().returns(Promise.resolve(answers.first))
-          .onSecondCall().returns(Promise.resolve(answers.second));
 
-        return p.ask(promise, ['0', '1']).then(function() {
+        sinon.stub(p, '_hasFailed')
+          .onFirstCall()
+          .returns('1')
+          .onSecondCall()
+          .returns(false);
+
+        sinon.stub(p._inquirer, 'prompt')
+          .onFirstCall()
+          .returns(Promise.resolve(answers.first))
+          .onSecondCall()
+          .returns(Promise.resolve(answers.second));
+
+        return p.ask(promise, ['0', '1']).then(function () {
           assert.strictEqual(p._hasFailed.callCount, 2, '_hasFailed once');
           // Twice for questions, once for retry message
           assert.strictEqual(p._questions.callCount, 3, '_questions once');
@@ -152,14 +158,14 @@ describe('Prompt', function() {
       });
     });
 
-    describe('#failed', function() {
-      it('returns message if max attempts not met', function() {
+    describe('#failed', function () {
+      it('returns message if max attempts not met', function () {
         var message = 'some message';
         var result = p.failed(1, message);
         assert.equal(result, message);
       });
 
-      it('returns true if max attempts not met', function() {
+      it('returns true if max attempts not met', function () {
         var message = 'some message';
         p._stageAttempts = p._maxStageAttempts;
         var result = p.failed(1, message);
@@ -167,8 +173,8 @@ describe('Prompt', function() {
       });
     });
 
-    describe('#_reset', function() {
-      it('sets stageAttempts to 0 and stageFailed to false', function() {
+    describe('#_reset', function () {
+      it('sets stageAttempts to 0 and stageFailed to false', function () {
         p._stageAttempts = 3;
         p._stageFailed = '1';
         p._reset();
@@ -177,15 +183,15 @@ describe('Prompt', function() {
       });
     });
 
-    describe('#_hasFailed', function() {
-      it('returns true if _stageFailed not false', function() {
+    describe('#_hasFailed', function () {
+      it('returns true if _stageFailed not false', function () {
         p._stageFailed = '1';
 
         var failed = p._hasFailed();
         assert.strictEqual(failed, true);
       });
 
-      it('returns true if _stageFailed not false', function() {
+      it('returns true if _stageFailed not false', function () {
         p._stageFailed = false;
 
         var failed = p._hasFailed();

@@ -2,7 +2,7 @@
 
 var fs = require('fs');
 var path = require('path');
-var child_process = require('child_process');
+var childProcess = require('child_process');
 
 var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
@@ -29,14 +29,14 @@ daemon.get = function (cfg) {
       return reject(new TypeError('cfg must be a Config object'));
     }
 
-    daemon.status(cfg).then(function(status) {
+    return daemon.status(cfg).then(function (status) {
       if (!status.exists) {
         return resolve(null);
       }
 
 
       var d = new Daemon(cfg);
-      return d.connect().then(function() {
+      return d.connect().then(function () {
         resolve(d);
       }).catch(reject);
     }).catch(reject);
@@ -56,23 +56,23 @@ daemon.start = function (cfg) {
       return reject(new TypeError('cfg must be a Config object'));
     }
 
-    function retry (backoff) {
+    function retry(backoff) {
       if (backoff.attempts > 3) {
         return reject(new Error('Daemon did not start'));
       }
 
-      setTimeout(function() {
-        daemon.get(cfg).then(function(d) {
+      return setTimeout(function () {
+        daemon.get(cfg).then(function (d) {
           if (!d) {
             return retry(backoff);
           }
 
-          resolve(d);
+          return resolve(d);
         }).catch(reject);
       }, backoff.duration());
     }
 
-    daemon.status(cfg).then(function(status) {
+    return daemon.status(cfg).then(function (status) {
       if (status.exists) {
         return reject(new Error('Daemon is already running'));
       }
@@ -88,13 +88,13 @@ daemon.start = function (cfg) {
       };
 
       // TODO: We should be logging the pid and other information
-      var child = child_process.spawn(daemon.DAEMON_PATH, [], opt);
+      var child = childProcess.spawn(daemon.DAEMON_PATH, [], opt);
       child.unref();
 
       // XXX: Wait a second before trying to connect to the daemon
       var backoff = new Backoff({
-        min: 100, max: 1000, jitter: 0.75, factor: 2});
-      retry(backoff);
+        min: 100, max: 1000, jitter: 0.75, factor: 2 });
+      return retry(backoff);
     }).catch(reject);
   });
 };
@@ -112,7 +112,7 @@ daemon.stop = function (cfg) {
       return reject(new TypeError('cfg must be a Config object'));
     }
 
-    daemon.status(cfg).then(function(status) {
+    return daemon.status(cfg).then(function (status) {
       if (!status.exists) {
         return reject(new Error('Daemon is not running'));
       }
@@ -125,19 +125,19 @@ daemon.stop = function (cfg) {
         process.kill(status.pid, 'SIGTERM');
       } catch (err) {
         if (err.code === 'ESRCH') {
-          return reject(new Error('Unknown pid cannot kill: '+status.pid));
+          return reject(new Error('Unknown pid cannot kill: ' + status.pid));
         }
 
         return reject(err);
       }
 
-      resolve();
+      return resolve();
     });
   });
 };
 
 daemon.status = function (cfg) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     fs.readFile(cfg.pidPath, 'utf-8', function (err, pid) {
       if (err) {
         if (err && err.code === 'ENOENT') {
@@ -149,7 +149,7 @@ daemon.status = function (cfg) {
 
       pid = parseInt(pid, 10);
       if (_.isNaN(pid)) {
-        return reject(new Error('Invalid pid in file '+cfg.pidPath));
+        return reject(new Error('Invalid pid in file ' + cfg.pidPath));
       }
 
       var exists = true;
@@ -159,16 +159,16 @@ daemon.status = function (cfg) {
         //
         // An error is thrown if the process does not exist.
         process.kill(pid, 0);
-      } catch (err) {
-        if (err.code !== 'ESRCH') {
-          return reject(err);
+      } catch (e) {
+        if (e.code !== 'ESRCH') {
+          return reject(e);
         }
 
         exists = false;
         pid = null;
       }
 
-      resolve({ exists: exists, pid: pid });
+      return resolve({ exists: exists, pid: pid });
     });
   });
 };

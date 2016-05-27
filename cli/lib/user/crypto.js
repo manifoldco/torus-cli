@@ -25,20 +25,20 @@ var PASSWORD_BUFFER_LENGTH = 224;
  *
  * @param {string} password - Plaintext password value
  */
-user.encryptPasswordObject = function(password) {
+user.encryptPasswordObject = function (password) {
   var data = {};
 
   // Generate 128 bit (16 byte) salt for password
   return utils.randomBytes(SALT_BYTES)
     // Construct the password object
-    .then(function(passwordSalt) {
+    .then(function (passwordSalt) {
       data.password = {
         salt: base64url.encode(passwordSalt),
-        alg: algos.value('scrypt'), // 0x23
+        alg: algos.value('scrypt') // 0x23
       };
 
       // Create password buffer
-      return kdf.generate(password, passwordSalt).then(function(buf) {
+      return kdf.generate(password, passwordSalt).then(function (buf) {
         if (buf.length !== PASSWORD_BUFFER_LENGTH) {
           throw new Error('invalid buffer length');
         }
@@ -48,20 +48,20 @@ user.encryptPasswordObject = function(password) {
       });
 
     // Construct the master object from the password buffer
-    }).then(function(passwordBuf) {
+    }).then(function (passwordBuf) {
       data.master = {
-        alg: algos.value('triplesec v3'), // 0x22
+        alg: algos.value('triplesec v3') // 0x22
       };
 
       // Generate 1024 bit (256 byte) master key
-      return utils.randomBytes(MASTER_KEY_BYTES).then(function(masterKeyBuf) {
+      return utils.randomBytes(MASTER_KEY_BYTES).then(function (masterKeyBuf) {
         // Ensure the buffer used to encrypt is 192 bytes
         var passwordBufSlice = passwordBuf.slice(0, SLICE_LENGTH_BYTES);
         // Encrypt master key using the password buffer
         return triplesec.encrypt({
           data: masterKeyBuf,
-          key: passwordBufSlice,
-        }).then(function(buf) {
+          key: passwordBufSlice
+        }).then(function (buf) {
           // Base64 the master value for transmission
           data.master.value = base64url.encode(buf);
           return data;
@@ -75,7 +75,7 @@ user.encryptPasswordObject = function(password) {
  *
  * @param {buffer} passwordBuf
  */
-user.pwh = function(passwordBuf) {
+user.pwh = function (passwordBuf) {
   // pwh is created from last 32 byte / 256 bit of password buffer
   var passwordBufSlice = passwordBuf.slice(SLICE_LENGTH_BYTES);
   return base64url.encode(passwordBufSlice);
@@ -87,10 +87,10 @@ user.pwh = function(passwordBuf) {
  * @param {string} password - Plaintext password
  * @param {object} userObject - Full user object
  */
-user.decryptMasterKey = function(password, userObject) {
+user.decryptMasterKey = function (password, userObject) {
   // Use stored password salt to encrypt password
   var passwordSalt = userObject.body.password.salt;
-  return kdf.generate(password, passwordSalt).then(function(buf) {
+  return kdf.generate(password, passwordSalt).then(function (buf) {
     // Decode master value from base64url
     var value = base64url.toBuffer(userObject.body.master.value);
     // Use the password buffer to decrypt the master key
@@ -102,7 +102,7 @@ user.decryptMasterKey = function(password, userObject) {
     // Returns masterKey buffer for use with encrypting
     return triplesec.decrypt({
       data: value,
-      key: masterKey,
+      key: masterKey
     });
   });
 };

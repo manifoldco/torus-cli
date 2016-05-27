@@ -9,12 +9,12 @@ var _ = require('lodash');
  *
  * @param {function} fn
  */
-output.create = function(fn) {
+output.create = function (fn) {
   if (!_.isFunction(fn)) {
     throw new Error('missing output function');
   }
 
-  return function(opts) {
+  return function (opts) {
     opts = opts || {};
 
     // TODO: Proper output module for errors and banner messages

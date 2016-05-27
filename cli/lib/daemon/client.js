@@ -6,7 +6,7 @@ var Promise = require('es6-promise').Promise;
 var EventEmitter = require('events').EventEmitter;
 var EventRegulator = require('event-regulator').EventRegulator;
 
-function proxy (emitter, event) {
+function proxy(emitter, event) {
   return function () {
     var args = arguments.
     args.unshift(event);
@@ -21,7 +21,7 @@ function proxy (emitter, event) {
  * Wrapper around unix socket for sending and receiving Message objects with a
  * promise based
  */
-function Client (socketPath) {
+function Client(socketPath) {
   EventEmitter.call(this);
 
   if (!socketPath || typeof socketPath !== 'string') {
@@ -55,7 +55,7 @@ Client.prototype.connect = function () {
         return reject(err);
       }
 
-      resolve();
+      return resolve();
     });
   });
 };
@@ -63,17 +63,16 @@ Client.prototype.connect = function () {
 Client.prototype.send = function (msg) {
   var self = this;
   return new Promise(function (resolve, reject) {
-
     if (!msg || !msg.id || !msg.type || !msg.command) {
       return reject(new Error('Message missing required properties'));
     }
 
-    self.socket.write(JSON.stringify(msg), function (err) {
+    return self.socket.write(JSON.stringify(msg), function (err) {
       if (err) {
         return reject(err);
       }
 
-      resolve();
+      return resolve();
     });
   });
 };
@@ -95,7 +94,9 @@ Client.prototype._onData = function (buf) {
   var parts = this.buf.split('\n');
   this.buf = '';
 
-  var part, msg;
+  var part;
+  var msg;
+
   for (var i = 0; i < parts.length; ++i) {
     part = parts[i];
 
@@ -115,8 +116,8 @@ Client.prototype._onData = function (buf) {
       msg = JSON.parse(part);
       this.emit('message', msg);
     } catch (err) {
-      return this._onError(new Error(
-        'Could not parse message: '+err.message
+      this._onError(new Error(
+        'Could not parse message: ' + err.message
       ));
     }
   }

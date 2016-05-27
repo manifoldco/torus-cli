@@ -11,7 +11,7 @@ var SCRYPT_P = 1; // parallelism factor
 var SCRYPT_DKLEN = 224; // generate 224 byte key
 
 kdf.generate = function (key, salt, hook) {
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve, reject) {
     key = (Buffer.isBuffer(key) ? key : new Buffer(key));
     salt = (Buffer.isBuffer(salt)) ? salt : new Buffer((salt));
 
@@ -30,7 +30,7 @@ kdf.generate = function (key, salt, hook) {
         return reject(res);
       }
 
-      resolve(res.to_buffer());
+      return resolve(res.to_buffer());
     });
   });
 };

@@ -10,7 +10,7 @@ var Command = require('./command');
 var Context = require('./context');
 var Runnable = require('./runnable');
 
-function Program (name, version, templates) {
+function Program(name, version, templates) {
   Runnable.call(this);
 
   if (typeof name !== 'string') {
@@ -27,12 +27,8 @@ function Program (name, version, templates) {
   this.name = name;
   this.version = version;
   this.templates = {
-    program: _.template(templates.program, { imports: {
-      '_': _
-    }}),
-    command: _.template(templates.command, { imports: {
-      '_': _
-    }})
+    program: _.template(templates.program, { imports: { _: _ } }),
+    command: _.template(templates.command, { imports: { _: _ } })
   };
   this.commands = {};
   this.groups = {};
@@ -60,7 +56,6 @@ Program.prototype.command = function (cmd) {
 };
 
 Program.prototype.help = function (ctx) {
-
   var params = ctx.params;
   if (!ctx.slug || (ctx.slug === 'help' && params.length === 0)) {
     return this._rootHelp(ctx);
@@ -72,14 +67,14 @@ Program.prototype.help = function (ctx) {
 
   var c = this.commands[ctx.slug];
   if (!c) {
-    console.log('Unknown command: '+ctx.slug);
+    console.log('Unknown command: ' + ctx.slug);
     return this._rootHelp(ctx);
   }
 
   return this._cmdHelp(ctx, c);
 };
 
-Program.prototype._rootHelp = function root (ctx) {
+Program.prototype._rootHelp = function root(ctx) {
   console.log(this.templates.program({
     program: this,
     ctx: ctx
@@ -126,7 +121,6 @@ Program.prototype._parseArgs = function (ctx, cmd, argv) {
 };
 
 Program.prototype.run = function (argv) {
-
   if (!Array.isArray(argv)) {
     throw new Error('Must provide an array for argv');
   }
@@ -141,7 +135,7 @@ Program.prototype.run = function (argv) {
 
   var cmd = this.commands[ctx.slug];
   if (!this.commands[ctx.slug]) {
-    console.log('Unknown Command: '+ctx.slug);
+    console.log('Unknown Command: ' + ctx.slug);
     ctx.slug = ctx.group = null;
     return this.help(ctx);
   }
@@ -150,8 +144,8 @@ Program.prototype.run = function (argv) {
   this._parseArgs(ctx, cmd, argv);
 
   var self = this;
-  return self.runHooks('pre', ctx).then(function() {
-    return cmd.run.call(cmd, ctx).then(function() {
+  return self.runHooks('pre', ctx).then(function () {
+    return cmd.run.call(cmd, ctx).then(function () {
       return self.runHooks('post', ctx);
     });
   });

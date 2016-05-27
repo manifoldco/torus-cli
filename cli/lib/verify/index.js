@@ -14,7 +14,7 @@ verify.output = {};
 /**
  * Intermediate output
  */
-verify.output.intermediate = output.create(function() {
+verify.output.intermediate = output.create(function () {
   console.log('We have sent a verification code to your email.');
   console.log('Please enter your code below:');
 });
@@ -22,14 +22,14 @@ verify.output.intermediate = output.create(function() {
 /**
  * Success output
  */
-verify.output.success = output.create(function() {
+verify.output.success = output.create(function () {
   console.log('Your account is now verified.');
 });
 
 /**
  * Failure output
  */
-verify.output.failure = output.create(function() {
+verify.output.failure = output.create(function () {
   console.error('Email verification failed, please try again.');
 });
 
@@ -38,14 +38,14 @@ verify.output.failure = output.create(function() {
  *
  * @param {object} ctx - Prompt context
  */
-verify.questions = function() {
+verify.questions = function () {
   return [
     [
       {
         name: 'code',
         message: 'Verification code',
-        validate: validate.code,
-      },
+        validate: validate.code
+      }
     ]
   ];
 };
@@ -55,7 +55,7 @@ verify.questions = function() {
  *
  * @param {object} ctx - Command context
  */
-verify.execute = function(ctx) {
+verify.execute = function (ctx) {
   var retrieveInput;
   var code = verify._codeFromParams(ctx.params);
 
@@ -70,7 +70,7 @@ verify.execute = function(ctx) {
     retrieveInput = verify._prompt();
   }
 
-  return retrieveInput.then(function(userInput) {
+  return retrieveInput.then(function (userInput) {
     return verify._execute(ctx.token, userInput);
   });
 };
@@ -80,10 +80,10 @@ verify.execute = function(ctx) {
  *
  * @param {object} ctx - Command context
  */
-verify.subcommand = function(ctx) {
+verify.subcommand = function (ctx) {
   ctx.params = [];
-  return new Promise(function(resolve, reject) {
-    verify.execute(ctx).then(resolve).catch(function(err) {
+  return new Promise(function (resolve, reject) {
+    verify.execute(ctx).then(resolve).catch(function (err) {
       verify.output.failure();
       err.output = false;
       reject(err);
@@ -94,7 +94,7 @@ verify.subcommand = function(ctx) {
 /**
  * Create prompt object
  */
-verify._prompt = function() {
+verify._prompt = function () {
   var prompt = new Prompt({
     stages: verify.questions
   });
@@ -107,21 +107,21 @@ verify._prompt = function() {
  * @param {string} token - Auth token
  * @param {object} userInput
  */
-verify._execute = function(token, userInput) {
-  return new Promise(function(resolve, reject) {
+verify._execute = function (token, userInput) {
+  return new Promise(function (resolve, reject) {
     client.auth(token);
 
     if (!client.authToken) {
       return reject(new Error('must authenticate first'));
     }
 
-    client.post({
+    return client.post({
       url: '/users/verify',
       json: {
         // Trim spaces if provided in input
-        code: userInput.code.replace(/\s/g, '').toUpperCase(),
+        code: userInput.code.replace(/\s/g, '').toUpperCase()
       }
-    }).then(function(result) {
+    }).then(function (result) {
       resolve(result.user);
     }).catch(reject);
   });
@@ -132,7 +132,7 @@ verify._execute = function(token, userInput) {
  *
  * @param {array} params
  */
-verify._codeFromParams = function(params) {
+verify._codeFromParams = function (params) {
   params = params || [];
   var code;
   if (params.length === 3) {
