@@ -108,14 +108,14 @@ Prompt.prototype._reset = function () {
 /**
  * Apply default values to stages
  */
-Prompt.prototype._setDefaults = function(stages) {
+Prompt.prototype._setDefaults = function (stages) {
   if (!this._defaults) {
     return stages;
   }
 
   var self = this;
   stages = stages || [];
-  return _.map(stages, function(stage) {
+  return _.map(stages, function (stage) {
     if (_.isArray(stage)) {
       return self._setDefaults(stage);
     }

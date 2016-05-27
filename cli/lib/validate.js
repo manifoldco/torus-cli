@@ -96,7 +96,7 @@ validate.passphrase = function (input) {
 validate.id = function (input) {
   var error = 'Please enter a valid 24 character ID';
   var matches = validator.matches(input, /^[a-zA-Z0-9\\_\\-]+$/);
-  return input.length !== 24 || !matches? error : true;
+  return input.length !== 24 || !matches ? error : true;
 };
 
 validate.code = function (input) {

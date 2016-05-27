@@ -13,15 +13,15 @@ var client = require('../api/client').create();
 
 envCreate.output = {};
 
-envCreate.output.success = output.create(function() {
+envCreate.output.success = output.create(function () {
   console.log('Environment created');
 });
 
-envCreate.output.failure = output.create(function() {
+envCreate.output.failure = output.create(function () {
   console.log('Environment creation failed, please try again');
 });
 
-envCreate.questions = function(services) {
+envCreate.questions = function (serviceNames) {
   return [
     [
       {
@@ -33,7 +33,7 @@ envCreate.questions = function(services) {
         type: 'list',
         name: 'service',
         message: 'Service',
-        choices: services
+        choices: serviceNames
       }
     ]
   ];
@@ -41,7 +41,7 @@ envCreate.questions = function(services) {
 
 var validator = validate.build({
   name: validate.slug,
-  service: validate.slug,
+  service: validate.slug
 });
 
 /**
@@ -49,25 +49,24 @@ var validator = validate.build({
  *
  * @param {object} ctx - Command context
  */
-envCreate.execute = function(ctx) {
-  return new Promise(function(resolve, reject) {
-
+envCreate.execute = function (ctx) {
+  return new Promise(function (resolve, reject) {
     var options = ctx.options || {};
     var params = ctx.params || [];
     var service = options.service && options.service.value;
 
     var data = {
       name: params[0],
-      service: service,
+      service: service
     };
 
     var serviceData;
-    services.execute(ctx).then(function(services) {
-      serviceData = services.body;
+    services.execute(ctx).then(function (results) {
+      serviceData = results.body;
       return _.map(serviceData, 'body.name');
 
     // Prompt for values, filling in defaults for supplied values
-    }).then(function(serviceNames) {
+    }).then(function (serviceNames) {
       if (!serviceNames.length) {
         throw new Error('Must create service before env');
       }
@@ -87,15 +86,16 @@ envCreate.execute = function(ctx) {
       }
 
       // Otherwise prompt for missing values
-      return envCreate._prompt(data, serviceNames).then(function(userInput) {
+      return envCreate._prompt(data, serviceNames).then(function (userInput) {
         userInput = _.omitBy(_.extend({}, data, userInput), _.isUndefined);
         return userInput;
       });
 
     // Map the item selected to its ID
-    }).then(function(userInput) {
-      var serviceId = _.map(_.filter(serviceData, function(service) {
-        return service.body.name === userInput.service;
+    })
+    .then(function (userInput) {
+      var serviceId = _.map(_.filter(serviceData, function (s) {
+        return s.body.name === userInput.service;
       }), 'id');
 
       // Swap for owner_id since we know the exact one
@@ -104,23 +104,24 @@ envCreate.execute = function(ctx) {
       return userInput;
 
     // Create the env in the
-    }).then(function(userInput) {
-
+    })
+    .then(function (userInput) {
       return envCreate._execute(ctx.token, userInput);
-
-    }).then(resolve).catch(reject);
+    })
+    .then(resolve)
+    .catch(reject);
   });
 };
 
 /**
  * Create prompt promise
  */
-envCreate._prompt = function(defaults, services) {
+envCreate._prompt = function (defaults, serviceNames) {
   var prompt = new Prompt({
     stages: envCreate.questions,
     defaults: defaults,
     questionArgs: [
-      services
+      serviceNames
     ]
   });
 
@@ -133,9 +134,8 @@ envCreate._prompt = function(defaults, services) {
  * @param {string} token
  * @param {object} data
  */
-envCreate._execute = function(token, data) {
-  return new Promise(function(resolve, reject) {
-
+envCreate._execute = function (token, data) {
+  return new Promise(function (resolve, reject) {
     // Authenticate the API client
     client.auth(token);
 
@@ -148,6 +148,8 @@ envCreate._execute = function(token, data) {
       json: {
         body: data
       }
-    }).then(resolve).catch(reject);
+    })
+    .then(resolve)
+    .catch(reject);
   });
 };

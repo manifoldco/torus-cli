@@ -10,11 +10,11 @@ var createEnv = new Command(
   'envs:create [name]',
   'create an environment for a service',
   function (ctx) {
-    return new Promise(function(resolve, reject) {
-      envs.create.execute(ctx).then(function() {
+    return new Promise(function (resolve, reject) {
+      envs.create.execute(ctx).then(function () {
         envs.create.output.success();
         resolve();
-      }).catch(function(err) {
+      }).catch(function (err) {
         err.type = err.type || 'unknown';
         envs.create.output.failure(err);
         reject(err);

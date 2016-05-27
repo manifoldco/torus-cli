@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 'use strict';
 
 var sinon = require('sinon');
@@ -16,7 +17,7 @@ var ValidationError = require('../../lib/validate').ValidationError;
 var ORG = {
   id: utils.id('org'),
   body: {
-    name: 'jeff-arigato-sh',
+    name: 'jeff-arigato-sh'
   }
 };
 
@@ -32,24 +33,24 @@ var ENV = {
   id: utils.id('env'),
   body: {
     name: 'staging',
-    owner_id: SERVICE.id,
+    owner_id: SERVICE.id
   }
 };
 
 var CTX_DAEMON_EMPTY;
 var CTX;
 
-describe('Envs Create', function() {
-  before(function() {
+describe('Envs Create', function () {
+  before(function () {
     this.sandbox = sinon.sandbox.create();
   });
-  beforeEach(function() {
+  beforeEach(function () {
     this.sandbox.stub(envs.output, 'success');
     this.sandbox.stub(envs.output, 'failure');
     this.sandbox.stub(client, 'get')
-      .returns(Promise.resolve({ body: [ SERVICE ] }));
+      .returns(Promise.resolve({ body: [SERVICE] }));
     this.sandbox.stub(client, 'post')
-      .returns(Promise.resolve({ body: [ ENV ] }));
+      .returns(Promise.resolve({ body: [ENV] }));
     this.sandbox.spy(client, 'auth');
 
     // Context stub when no token set
@@ -76,108 +77,108 @@ describe('Envs Create', function() {
     // Run the token middleware to populate the context object
     return Promise.all([
       tokenMiddleware.preHook()(CTX),
-      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY),
+      tokenMiddleware.preHook()(CTX_DAEMON_EMPTY)
     ]);
   });
-  afterEach(function() {
+  afterEach(function () {
     this.sandbox.restore();
   });
-  describe('execute', function() {
-    it('calls _execute with inputs', function() {
+  describe('execute', function () {
+    it('calls _execute with inputs', function () {
       this.sandbox.stub(envs, '_prompt').returns(Promise.resolve());
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
-      return envs.execute(CTX).then(function() {
+      return envs.execute(CTX).then(function () {
         sinon.assert.calledOnce(envs._execute);
       });
     });
-    it('prompts for missing inputs', function() {
+    it('prompts for missing inputs', function () {
       this.sandbox.stub(envs, '_prompt').returns(Promise.resolve());
-      return envs.execute(CTX).then(function() {
+      return envs.execute(CTX).then(function () {
         sinon.assert.calledOnce(envs._prompt);
       });
     });
-    it('skips the prompt when inputs are supplied', function() {
+    it('skips the prompt when inputs are supplied', function () {
       this.sandbox.spy(envs, '_prompt');
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
-      CTX.params = [ ENV.body.name ];
+      CTX.params = [ENV.body.name];
       CTX.options = { service: { value: SERVICE.body.name } };
-      return envs.execute(CTX).then(function() {
+      return envs.execute(CTX).then(function () {
         sinon.assert.notCalled(envs._prompt);
       });
     });
-    it('prompt - converts service name to owner_id before POST', function() {
+    it('prompt - converts service name to owner_id before POST', function () {
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
       this.sandbox.stub(envs, '_prompt').returns(Promise.resolve({
         name: ENV.body.name,
-        service: SERVICE.body.name,
+        service: SERVICE.body.name
       }));
-      return envs.execute(CTX).then(function() {
+      return envs.execute(CTX).then(function () {
         sinon.assert.calledOnce(envs._prompt);
         var args = envs._execute.firstCall.args;
         assert.deepEqual(args[1], {
           name: ENV.body.name,
-          owner_id: SERVICE.id,
+          owner_id: SERVICE.id
         });
       });
     });
-    it('rejects invalid flags', function(done) {
+    it('rejects invalid flags', function (done) {
       this.sandbox.spy(envs, '_prompt');
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
-      CTX.params = [ ENV.body.name ];
+      CTX.params = [ENV.body.name];
       CTX.options = { service: { value: 'a+++' } };
-      envs.execute(CTX).then(function() {
+      envs.execute(CTX).then(function () {
         done(new Error('not called'));
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err instanceof ValidationError);
         done();
       });
     });
-    it('rejects invalid params', function(done) {
+    it('rejects invalid params', function (done) {
       this.sandbox.spy(envs, '_prompt');
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
-      CTX.params = [ 'A+++' ];
+      CTX.params = ['A+++'];
       CTX.options = { service: { value: SERVICE.body.name } };
-      envs.execute(CTX).then(function() {
+      envs.execute(CTX).then(function () {
         done(new Error('not called'));
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.ok(err instanceof ValidationError);
         done();
       });
     });
-    it('no prompt - converts service name to owner_id before POST', function() {
+    it('no prompt - converts service name to owner_id before POST', function () {
       this.sandbox.spy(envs, '_prompt');
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
-      CTX.params = [ ENV.body.name ];
+      CTX.params = [ENV.body.name];
       CTX.options = { service: { value: SERVICE.body.name } };
-      return envs.execute(CTX).then(function() {
+      return envs.execute(CTX).then(function () {
         sinon.assert.notCalled(envs._prompt);
         var args = envs._execute.firstCall.args;
         assert.deepEqual(args[1], {
           name: ENV.body.name,
-          owner_id: SERVICE.id,
+          owner_id: SERVICE.id
         });
       });
     });
   });
-  describe('_execute', function() {
-    it('authorizes the client', function() {
+  describe('_execute', function () {
+    it('authorizes the client', function () {
       var input = { name: 'staging', owner_id: SERVICE.id };
-      return envs._execute(CTX.token, input).then(function() {
+      return envs._execute(CTX.token, input).then(function () {
         sinon.assert.calledOnce(client.auth);
       });
     });
-    it('fails if token not found in daemon', function(done) {
+    it('fails if token not found in daemon', function (done) {
       var input = { name: 'staging', owner_id: SERVICE.id };
-      envs._execute(CTX_DAEMON_EMPTY.token, input).then(function() {
+      envs._execute(CTX_DAEMON_EMPTY.token, input).then(function () {
         done(new Error('dont call'));
-      }).catch(function(err) {
+      }).catch(function (err) {
         assert.equal(err.message, 'must authenticate first');
         done();
       });
     });
-    it('sends api request to envs', function() {
+    it('sends api request to envs', function () {
       var input = { name: 'staging', owner_id: SERVICE.id };
-      return envs._execute(CTX.token, input).then(function() {
+      return envs._execute(CTX.token, input).then(function () {
         sinon.assert.calledOnce(client.post);
         var firstCall = client.post.firstCall;
         var args = firstCall.args;
@@ -186,7 +187,7 @@ describe('Envs Create', function() {
           json: {
             body: {
               name: 'staging',
-              owner_id: SERVICE.id,
+              owner_id: SERVICE.id
             }
           }
         });
