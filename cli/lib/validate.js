@@ -93,6 +93,12 @@ validate.passphrase = function (input) {
   return input.length < 8 ? error : true;
 };
 
+validate.id = function (input) {
+  var error = 'Please enter a valid 24 character ID';
+  var matches = validator.matches(input, /^[a-zA-Z0-9\\_\\-]+$/);
+  return input.length !== 24 || !matches ? error : true;
+};
+
 validate.code = function (input) {
   var error = 'Verification code must be exactly 9 characters';
   var trimmed = input.replace(/\s/g, '');

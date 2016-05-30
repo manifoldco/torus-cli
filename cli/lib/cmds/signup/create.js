@@ -15,7 +15,9 @@ module.exports = new Command(
   function (ctx) {
     return new Promise(function (resolve, reject) {
       // Create prompt from user questions
-      var prompt = new Prompt(user.questions);
+      var prompt = new Prompt({
+        stages: user.questions
+      });
 
       // Begin asking questions
       prompt.start().then(function (userInput) {

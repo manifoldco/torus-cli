@@ -95,7 +95,9 @@ verify.subcommand = function (ctx) {
  * Create prompt object
  */
 verify._prompt = function () {
-  var prompt = new Prompt(verify.questions);
+  var prompt = new Prompt({
+    stages: verify.questions
+  });
   return prompt.start();
 };
 

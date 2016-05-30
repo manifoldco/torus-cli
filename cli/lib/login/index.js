@@ -28,8 +28,6 @@ login.output.failure = output.create(function () {
 
 /**
  * Login prompt questions
- *
- * @param {object} ctx - Prompt context
  */
 login.questions = function () {
   return [
@@ -88,7 +86,9 @@ login.subcommand = function (ctx, inputs) {
  * Create prompt object
  */
 login._prompt = function () {
-  var prompt = new Prompt(login.questions);
+  var prompt = new Prompt({
+    stages: login.questions
+  });
   return prompt.start();
 };
 

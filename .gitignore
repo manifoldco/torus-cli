@@ -7,3 +7,4 @@ travis/id_rsa*
 builds/*
 
 *.sw[mnop]
+*.orig

@@ -4,20 +4,25 @@ var _ = require('lodash');
 var inquirer = require('inquirer');
 var Promise = require('es6-promise').Promise;
 
-function Prompt(stages, opts) {
-  if (!_.isFunction(stages)) {
+function Prompt(opts) {
+  opts = _.isPlainObject(opts) ? opts : {};
+  if (!_.isFunction(opts.stages)) {
     throw new Error('stages must be a function');
   }
-  opts = _.isPlainObject(opts) ? opts : {};
-  this.stages = stages(this);
+
+  this.stages = opts.stages.apply(this, opts.questionArgs || []);
   if (!_.isArray(this.stages)) {
     throw new Error('stages must return array');
   }
+
   this.aggregate = {};
   this._stageAttempts = 0;
   this._stageFailed = false;
   this._maxStageAttempts = opts.maxStageAttempts || 1;
+  this._defaults = opts.defaults || {};
   this._inquirer = inquirer;
+
+  this.stages = this._setDefaults(this.stages);
 }
 
 /**
@@ -98,6 +103,27 @@ Prompt.prototype._aggregate = function (result) {
 Prompt.prototype._reset = function () {
   this._stageAttempts = 0;
   this._stageFailed = false;
+};
+
+/**
+ * Apply default values to stages
+ */
+Prompt.prototype._setDefaults = function (stages) {
+  if (!this._defaults) {
+    return stages;
+  }
+
+  var self = this;
+  stages = stages || [];
+  return _.map(stages, function (stage) {
+    if (_.isArray(stage)) {
+      return self._setDefaults(stage);
+    }
+    if (stage && self._defaults[stage.name]) {
+      stage.default = self._defaults[stage.name];
+    }
+    return stage;
+  });
 };
 
 module.exports = Prompt;

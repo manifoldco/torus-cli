@@ -19,14 +19,15 @@ serviceCreate.output.success = output.create(function () {
 });
 
 /**
- * Service prompt questions
- *
- * @param {object} ctx - Prompt context
+ * Failure output
  */
 serviceCreate.output.failure = output.create(function () {
   console.log('Service creation failed, please try again');
 });
 
+/**
+ * Service prompt questions
+ */
 serviceCreate.questions = function () {
   return [
     [
@@ -51,17 +52,17 @@ var validator = validate.build({
 serviceCreate.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     var retrieveInput;
+
     var name = ctx.params[0];
-
-    var errors = validator({ name: name });
-    if (errors.length > 0) {
-      return reject(errors[0]);
-    }
-
     if (name) {
-      retrieveInput = Promise.resolve({
-        name: name
-      });
+      var errors = validator({ name: name });
+      if (errors.length > 0) {
+        retrieveInput = Promise.reject(errors[0]);
+      } else {
+        retrieveInput = Promise.resolve({
+          name: name
+        });
+      }
     } else {
       retrieveInput = serviceCreate._prompt();
     }
@@ -101,6 +102,9 @@ serviceCreate._execute = function (token, userInput) {
  * Create prompt promise
  */
 serviceCreate._prompt = function () {
-  var prompt = new Prompt(serviceCreate.questions);
+  var prompt = new Prompt({
+    stages: serviceCreate.questions
+  });
+
   return prompt.start();
 };
