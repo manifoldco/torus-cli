@@ -95,6 +95,15 @@ describe('Option', function () {
       assert.strictEqual(c.option('name'), o);
     });
 
+    it('sets as undefined if val is a bool and default is not', function () {
+      var o = new Option('-n, --name [name]', 'set name', null);
+
+      o.evaluate(c, { n: true });
+
+      assert.strictEqual(o.value, null);
+      assert.strictEqual(c.option('name'), o);
+    });
+
     it('sets as undefined if not bool', function () {
       var o = new Option('-n, --name [name]', 'set name');
 
