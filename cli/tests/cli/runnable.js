@@ -4,6 +4,7 @@
 
 var sinon = require('sinon');
 var assert = require('assert');
+var Promise = require('es6-promise').Promise;
 
 var Context = require('../../lib/cli/context');
 var Middleware = require('../../lib/cli/middleware');
@@ -95,6 +96,23 @@ describe('Runnable', function () {
       }, function (err) {
         assert.ok(err instanceof Error);
         assert.strictEqual(err.message, 'hi');
+      });
+    });
+
+    it('stops if middleware resolves success parameter as false', function () {
+      var failStub = sinon.stub().returns(Promise.resolve(false));
+      var passStub = sinon.stub().returns(Promise.resolve(true));
+
+      var c = new Context({});
+
+      r.hook('pre', failStub);
+      r.hook('pre', passStub);
+
+      return r.runHooks('pre', c).then(function (success) {
+        assert.strictEqual(success, false);
+
+        sinon.assert.calledOnce(failStub);
+        sinon.assert.notCalled(passStub);
       });
     });
   });

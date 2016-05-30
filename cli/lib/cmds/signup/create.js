@@ -35,10 +35,10 @@ module.exports = new Command(
         };
         return login.subcommand(ctx, params);
       })
-      .then(function (authToken) {
+      .then(function (session) {
         user.output.success();
 
-        ctx.token = authToken;
+        ctx.session = session;
 
         verify.output.intermediate({ top: false });
         return verify.subcommand(ctx).then(function (result) {

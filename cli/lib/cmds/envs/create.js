@@ -5,6 +5,7 @@ var Promise = require('es6-promise').Promise;
 var Command = require('../../cli/command');
 
 var envs = require('../../envs');
+var auth = require('../../middleware/auth');
 
 var createEnv = new Command(
   'envs:create [name]',
@@ -28,5 +29,7 @@ createEnv.option(
   'Name of the service to create env for',
   undefined
 );
+
+createEnv.hook('pre', auth());
 
 module.exports = createEnv;

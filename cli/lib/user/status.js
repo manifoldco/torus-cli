@@ -25,12 +25,12 @@ status.output.success = output.create(function (identity) {
 status.execute = function (ctx) {
   var identity = {};
   return new Promise(function (resolve, reject) {
-    if (!ctx.token) {
+    if (!ctx.session) {
       identity.user = null;
       return resolve(identity);
     }
 
-    client.auth(ctx.token);
+    client.auth(ctx.session.token);
 
     return client.get({
       url: '/users/self'

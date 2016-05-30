@@ -144,7 +144,11 @@ Program.prototype.run = function (argv) {
   this._parseArgs(ctx, cmd, argv);
 
   var self = this;
-  return self.runHooks('pre', ctx).then(function () {
+  return self.runHooks('pre', ctx).then(function (success) {
+    if (success === false) {
+      return false;
+    }
+
     return cmd.run.call(cmd, ctx).then(function () {
       return self.runHooks('post', ctx);
     });

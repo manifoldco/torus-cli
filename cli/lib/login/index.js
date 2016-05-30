@@ -12,6 +12,7 @@ var validate = require('../validate');
 var crypto = require('../crypto');
 var kdf = require('../crypto/kdf');
 var user = require('../user');
+var Session = require('../session');
 
 var TYPE_LOGIN = 'login';
 var TYPE_AUTH = 'auth';
@@ -140,10 +141,14 @@ login._execute = function (ctx, userInput) {
       // Re-authorize the api client for subsequent requests
       var authToken = result.body.auth_token;
       client.auth(authToken);
-      return ctx.daemon.set({
-        token: authToken
-      }).then(function () {
-        return authToken;
+
+      var sessionData = {
+        token: authToken,
+        passphrase: userInput.passphrase
+      };
+
+      return ctx.daemon.set(sessionData).then(function () {
+        return new Session(sessionData);
       });
     });
   });

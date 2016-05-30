@@ -4,6 +4,7 @@ var serviceCreate = exports;
 
 var Promise = require('es6-promise').Promise;
 
+var Session = require('../session');
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
@@ -68,7 +69,7 @@ serviceCreate.execute = function (ctx) {
     }
 
     return retrieveInput.then(function (userInput) {
-      return serviceCreate._execute(ctx.token, userInput);
+      return serviceCreate._execute(ctx.session, userInput);
     }).then(resolve).catch(reject);
   });
 };
@@ -76,16 +77,16 @@ serviceCreate.execute = function (ctx) {
 /**
  * Attempt to create service with supplied input
  *
- * @param {string} token - Auth token
+ * @param {object} session - Session object
  * @param {object} userInput
  */
-serviceCreate._execute = function (token, userInput) {
+serviceCreate._execute = function (session, userInput) {
   return new Promise(function (resolve, reject) {
-    client.auth(token);
-
-    if (!client.authToken) {
-      return reject(new Error('must authenticate first'));
+    if (!(session instanceof Session)) {
+      throw new TypeError('Session object missing on Context');
     }
+
+    client.auth(session.token);
 
     return client.post({
       url: '/services',

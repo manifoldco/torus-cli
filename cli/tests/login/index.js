@@ -39,7 +39,7 @@ var CTX = new Context({});
 CTX.config = new Config(process.cwd());
 CTX.daemon = new Daemon(CTX.config);
 
-describe('Session', function () {
+describe('Login', function () {
   before(function () {
     this.sandbox = sinon.sandbox.create();
   });
@@ -112,7 +112,7 @@ describe('Session', function () {
     });
     it('requests a loginToken from the registry', function () {
       return login._execute(CTX, {
-        password: PLAINTEXT,
+        passphrase: PLAINTEXT,
         email: EMAIL
       }).then(function () {
         sinon.assert.calledTwice(client.post);
@@ -128,7 +128,7 @@ describe('Session', function () {
     });
     it('derives a high entropy password from plaintext pw', function () {
       return login._execute(CTX, {
-        password: PLAINTEXT,
+        passphrase: PLAINTEXT,
         email: EMAIL
       }).then(function () {
         sinon.assert.calledOnce(kdf.generate);
@@ -138,7 +138,7 @@ describe('Session', function () {
     });
     it('generates an hmac of the pwh and loginToken', function () {
       return login._execute(CTX, {
-        password: PLAINTEXT,
+        passphrase: PLAINTEXT,
         email: EMAIL
       }).then(function () {
         sinon.assert.calledOnce(utils.hmac);
@@ -147,7 +147,7 @@ describe('Session', function () {
     });
     it('exchanges loginToken and pwh_hmac for authToken', function () {
       return login._execute(CTX, {
-        password: PLAINTEXT,
+        passphrase: PLAINTEXT,
         email: EMAIL
       }).then(function () {
         sinon.assert.calledTwice(client.post);

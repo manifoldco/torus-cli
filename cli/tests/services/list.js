@@ -8,6 +8,7 @@ var sinon = require('sinon');
 var Promise = require('es6-promise').Promise;
 var utils = require('common/utils');
 
+var Session = require('../../lib/session');
 var Context = require('../../lib/cli/context');
 
 var client = require('../../lib/api/client').create();
@@ -44,7 +45,10 @@ describe('Services List', function () {
   beforeEach(function () {
     sandbox = sinon.sandbox.create();
     ctx = new Context({});
-    ctx.token = 'abcdefgh';
+    ctx.session = new Session({
+      token: 'abcdefgh',
+      passphrase: 'hohohoho'
+    });
     ctx.params = ['hi-there'];
   });
 
@@ -54,13 +58,13 @@ describe('Services List', function () {
 
   describe('#execute', function () {
     it('requires an auth token', function () {
-      ctx.token = null;
+      ctx.session = null;
 
       return serviceList.execute(ctx).then(function () {
         assert.ok(false, 'should not resolve');
       }).catch(function (err) {
         assert.ok(err);
-        assert.strictEqual(err.message, 'must authenticate first');
+        assert.strictEqual(err.message, 'Session object not on Context');
       });
     });
 

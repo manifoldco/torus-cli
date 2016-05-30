@@ -1,6 +1,8 @@
 'use strict';
 
 var Promise = require('es6-promise').Promise;
+
+var Session = require('../session');
 var client = require('../api/client').create();
 
 /**
@@ -8,17 +10,29 @@ var client = require('../api/client').create();
  *
  * @param {object} ctx - Prompt context
  */
+
 module.exports = function (ctx) {
-  client.auth(ctx.token);
+  return new Promise(function (resolve, reject) {
+    if (!(ctx.session instanceof Session)) {
+      throw new TypeError('Session object not on Context object');
+    }
 
-  var resetClient = client.reset.bind(client);
+    client.auth(ctx.session.token);
 
-  return Promise.all([
-    ctx.daemon.logout(),
-    client.delete({ url: '/session/' + ctx.token })
-  ]).then(resetClient)
-    .catch(function (err) {
+    function resetClient() {
+      client.reset();
+      ctx.session = null;
+    }
+
+    return Promise.all([
+      ctx.daemon.logout(),
+      client.delete({ url: '/session/' + ctx.session.token })
+    ]).then(function () {
       resetClient();
-      throw err;
+      resolve();
+    }).catch(function (err) {
+      resetClient();
+      reject(err);
     });
+  });
 };

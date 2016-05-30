@@ -4,8 +4,9 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 var status = require('../user/status');
+var auth = require('../middleware/auth');
 
-module.exports = new Command(
+var cmd = new Command(
   'status',
   'shows your current cli status',
   function (ctx) {
@@ -20,3 +21,7 @@ module.exports = new Command(
     });
   }
 );
+
+cmd.hook('pre', auth());
+
+module.exports = cmd;
