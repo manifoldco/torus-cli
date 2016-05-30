@@ -26,7 +26,7 @@ var createEnv = new Command(
 
 createEnv.option(
   '-s, --service [service]',
-  'Name of the service to create env for',
+  'service the environment will belong too ',
   undefined
 );
 

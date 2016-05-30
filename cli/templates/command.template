@@ -3,12 +3,12 @@ Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
 <%
   print(cmd.description);
   if (cmd.options.length > 0) {
-    print('The following options are supported by this command:');
+    print('\n\nThe following options are supported by this command:\n\n');
   }
 
   var options = '';
   _.each(cmd.options, function (opt) {
-    options += '  '+_.padEnd(opt.usage, 28)+' '+opt.description+'\n';
+    options += '  '+_.padEnd(opt.flags, 28)+' '+opt.description+'\n';
   });
 
   print(options);
