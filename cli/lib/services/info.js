@@ -42,7 +42,7 @@ serviceInfo.execute = function (ctx) {
 
     client.auth(ctx.session.token);
 
-    return client.get({ url: '/services/' + name }).then(function (results) {
+    return client.get({ url: '/services?name=' + name }).then(function (results) {
       if (!results.body || results.body.length !== 1) {
         return reject(new Error('service not found'));
       }

@@ -21,10 +21,19 @@ var ORG = {
   }
 };
 
+var PROJECT = {
+  id: utils.id('project'),
+  body: {
+    name: 'api-1',
+    org_id: ORG.id
+  }
+};
+
 var SERVICE = {
   id: utils.id('service'),
   body: {
     name: 'api-1',
+    project_id: PROJECT.id,
     org_id: ORG.id
   }
 };
@@ -40,7 +49,18 @@ describe('Services Create', function () {
     this.sandbox.stub(services.output, 'success');
     this.sandbox.stub(services.output, 'failure');
     this.sandbox.stub(client, 'post')
-      .returns(Promise.resolve(SERVICE));
+      .onFirstCall()
+      .returns(Promise.resolve({
+        body: [
+          PROJECT
+        ]
+      }))
+      .onSecondCall()
+      .returns(Promise.resolve({
+        body: [
+          SERVICE
+        ]
+      }));
     this.sandbox.spy(client, 'auth');
 
     // Context stub when no token set
@@ -114,14 +134,24 @@ describe('Services Create', function () {
     it('sends api request to services', function () {
       var input = { name: 'api-1' };
       return services._execute(CTX.session, input).then(function () {
-        sinon.assert.calledOnce(client.post);
+        sinon.assert.calledTwice(client.post);
+
         var firstCall = client.post.firstCall;
-        var args = firstCall.args;
-        assert.deepEqual(args[0], {
-          url: '/services',
+        var secondCall = client.post.secondCall;
+        assert.deepEqual(firstCall.args[0], {
+          url: '/projects',
           json: {
             body: {
               name: 'api-1'
+            }
+          }
+        });
+        assert.deepEqual(secondCall.args[0], {
+          url: '/services',
+          json: {
+            body: {
+              name: 'api-1',
+              project_id: PROJECT.id
             }
           }
         });

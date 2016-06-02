@@ -55,11 +55,10 @@ envCreate.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     var options = ctx.options || {};
     var params = ctx.params || [];
-    var service = options.service && options.service.value;
 
     var data = {
       name: params[0],
-      service: service
+      service: options.service && options.service.value
     };
 
     var serviceData;
@@ -96,19 +95,24 @@ envCreate.execute = function (ctx) {
     // Map the item selected to its ID
     })
     .then(function (userInput) {
-      var serviceId = _.map(_.filter(serviceData, function (s) {
+      var service = _.find(serviceData, function (s) {
         return s.body.name === userInput.service;
-      }), 'id');
+      });
 
-      // Swap for owner_id since we know the exact one
-      userInput.owner_id = serviceId[0];
-      delete userInput.service;
-      return userInput;
+      if (!service) {
+        throw new Error('Unknown service: ' + userInput.service);
+      }
 
+      return {
+        body: {
+          name: userInput.name,
+          project_id: service.body.project_id
+        }
+      };
     // Create the env in the
     })
-    .then(function (userInput) {
-      return envCreate._execute(ctx.session, userInput);
+    .then(function (envData) {
+      return envCreate._execute(ctx.session, envData);
     })
     .then(resolve)
     .catch(reject);
@@ -146,9 +150,7 @@ envCreate._execute = function (session, data) {
 
     client.post({
       url: '/envs',
-      json: {
-        body: data
-      }
+      json: data
     })
     .then(resolve)
     .catch(reject);

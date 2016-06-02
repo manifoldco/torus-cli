@@ -6,6 +6,7 @@ var assert = require('assert');
 var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
+var listServices = require('../../lib/services/list');
 var envs = require('../../lib/envs/create');
 var client = require('../../lib/api/client').create();
 var sessionMiddleware = require('../../lib/middleware/session');
@@ -21,10 +22,19 @@ var ORG = {
   }
 };
 
+var PROJECT = {
+  id: utils.id('project'),
+  body: {
+    name: 'api-1',
+    org_id: ORG.id
+  }
+};
+
 var SERVICE = {
   id: utils.id('service'),
   body: {
     name: 'api-1',
+    project_id: PROJECT.id,
     org_id: ORG.id
   }
 };
@@ -33,7 +43,8 @@ var ENV = {
   id: utils.id('env'),
   body: {
     name: 'staging',
-    owner_id: SERVICE.id
+    project_id: PROJECT.id,
+    org_id: ORG.id
   }
 };
 
@@ -52,6 +63,8 @@ describe('Envs Create', function () {
     this.sandbox.stub(client, 'post')
       .returns(Promise.resolve({ body: [ENV] }));
     this.sandbox.spy(client, 'auth');
+    this.sandbox.stub(listServices, 'execute')
+      .returns(Promise.resolve({ body: [SERVICE] }));
 
     // Context stub when no session set
     CTX_DAEMON_EMPTY = new Context({});
@@ -87,16 +100,29 @@ describe('Envs Create', function () {
   });
   describe('execute', function () {
     it('calls _execute with inputs', function () {
-      this.sandbox.stub(envs, '_prompt').returns(Promise.resolve());
+      this.sandbox.stub(envs, '_prompt').returns(Promise.resolve({
+        service: 'api-1'
+      }));
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
       return envs.execute(CTX).then(function () {
         sinon.assert.calledOnce(envs._execute);
       });
     });
     it('prompts for missing inputs', function () {
-      this.sandbox.stub(envs, '_prompt').returns(Promise.resolve());
+      this.sandbox.stub(envs, '_prompt').returns(Promise.resolve({
+        service: 'api-1'
+      }));
       return envs.execute(CTX).then(function () {
         sinon.assert.calledOnce(envs._prompt);
+      });
+    });
+    it('errors if given service not found', function () {
+      CTX.params = ['dev'];
+      CTX.options.service = { value: 'api-2' };
+      return envs.execute(CTX).then(function () {
+        assert.ok(false, 'should error');
+      }).catch(function (err) {
+        assert.ok(err.message, 'Unknown service: api-2');
       });
     });
     it('skips the prompt when inputs are supplied', function () {
@@ -108,7 +134,7 @@ describe('Envs Create', function () {
         sinon.assert.notCalled(envs._prompt);
       });
     });
-    it('prompt - converts service name to owner_id before POST', function () {
+    it('prompt - converts service name to project_id before POST', function () {
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
       this.sandbox.stub(envs, '_prompt').returns(Promise.resolve({
         name: ENV.body.name,
@@ -118,8 +144,10 @@ describe('Envs Create', function () {
         sinon.assert.calledOnce(envs._prompt);
         var args = envs._execute.firstCall.args;
         assert.deepEqual(args[1], {
-          name: ENV.body.name,
-          owner_id: SERVICE.id
+          body: {
+            name: ENV.body.name,
+            project_id: PROJECT.id
+          }
         });
       });
     });
@@ -147,7 +175,7 @@ describe('Envs Create', function () {
         done();
       });
     });
-    it('no prompt - converts service name to owner_id before POST', function () {
+    it('no prompt - converts service name to project_id before POST', function () {
       this.sandbox.spy(envs, '_prompt');
       this.sandbox.stub(envs, '_execute').returns(Promise.resolve());
       CTX.params = [ENV.body.name];
@@ -156,21 +184,34 @@ describe('Envs Create', function () {
         sinon.assert.notCalled(envs._prompt);
         var args = envs._execute.firstCall.args;
         assert.deepEqual(args[1], {
-          name: ENV.body.name,
-          owner_id: SERVICE.id
+          body: {
+            name: ENV.body.name,
+            project_id: PROJECT.id
+          }
         });
       });
     });
   });
   describe('_execute', function () {
     it('authorizes the client', function () {
-      var input = { name: 'staging', owner_id: SERVICE.id };
+      var input = {
+        body: {
+          name: 'staging',
+          project_id: PROJECT.id
+        }
+      };
       return envs._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.auth);
       });
     });
+
     it('fails if session does not exist', function (done) {
-      var input = { name: 'staging', owner_id: SERVICE.id };
+      var input = {
+        body: {
+          name: 'staging',
+          project_id: PROJECT.id
+        }
+      };
       envs._execute(CTX_DAEMON_EMPTY.session, input).then(function () {
         done(new Error('dont call'));
       }).catch(function (err) {
@@ -178,8 +219,14 @@ describe('Envs Create', function () {
         done();
       });
     });
+
     it('sends api request to envs', function () {
-      var input = { name: 'staging', owner_id: SERVICE.id };
+      var input = {
+        body: {
+          name: 'staging',
+          project_id: PROJECT.id
+        }
+      };
       return envs._execute(CTX.session, input).then(function () {
         sinon.assert.calledOnce(client.post);
         var firstCall = client.post.firstCall;
@@ -189,7 +236,7 @@ describe('Envs Create', function () {
           json: {
             body: {
               name: 'staging',
-              owner_id: SERVICE.id
+              project_id: PROJECT.id
             }
           }
         });

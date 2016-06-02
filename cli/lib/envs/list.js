@@ -21,10 +21,10 @@ envsList.output.success = output.create(function (payload) {
   var envs = payload.envs;
   var services = payload.services;
 
-  var envsByOwner = _.groupBy(envs, 'body.owner_id');
+  var envsByOwner = _.groupBy(envs, 'body.project_id');
 
   _.each(services, function (service) {
-    var serviceEnvs = envsByOwner[service.id];
+    var serviceEnvs = envsByOwner[service.body.project_id];
     var serviceName = service.body.name;
 
     if (!serviceEnvs) return;
@@ -73,27 +73,36 @@ envsList.execute = function (ctx) {
         return reject(err);
       }
 
-      serviceOpts.url += '/' + serviceName;
+      serviceOpts.url += '/?name=' + serviceName;
     }
 
-    return client.get(serviceOpts)
-      .then(function (servicePayload) {
-        // TODO: No services? Prompt them to create one first.
+    return client.get(serviceOpts).then(function (servicePayload) {
+      // TODO: No services? Prompt them to create one first.
+      var services = servicePayload.body;
+      if (!Array.isArray(services)) {
+        throw new Error('API returned invalid services list');
+      }
 
-        // Get environments associated with each service
-        var findEnvs = servicePayload.body.map(function (service) {
-          return client.get({ url: '/envs', qs: { owner_id: service.id } });
-        });
+      var opts = { url: '/envs' };
 
-        return Promise.all(findEnvs).then(function (envsPayload) {
-          return resolve({
-            services: servicePayload.body,
-            envs: _.flatMap(envsPayload, function (envPayload) {
-              return envPayload.body;
-            })
-          });
+      // The org_id is implicit on the GET request based on the calling user.
+      if (serviceName) {
+        opts.qs = {
+          project_id: services[0].body.project_id
+        };
+      }
+
+      return client.get(opts).then(function (envsPayload) {
+        var envs = envsPayload.body;
+        if (!Array.isArray(envs)) {
+          throw new Error('API returned invalid envs list');
+        }
+
+        resolve({
+          services: services,
+          envs: envs
         });
-      })
-      .catch(reject);
+      });
+    }).catch(reject);
   });
 };
