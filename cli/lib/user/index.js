@@ -47,6 +47,11 @@ user.questions = function () {
     // Stage one
     [
       {
+        name: 'username',
+        message: 'Username',
+        validate: validate.slug
+      },
+      {
         name: 'name',
         message: 'Full name',
         validate: validate.name
@@ -91,6 +96,7 @@ user.create = function (userInput) {
   var object = {
     id: utils.id('user'), // generate user-object id
     body: {
+      username: userInput.username,
       name: userInput.name,
       email: userInput.email
     }

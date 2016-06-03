@@ -76,6 +76,7 @@ describe('Login', function () {
   describe('subcommand', function () {
     it('calls execute with inputs', function () {
       var inputs = {
+        username: 'jeff',
         email: 'jeff@example.com',
         passphrase: 'password'
       };
