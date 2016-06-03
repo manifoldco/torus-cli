@@ -21,19 +21,29 @@ var ORG = {
   }
 };
 
-var SERVICE = {
-  id: utils.id('service'),
+var PROJECT = {
+  id: utils.id('project'),
   body: {
     name: 'api-1',
     org_id: ORG.id
   }
 };
 
+var SERVICE = {
+  id: utils.id('service'),
+  body: {
+    name: 'api-1',
+    org_id: ORG.id,
+    project_id: PROJECT.id
+  }
+};
+
 var ENV = {
   id: utils.id('env'),
   body: {
-    owner_id: SERVICE.id,
-    service: SERVICE.body.name
+    org_id: ORG.id,
+    project_id: PROJECT.id,
+    name: SERVICE.body.name
   }
 };
 
@@ -101,12 +111,9 @@ describe('Envs List', function () {
       return envs.list.execute(CTX).then(function (payload) {
         sinon.assert.calledWith(client.get.getCall(0), { url: SERVICE_PATH });
         sinon.assert.calledWith(client.get.getCall(1), {
-          url: ENV_PATH,
-          qs: { owner_id: SERVICE.id }
+          url: ENV_PATH
         });
         assert(payload, { services: [SERVICE], envs: [ENV] });
-      }).catch(function () {
-        assert.ok(false, 'did not expect to catch error');
       });
     });
 
@@ -115,12 +122,16 @@ describe('Envs List', function () {
 
       return envs.list.execute(CTX).then(function (payload) {
         sinon.assert.calledWith(client.get.getCall(0), {
-          url: SERVICE_PATH + '/' + SERVICE.body.name
+          url: SERVICE_PATH + '/?name=' + SERVICE.body.name
+        });
+        sinon.assert.calledWith(client.get.getCall(1), {
+          url: ENV_PATH,
+          qs: {
+            project_id: PROJECT.id
+          }
         });
 
         assert(payload, { services: [SERVICE], envs: [ENV] });
-      }).catch(function () {
-        assert.ok(false, 'did not expect to catch error');
       });
     });
 

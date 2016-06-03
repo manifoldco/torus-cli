@@ -88,14 +88,43 @@ serviceCreate._execute = function (session, userInput) {
 
     client.auth(session.token);
 
+    // Projects and services have the same name for now; standardized until
+    // projects are part of the UI we reveal to users through the CLI.
+    var project;
     return client.post({
-      url: '/services',
+      url: '/projects',
       json: {
         body: {
           name: userInput.name
         }
       }
-    }).then(resolve).catch(reject);
+    }).then(function (res) {
+      if (!res.body || res.body.length !== 1) {
+        throw new Error('Project was not created; invalid body returned');
+      }
+
+      project = res.body[0];
+      return client.post({
+        url: '/services',
+        json: {
+          body: {
+            name: project.body.name,
+            project_id: project.id
+          }
+        }
+      });
+    }).then(function (res) {
+      if (!res.body || res.body.length !== 1) {
+        throw new Error('Service was not created; invalid body returned');
+      }
+
+      var service = res.body[0];
+      resolve({
+        project: project,
+        service: service
+      });
+    })
+    .catch(reject);
   });
 };
 
