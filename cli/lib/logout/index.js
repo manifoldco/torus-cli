@@ -26,7 +26,7 @@ module.exports = function (ctx) {
 
     return Promise.all([
       ctx.daemon.logout(),
-      client.delete({ url: '/session/' + ctx.session.token })
+      client.delete({ url: '/tokens/' + ctx.session.token })
     ]).then(function () {
       resetClient();
       resolve();

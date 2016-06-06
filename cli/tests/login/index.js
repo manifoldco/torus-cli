@@ -119,7 +119,7 @@ describe('Login', function () {
         sinon.assert.calledTwice(client.post);
         var firstCall = client.post.firstCall;
         assert.deepEqual(firstCall.args[0], {
-          url: '/session',
+          url: '/tokens',
           json: {
             type: TYPE_LOGIN,
             email: EMAIL
@@ -154,7 +154,7 @@ describe('Login', function () {
         sinon.assert.calledTwice(client.post);
         var secondCall = client.post.secondCall;
         assert.deepEqual(secondCall.args[0], {
-          url: '/session',
+          url: '/tokens',
           json: {
             type: TYPE_AUTH,
             login_token_hmac: base64url.encode(BUFFER)

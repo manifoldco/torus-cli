@@ -51,7 +51,7 @@ describe('Logout', function () {
     return logout(ctx).then(function () {
       sinon.assert.calledWith(client.auth, session.token);
       sinon.assert.calledWith(client.delete,
-                              { url: '/session/' + session.token });
+                              { url: '/tokens/' + session.token });
       sinon.assert.calledOnce(ctx.daemon.logout);
       sinon.assert.calledOnce(client.reset);
       assert.strictEqual(ctx.session, null);
@@ -77,7 +77,7 @@ describe('Logout', function () {
     return logout(ctx).catch(function () {
       sinon.assert.calledWith(client.auth, session.token);
       sinon.assert.calledWith(client.delete,
-                              { url: '/session/' + session.token });
+                              { url: '/tokens/' + session.token });
       sinon.assert.calledOnce(client.reset);
       assert.strictEqual(ctx.session, null);
     });
