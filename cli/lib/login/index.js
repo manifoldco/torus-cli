@@ -105,7 +105,7 @@ login._execute = function (ctx, userInput) {
   var salt;
   var loginToken;
   return client.post({
-    url: '/session',
+    url: '/tokens',
     json: {
       type: TYPE_LOGIN,
       email: userInput.email
@@ -132,7 +132,7 @@ login._execute = function (ctx, userInput) {
     // Use the login token to make an authenticated login attempt
     client.auth(loginToken);
     return client.post({
-      url: '/session',
+      url: '/tokens',
       json: {
         type: TYPE_AUTH,
         login_token_hmac: base64url.encode(result)
