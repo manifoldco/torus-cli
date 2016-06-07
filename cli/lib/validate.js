@@ -48,29 +48,13 @@ validate.build = function (ruleMap) {
   };
 };
 
-/**
- * Given a map of names to validation functions it returns a function that
- * validates that all of the object data must match.
- *
- * @param {Object} ruleMap map of value names to validation functions
- * @returns {Function} function accepting map of value names to values which
- *                     returns an empty array on success or an array of errors.
- */
-validate.build = function (ruleMap) {
-  return function (input) {
-    var keyDiff = _.difference(Object.keys(ruleMap), Object.keys(input));
-    if (keyDiff.length > 0) {
-      return [new ValidationError('Missing parameters: ' + keyDiff.join(', '))];
-    }
+var CRED_NAME = new RegExp(/^[a-z][a-z0-9_]{0,63}$/);
 
-    var errs = _.map(ruleMap, function (rule, name) {
-      var output = rule(input[name]);
-      return (typeof output === 'string') ?
-        new ValidationError(name + ': ' + output) : null;
-    });
+validate.credName = function (input) {
+  var error =
+    'Credential must contain only alphanumeric or underscore characters';
 
-    return errs.filter(function (err) { return err !== null; });
-  };
+  return CRED_NAME.test(input) ? true : error;
 };
 
 validate.name = function (input) {
@@ -80,7 +64,8 @@ validate.name = function (input) {
 
 validate.slug = function (input) {
   var error = 'Only alphanumeric, hyphens and underscores are allowed';
-  return validator.matches(input, /^[a-zA-Z0-9\\_\\-]+$/) ? true : error;
+  return validator.matches(
+    input, /^[a-z0-9][a-z0-9\-_]{0,63}$/) ? true : error;
 };
 
 validate.email = function (input) {

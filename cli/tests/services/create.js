@@ -72,7 +72,7 @@ describe('Services Create', function () {
     CTX = new Context({});
     CTX.config = new Config(process.cwd());
     CTX.daemon = new Daemon(CTX.config);
-    CTX.params = ['ABC123ABC'];
+    CTX.params = ['abc123abc'];
 
     // Empty daemon
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
