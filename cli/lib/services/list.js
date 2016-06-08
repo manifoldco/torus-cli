@@ -7,6 +7,7 @@ var _ = require('lodash');
 var Session = require('../session');
 var output = require('../cli/output');
 var client = require('../api/client').create();
+var validate = require('../validate');
 
 servicesList.output = {};
 
@@ -32,12 +33,38 @@ servicesList.output.failure = output.create(function () {
 servicesList.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     if (!(ctx.session instanceof Session)) {
-      throw new TypeError('Session object not on Context');
+      return reject(new TypeError('Session object not on Context'));
+    }
+
+    var orgName = ctx.options && ctx.options.org && ctx.options.org.value;
+
+    if (!orgName) {
+      return reject(new Error('--org is (temporarily) required.'));
+    }
+
+    var validOrgName = validate.slug(orgName);
+
+    if (!_.isBoolean(validOrgName)) {
+      return reject(new Error(validOrgName));
     }
 
     client.auth(ctx.session.token);
-    return client.get({ url: '/services' })
-      .then(resolve)
-      .catch(reject);
+
+    return client.get({
+      url: '/orgs',
+      qs: { name: orgName }
+    }).then(function (res) {
+      var org = res.body && res.body[0];
+
+      if (!_.isObject(org)) {
+        return reject(new Error('The org could not be found'));
+      }
+
+      return client.get({
+        url: '/services',
+        qs: { org_id: org.id }
+      }).then(resolve)
+        .catch(reject);
+    });
   });
 };

@@ -54,22 +54,27 @@ serviceCreate.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     var retrieveInput;
 
+    var options = ctx.options;
+    var orgName = options && options.org && options.org.value;
+
+    if (!orgName) {
+      throw new Error('--org is (temporarily) required.');
+    }
+
     var name = ctx.params[0];
     if (name) {
       var errors = validator({ name: name });
       if (errors.length > 0) {
         retrieveInput = Promise.reject(errors[0]);
       } else {
-        retrieveInput = Promise.resolve({
-          name: name
-        });
+        retrieveInput = Promise.resolve({ name: name });
       }
     } else {
       retrieveInput = serviceCreate._prompt();
     }
 
     return retrieveInput.then(function (userInput) {
-      return serviceCreate._execute(ctx.session, userInput);
+      return serviceCreate._execute(ctx.session, userInput, orgName);
     }).then(resolve).catch(reject);
   });
 };
@@ -80,7 +85,7 @@ serviceCreate.execute = function (ctx) {
  * @param {object} session - Session object
  * @param {object} userInput
  */
-serviceCreate._execute = function (session, userInput) {
+serviceCreate._execute = function (session, userInput, orgName) {
   return new Promise(function (resolve, reject) {
     if (!(session instanceof Session)) {
       throw new TypeError('Session object missing on Context');
@@ -91,13 +96,27 @@ serviceCreate._execute = function (session, userInput) {
     // Projects and services have the same name for now; standardized until
     // projects are part of the UI we reveal to users through the CLI.
     var project;
-    return client.post({
-      url: '/projects',
-      json: {
-        body: {
-          name: userInput.name
-        }
+    var org;
+    client.get({
+      url: '/orgs',
+      qs: { name: orgName }
+    })
+    .then(function (res) {
+      org = res.body && res.body[0];
+
+      if (!org) {
+        throw new Error('Project was not created; invalid org provided');
       }
+
+      return client.post({
+        url: '/projects',
+        json: {
+          body: {
+            name: userInput.name,
+            org_id: org.id
+          }
+        }
+      });
     }).then(function (res) {
       if (!res.body || res.body.length !== 1) {
         throw new Error('Project was not created; invalid body returned');
@@ -109,11 +128,13 @@ serviceCreate._execute = function (session, userInput) {
         json: {
           body: {
             name: project.body.name,
-            project_id: project.id
+            project_id: project.id,
+            org_id: org.id
           }
         }
       });
-    }).then(function (res) {
+    })
+    .then(function (res) {
       if (!res.body || res.body.length !== 1) {
         throw new Error('Service was not created; invalid body returned');
       }

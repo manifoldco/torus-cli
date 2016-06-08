@@ -38,29 +38,37 @@ var SERVICES = [
   }
 ];
 
+var CTX;
+
 
 describe('Services List', function () {
-  var sandbox;
-  var ctx;
+  before(function () {
+    this.sandbox = sinon.sandbox.create();
+  });
   beforeEach(function () {
-    sandbox = sinon.sandbox.create();
-    ctx = new Context({});
-    ctx.session = new Session({
+    this.sandbox.stub(client, 'get')
+      .onFirstCall()
+      .returns(Promise.resolve({
+        body: [ORG]
+      }));
+    CTX = new Context({});
+    CTX.session = new Session({
       token: 'abcdefgh',
       passphrase: 'hohohoho'
     });
-    ctx.params = ['hi-there'];
+    CTX.params = ['hi-there'];
+    CTX.options = { org: { value: ORG.body.name } };
   });
 
   afterEach(function () {
-    sandbox.restore();
+    this.sandbox.restore();
   });
 
   describe('#execute', function () {
     it('requires an auth token', function () {
-      ctx.session = null;
+      CTX.session = null;
 
-      return serviceList.execute(ctx).then(function () {
+      return serviceList.execute(CTX).then(function () {
         assert.ok(false, 'should not resolve');
       }).catch(function (err) {
         assert.ok(err);
@@ -69,9 +77,9 @@ describe('Services List', function () {
     });
 
     it('does not throw if the user has no services', function () {
-      sandbox.stub(client, 'get').returns(Promise.resolve({ body: [] }));
+      client.get.returns(Promise.resolve({ body: [] }));
 
-      return serviceList.execute(ctx).then(function (services) {
+      return serviceList.execute(CTX).then(function (services) {
         assert.deepEqual(services.body, []);
       }).catch(function () {
         assert.ok(false, 'should not resolve');
@@ -81,9 +89,9 @@ describe('Services List', function () {
     it('handles not found from api', function () {
       var err = new Error('service not found');
       err.type = 'not_found';
-      sandbox.stub(client, 'get').returns(Promise.reject(err));
+      client.get.returns(Promise.reject(err));
 
-      return serviceList.execute(ctx).then(function () {
+      return serviceList.execute(CTX).then(function () {
         assert.ok(false, 'should not resolve');
       }).catch(function (e) {
         assert.strictEqual(e.type, 'not_found');
@@ -91,9 +99,9 @@ describe('Services List', function () {
     });
 
     it('resolves with an array of services', function () {
-      sandbox.stub(client, 'get').returns(Promise.resolve(SERVICES));
+      client.get.returns(Promise.resolve(SERVICES));
 
-      return serviceList.execute(ctx).then(function (service) {
+      return serviceList.execute(CTX).then(function (service) {
         assert.deepEqual(service, SERVICES);
       });
     });

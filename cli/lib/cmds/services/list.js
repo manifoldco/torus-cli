@@ -23,6 +23,12 @@ var cmd = new Command(
   }
 );
 
+cmd.option(
+  '-o, --org [org]',
+  'Specify an organization',
+  null
+);
+
 cmd.hook('pre', auth());
 
 module.exports = cmd;
