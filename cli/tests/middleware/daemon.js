@@ -55,6 +55,7 @@ describe('daemon middleware', function () {
       var d = new Daemon(ctx.config);
       ctx.daemon = d;
 
+      sandbox.stub(d, 'connected').returns(true);
       sandbox.stub(d, 'disconnect').returns(Promise.resolve());
 
       return middleware.postHook()(ctx).then(function () {

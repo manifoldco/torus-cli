@@ -40,6 +40,11 @@ module.exports.postHook = function () {
         new Error('Must have config and daemon on Content'));
     }
 
+    // If we're already disconnected then we don't need to do anything!
+    if (!ctx.daemon.connected()) {
+      return Promise.resolve();
+    }
+
     return ctx.daemon.disconnect();
   };
 };
