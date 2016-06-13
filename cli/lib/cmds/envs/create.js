@@ -7,7 +7,7 @@ var Command = require('../../cli/command');
 var envs = require('../../envs');
 var auth = require('../../middleware/auth');
 
-var createEnv = new Command(
+var cmd = new Command(
   'envs:create [name]',
   'create an environment for a service',
   function (ctx) {
@@ -24,12 +24,18 @@ var createEnv = new Command(
   }
 );
 
-createEnv.option(
+cmd.option(
   '-s, --service [service]',
   'service the environment will belong too',
   undefined
 );
 
-createEnv.hook('pre', auth());
+cmd.option(
+  '-o, --org [org]',
+  'Specify an organization',
+  null
+);
 
-module.exports = createEnv;
+cmd.hook('pre', auth());
+
+module.exports = cmd;
