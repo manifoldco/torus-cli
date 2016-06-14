@@ -24,10 +24,8 @@ envsList.output.success = output.create(function (payload) {
   var envsByOwner = _.groupBy(envs, 'body.project_id');
 
   _.each(services, function (service) {
-    var serviceEnvs = envsByOwner[service.body.project_id];
+    var serviceEnvs = envsByOwner[service.body.project_id] || [];
     var serviceName = service.body.name;
-
-    if (!serviceEnvs) return;
 
     var msg = ' ' + serviceName + ' service (' + serviceEnvs.length + ')\n';
 
