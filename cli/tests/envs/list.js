@@ -47,6 +47,7 @@ var ENV = {
   }
 };
 
+var ORG_PATH = '/orgs';
 var ENV_PATH = '/envs';
 var SERVICE_PATH = '/services';
 var CTX_DAEMON_EMPTY;
@@ -60,7 +61,18 @@ describe('Envs List', function () {
     this.sandbox.stub(envs.list.output, 'success');
     this.sandbox.stub(envs.list.output, 'failure');
     this.sandbox.stub(client, 'get')
-      .returns(Promise.resolve({ body: [ENV] }));
+      .onFirstCall()
+      .returns(Promise.resolve({
+        body: [ORG]
+      }))
+      .onSecondCall()
+      .returns(Promise.resolve({
+        body: [SERVICE]
+      }))
+      .onThirdCall()
+      .returns(Promise.resolve({
+        body: [ENV]
+      }));
     this.sandbox.spy(client, 'auth');
 
     // Context stub when no session set
@@ -73,6 +85,10 @@ describe('Envs List', function () {
     CTX.config = new Config(process.cwd());
     CTX.daemon = new Daemon(CTX.config);
     CTX.params = ['ABC123ABC'];
+    CTX.options = {
+      org: { value: ORG.body.name },
+      service: { value: SERVICE.body.name }
+    };
 
     // Empty daemon
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
@@ -105,38 +121,53 @@ describe('Envs List', function () {
     });
 
     it('sends an api request to envs', function () {
-      client.get.onFirstCall().returns(Promise.resolve({ body: [SERVICE] }));
-      client.get.onSecondCall().returns(Promise.resolve({ body: [ENV] }));
-
       return envs.list.execute(CTX).then(function (payload) {
-        sinon.assert.calledWith(client.get.getCall(0), { url: SERVICE_PATH });
-        sinon.assert.calledWith(client.get.getCall(1), {
-          url: ENV_PATH
-        });
+        assert.deepEqual(client.get.getCall(0).args, [{
+          url: ORG_PATH,
+          qs: { name: ORG.body.name }
+        }]);
+        assert.deepEqual(client.get.getCall(1).args, [{
+          url: SERVICE_PATH,
+          qs: { name: SERVICE.body.name, org_id: ORG.id }
+        }]);
+        assert.deepEqual(client.get.getCall(2).args, [{
+          url: ENV_PATH,
+          qs: { org_id: ORG.id, project_id: PROJECT.id }
+        }]);
         assert(payload, { services: [SERVICE], envs: [ENV] });
       });
     });
 
-    it('accepts optional [-s --service] flags', function () {
-      CTX.options = { service: { value: SERVICE.body.name } };
+    it('requires [-o --org] flag', function () {
+      CTX.options = {
+        service: { value: SERVICE.body.name }
+      };
 
-      return envs.list.execute(CTX).then(function (payload) {
-        sinon.assert.calledWith(client.get.getCall(0), {
-          url: SERVICE_PATH + '/?name=' + SERVICE.body.name
-        });
-        sinon.assert.calledWith(client.get.getCall(1), {
-          url: ENV_PATH,
-          qs: {
-            project_id: PROJECT.id
-          }
-        });
+      return envs.list.execute(CTX).then(function () {
+        assert.ok(false, 'should not resolve');
+      }).catch(function (err) {
+        assert.ok(err.message, ': --org is (temporarily) required');
+      });
+    });
 
-        assert(payload, { services: [SERVICE], envs: [ENV] });
+    it('requires [-s --service] flag', function () {
+      CTX.options = {
+        org: { value: ORG.body.name }
+      };
+
+      return envs.list.execute(CTX).then(function () {
+        assert.ok(false, 'should not resolve');
+      }).catch(function (err) {
+        assert.ok(err.message, ': --service is (temporarily) required');
       });
     });
 
     it('rejects invalid service names', function () {
-      CTX.options = { service: { value: '~a~' } };
+      CTX.options = {
+        org: { value: ORG.body.name },
+        service: { value: '~a~' }
+      };
+
       var expErr = 'Only alphanumeric, hyphens and underscores are allowed';
 
       return envs.list.execute(CTX).then(function () {

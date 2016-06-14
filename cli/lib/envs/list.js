@@ -59,50 +59,74 @@ envsList.execute = function (ctx) {
       throw new TypeError('Session object missing on Context');
     }
 
-    client.auth(ctx.session.token);
+    var orgName = ctx.options.org.value;
 
-    var options = ctx.options;
-    var serviceName = options && options.service && options.service.value;
-    var serviceOpts = { url: '/services' };
-
-    // Lookup by service name if one is provided and valid
-    if (serviceName) {
-      var err = validate.slug(serviceName);
-
-      if (!_.isBoolean(err)) {
-        return reject(err);
-      }
-
-      serviceOpts.url += '/?name=' + serviceName;
+    if (!orgName) {
+      return reject(new Error('--org is (temporarily) required.'));
     }
 
-    return client.get(serviceOpts).then(function (servicePayload) {
-      // TODO: No services? Prompt them to create one first.
-      var services = servicePayload.body;
-      if (!Array.isArray(services)) {
-        throw new Error('API returned invalid services list');
+    var validOrgName = validate.slug(orgName);
+
+    if (!_.isBoolean(validOrgName)) {
+      return reject(new Error(validOrgName));
+    }
+
+    var serviceName = ctx.options.service.value;
+
+    if (!serviceName) {
+      return reject(new Error('--service is (temporarily) required.'));
+    }
+
+    var validServiceName = validate.slug(serviceName);
+
+    if (!_.isBoolean(validServiceName)) {
+      return reject(validServiceName);
+    }
+
+    client.auth(ctx.session.token);
+
+    return client.get({
+      url: '/orgs',
+      qs: { name: orgName }
+    }).then(function (res) {
+      var org = res.body && res.body[0];
+
+      if (!_.isObject(org)) {
+        return reject(new Error('The org could not be found'));
       }
 
-      var opts = { url: '/envs' };
-
-      // The org_id is implicit on the GET request based on the calling user.
-      if (serviceName) {
-        opts.qs = {
-          project_id: services[0].body.project_id
-        };
-      }
-
-      return client.get(opts).then(function (envsPayload) {
-        var envs = envsPayload.body;
-        if (!Array.isArray(envs)) {
-          throw new Error('API returned invalid envs list');
+      return client.get({
+        url: '/services',
+        qs: {
+          org_id: org.id,
+          name: serviceName
+        }
+      }).then(function (servicePayload) {
+        // TODO: No services? Prompt them to create one first.
+        var services = servicePayload.body;
+        if (!Array.isArray(services)) {
+          return reject(new Error('API returned invalid services list'));
         }
 
-        resolve({
-          services: services,
-          envs: envs
+        return client.get({
+          url: '/envs',
+          qs: {
+            org_id: org.id,
+            project_id: services[0].body.project_id
+          }
+        }).then(function (envsPayload) {
+          var envs = envsPayload.body;
+          if (!Array.isArray(envs)) {
+            return reject(new Error('API returned invalid envs list'));
+          }
+
+          return {
+            services: services,
+            envs: envs
+          };
         });
       });
-    }).catch(reject);
+    }).then(resolve)
+      .catch(reject);
   });
 };

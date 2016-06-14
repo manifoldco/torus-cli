@@ -6,7 +6,7 @@ var Command = require('../../cli/command');
 var envs = require('../../envs');
 var auth = require('../../middleware/auth');
 
-var listEnv = new Command(
+var cmd = new Command(
   'envs',
   'list environments',
   function (ctx) {
@@ -23,12 +23,18 @@ var listEnv = new Command(
   }
 );
 
-listEnv.option(
+cmd.option(
   '-s, --service [service]',
   'List environments for a particular service',
   null
 );
 
-listEnv.hook('pre', auth());
+cmd.option(
+  '-o, --org [org]',
+  'Specify an organization',
+  null
+);
 
-module.exports = listEnv;
+cmd.hook('pre', auth());
+
+module.exports = cmd;
