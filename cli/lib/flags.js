@@ -30,9 +30,15 @@ flags.add = function (cmd, name, overrides) {
     throw new Error('Unknown option: ' + name);
   }
 
-  if (cmd.options[name]) {
+  var matching = cmd.options.filter(function (o) {
+    return (o.name() === name);
+  });
+
+  if (matching.length > 0) {
     throw new Error('Cannot add the same option twice');
   }
+
+  overrides = overrides || {};
 
   var opt = LIST[name];
   cmd.option.apply(cmd, [
