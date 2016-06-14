@@ -2,6 +2,7 @@
 
 var Promise = require('es6-promise').Promise;
 
+var flags = require('../../flags');
 var Command = require('../../cli/command');
 var create = require('../../projects/create');
 var auth = require('../../middleware/auth');
@@ -26,10 +27,8 @@ var cmd = new Command(
 
 cmd.hook('pre', auth());
 
-cmd.option(
-  '-o, --org [name]',
-  'the organization this project will belong too',
-  undefined
-);
+flags.add(cmd, 'org', {
+  description: 'the organization this project will belong too'
+});
 
 module.exports = cmd;
