@@ -24,10 +24,8 @@ envsList.output.success = output.create(function (payload) {
   var envsByOwner = _.groupBy(envs, 'body.project_id');
 
   _.each(services, function (service) {
-    var serviceEnvs = envsByOwner[service.body.project_id];
+    var serviceEnvs = envsByOwner[service.body.project_id] || [];
     var serviceName = service.body.name;
-
-    if (!serviceEnvs) return;
 
     var msg = ' ' + serviceName + ' service (' + serviceEnvs.length + ')\n';
 
@@ -106,6 +104,9 @@ envsList.execute = function (ctx) {
         var services = servicePayload.body;
         if (!Array.isArray(services)) {
           return reject(new Error('API returned invalid services list'));
+        }
+        if (services.length !== 1) {
+          return reject(new Error('Unknown service name: ' + serviceName));
         }
 
         return client.get({

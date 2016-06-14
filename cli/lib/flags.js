@@ -18,6 +18,21 @@ var LIST = flags.LIST = {
     usage: '-o, --org [name]',
     description: 'specify the organization',
     default: undefined
+  },
+  service: {
+    usage: '-s, --service [name]',
+    description: 'specify the service',
+    default: undefined
+  },
+  environment: {
+    usage: '-e, --environment [name]',
+    description: 'specify the environment',
+    default: undefined
+  },
+  instance: {
+    usage: '-i, --instance [name]',
+    description: 'specify the instance',
+    default: '1'
   }
 };
 
