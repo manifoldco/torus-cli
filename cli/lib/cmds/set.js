@@ -4,6 +4,7 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 
+var flags = require('../flags');
 var setCred = require('../credentials/set');
 var auth = require('../middleware/auth');
 
@@ -26,22 +27,17 @@ var set = new Command(
 
 set.hook('pre', auth());
 
-set.option(
-  '-s, --service [service]',
-  'the service the credential will belong too',
-  undefined
-);
-
-set.option(
-  '-e, --environment [environment]',
-  'the environment the credential will belong too',
-  undefined
-);
-
-set.option(
-  '-i, --instance [name]',
-  'the instance of the service belonging to the current user',
-  '1'
-);
+flags.add(set, 'org', {
+  description: 'the org the credential will belong too'
+});
+flags.add(set, 'service', {
+  description: 'the service the credential will belong too'
+});
+flags.add(set, 'environment', {
+  description: 'the environment the credential will belong too'
+});
+flags.add(set, 'instance', {
+  description: 'the instance of the service belonging to the current user'
+});
 
 module.exports = set;

@@ -2,6 +2,7 @@
 
 var Promise = require('es6-promise').Promise;
 
+var flags = require('../flags');
 var Command = require('../cli/command');
 var run = require('../credentials/run');
 var auth = require('../middleware/auth');
@@ -22,22 +23,17 @@ var runCmd = new Command(
 
 runCmd.hook('pre', auth());
 
-runCmd.option(
-  '-s, --service [service]',
-  'the service this process belongs too',
-  undefined
-);
-
-runCmd.option(
-  '-e, --environment [environment]',
-  'the environment this process is running in',
-  undefined
-);
-
-runCmd.option(
-  '-i, --instance [name]',
-  'the instance of the service',
-  '1'
-);
+flags.add(runCmd, 'org', {
+  description: 'the org the credentials belongs too'
+});
+flags.add(runCmd, 'service', {
+  description: 'the service the credentials belong too'
+});
+flags.add(runCmd, 'environment', {
+  description: 'the environment the credentiasl belong too'
+});
+flags.add(runCmd, 'instance', {
+  description: 'the instance of the service belonging to the current user'
+});
 
 module.exports = runCmd;

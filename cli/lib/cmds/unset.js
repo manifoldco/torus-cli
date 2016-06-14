@@ -4,6 +4,7 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 
+var flags = require('../flags');
 var unsetCred = require('../credentials/unset');
 var auth = require('../middleware/auth');
 
@@ -26,22 +27,18 @@ var unset = new Command(
 
 unset.hook('pre', auth());
 
-unset.option(
-  '-s, --service [service]',
-  'the service the credential belongs too',
-  undefined
-);
+flags.add(unset, 'org', {
+  description: 'the org the credential will belong too'
+});
+flags.add(unset, 'service', {
+  description: 'the service the credential will belong too'
+});
+flags.add(unset, 'environment', {
+  description: 'the environment the credential will belong too'
+});
+flags.add(unset, 'instance', {
+  description: 'the instance of the service belonging to the current user'
+});
 
-unset.option(
-  '-e, --environment [environment]',
-  'the environment the credential belongs too',
-  undefined
-);
-
-unset.option(
-  '-i, --instance [name]',
-  'the instance of the service belonging to the current user',
-  '1'
-);
 
 module.exports = unset;
