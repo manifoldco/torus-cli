@@ -48,18 +48,19 @@ describe('Services Create', function () {
   beforeEach(function () {
     this.sandbox.stub(services.output, 'success');
     this.sandbox.stub(services.output, 'failure');
+    this.sandbox.stub(client, 'get')
+      .onFirstCall()
+      .returns(Promise.resolve({
+        body: [ORG]
+      }));
     this.sandbox.stub(client, 'post')
       .onFirstCall()
       .returns(Promise.resolve({
-        body: [
-          PROJECT
-        ]
+        body: [PROJECT]
       }))
       .onSecondCall()
       .returns(Promise.resolve({
-        body: [
-          SERVICE
-        ]
+        body: [SERVICE]
       }));
     this.sandbox.spy(client, 'auth');
 
@@ -73,6 +74,7 @@ describe('Services Create', function () {
     CTX.config = new Config(process.cwd());
     CTX.daemon = new Daemon(CTX.config);
     CTX.params = ['abc123abc'];
+    CTX.options = { org: { value: ORG.body.name } };
 
     // Empty daemon
     this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
@@ -114,16 +116,16 @@ describe('Services Create', function () {
   });
   describe('_execute', function () {
     it('authorizes the client', function () {
-      var input = { name: 'api-1' };
-      return services._execute(CTX.session, input).then(function () {
-        sinon.assert.calledOnce(client.auth);
-      });
+      return services._execute(CTX.session, { name: 'api-1' }, ORG.body.name)
+        .then(function () {
+          sinon.assert.called(client.auth);
+        });
     });
 
     it('errors if session is missing', function () {
       var session = CTX_DAEMON_EMPTY.session;
       var input = {};
-      return services._execute(session, input).then(function () {
+      return services._execute(session, input, ORG.body.name).then(function () {
         assert.ok(false, 'should error');
       }).catch(function (err) {
         assert.ok(err);
@@ -133,25 +135,34 @@ describe('Services Create', function () {
 
     it('sends api request to services', function () {
       var input = { name: 'api-1' };
-      return services._execute(CTX.session, input).then(function () {
+      return services._execute(CTX.session, input, ORG.body.name).then(function () {
         sinon.assert.calledTwice(client.post);
 
-        var firstCall = client.post.firstCall;
-        var secondCall = client.post.secondCall;
-        assert.deepEqual(firstCall.args[0], {
+        var firstGet = client.get.firstCall;
+        var firstPost = client.post.firstCall;
+        var secondPost = client.post.secondCall;
+        assert.deepEqual(firstGet.args[0], {
+          url: '/orgs',
+          qs: {
+            name: 'my-org'
+          }
+        });
+        assert.deepEqual(firstPost.args[0], {
           url: '/projects',
           json: {
             body: {
-              name: 'api-1'
+              name: 'api-1',
+              org_id: ORG.id
             }
           }
         });
-        assert.deepEqual(secondCall.args[0], {
+        assert.deepEqual(secondPost.args[0], {
           url: '/services',
           json: {
             body: {
               name: 'api-1',
-              project_id: PROJECT.id
+              project_id: PROJECT.id,
+              org_id: ORG.id
             }
           }
         });
