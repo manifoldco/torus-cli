@@ -106,7 +106,7 @@ envsList.execute = function (ctx) {
           return reject(new Error('API returned invalid services list'));
         }
         if (services.length !== 1) {
-          return reject(new Error('Unknown service name: '+serviceName));
+          return reject(new Error('Unknown service name: ' + serviceName));
         }
 
         return client.get({
