@@ -21,6 +21,8 @@ var validator = validate.build({
 run.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     var params = ctx.params;
+
+    var orgName = ctx.option('org').value;
     var serviceName = ctx.option('service').value;
     var envName = ctx.option('environment').value;
     var instance = ctx.option('instance').value;
@@ -38,6 +40,7 @@ run.execute = function (ctx) {
     }
 
     var errors = validator({
+      org: orgName,
       service: serviceName,
       environment: envName,
       instance: instance
@@ -47,6 +50,7 @@ run.execute = function (ctx) {
     }
 
     return credentials.get(ctx.session, {
+      org: orgName,
       service: serviceName,
       environment: envName,
       instance: instance
@@ -91,7 +95,6 @@ run.spawn = function (daemon, params, creds) {
     }
 
     function handleSignal(signal) {
-      console.log('sending signal', signal);
       proc.kill(signal);
     }
 

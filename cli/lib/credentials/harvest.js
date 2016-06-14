@@ -4,6 +4,7 @@ var validate = require('../validate');
 var validator = validate.build({
   environment: validate.slug,
   service: validate.slug,
+  org: validate.slug,
   name: validate.credName,
   instance: validate.slug
 });
@@ -30,9 +31,14 @@ module.exports = function (ctx) {
     };
   }
 
+  var orgName = ctx.option('org').value;
   var serviceName = ctx.option('service').value;
   var envName = ctx.option('environment').value;
   var instance = ctx.option('instance').value;
+
+  if (!orgName) {
+    throw new Error('You must provide a --org flag');
+  }
 
   if (!serviceName) {
     throw new Error('You must provide a --service flag');
@@ -43,6 +49,7 @@ module.exports = function (ctx) {
   }
 
   var errors = validator({
+    org: orgName,
     name: name,
     service: serviceName,
     environment: envName,
@@ -53,6 +60,7 @@ module.exports = function (ctx) {
   }
 
   return {
+    org: orgName,
     name: name,
     service: serviceName,
     environment: envName,

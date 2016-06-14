@@ -32,7 +32,8 @@ credentials.create = function (session, params, value) {
     }
     if (!params.name ||
         (!params.path &&
-         (!params.service || !params.environment || !params.instance))) {
+         (!params.service || !params.environment ||
+          !params.instance || !params.org))) {
       throw new Error('Invalid parameters provided');
     }
 
@@ -40,72 +41,92 @@ credentials.create = function (session, params, value) {
       throw new Error('Invalid path provided');
     }
 
+    client.auth(session.token);
+
     var cpathObj;
     if (params.path) {
       cpathObj = cpath.parseExp(params.path);
-      params.service = cpathObj.service;
     }
 
     // XXX: Right now the project and service name are the same, so we use
     // that for selecting the service
     var projectName = (cpathObj) ? cpathObj.project : params.service;
-    client.auth(session.token);
+    var orgName = (cpathObj) ? cpathObj.org : params.org;
     return Promise.all([
       client.get({ url: '/users/self' }),
-      client.get({ url: '/projects?name=' + projectName })
+      client.get({ url: '/orgs?name=' + orgName })
     ]).then(function (results) {
-      // XXX: Need to validate the responses here
       var user = results[0] && results[0].body && results[0].body[0];
-      var project = results[1] && results[1].body && results[1].body[0];
+      var org = results[1] && results[1].body && results[1].body[0];
 
-      if (!user || !project) {
-        return reject(new Error('Project does not exist: ' + projectName));
+      if (!user) {
+        return reject(new Error('Could not find the user'));
       }
 
-      var pathexp = (cpathObj) ?
-        cpathObj.toString() : getPath(user, project, params);
+      if (!org) {
+        return reject(new Error('Unknown org: ' + orgName));
+      }
 
-      var getCredential = {
-        url: '/credentials',
+      var getProject = {
+        url: '/projects',
         qs: {
-          name: params.name,
-          pathexp: pathexp
+          name: projectName,
+          org_id: org.id
         }
       };
 
-      return client.get(getCredential).then(function (result) {
-        var cred = result.body && result.body[0];
-        var previous = (cred) ? cred.id : null;
-        var version = (cred) ? cred.body.version + 1 : 1;
+      return client.get(getProject).then(function (result) {
+        var project = result.body && result.body[0];
 
-        // Prevent the credential from being unset if it's already unset.
-        var curCredValue;
-        if (cred && value.body.type === 'undefined') {
-          curCredValue = cValue.parse(cred.body.value);
-
-          if (curCredValue.body.type === 'undefined') {
-            return reject(new Error('You cannot unset a credential twice'));
-          }
+        if (!project) {
+          return reject(new Error('Unknown project: ' + projectName));
         }
 
-        var object = {
-          id: utils.id('credential'),
-          body: {
+        var pathexp = (cpathObj) ?
+          cpathObj.toString() : getPath(user, project, params);
+
+        var getCredential = {
+          url: '/credentials',
+          qs: {
             name: params.name,
-            project_id: project.id,
-            org_id: project.body.org_id,
-            pathexp: pathexp,
-            version: version,
-            previous: previous,
-            value: value.toString()
+            pathexp: pathexp
           }
         };
 
-        return client.post({
-          url: '/credentials',
-          json: object
-        }).then(function (cResult) {
-          resolve(cResult.body);
+        return client.get(getCredential).then(function (credResult) {
+          var cred = credResult.body && credResult.body[0];
+          var previous = (cred) ? cred.id : null;
+          var version = (cred) ? cred.body.version + 1 : 1;
+
+          // Prevent the credential from being unset if it's already unset.
+          var curCredValue;
+          if (cred && value.body.type === 'undefined') {
+            curCredValue = cValue.parse(cred.body.value);
+
+            if (curCredValue.body.type === 'undefined') {
+              return reject(new Error('You cannot unset a credential twice'));
+            }
+          }
+
+          var object = {
+            id: utils.id('credential'),
+            body: {
+              name: params.name,
+              project_id: project.id,
+              org_id: org.id,
+              pathexp: pathexp,
+              version: version,
+              previous: previous,
+              value: value.toString()
+            }
+          };
+
+          return client.post({
+            url: '/credentials',
+            json: object
+          }).then(function (cResult) {
+            resolve(cResult.body);
+          });
         });
       });
     }).catch(reject);
@@ -117,19 +138,31 @@ credentials.get = function (session, params) {
     if (!(session instanceof Session)) {
       throw new Error('Session must be provided');
     }
-    if (!params.service || !params.environment || !params.instance) {
-      throw new Error('Service, environment, and instnace must be provided');
+    if (!params.service || !params.environment ||
+        !params.instance || !params.org) {
+      throw new Error(
+        'Org, Service, environment, and instance must be provided');
     }
 
     client.auth(session.token);
-    return client.get({ url: '/users/self' }).then(function (result) {
-      var user = result.body && result.body[0];
+
+    return Promise.all([
+      client.get({ url: '/users/self' }),
+      client.get({ url: '/orgs', qs: { name: params.org } })
+    ]).then(function (results) {
+      var user = results[0] && results[0].body && results[0].body[0];
+      var org = results[1] && results[1].body && results[1].body[0];
+
       if (!user) {
         return reject(new Error('Could not find user'));
       }
 
+      if (!org) {
+        return reject(new Error('Could not find the org: ' + params.org));
+      }
+
       var path = '/' + [
-        user.body.username, // default to the users org
+        org.body.name, // default to the users org
         params.service, // service and project have the same name
         params.environment,
         params.service,
@@ -143,8 +176,8 @@ credentials.get = function (session, params) {
           path: path
         }
       };
-      return client.get(getCreds).then(function (results) {
-        return results.body;
+      return client.get(getCreds).then(function (payload) {
+        return payload.body;
       });
     })
     .then(resolve)
