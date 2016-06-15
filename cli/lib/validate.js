@@ -28,17 +28,24 @@ validate.ValidationError = ValidationError;
  * validates that all of the object data must match.
  *
  * @param {Object} ruleMap map of value names to validation functions
+ * @param {Boolean} requireAll defaults to true, require all to be present
  * @returns {Function} function accepting map of value names to values which
  *                     returns an empty array on success or an array of errors.
  */
-validate.build = function (ruleMap) {
+validate.build = function (ruleMap, requireAll) {
+  requireAll = (requireAll === undefined) ? true : requireAll;
+
   return function (input) {
     var keyDiff = _.difference(Object.keys(ruleMap), Object.keys(input));
-    if (keyDiff.length > 0) {
+    if (keyDiff.length > 0 && requireAll) {
       return [new ValidationError('Missing parameters: ' + keyDiff.join(', '))];
     }
 
     var errs = _.map(ruleMap, function (rule, name) {
+      if (input[name] === undefined && !requireAll) {
+        return null;
+      }
+
       var output = rule(input[name]);
       return (typeof output === 'string') ?
         new ValidationError(name + ': ' + output) : null;

@@ -21,16 +21,16 @@ var ORG = {
   }
 };
 
-var SERVICES = [
+var PROJECTS = [
   {
-    id: utils.id('service'),
+    id: utils.id('project'),
     body: {
       name: 'api-1',
       org_id: ORG.id
     }
   },
   {
-    id: utils.id('service'),
+    id: utils.id('project'),
     body: {
       name: 'api-2',
       org_id: ORG.id
@@ -38,10 +38,36 @@ var SERVICES = [
   }
 ];
 
-var CTX;
+var SERVICES = [
+  {
+    id: utils.id('service'),
+    body: {
+      name: 'api-1',
+      org_id: ORG.id,
+      project_id: PROJECTS[0].id
+    }
+  },
+  {
+    id: utils.id('service'),
+    body: {
+      name: 'api-2',
+      org_id: ORG.id,
+      project_id: PROJECTS[1].id
+    }
+  },
+  {
+    id: utils.id('service'),
+    body: {
+      name: 'api-2-1',
+      org_id: ORG.id,
+      project_id: PROJECTS[1].id
+    }
+  }
+];
 
 
 describe('Services List', function () {
+  var CTX;
   before(function () {
     this.sandbox = sinon.sandbox.create();
   });
@@ -57,7 +83,14 @@ describe('Services List', function () {
       passphrase: 'hohohoho'
     });
     CTX.params = ['hi-there'];
-    CTX.options = { org: { value: ORG.body.name } };
+    CTX.options = {
+      org: {
+        value: ORG.body.name
+      },
+      project: {
+        value: undefined
+      }
+    };
   });
 
   afterEach(function () {
@@ -76,13 +109,13 @@ describe('Services List', function () {
       });
     });
 
-    it('does not throw if the user has no services', function () {
+    it('does not throw if the user has no services or projects', function () {
       client.get.returns(Promise.resolve({ body: [] }));
-
-      return serviceList.execute(CTX).then(function (services) {
-        assert.deepEqual(services.body, []);
-      }).catch(function () {
-        assert.ok(false, 'should not resolve');
+      return serviceList.execute(CTX).then(function (payload) {
+        assert.deepEqual(payload, {
+          projects: [],
+          services: []
+        });
       });
     });
 
@@ -98,11 +131,42 @@ describe('Services List', function () {
       });
     });
 
-    it('resolves with an array of services', function () {
-      client.get.returns(Promise.resolve(SERVICES));
+    it('resolves with services and projects', function () {
+      client.get.onCall(1).returns(Promise.resolve({ body: PROJECTS }));
+      client.get.onCall(2).returns(Promise.resolve({ body: SERVICES }));
 
-      return serviceList.execute(CTX).then(function (service) {
-        assert.deepEqual(service, SERVICES);
+      return serviceList.execute(CTX).then(function (payload) {
+        assert.deepEqual(payload, {
+          projects: PROJECTS,
+          services: SERVICES
+        });
+      });
+    });
+
+    it('returns an error if project is unknown', function () {
+      client.get.returns(Promise.resolve({ body: [] }));
+
+      CTX.options.project.value = 'api-3';
+
+      return serviceList.execute(CTX).then(function () {
+        assert.ok(false, 'should not resolve');
+      }).catch(function (err) {
+        assert.ok(err instanceof Error);
+        assert.strictEqual(err.message, 'project not found: api-3');
+      });
+    });
+
+    it('resolves with services and proejcts w/ name provided', function () {
+      client.get.onCall(1).returns(Promise.resolve({ body: PROJECTS }));
+      client.get.onCall(2).returns(Promise.resolve({ body: SERVICES }));
+
+      CTX.options.project.value = PROJECTS[0].body.name;
+
+      return serviceList.execute(CTX).then(function (payload) {
+        assert.deepEqual(payload, {
+          projects: [PROJECTS[0]],
+          services: [SERVICES[0]]
+        });
       });
     });
   });
