@@ -30,15 +30,17 @@ unset.hook('pre', auth());
 flags.add(unset, 'org', {
   description: 'the org the credential will belong too'
 });
-flags.add(unset, 'service', {
-  description: 'the service the credential will belong too'
+flags.add(unset, 'project', {
+  description: 'the project the credential will belong too'
 });
 flags.add(unset, 'environment', {
   description: 'the environment the credential will belong too'
 });
+flags.add(unset, 'service', {
+  description: 'the service the credential will belong too'
+});
 flags.add(unset, 'instance', {
   description: 'the instance of the service belonging to the current user'
 });
-
 
 module.exports = unset;

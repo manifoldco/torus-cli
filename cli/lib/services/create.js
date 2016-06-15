@@ -45,7 +45,7 @@ serviceCreate.execute = function (ctx) {
     };
 
     if (!data.org) {
-      throw new Error('--org is (temporarily) required.');
+      throw new Error('--org is required.');
     }
 
     client.auth(ctx.session.token);

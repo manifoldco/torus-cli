@@ -12,7 +12,6 @@ var sessionMiddleware = require('../../lib/middleware/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Daemon = require('../../lib/daemon/object').Daemon;
-var ValidationError = require('../../lib/validate').ValidationError;
 
 var ORG = {
   id: utils.id('org'),
@@ -38,9 +37,6 @@ var ENV = {
   }
 };
 
-var ctx_DAEMON_EMPTY;
-var ctx;
-
 describe('Envs Create', function () {
   var ctx;
 
@@ -60,11 +56,11 @@ describe('Envs Create', function () {
       .returns(Promise.resolve({
         body: [PROJECT]
       }));
-    
+
     this.sandbox.stub(client, 'post')
       .returns(Promise.resolve({ body: [ENV] }));
     this.sandbox.spy(client, 'auth');
-    
+
     // Context stub with session set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
@@ -81,13 +77,14 @@ describe('Envs Create', function () {
     this.sandbox.stub(ctx.daemon, 'get')
       .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
 
-    return sessionMiddleware()(ctx)  
+    return sessionMiddleware()(ctx);
   });
+
   afterEach(function () {
     this.sandbox.restore();
   });
+
   describe('execute', function () {
-    
     it('errors if org is not provided', function () {
       ctx.options.org.value = undefined;
 

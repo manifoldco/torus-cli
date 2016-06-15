@@ -98,7 +98,7 @@ describe('Services Create', function () {
         assert.ok(false, 'should not pass');
       }, function (err) {
         assert.ok(err);
-        assert.strictEqual(err.message, '--org is (temporarily) required.');
+        assert.strictEqual(err.message, '--org is required.');
       });
     });
 

@@ -24,7 +24,10 @@ var runCmd = new Command(
 runCmd.hook('pre', auth());
 
 flags.add(runCmd, 'org', {
-  description: 'the org the credentials belongs too'
+  description: 'the org the credentials belong too'
+});
+flags.add(runCmd, 'project', {
+  description: 'the project the credentials belong too'
 });
 flags.add(runCmd, 'service', {
   description: 'the service the credentials belong too'

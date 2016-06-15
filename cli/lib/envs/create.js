@@ -8,7 +8,6 @@ var _ = require('lodash');
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
-var Session = require('../session');
 
 var client = require('../api/client').create();
 
@@ -42,7 +41,7 @@ envCreate.execute = function (ctx) {
 
     if (!data.org) {
       throw new Error('--org is required.');
-    } 
+    }
 
     client.auth(ctx.session.token);
 
@@ -51,7 +50,7 @@ envCreate.execute = function (ctx) {
       qs: { name: data.org }
     };
     client.get(getOrgs).then(function (orgResult) {
-      var org = orgResult.body && orgResult.body[0]
+      var org = orgResult.body && orgResult.body[0];
       if (!org) {
         throw new Error('org not found: ' + data.org);
       }
@@ -88,7 +87,7 @@ envCreate.execute = function (ctx) {
         if (data.name && data.project) {
           var errors = validator(data);
           if (errors.length > 0) {
-            return reject(errors[0])
+            return reject(errors[0]);
           }
 
           return envCreate._execute(org, projects, data).then(resolve);
@@ -99,7 +98,8 @@ envCreate.execute = function (ctx) {
           return envCreate._execute(org, projects, input).then(resolve);
         });
       });
-    }).catch(reject);
+    })
+    .catch(reject);
   });
 };
 

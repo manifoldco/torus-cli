@@ -16,7 +16,7 @@ set.execute = function (ctx) {
     }
 
     var value = cValue.create(ctx.params[1]);
-    var params = harvest(ctx);
+    var params = harvest.create(ctx);
 
     return credentials.create(ctx.session, params, value)
       .then(resolve).catch(reject);

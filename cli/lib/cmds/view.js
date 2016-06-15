@@ -29,6 +29,9 @@ view.hook('pre', auth());
 flags.add(view, 'org', {
   description: 'the org the credentials belongs too'
 });
+flags.add(view, 'project', {
+  description: 'the project the credentials belongs too'
+});
 flags.add(view, 'service', {
   description: 'the service the credentials belong too'
 });

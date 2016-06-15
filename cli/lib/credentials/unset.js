@@ -17,7 +17,7 @@ unset.execute = function (ctx) {
 
     // to unset is just setting the cred as undefined
     var value = cValue.create(undefined);
-    var params = harvest(ctx);
+    var params = harvest.create(ctx);
 
     return credentials.create(ctx.session, params, value)
       .then(resolve).catch(reject);
