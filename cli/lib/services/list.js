@@ -85,6 +85,9 @@ servicesList.execute = function (ctx) {
         return reject(new Error('org not found: ' + orgName));
       }
 
+      // XXX: This returns all services and all projects for an org, over time,
+      // as the number of projects and services scale in an org this will fall
+      // over and get really slow.
       return Promise.all([
         client.get({
           url: '/projects',

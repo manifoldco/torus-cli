@@ -7,7 +7,7 @@ var assert = require('assert');
 var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
-var envs = require('../../lib/envs');
+var envsList = require('../../lib/envs/list');
 var client = require('../../lib/api/client').create();
 var sessionMiddleware = require('../../lib/middleware/session');
 var Config = require('../../lib/config');
@@ -21,45 +21,52 @@ var ORG = {
   }
 };
 
-var PROJECT = {
-  id: utils.id('project'),
-  body: {
-    name: 'api-1',
-    org_id: ORG.id
+var PROJECTS = [
+  {
+    id: utils.id('project'),
+    body: {
+      name: 'www',
+      org_id: ORG.id
+    }
+  },
+  {
+    id: utils.id('project'),
+    body: {
+      name: 'core',
+      org_id: ORG.id
+    }
   }
-};
+];
 
-var SERVICE = {
-  id: utils.id('service'),
-  body: {
-    name: 'api-1',
-    org_id: ORG.id,
-    project_id: PROJECT.id
+var ENVS = [
+  {
+    id: utils.id('env'),
+    body: {
+      org_id: ORG.id,
+      project_id: PROJECTS[0].id,
+      name: 'dev-1'
+    }
+  },
+  {
+    id: utils.id('env'),
+    body: {
+      org_id: ORG.id,
+      project_id: PROJECTS[1].id,
+      name: 'dev-2'
+    }
   }
-};
-
-var ENV = {
-  id: utils.id('env'),
-  body: {
-    org_id: ORG.id,
-    project_id: PROJECT.id,
-    name: SERVICE.body.name
-  }
-};
-
-var ORG_PATH = '/orgs';
-var ENV_PATH = '/envs';
-var SERVICE_PATH = '/services';
-var CTX_DAEMON_EMPTY;
-var CTX;
+];
 
 describe('Envs List', function () {
+  var ctx;
+
   before(function () {
     this.sandbox = sinon.sandbox.create();
   });
+
   beforeEach(function () {
-    this.sandbox.stub(envs.list.output, 'success');
-    this.sandbox.stub(envs.list.output, 'failure');
+    this.sandbox.stub(envsList.output, 'success');
+    this.sandbox.stub(envsList.output, 'failure');
     this.sandbox.stub(client, 'get')
       .onFirstCall()
       .returns(Promise.resolve({
@@ -67,44 +74,32 @@ describe('Envs List', function () {
       }))
       .onSecondCall()
       .returns(Promise.resolve({
-        body: [SERVICE]
+        body: PROJECTS
       }))
       .onThirdCall()
       .returns(Promise.resolve({
-        body: [ENV]
+        body: ENVS
       }));
     this.sandbox.spy(client, 'auth');
 
-    // Context stub when no session set
-    CTX_DAEMON_EMPTY = new Context({});
-    CTX_DAEMON_EMPTY.config = new Config(process.cwd());
-    CTX_DAEMON_EMPTY.daemon = new Daemon(CTX_DAEMON_EMPTY.config);
-
     // Context stub with session set
-    CTX = new Context({});
-    CTX.config = new Config(process.cwd());
-    CTX.daemon = new Daemon(CTX.config);
-    CTX.params = ['ABC123ABC'];
-    CTX.options = {
+    ctx = new Context({});
+    ctx.config = new Config(process.cwd());
+    ctx.daemon = new Daemon(ctx.config);
+    ctx.params = [];
+    ctx.options = {
       org: { value: ORG.body.name },
-      service: { value: SERVICE.body.name }
+      project: { value: PROJECTS[0].body.name }
     };
 
-    // Empty daemon
-    this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'set')
-      .returns(Promise.resolve());
-    this.sandbox.stub(CTX_DAEMON_EMPTY.daemon, 'get')
-      .returns(Promise.resolve({ token: '', passphrase: '' }));
     // Daemon with session
-    this.sandbox.stub(CTX.daemon, 'set')
+    this.sandbox.stub(ctx.daemon, 'set')
       .returns(Promise.resolve());
-    this.sandbox.stub(CTX.daemon, 'get')
+    this.sandbox.stub(ctx.daemon, 'get')
       .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
+
     // Run the session middleware to populate the context object
-    return Promise.all([
-      sessionMiddleware()(CTX),
-      sessionMiddleware()(CTX_DAEMON_EMPTY)
-    ]);
+    return sessionMiddleware()(ctx);
   });
 
   afterEach(function () {
@@ -112,69 +107,93 @@ describe('Envs List', function () {
   });
 
   describe('#execute', function () {
-    it('authorizes the client', function () {
-      return envs.list.execute(CTX).then(function () {
-        sinon.assert.calledOnce(client.auth);
-      }).catch(function () {
-        assert.ok(false, 'should not error');
-      });
-    });
+    it('errors if session is missing on ctx', function () {
+      ctx.session = null;
 
-    it('sends an api request to envs', function () {
-      return envs.list.execute(CTX).then(function (payload) {
-        assert.deepEqual(client.get.getCall(0).args, [{
-          url: ORG_PATH,
-          qs: { name: ORG.body.name }
-        }]);
-        assert.deepEqual(client.get.getCall(1).args, [{
-          url: SERVICE_PATH,
-          qs: { name: SERVICE.body.name, org_id: ORG.id }
-        }]);
-        assert.deepEqual(client.get.getCall(2).args, [{
-          url: ENV_PATH,
-          qs: { org_id: ORG.id, project_id: PROJECT.id }
-        }]);
-        assert(payload, { services: [SERVICE], envs: [ENV] });
-      });
-    });
-
-    it('requires [-o --org] flag', function () {
-      CTX.options = {
-        service: { value: SERVICE.body.name }
-      };
-
-      return envs.list.execute(CTX).then(function () {
-        assert.ok(false, 'should not resolve');
-      }).catch(function (err) {
-        assert.ok(err.message, ': --org is (temporarily) required');
-      });
-    });
-
-    it('requires [-s --service] flag', function () {
-      CTX.options = {
-        org: { value: ORG.body.name }
-      };
-
-      return envs.list.execute(CTX).then(function () {
-        assert.ok(false, 'should not resolve');
-      }).catch(function (err) {
-        assert.ok(err.message, ': --service is (temporarily) required');
-      });
-    });
-
-    it('rejects invalid service names', function () {
-      CTX.options = {
-        org: { value: ORG.body.name },
-        service: { value: '~a~' }
-      };
-
-      var expErr = 'Only alphanumeric, hyphens and underscores are allowed';
-
-      return envs.list.execute(CTX).then(function () {
-        assert.ok(false, 'should not resolve');
-      }).catch(function (err) {
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
         assert.ok(err);
-        assert.strictEqual(err, expErr);
+        assert.strictEqual(err.message, 'Session object missing on Context');
+      });
+    });
+
+    it('errors if org is not provided', function () {
+      ctx.options.org.value = undefined;
+
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
+        assert.ok(err);
+        assert.strictEqual(err.message, '--org is required.');
+      });
+    });
+
+    it('errors if org and project are provided and invalid', function () {
+      ctx.options.org.value = '@@';
+      ctx.options.project.value = '!!2@@';
+
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
+        assert.ok(err);
+        assert.strictEqual(err.message,
+          'org: Only alphanumeric, hyphens and underscores are allowed');
+      });
+    });
+
+    it('errors if org or project are provided and invalid', function () {
+      ctx.options.org.value = 'jeff-arigato-sh';
+      ctx.options.project.value = '@@@';
+
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
+        assert.ok(err);
+        assert.strictEqual(err.message,
+          'project: Only alphanumeric, hyphens and underscores are allowed');
+      });
+    });
+
+    it('errors if the org was not found', function () {
+      client.get.onCall(0).returns(Promise.resolve({ body: [] }));
+
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
+        assert.ok(err);
+        assert.strictEqual(err.message, 'org not found: jeff-arigato-sh');
+      });
+    });
+
+    it('errors if project provided and not found', function () {
+      client.get.onCall(1).returns(Promise.resolve({ body: [] }));
+
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
+        assert.ok(err);
+        assert.strictEqual(err.message, 'project not found: www');
+      });
+    });
+
+    it('returns project and its envs if project provided', function () {
+      return envsList.execute(ctx).then(function (results) {
+        assert.deepEqual(results, {
+          projects: [PROJECTS[0]],
+          envs: [ENVS[0]]
+        });
+      });
+    });
+
+    it('returns all projects and envs if project is not provided', function () {
+      ctx.options.project.value = undefined;
+
+      return envsList.execute(ctx).then(function (results) {
+        assert.deepEqual(results, {
+          projects: PROJECTS,
+          envs: ENVS
+        });
       });
     });
   });
