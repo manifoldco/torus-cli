@@ -4,6 +4,7 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../../cli/command');
 
+var flags = require('../../flags');
 var envs = require('../../envs');
 var auth = require('../../middleware/auth');
 
@@ -24,18 +25,11 @@ var cmd = new Command(
   }
 );
 
-cmd.option(
-  '-s, --service [service]',
-  'service the environment will belong too',
-  undefined
-);
-
-cmd.option(
-  '-o, --org [org]',
-  'Specify an organization',
-  null
-);
-
 cmd.hook('pre', auth());
+
+flags.add(cmd, 'org');
+flags.add(cmd, 'project', {
+  description: 'the project this environment will belong too'
+});
 
 module.exports = cmd;
