@@ -33,10 +33,15 @@ var validator = validate.build({
  */
 envCreate.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    var data = {
-      name: ctx.params[0],
+    ctx.target.flags({
       org: ctx.option('org').value,
       project: ctx.option('project').value
+    });
+
+    var data = {
+      name: ctx.params[0],
+      org: ctx.target.org,
+      project: ctx.target.project
     };
 
     if (!data.org) {

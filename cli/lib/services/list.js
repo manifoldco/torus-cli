@@ -58,17 +58,20 @@ servicesList.execute = function (ctx) {
       return reject(new TypeError('Session object not on Context'));
     }
 
-    var orgName = ctx.option('org').value;
-    var projectName = ctx.option('project').value;
+    ctx.target.flags({
+      org: ctx.option('org').value
+    });
 
-    if (!orgName) {
+    var data = {
+      org: ctx.target.org,
+      project: ctx.option('project').value
+    };
+
+    if (!data.org) {
       return reject(new Error('--org is required.'));
     }
 
-    var errors = validator({
-      org: orgName,
-      project: projectName
-    });
+    var errors = validator(data);
     if (errors.length > 0) {
       return reject(errors[0]);
     }
@@ -77,12 +80,12 @@ servicesList.execute = function (ctx) {
 
     return client.get({
       url: '/orgs',
-      qs: { name: orgName }
+      qs: { name: data.org }
     }).then(function (res) {
       var org = res.body && res.body[0];
 
       if (!_.isObject(org)) {
-        return reject(new Error('org not found: ' + orgName));
+        return reject(new Error('org not found: ' + data.org));
       }
 
       // XXX: This returns all services and all projects for an org, over time,
@@ -105,13 +108,13 @@ servicesList.execute = function (ctx) {
         var projects = results[0] && results[0].body;
         var services = results[1] && results[1].body;
 
-        if (projectName) {
+        if (data.project) {
           projects = projects.filter(function (project) {
-            return (project.body.name === projectName);
+            return (project.body.name === data.project);
           });
 
           if (projects.length === 0) {
-            return reject(new Error('project not found: ' + projectName));
+            return reject(new Error('project not found: ' + data.project));
           }
 
           services = services.filter(function (service) {

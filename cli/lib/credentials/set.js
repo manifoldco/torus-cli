@@ -28,5 +28,5 @@ set.output.success = function () {
 };
 
 set.output.failure = function () {
-  console.log('It failed ;(');
+  console.log('Failed to set credential value');
 };

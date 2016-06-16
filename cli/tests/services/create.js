@@ -11,6 +11,7 @@ var serviceCreate = require('../../lib/services/create');
 var client = require('../../lib/api/client').create();
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
+var Target = require('../../lib/context/target');
 var Daemon = require('../../lib/daemon/object').Daemon;
 var sessionMiddleware = require('../../lib/middleware/session');
 
@@ -72,6 +73,7 @@ describe('Services Create', function () {
       org: { value: ORG.body.name },
       project: { value: PROJECT.body.name }
     };
+    ctx.target = new Target(process.cwd(), {});
 
     // Daemon with token
     this.sandbox.stub(ctx.daemon, 'set')

@@ -7,6 +7,7 @@ var Command = require('../cli/command');
 var flags = require('../flags');
 var unsetCred = require('../credentials/unset');
 var auth = require('../middleware/auth');
+var target = require('../middleware/target');
 
 var unset = new Command(
   'unset <name>',
@@ -26,6 +27,7 @@ var unset = new Command(
 );
 
 unset.hook('pre', auth());
+unset.hook('pre', target());
 
 flags.add(unset, 'org', {
   description: 'the org the credential will belong to'

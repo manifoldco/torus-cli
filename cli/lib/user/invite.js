@@ -33,10 +33,14 @@ invite.output.failure = output.create(function () {
 invite.execute = function (ctx) {
   /* eslint-disable consistent-return, no-shadow */
   return new Promise(function (resolve, reject) {
+    ctx.target.flags({
+      org: ctx.option('org').value
+    });
+
     var data = {
       team: 'member',
       username: ctx.params[0],
-      org: ctx.option('org').value
+      org: ctx.target.org
     };
 
     if (!data.org) {

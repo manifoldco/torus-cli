@@ -29,5 +29,5 @@ unset.output.success = function () {
 };
 
 unset.output.failure = function () {
-  console.log('It failed ;(');
+  console.log('Failed to set credential value');
 };

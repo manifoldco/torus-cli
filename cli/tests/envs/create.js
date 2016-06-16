@@ -11,6 +11,7 @@ var client = require('../../lib/api/client').create();
 var sessionMiddleware = require('../../lib/middleware/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
+var Target = require('../../lib/context/target');
 var Daemon = require('../../lib/daemon/object').Daemon;
 
 var ORG = {
@@ -70,6 +71,7 @@ describe('Envs Create', function () {
       project: { value: PROJECT.body.name },
       org: { value: ORG.body.name }
     };
+    ctx.target = new Target(process.cwd(), {});
 
     // Daemon with token
     this.sandbox.stub(ctx.daemon, 'set')

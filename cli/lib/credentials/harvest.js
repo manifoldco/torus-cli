@@ -1,8 +1,10 @@
 'use strict';
 
-var validate = require('../validate');
 
 var harvest = module.exports;
+
+var validate = require('../validate');
+var Target = require('../context/target');
 
 var createValidator = validate.build({
   project: validate.slug,
@@ -29,6 +31,10 @@ var getValidator = validate.build({
  * @return {Promise}
  */
 harvest.create = function (ctx) {
+  if (!(ctx.target instanceof Target)) {
+    throw new TypeError('Target must exist on the Context object');
+  }
+
   var name = ctx.params[0];
   var parts = name.split('/').filter(function (part) {
     return part.length !== 0;
@@ -43,48 +49,44 @@ harvest.create = function (ctx) {
     };
   }
 
-  var orgName = ctx.option('org').value;
-  var projectName = ctx.option('project').value;
-  var serviceName = ctx.option('service').value;
-  var envName = ctx.option('environment').value;
-  var instance = ctx.option('instance').value;
+  ctx.target.flags({
+    org: ctx.option('org').value,
+    project: ctx.option('project').value,
+    service: ctx.option('service').value,
+    environment: ctx.option('environment').value
+  });
 
-  if (!orgName) {
+  var data = {
+    org: ctx.target.org,
+    project: ctx.target.project,
+    environment: ctx.target.environment,
+    service: ctx.target.service,
+    instance: ctx.option('instance').value,
+    name: name
+  };
+
+  if (!data.org) {
     throw new Error('You must provide a --org flag');
   }
 
-  if (!projectName) {
+  if (!data.project) {
     throw new Error('You must provide a --project flag');
   }
 
-  if (!serviceName) {
+  if (!data.service) {
     throw new Error('You must provide a --service flag');
   }
 
-  if (!envName) {
+  if (!data.environment) {
     throw new Error('You must provide a --environment flag');
   }
 
-  var errors = createValidator({
-    org: orgName,
-    name: name,
-    project: projectName,
-    service: serviceName,
-    environment: envName,
-    instance: instance
-  });
+  var errors = createValidator(data);
   if (errors.length > 0) {
     throw errors[0];
   }
 
-  return {
-    org: orgName,
-    name: name,
-    project: projectName,
-    service: serviceName,
-    environment: envName,
-    instance: instance
-  };
+  return data;
 };
 
 /**
@@ -95,40 +97,41 @@ harvest.create = function (ctx) {
  * @return {Promise}
  */
 harvest.get = function (ctx) {
-  var orgName = ctx.option('org').value;
-  var projectName = ctx.option('project').value;
-  var serviceName = ctx.option('service').value;
-  var envName = ctx.option('environment').value;
-  var instance = ctx.option('instance').value;
+  ctx.target.flags({
+    org: ctx.option('org').value,
+    project: ctx.option('project').value,
+    service: ctx.option('service').value,
+    environment: ctx.option('environment').value
+  });
 
-  if (!orgName) {
+  var data = {
+    org: ctx.target.org,
+    project: ctx.target.project,
+    environment: ctx.target.environment,
+    service: ctx.target.service,
+    instance: ctx.option('instance').value
+  };
+
+  if (!data.org) {
     throw new Error('You must provide a --org flag');
   }
 
-  if (!projectName) {
+  if (!data.project) {
     throw new Error('You must provide a --project flag');
   }
 
-  if (!serviceName) {
+  if (!data.service) {
     throw new Error('You must provide a --service flag');
   }
 
-  if (!envName) {
+  if (!data.environment) {
     throw new Error('You must provide a --environment flag');
   }
 
-  var params = {
-    org: orgName,
-    project: projectName,
-    service: serviceName,
-    environment: envName,
-    instance: instance
-  };
-
-  var errors = getValidator(params);
+  var errors = getValidator(data);
   if (errors.length > 0) {
     throw errors[0];
   }
 
-  return params;
+  return data;
 };

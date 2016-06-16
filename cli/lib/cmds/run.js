@@ -6,6 +6,7 @@ var flags = require('../flags');
 var Command = require('../cli/command');
 var run = require('../credentials/run');
 var auth = require('../middleware/auth');
+var target = require('../middleware/target');
 
 var runCmd = new Command(
   'run <command>',
@@ -22,6 +23,7 @@ var runCmd = new Command(
 );
 
 runCmd.hook('pre', auth());
+runCmd.hook('pre', target());
 
 flags.add(runCmd, 'org', {
   description: 'the org the credentials belong to'

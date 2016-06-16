@@ -10,6 +10,7 @@ var utils = require('common/utils');
 
 var Session = require('../../lib/session');
 var Context = require('../../lib/cli/context');
+var Target = require('../../lib/context/target');
 
 var client = require('../../lib/api/client').create();
 var serviceList = require('../../lib/services/list');
@@ -91,6 +92,9 @@ describe('Services List', function () {
         value: undefined
       }
     };
+    CTX.target = new Target(process.cwd(), {
+      org: ORG.body.name
+    });
   });
 
   afterEach(function () {

@@ -6,6 +6,7 @@ var flags = require('../flags');
 var Command = require('../cli/command');
 var invite = require('../user/invite');
 var auth = require('../middleware/auth');
+var target = require('../middleware/target');
 
 var inviteCmd = new Command(
   'invite <username>',
@@ -24,6 +25,7 @@ var inviteCmd = new Command(
 );
 
 inviteCmd.hook('pre', auth());
+inviteCmd.hook('pre', target());
 
 flags.add(inviteCmd, 'org', {
   description: 'the org to invite the user to'

@@ -3,20 +3,23 @@
 var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
-var status = require('../context/status');
+
+var init = require('../context/init');
 var auth = require('../middleware/auth');
-var target = require('../middleware/target');
 
 var cmd = new Command(
-  'status',
-  'shows your current cli status',
+  'init',
+  'initalize a project and service linking to a codebase',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      status.execute(ctx).then(function (identity) {
-        status.output.success(null, identity);
-        resolve();
+      init.execute(ctx).then(function (result) {
+        init.output.success(result);
+
+        resolve(true);
       }).catch(function (err) {
-        status.output.failure(err);
+        err.type = err.type || 'unknown';
+
+        init.output.failure();
         reject(err);
       });
     });
@@ -24,6 +27,5 @@ var cmd = new Command(
 );
 
 cmd.hook('pre', auth());
-cmd.hook('pre', target());
 
 module.exports = cmd;

@@ -7,6 +7,7 @@ var Command = require('../cli/command');
 var flags = require('../flags');
 var setCred = require('../credentials/set');
 var auth = require('../middleware/auth');
+var target = require('../middleware/target');
 
 var set = new Command(
   'set <name> <value>',
@@ -26,6 +27,7 @@ var set = new Command(
 );
 
 set.hook('pre', auth());
+set.hook('pre', target());
 
 flags.add(set, 'org', {
   description: 'the org the credential will belong to'
