@@ -2,9 +2,9 @@
 
 var serviceCreate = exports;
 
+var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
 
-var Session = require('../session');
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
@@ -26,23 +26,9 @@ serviceCreate.output.failure = output.create(function () {
   console.log('Service creation failed, please try again');
 });
 
-/**
- * Service prompt questions
- */
-serviceCreate.questions = function () {
-  return [
-    [
-      {
-        name: 'name',
-        message: 'Service name',
-        validate: validate.slug
-      }
-    ]
-  ];
-};
-
 var validator = validate.build({
-  name: validate.slug
+  name: validate.slug,
+  project: validate.slug
 });
 
 /**
@@ -52,97 +38,71 @@ var validator = validate.build({
  */
 serviceCreate.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    var retrieveInput;
+    var data = {
+      name: ctx.params[0],
+      org: ctx.option('org').value,
+      project: ctx.option('project').value
+    };
 
-    var options = ctx.options;
-    var orgName = options && options.org && options.org.value;
-
-    if (!orgName) {
-      throw new Error('--org is (temporarily) required.');
+    if (!data.org) {
+      throw new Error('--org is required.');
     }
 
-    var name = ctx.params[0];
-    if (name) {
-      var errors = validator({ name: name });
-      if (errors.length > 0) {
-        retrieveInput = Promise.reject(errors[0]);
-      } else {
-        retrieveInput = Promise.resolve({ name: name });
-      }
-    } else {
-      retrieveInput = serviceCreate._prompt();
-    }
+    client.auth(ctx.session.token);
 
-    return retrieveInput.then(function (userInput) {
-      return serviceCreate._execute(ctx.session, userInput, orgName);
-    }).then(resolve).catch(reject);
-  });
-};
-
-/**
- * Attempt to create service with supplied input
- *
- * @param {object} session - Session object
- * @param {object} userInput
- */
-serviceCreate._execute = function (session, userInput, orgName) {
-  return new Promise(function (resolve, reject) {
-    if (!(session instanceof Session)) {
-      throw new TypeError('Session object missing on Context');
-    }
-
-    client.auth(session.token);
-
-    // Projects and services have the same name for now; standardized until
-    // projects are part of the UI we reveal to users through the CLI.
-    var project;
-    var org;
-    client.get({
+    var getOrgs = {
       url: '/orgs',
-      qs: { name: orgName }
-    })
-    .then(function (res) {
-      org = res.body && res.body[0];
-
+      qs: { name: data.org }
+    };
+    client.get(getOrgs).then(function (orgResult) {
+      var org = orgResult.body && orgResult.body[0];
       if (!org) {
-        throw new Error('Project was not created; invalid org provided');
+        throw new Error('org not found: ' + data.org);
       }
 
-      return client.post({
+      return org;
+    }).then(function (org) {
+      var getProjects = {
         url: '/projects',
-        json: {
-          body: {
-            name: userInput.name,
-            org_id: org.id
-          }
+        qs: {
+          org_id: org.id
         }
-      });
-    }).then(function (res) {
-      if (!res.body || res.body.length !== 1) {
-        throw new Error('Project was not created; invalid body returned');
+      };
+
+      if (data.project) {
+        getProjects.qs.name = data.project;
       }
 
-      project = res.body[0];
-      return client.post({
-        url: '/services',
-        json: {
-          body: {
-            name: project.body.name,
-            project_id: project.id,
-            org_id: org.id
-          }
-        }
-      });
-    })
-    .then(function (res) {
-      if (!res.body || res.body.length !== 1) {
-        throw new Error('Service was not created; invalid body returned');
-      }
+      return client.get(getProjects).then(function (projectResult) {
+        var projects = projectResult.body;
 
-      var service = res.body[0];
-      resolve({
-        project: project,
-        service: service
+        if (!Array.isArray(projects)) {
+          throw new Error('Invalid result from project retreival');
+        }
+
+        if (data.project && projects.length !== 1) {
+          throw new Error('project not found: ' + data.project);
+        }
+
+        if (projects.length === 0) {
+          throw new Error(
+            'You must create a project before creating a service');
+        }
+
+        if (data.name && data.project) {
+          var errors = validator(data);
+          if (errors.length > 0) {
+            return reject(errors[0]);
+          }
+
+          return serviceCreate._execute(org, projects, data).then(resolve);
+        }
+
+        var projectNames = _.map(projects, 'body.name');
+        return serviceCreate._prompt(data, projectNames).then(function (input) {
+          return serviceCreate._execute(org, projects, input)
+            .then(resolve);
+        });
       });
     })
     .catch(reject);
@@ -150,12 +110,83 @@ serviceCreate._execute = function (session, userInput, orgName) {
 };
 
 /**
+ * Attempt to create service with supplied input
+ *
+ * @param {Object} org organization object
+ * @param {Object} project array of possible projects
+ * @param {Object} input user input
+ */
+serviceCreate._execute = function (org, projects, input) {
+  return new Promise(function (resolve, reject) {
+    var project = _.find(projects, function (p) {
+      return (p.body.name === input.project &&
+              p.body.org_id === org.id);
+    });
+
+    if (!project) {
+      throw new Error('project not found: ' + input.project);
+    }
+
+    var postServices = {
+      url: '/services',
+      json: {
+        body: {
+          org_id: org.id,
+          project_id: project.id,
+          name: input.name
+        }
+      }
+    };
+
+    return client.post(postServices).then(function (result) {
+      var service = result && result.body[0];
+      if (!service) {
+        throw new Error('Invalid service creation result');
+      }
+
+      resolve({
+        project: project,
+        service: service
+      });
+    }).catch(reject);
+  });
+};
+
+/**
  * Create prompt promise
  */
-serviceCreate._prompt = function () {
+serviceCreate._prompt = function (defaults, projectNames) {
   var prompt = new Prompt({
-    stages: serviceCreate.questions
+    stages: serviceCreate._questions,
+    defaults: defaults,
+    questionArgs: [
+      projectNames
+    ]
   });
 
-  return prompt.start();
+  return prompt.start().then(function (answers) {
+    return _.omitBy(_.extend({}, defaults, answers), _.isUndefined);
+  });
 };
+
+/**
+ * Service prompt questions
+ */
+serviceCreate._questions = function (projectNames) {
+  return [
+    [
+      {
+        name: 'name',
+        message: 'Service name',
+        validate: validate.slug
+      },
+      {
+        type: 'list',
+        name: 'project',
+        message: 'Project',
+        choices: projectNames
+      }
+    ]
+  ];
+};
+

@@ -11,12 +11,12 @@ var cValue = require('./value');
 
 var credentials = exports;
 
-function getPath(user, project, params) {
+function getPath(user, params) {
   return '/' + [
-    user.body.username, // default to the users org
-    project.body.name,
+    params.org, // default to the users org
+    params.project,
     params.environment,
-    project.body.name, // rely on the fact that project name == service name
+    params.service,
     user.body.username,
     params.instance // default to instance id 1
   ].join('/');
@@ -32,8 +32,8 @@ credentials.create = function (session, params, value) {
     }
     if (!params.name ||
         (!params.path &&
-         (!params.service || !params.environment ||
-          !params.instance || !params.org))) {
+         (!params.org || !params.project || !params.service ||
+          !params.environment || !params.instance))) {
       throw new Error('Invalid parameters provided');
     }
 
@@ -48,9 +48,7 @@ credentials.create = function (session, params, value) {
       cpathObj = cpath.parseExp(params.path);
     }
 
-    // XXX: Right now the project and service name are the same, so we use
-    // that for selecting the service
-    var projectName = (cpathObj) ? cpathObj.project : params.service;
+    var projectName = (cpathObj) ? cpathObj.project : params.project;
     var orgName = (cpathObj) ? cpathObj.org : params.org;
     return Promise.all([
       client.get({ url: '/users/self' }),
@@ -83,7 +81,7 @@ credentials.create = function (session, params, value) {
         }
 
         var pathexp = (cpathObj) ?
-          cpathObj.toString() : getPath(user, project, params);
+          cpathObj.toString() : getPath(user, params);
 
         var getCredential = {
           url: '/credentials',
@@ -138,10 +136,10 @@ credentials.get = function (session, params) {
     if (!(session instanceof Session)) {
       throw new Error('Session must be provided');
     }
-    if (!params.service || !params.environment ||
+    if (!params.project || !params.service || !params.environment ||
         !params.instance || !params.org) {
       throw new Error(
-        'Org, Service, environment, and instance must be provided');
+        'Org, project, service, environment, and instance must be provided');
     }
 
     client.auth(session.token);
@@ -162,8 +160,8 @@ credentials.get = function (session, params) {
       }
 
       var path = '/' + [
-        org.body.name, // default to the users org
-        params.service, // service and project have the same name
+        org.body.name,
+        params.project,
         params.environment,
         params.service,
         user.body.username,

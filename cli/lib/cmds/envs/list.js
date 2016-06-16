@@ -3,6 +3,7 @@
 var Promise = require('es6-promise').Promise;
 
 var Command = require('../../cli/command');
+var flags = require('../../flags');
 var envs = require('../../envs');
 var auth = require('../../middleware/auth');
 
@@ -23,18 +24,11 @@ var cmd = new Command(
   }
 );
 
-cmd.option(
-  '-s, --service [service]',
-  'List environments for a particular service',
-  null
-);
-
-cmd.option(
-  '-o, --org [org]',
-  'Specify an organization',
-  null
-);
-
 cmd.hook('pre', auth());
+
+flags.add(cmd, 'org');
+flags.add(cmd, 'project', {
+  description: 'list environments for a particular project'
+});
 
 module.exports = cmd;

@@ -8,7 +8,6 @@ var _ = require('lodash');
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
-var Session = require('../session');
 
 var client = require('../api/client').create();
 
@@ -22,27 +21,9 @@ envCreate.output.failure = output.create(function () {
   console.log('Environment creation failed, please try again');
 });
 
-envCreate.questions = function (serviceNames) {
-  return [
-    [
-      {
-        name: 'name',
-        message: 'Environment name',
-        validate: validate.slug
-      },
-      {
-        type: 'list',
-        name: 'service',
-        message: 'Service',
-        choices: serviceNames
-      }
-    ]
-  ];
-};
-
 var validator = validate.build({
   name: validate.slug,
-  service: validate.slug
+  project: validate.slug
 });
 
 /**
@@ -52,96 +33,72 @@ var validator = validate.build({
  */
 envCreate.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    var params = ctx.params || [];
-
     var data = {
-      name: params[0],
-      service: ctx.options.service.value
+      name: ctx.params[0],
+      org: ctx.option('org').value,
+      project: ctx.option('project').value
     };
 
-    var orgName = ctx.options.org.value;
-
-    if (!orgName) {
-      return reject(new Error('--org is (temporarily) required.'));
-    }
-
-    var validOrgName = validate.slug(orgName);
-
-    if (!_.isBoolean(validOrgName)) {
-      return reject(new Error(validOrgName));
+    if (!data.org) {
+      throw new Error('--org is required.');
     }
 
     client.auth(ctx.session.token);
 
-    var serviceData;
-    var org;
-    return client.get({
+    var getOrgs = {
       url: '/orgs',
-      qs: { name: orgName }
-    }).then(function (res) {
-      org = res.body && res.body[0];
-
+      qs: { name: data.org }
+    };
+    client.get(getOrgs).then(function (orgResult) {
+      var org = orgResult.body && orgResult.body[0];
       if (!org) {
-        throw new Error('Env not created; invalid org provided');
+        throw new Error('org not found: ' + data.org);
       }
 
-      return client.get({
-        url: '/services',
-        qs: { org_id: org.id }
-      }).then(function (results) {
-        serviceData = results.body;
-        return _.map(serviceData, 'body.name');
+      return org;
+    }).then(function (org) {
+      var getProjects = {
+        url: '/projects',
+        qs: {
+          org_id: org.id
+        }
+      };
 
-      // Prompt for values, filling in defaults for supplied values
-      }).then(function (serviceNames) {
-        if (!serviceNames.length) {
-          throw new Error('Must create service before env');
+      if (data.project) {
+        getProjects.qs.name = data.project;
+      }
+
+      return client.get(getProjects).then(function (projectResult) {
+        var projects = projectResult.body;
+
+        if (!Array.isArray(projects)) {
+          throw new Error('Invalid result from project retrieval');
         }
 
-        // If sufficient data supplied, return early
-        if (data.name && data.service) {
-          data = _.omitBy(data, _.isUndefined);
-          data = _.mapValues(data, _.toString);
+        if (data.project && projects.length !== 1) {
+          throw new Error('project not found: ' + data.project);
+        }
 
-          // Validate inputs from params/options
+        if (projects.length === 0) {
+          throw new Error(
+            'You must create a project before creating an environment');
+        }
+
+        if (data.name && data.project) {
           var errors = validator(data);
-          if (errors.length) {
+          if (errors.length > 0) {
             return reject(errors[0]);
           }
 
-          return data;
+          return envCreate._execute(org, projects, data).then(resolve);
         }
 
-        // Otherwise prompt for missing values
-        return envCreate._prompt(data, serviceNames).then(function (userInput) {
-          userInput = _.omitBy(_.extend({}, data, userInput), _.isUndefined);
-          return userInput;
+        var projectNames = _.map(projects, 'body.name');
+        return envCreate._prompt(data, projectNames).then(function (input) {
+          return envCreate._execute(org, projects, input).then(resolve);
         });
-
-      // Map the item selected to its ID
-      })
-      .then(function (userInput) {
-        var service = _.find(serviceData, function (s) {
-          return s.body.name === userInput.service;
-        });
-
-        if (!service) {
-          throw new Error('Unknown service: ' + userInput.service);
-        }
-
-        return {
-          body: {
-            name: userInput.name,
-            project_id: service.body.project_id,
-            org_id: org.id
-          }
-        };
-      })
-      .then(function (envData) {
-        return envCreate._execute(ctx.session, envData);
       });
     })
-    .then(resolve)
     .catch(reject);
   });
 };
@@ -149,35 +106,71 @@ envCreate.execute = function (ctx) {
 /**
  * Create prompt promise
  */
-envCreate._prompt = function (defaults, serviceNames) {
+envCreate._prompt = function (defaults, projectNames) {
   var prompt = new Prompt({
-    stages: envCreate.questions,
+    stages: envCreate._questions,
     defaults: defaults,
     questionArgs: [
-      serviceNames
+      projectNames
     ]
   });
 
-  return prompt.start();
-};
-
-/**
- * Run the create request
- *
- * @param {Session} session
- * @param {object} data
- */
-envCreate._execute = function (session, data) {
-  return new Promise(function (resolve, reject) {
-    if (!(session instanceof Session)) {
-      throw new TypeError('Session object missing on Context');
-    }
-
-    client.post({
-      url: '/envs',
-      json: data
-    })
-    .then(resolve)
-    .catch(reject);
+  return prompt.start().then(function (answers) {
+    return _.omitBy(_.extend({}, defaults, answers), _.isUndefined);
   });
 };
+
+envCreate._execute = function (org, projects, input) {
+  return new Promise(function (resolve, reject) {
+    var project = _.find(projects, function (p) {
+      return (p.body.name === input.project &&
+              p.body.org_id === org.id);
+    });
+
+    if (!project) {
+      throw new Error('project not found: ' + input.project);
+    }
+
+    var postEnvs = {
+      url: '/envs',
+      json: {
+        body: {
+          org_id: org.id,
+          project_id: project.id,
+          name: input.name
+        }
+      }
+    };
+
+    return client.post(postEnvs).then(function (result) {
+      var env = result && result.body[0];
+      if (!env) {
+        throw new Error('Invalid service creation result');
+      }
+
+      resolve({
+        project: project,
+        env: env
+      });
+    }).catch(reject);
+  });
+};
+
+envCreate._questions = function (projectNames) {
+  return [
+    [
+      {
+        name: 'name',
+        message: 'Environment name',
+        validate: validate.slug
+      },
+      {
+        type: 'list',
+        name: 'project',
+        message: 'Project',
+        choices: projectNames
+      }
+    ]
+  ];
+};
+

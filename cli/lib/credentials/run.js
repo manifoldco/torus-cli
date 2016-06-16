@@ -6,56 +6,18 @@ var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
 var regulator = require('event-regulator');
 
-var validate = require('../validate');
 var cValue = require('./value');
 var credentials = require('./credentials');
+var harvest = require('./harvest');
 
 var run = exports;
 
-var validator = validate.build({
-  environment: validate.slug,
-  service: validate.slug,
-  instance: validate.slug
-});
-
 run.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    var params = ctx.params;
+    var params = harvest.get(ctx);
 
-    var orgName = ctx.option('org').value;
-    var serviceName = ctx.option('service').value;
-    var envName = ctx.option('environment').value;
-    var instance = ctx.option('instance').value;
-
-    if (params.length < 1) {
-      return reject(new Error('You must provide commands to run'));
-    }
-
-    if (!serviceName) {
-      return reject(new Error('You must provide a --service flag'));
-    }
-
-    if (!envName) {
-      return reject(new Error('You must provide a --environment flag'));
-    }
-
-    var errors = validator({
-      org: orgName,
-      service: serviceName,
-      environment: envName,
-      instance: instance
-    });
-    if (errors.length > 0) {
-      return reject(errors[0]);
-    }
-
-    return credentials.get(ctx.session, {
-      org: orgName,
-      service: serviceName,
-      environment: envName,
-      instance: instance
-    }).then(function (creds) {
-      return run.spawn(ctx.daemon, params, creds);
+    return credentials.get(ctx.session, params).then(function (creds) {
+      return run.spawn(ctx.daemon, ctx.params, creds);
     }).catch(reject);
   });
 };

@@ -19,22 +19,22 @@ envsList.output = {};
  */
 envsList.output.success = output.create(function (payload) {
   var envs = payload.envs;
-  var services = payload.services;
+  var projects = payload.projects;
 
-  var envsByOwner = _.groupBy(envs, 'body.project_id');
+  var envsByProject = _.groupBy(envs, 'body.project_id');
 
-  _.each(services, function (service) {
-    var serviceEnvs = envsByOwner[service.body.project_id] || [];
-    var serviceName = service.body.name;
+  _.each(projects, function (project) {
+    var projectEnvs = envsByProject[project.id] || [];
+    var projectName = project.body.name;
 
-    var msg = ' ' + serviceName + ' service (' + serviceEnvs.length + ')\n';
+    var msg = ' ' + projectName + ' projects (' + projectEnvs.length + ')\n';
 
     msg += ' ' + new Array(msg.length - 1).join('-') + '\n'; // underline
-    msg += serviceEnvs.map(function (env) {
+    msg += projectEnvs.map(function (env) {
       return _.padStart(env.body.name, env.body.name.length + 1);
     }).join('\n');
 
-    if (envs !== _.findLast(serviceEnvs)) {
+    if (envs !== _.findLast(projectEnvs)) {
       msg += '\n';
     }
 
@@ -45,6 +45,11 @@ envsList.output.success = output.create(function (payload) {
 envsList.output.failure = output.create(function () {
   console.log('Retrieval of envs failed!');
 });
+
+var validator = validate.build({
+  org: validate.slug,
+  project: validate.slug
+}, false);
 
 /**
  * List envs
@@ -58,27 +63,18 @@ envsList.execute = function (ctx) {
     }
 
     var orgName = ctx.options.org.value;
+    var projectName = ctx.options.project.value;
 
     if (!orgName) {
-      return reject(new Error('--org is (temporarily) required.'));
+      throw new Error('--org is required.');
     }
 
-    var validOrgName = validate.slug(orgName);
-
-    if (!_.isBoolean(validOrgName)) {
-      return reject(new Error(validOrgName));
-    }
-
-    var serviceName = ctx.options.service.value;
-
-    if (!serviceName) {
-      return reject(new Error('--service is (temporarily) required.'));
-    }
-
-    var validServiceName = validate.slug(serviceName);
-
-    if (!_.isBoolean(validServiceName)) {
-      return reject(validServiceName);
+    var errors = validator({
+      org: orgName,
+      project: projectName
+    });
+    if (errors.length > 0) {
+      return reject(errors[0]);
     }
 
     client.auth(ctx.session.token);
@@ -90,44 +86,48 @@ envsList.execute = function (ctx) {
       var org = res.body && res.body[0];
 
       if (!_.isObject(org)) {
-        return reject(new Error('The org could not be found'));
+        return reject(new Error('org not found: ' + orgName));
       }
 
-      return client.get({
-        url: '/services',
-        qs: {
-          org_id: org.id,
-          name: serviceName
-        }
-      }).then(function (servicePayload) {
-        // TODO: No services? Prompt them to create one first.
-        var services = servicePayload.body;
-        if (!Array.isArray(services)) {
-          return reject(new Error('API returned invalid services list'));
-        }
-        if (services.length !== 1) {
-          return reject(new Error('Unknown service name: ' + serviceName));
-        }
-
-        return client.get({
+      // XXX: This returns all envs and all projects for an org, over time,
+      // as the number of projects and environments scale in an org this will
+      // fall over and get really slow.
+      return Promise.all([
+        client.get({
+          url: '/projects',
+          qs: {
+            org_id: org.id
+          }
+        }),
+        client.get({
           url: '/envs',
           qs: {
-            org_id: org.id,
-            project_id: services[0].body.project_id
+            org_id: org.id
           }
-        }).then(function (envsPayload) {
-          var envs = envsPayload.body;
-          if (!Array.isArray(envs)) {
-            return reject(new Error('API returned invalid envs list'));
+        })
+      ]).then(function (results) {
+        var projects = results[0] && results[0].body;
+        var envs = results[1] && results[1].body;
+
+        if (projectName) {
+          projects = projects.filter(function (project) {
+            return (project.body.name === projectName);
+          });
+
+          if (projects.length === 0) {
+            throw new Error('project not found: ' + projectName);
           }
 
-          return {
-            services: services,
-            envs: envs
-          };
+          envs = envs.filter(function (env) {
+            return (projects[0].id === env.body.project_id);
+          });
+        }
+
+        return resolve({
+          projects: projects || [],
+          envs: envs || []
         });
       });
-    }).then(resolve)
-      .catch(reject);
+    }).catch(reject);
   });
 };
