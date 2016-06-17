@@ -29,7 +29,7 @@ cmd.hook('pre', auth());
 
 flags.add(cmd, 'org');
 flags.add(cmd, 'project', {
-  description: 'the project this environment will belong too'
+  description: 'the project this environment will belong to'
 });
 
 module.exports = cmd;

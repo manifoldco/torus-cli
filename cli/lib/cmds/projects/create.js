@@ -28,7 +28,7 @@ var cmd = new Command(
 cmd.hook('pre', auth());
 
 flags.add(cmd, 'org', {
-  description: 'the organization this project will belong too'
+  description: 'the organization this project will belong to'
 });
 
 module.exports = cmd;

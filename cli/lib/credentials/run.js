@@ -45,7 +45,7 @@ run.spawn = function (daemon, params, creds) {
 
     function onClose(exitCode) {
       // If the exitCode is 0 then propagate up a successful run to
-      // `bin/arigatoo` which will exit with a non-zero exitCode.
+      // `bin/arigato` which will exit with a non-zero exitCode.
       //
       // TODO: Don't swallow the exitCode and propagate it all the way up.
       daemon.disconnect().then(function () {

@@ -28,16 +28,16 @@ var set = new Command(
 set.hook('pre', auth());
 
 flags.add(set, 'org', {
-  description: 'the org the credential will belong too'
+  description: 'the org the credential will belong to'
 });
 flags.add(set, 'project', {
-  description: 'the project the credential will belong too'
+  description: 'the project the credential will belong to'
 });
 flags.add(set, 'environment', {
-  description: 'the environment the credential will belong too'
+  description: 'the environment the credential will belong to'
 });
 flags.add(set, 'service', {
-  description: 'the service the credential will belong too'
+  description: 'the service the credential will belong to'
 });
 flags.add(set, 'instance', {
   description: 'the instance of the service belonging to the current user'

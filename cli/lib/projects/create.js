@@ -108,7 +108,7 @@ create._questions = function (orgNames) {
       {
         type: 'list',
         name: 'org',
-        message: 'Organization the project belongs too',
+        message: 'Organization the project belongs to',
         choices: orgNames
       }
     ]

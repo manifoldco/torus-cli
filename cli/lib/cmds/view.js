@@ -27,16 +27,16 @@ var view = new Command(
 view.hook('pre', auth());
 
 flags.add(view, 'org', {
-  description: 'the org the credentials belongs too'
+  description: 'the org the credentials belongs to'
 });
 flags.add(view, 'project', {
-  description: 'the project the credentials belongs too'
+  description: 'the project the credentials belongs to'
 });
 flags.add(view, 'service', {
-  description: 'the service the credentials belong too'
+  description: 'the service the credentials belong to'
 });
 flags.add(view, 'environment', {
-  description: 'the environment the credentiasl belong too'
+  description: 'the environment the credentiasl belong to'
 });
 flags.add(view, 'instance', {
   description: 'the instance of the service belonging to the current user'
