@@ -9,6 +9,12 @@ var client = require('../api/client').create();
 var output = require('../cli/output');
 var validate = require('../validate');
 
+var validator = validate.build({
+  team: validate.slug,
+  username: validate.slug,
+  org: validate.slug
+});
+
 invite.output = {};
 
 invite.output.success = output.create(function (username) {
@@ -25,6 +31,7 @@ invite.output.failure = output.create(function () {
  * @param {object} ctx - Command context
  */
 invite.execute = function (ctx) {
+  /* eslint-disable consistent-return, no-shadow */
   return new Promise(function (resolve, reject) {
     var data = {
       team: 'member',
@@ -33,19 +40,12 @@ invite.execute = function (ctx) {
     };
 
     if (!data.org) {
-      throw new Error('--org is required');
+      return reject(new Error('--org is required'));
     }
 
-    if (validate.slug(data.org) instanceof Error) {
-      throw new Error('invalid org name supplied');
-    }
-
-    if (!data.username) {
-      throw new Error('username is required');
-    }
-
-    if (validate.slug(data.username) instanceof Error) {
-      throw new Error('invalid username supplied');
+    var errors = validator(data);
+    if (errors.length > 0) {
+      return reject(errors[0]);
     }
 
     client.auth(ctx.session.token);
