@@ -24,7 +24,7 @@ list.output.success = output.create(function (payload) {
   var projectsByOrg = _.groupBy(payload.projects, 'body.org_id');
 
   _.each(orgIdMap, function (org, i) {
-    var projects = projectsByOrg[org.id];
+    var projects = projectsByOrg[org.id] || [];
 
     var msg = ' ' + org.body.name + ' org (' + projects.length + ')\n';
     msg += ' ' + new Array(msg.length - 1).join('-') + '\n'; // underline
