@@ -27,7 +27,7 @@ cmd.hook('pre', auth());
 
 cmd.option(
   '-o, --org [name]',
-  'the organization this project will belong too',
+  'the organization this project will belong to',
   undefined
 );
 
