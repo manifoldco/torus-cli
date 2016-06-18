@@ -13,25 +13,25 @@ var Target = require('./target');
 var init = exports;
 init.output = {};
 
+var CREATE_ORG_VALUE = 'Create New Org';
+var CREATE_PROJECT_VALUE = 'Create New Project';
+var CREATE_SERVICE_VALUE = 'Create New Service';
+
 init.output.success = function (objects) {
   var target = objects.target;
-  var user = objects.user;
 
-  console.log('\n' + process.cwd(), 'has been associated with /' + [
-    target.org,
-    target.project,
-    target.environment,
-    target.service,
-    user.body.username,
-    '1'
-  ].join('/') + '\n');
+  console.log('\nYour current working directory and all sub directories have ' +
+              'been linked to:\n');
+  console.log('Org: ' + target.org);
+  console.log('Project: ' + target.project);
+  console.log('Environment: ' + target.environment);
+  console.log('Service: ' + target.service + '\n');
 
-  console.log('All sub-directories will be associated with this org, project,' +
-    ' and service');
+  console.log('Use \'ag status\' to display your current working context.\n');
 };
 
 init.output.failure = function () {
-  console.log('Failed to associate directory');
+  console.log('Failed to link your current working directory.');
 };
 
 init.execute = function (ctx) {
@@ -143,20 +143,20 @@ init._questions = function (store) {
     {
       type: 'list',
       name: 'org',
-      message: 'The organization this code base is tied too',
+      message: 'Select an org',
       choices: function () {
         return store.get('org').then(function (orgs) {
           var choices = orgs.map(function (org) {
             return org.body.name;
           });
 
-          choices.push('Create New Organization');
+          choices.push(CREATE_ORG_VALUE);
 
           return choices;
         });
       },
       filter: function (orgName) {
-        if (orgName === 'Create New Organization') {
+        if (orgName === CREATE_ORG_VALUE) {
           return undefined;
         }
 
@@ -174,7 +174,7 @@ init._questions = function (store) {
     {
       type: 'input',
       name: 'orgName',
-      message: 'What\'s the name of the new organization?',
+      message: 'New org name?',
       validate: validate.slug,
       when: function (answers) {
         return (answers.org === undefined);
@@ -183,7 +183,7 @@ init._questions = function (store) {
     {
       type: 'list',
       name: 'project',
-      message: 'Which project does this codebase belong too?',
+      message: 'Select a project',
       choices: function (answers) {
         var filter = { body: { org_id: answers.org.id } };
         return store.get('project', filter).then(function (projects) {
@@ -191,12 +191,12 @@ init._questions = function (store) {
             return project.body.name;
           });
 
-          choices.push('Create New Project');
+          choices.push(CREATE_PROJECT_VALUE);
           return choices;
         });
       },
       filter: function (projectName) {
-        if (projectName === 'Create New Project') {
+        if (projectName === CREATE_PROJECT_VALUE) {
           return undefined;
         }
 
@@ -222,7 +222,7 @@ init._questions = function (store) {
     {
       type: 'input',
       name: 'projectName',
-      message: 'What\'s the name of the new project?',
+      message: 'New project name?',
       validate: validate.slug,
       when: function (answers) {
         return (answers.project === undefined);
@@ -231,7 +231,7 @@ init._questions = function (store) {
     {
       type: 'list',
       name: 'service',
-      message: 'What service does this codebase belong too?',
+      message: 'Select a service',
       choices: function (answers) {
         var filter = {
           body: {
@@ -244,12 +244,12 @@ init._questions = function (store) {
             return service.body.name;
           });
 
-          choices.push('Create New Service');
+          choices.push(CREATE_SERVICE_VALUE);
           return choices;
         });
       },
       filter: function (serviceName) {
-        if (serviceName === 'Create New Service') {
+        if (serviceName === CREATE_SERVICE_VALUE) {
           return undefined;
         }
 
@@ -265,7 +265,8 @@ init._questions = function (store) {
             throw new Error('service not found: ' + serviceName);
           }
 
-          return services[0];
+          state.service = services[0];
+          return state.service;
         });
       },
       when: function (answers) {
@@ -275,7 +276,7 @@ init._questions = function (store) {
     {
       type: 'input',
       name: 'serviceName',
-      message: 'What\'s the name of the new service?',
+      message: 'New service name?',
       validate: validate.slug,
       when: function (answers) {
         return (answers.service === undefined);

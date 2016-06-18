@@ -24,7 +24,7 @@ status.output.success = output.create(function (state) {
       ' use \'ag init\' to link your project');
   }
 
-  console.log('Organization: ' + state.target.org);
+  console.log('Org: ' + state.target.org);
   console.log('Project: ' + state.target.project);
   console.log('Environment: dev-' + state.user.body.username);
   console.log('Service: ' + state.target.service);

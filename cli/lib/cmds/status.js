@@ -9,7 +9,7 @@ var target = require('../middleware/target');
 
 var cmd = new Command(
   'status',
-  'shows your current cli status',
+  'shows your current arigato status based on your identity and CWD',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       status.execute(ctx).then(function (identity) {
