@@ -54,13 +54,6 @@ invite.execute = function (ctx) {
       url: '/profiles/' + data.username
     };
 
-    var getTeam = {
-      url: '/teams',
-      qs: {
-        name: data.team
-      }
-    };
-
     var getOrg = {
       url: '/orgs',
       qs: {
@@ -68,27 +61,43 @@ invite.execute = function (ctx) {
       }
     };
 
+    var user;
+    var org;
+    var team;
+
     Promise.all([
       client.get(getUser),
-      client.get(getTeam),
       client.get(getOrg)
     ])
     .then(function (results) {
-      var user = _.get(results, '[0].body[0]', null);
+      user = _.get(results, '[0].body[0]', null);
       if (!user) {
         throw new Error('user not found: ' + data.username);
       }
 
-      var team = _.get(results, '[1].body[0]', null);
-      if (!team) {
-        throw new Error('team not found: ' + data.team);
-      }
-
-      var org = _.get(results, '[2].body[0]', null);
+      org = _.get(results, '[1].body[0]', null);
       if (!org) {
         throw new Error('org not found: ' + data.org);
       }
+    })
+    .then(function () {
+      var getTeam = {
+        url: '/teams',
+        qs: {
+          org_id: org.id,
+          name: data.team
+        }
+      };
 
+      return client.get(getTeam).then(function (teams) {
+        team = _.get(teams, 'body[0]', null);
+
+        if (!team) {
+          throw new Error('team not found: ' + data.team);
+        }
+      });
+    })
+    .then(function () {
       var postInvite = {
         url: '/memberships',
         json: {
