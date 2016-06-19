@@ -13,7 +13,7 @@ var Promise = require('es6-promise').Promise;
  * It also won't update based on changes made to the underlying data on the
  * server by another user.
  *
- * It's been desigend with the `ag init` flow in mind, nothing more.
+ * It's been desigend with the `ag link` flow in mind, nothing more.
  *
  * @constructor
  * @param {Client} client an api client

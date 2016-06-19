@@ -10,14 +10,14 @@ var client = require('../api/client').create();
 var targetMap = require('./map');
 var Target = require('./target');
 
-var init = exports;
-init.output = {};
+var link = exports;
+link.output = {};
 
 var CREATE_ORG_VALUE = 'Create New Org';
 var CREATE_PROJECT_VALUE = 'Create New Project';
 var CREATE_SERVICE_VALUE = 'Create New Service';
 
-init.output.success = function (ctx, objects) {
+link.output.success = function (ctx, objects) {
   var programName = ctx.program.name;
   var target = objects.target;
 
@@ -32,17 +32,17 @@ init.output.success = function (ctx, objects) {
               'your current working context.\n');
 };
 
-init.output.failure = function () {
+link.output.failure = function () {
   console.log('Failed to link your current working directory.');
 };
 
-init.execute = function (ctx) {
+link.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     client.auth(ctx.session.token);
 
     var store = new Store(client);
-    init._prompt(store).then(function (answers) {
-      return init._retrieveObjects(store, answers);
+    link._prompt(store).then(function (answers) {
+      return link._retrieveObjects(store, answers);
     }).then(function (objects) {
       return client.get({ url: '/users/self' }).then(function (result) {
         var user = result.body && result.body[0];
@@ -81,7 +81,7 @@ init.execute = function (ctx) {
  * @param {Object} anwers
  * @returns {Promise}
  */
-init._retrieveObjects = function (store, answers) {
+link._retrieveObjects = function (store, answers) {
   var getOrg = (answers.org) ?
     Promise.resolve(answers.org) : store.create('org', {
       body: {
@@ -119,9 +119,9 @@ init._retrieveObjects = function (store, answers) {
   });
 };
 
-init._prompt = function (store) {
+link._prompt = function (store) {
   var prompt = new Prompt({
-    stages: init._questions,
+    stages: link._questions,
     questionArgs: [
       store
     ]
@@ -130,7 +130,7 @@ init._prompt = function (store) {
   return prompt.start();
 };
 
-init._questions = function (store) {
+link._questions = function (store) {
   // We use state to keep track of the accrued objects so we don't have to keep
   // calling into the store since we can't access the answers hash in a filter.
   var state = {};

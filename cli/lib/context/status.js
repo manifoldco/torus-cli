@@ -24,7 +24,7 @@ status.output.success = output.create(function (ctx, state) {
 
   if (state.target.org === null) {
     return console.log('\nYou are not inside a linked working directory,' +
-      ' use \'' + programName + ' init\' to link your project');
+      ' use \'' + programName + ' link\' to link your project');
   }
 
   console.log('Org: ' + state.target.org);

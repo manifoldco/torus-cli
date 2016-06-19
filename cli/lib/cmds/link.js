@@ -4,22 +4,22 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 
-var init = require('../context/init');
+var link = require('../context/link');
 var auth = require('../middleware/auth');
 
 var cmd = new Command(
-  'init',
-  'initalize a project and service linking to a codebase',
+  'link',
+  'setup a link between this working directory and the arigato cloud',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      init.execute(ctx).then(function (result) {
-        init.output.success(ctx, result);
+      link.execute(ctx).then(function (result) {
+        link.output.success(ctx, result);
 
         resolve(true);
       }).catch(function (err) {
         err.type = err.type || 'unknown';
 
-        init.output.failure();
+        link.output.failure();
         reject(err);
       });
     });
