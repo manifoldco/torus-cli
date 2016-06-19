@@ -15,6 +15,8 @@ status.output.failure = output.create(function () {
 });
 
 status.output.success = output.create(function (state) {
+  console.log('Current Working Context:\n');
+
   console.log(
     'Identity: ' + state.user.body.name + ' (' + state.user.body.email + ')');
   console.log('Username: ' + state.user.body.username);
