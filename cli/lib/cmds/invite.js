@@ -13,8 +13,8 @@ var inviteCmd = new Command(
   'invite a user to collaborate in your org',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      invite.execute(ctx).then(function (username) {
-        invite.output.success(null, username);
+      invite.execute(ctx).then(function (results) {
+        invite.output.success(null, results);
         resolve();
       }).catch(function (err) {
         invite.output.failure();
