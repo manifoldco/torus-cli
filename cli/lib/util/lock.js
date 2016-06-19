@@ -9,6 +9,34 @@ function getLockPath(file) {
   return file + '.lock';
 }
 
+lock.wrap = function (file, fn) {
+  return new Promise(function (resolve, reject) {
+    var locked;
+    return lock.acquire(file).then(function () {
+      locked = true;
+
+      var args;
+      return fn().then(function () {
+        args = arguments;
+        return lock.release(file);
+      }).then(function () {
+        resolve.apply(resolve, args);
+      });
+    }).catch(function (err) {
+      if (!locked) {
+        return reject(err);
+      }
+
+      return lock.release(file).then(function () {
+        return reject(err);
+      }).catch(function (releaseErr) {
+        return reject(new Error(
+          'Could not release file: ' + file + ' err: ' + releaseErr.message));
+      });
+    });
+  });
+};
+
 lock.acquire = function (file) {
   return new Promise(function (resolve, reject) {
     var lockPath = getLockPath(file);

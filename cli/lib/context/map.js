@@ -31,7 +31,7 @@ map.link = function (config, target) {
   }
 
   return new Promise(function (resolve, reject) {
-    lock.acquire(config.mapPath).then(function () {
+    lock.wrap(config.mapPath, function () {
       return map.get(config).then(function (targetMap) {
         var matches = map._getMatches(targetMap, target.path);
 
@@ -53,8 +53,38 @@ map.link = function (config, target) {
 
         targetMap[target.path] = target.context();
         return map._writeFile(config.mapPath, targetMap).then(function () {
-          return lock.release(config.mapPath);
-        }).then(function () {
+          resolve(map._getMatches(targetMap, target.path));
+        });
+      });
+    }).catch(reject);
+  });
+};
+
+/**
+ * Unlinks a given target. Holds a lock on the context map file so no one else
+ * can write.
+ *
+ * @param {Config} config
+ * @param {Target} target
+ */
+map.unlink = function (config, target) {
+  if (!(config instanceof Config)) {
+    throw new TypeError('Must provdie a Config object');
+  }
+
+  if (!(target instanceof Target)) {
+    throw new TypeError('Must provide a Context object');
+  }
+
+  return new Promise(function (resolve, reject) {
+    lock.wrap(config.mapPath, function () {
+      return map.get(config).then(function (targetMap) {
+        if (!targetMap[target.path]) {
+          throw new Error('Target path is not linked in ' + config.mapPath);
+        }
+
+        delete targetMap[target.path];
+        return map._writeFile(config.mapPath, targetMap).then(function () {
           resolve(map._getMatches(targetMap, target.path));
         });
       });
@@ -140,22 +170,23 @@ map._getMatches = function (targetMap, dir) {
     if (!pathMatchers[path]) {
       throw new Error('unknown matcher for path: ' + path);
     }
+
     if (!pathMatchers[path].test(dir)) {
       return;
     }
 
-    var pos = dir.indexOf(path);
-    if (pos === -1) {
-      throw new Error('Should not happen but returned -1 position');
+    var distance = dir.length - path.length;
+    if (distance === -1) {
+      throw new Error('Should not happen, cwd path shorter than map: ' + path);
     }
 
     matches[path] = {
       path: path,
-      pos: pos
+      distance: distance
     };
   });
 
-  var sorted = _.sortBy(matches, 'pos').map(function (element) {
+  var sorted = _.sortBy(matches, 'distance').map(function (element) {
     return new Target(element.path, targetMap[element.path]);
   });
 
