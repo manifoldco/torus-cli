@@ -24,8 +24,12 @@ unset.execute = function (ctx) {
   });
 };
 
-unset.output.success = function () {
-  console.log('Credential has been unset!');
+unset.output.success = function (cred) {
+  console.log('Variable ' + cred.body.name + ' has been unset at ' +
+              cred.body.pathexp + '/' + cred.body.name + '.\n');
+
+  console.log('You can view all variables for your current working ' +
+              'context using \'ag view\'.\n');
 };
 
 unset.output.failure = function () {

@@ -23,8 +23,12 @@ set.execute = function (ctx) {
   });
 };
 
-set.output.success = function () {
-  console.log('Credential has been set!');
+set.output.success = function (cred) {
+  console.log('Variable ' + cred.body.name + ' has been set at ' +
+              cred.body.pathexp + '/' + cred.body.name + '.\n');
+
+  console.log('You can view all variables for your current working ' +
+              'context using \'ag view\'.\n');
 };
 
 set.output.failure = function () {

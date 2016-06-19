@@ -18,7 +18,6 @@ var validator = validate.build({
 invite.output = {};
 
 invite.output.success = output.create(function (results) {
-
   var username = results.profile.body.username;
   var orgName = results.org.body.name;
   var teamName = results.team.body.name;
