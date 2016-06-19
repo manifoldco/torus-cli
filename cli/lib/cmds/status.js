@@ -13,7 +13,7 @@ var cmd = new Command(
   function (ctx) {
     return new Promise(function (resolve, reject) {
       status.execute(ctx).then(function (identity) {
-        status.output.success(null, identity);
+        status.output.success(null, ctx, identity);
         resolve();
       }).catch(function (err) {
         status.output.failure(err);

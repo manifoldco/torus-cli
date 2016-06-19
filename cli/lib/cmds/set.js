@@ -15,7 +15,7 @@ var set = new Command(
   function (ctx) {
     return new Promise(function (resolve, reject) {
       setCred.execute(ctx).then(function (cred) {
-        setCred.output.success(cred);
+        setCred.output.success(ctx, cred);
         resolve(true);
       }).catch(function (err) {
         err.type = err.type || 'unknown';

@@ -23,12 +23,13 @@ set.execute = function (ctx) {
   });
 };
 
-set.output.success = function (cred) {
+set.output.success = function (ctx, cred) {
+  var programName = ctx.program.name;
   console.log('Variable ' + cred.body.name + ' has been set at ' +
               cred.body.pathexp + '/' + cred.body.name + '.\n');
 
   console.log('You can view all variables for your current working ' +
-              'context using \'ag view\'.\n');
+              'context using \'' + programName + ' view\'.\n');
 };
 
 set.output.failure = function () {

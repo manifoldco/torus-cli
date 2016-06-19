@@ -15,7 +15,7 @@ var unset = new Command(
   function (ctx) {
     return new Promise(function (resolve, reject) {
       unsetCred.execute(ctx).then(function (cred) {
-        unsetCred.output.success(cred);
+        unsetCred.output.success(ctx, cred);
         resolve(true);
       }).catch(function (err) {
         err.type = err.type || 'unknown';

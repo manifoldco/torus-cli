@@ -14,16 +14,17 @@ status.output.failure = output.create(function () {
   console.log('Error determining status');
 });
 
-status.output.success = output.create(function (state) {
-  console.log('Current Working Context:\n');
+status.output.success = output.create(function (ctx, state) {
+  var programName = ctx.program.name;
 
+  console.log('Current Working Context:\n');
   console.log(
     'Identity: ' + state.user.body.name + ' (' + state.user.body.email + ')');
   console.log('Username: ' + state.user.body.username);
 
   if (state.target.org === null) {
     return console.log('\nYou are not inside a linked working directory,' +
-      ' use \'ag init\' to link your project');
+      ' use \'' + programName + ' init\' to link your project');
   }
 
   console.log('Org: ' + state.target.org);

@@ -17,7 +17,8 @@ var CREATE_ORG_VALUE = 'Create New Org';
 var CREATE_PROJECT_VALUE = 'Create New Project';
 var CREATE_SERVICE_VALUE = 'Create New Service';
 
-init.output.success = function (objects) {
+init.output.success = function (ctx, objects) {
+  var programName = ctx.program.name;
   var target = objects.target;
 
   console.log('\nYour current working directory and all sub directories have ' +
@@ -27,7 +28,8 @@ init.output.success = function (objects) {
   console.log('Environment: ' + target.environment);
   console.log('Service: ' + target.service + '\n');
 
-  console.log('Use \'ag status\' to display your current working context.\n');
+  console.log('Use \'' + programName + ' status\' to display ' +
+              'your current working context.\n');
 };
 
 init.output.failure = function () {
