@@ -57,10 +57,9 @@ link.execute = function (ctx) {
           org: objects.org.body.name,
           project: objects.project.body.name,
           service: objects.service.body.name,
-
-          // XXX: Should we make sure this actually exists??
           environment: 'dev-' + user.body.username
         });
+
         return targetMap.link(ctx.config, target).then(function () {
           resolve({
             target: target,

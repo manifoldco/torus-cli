@@ -47,7 +47,7 @@ map.link = function (config, target) {
         });
 
         if (!allMatch) {
-          throw new Error('Sub-directories cannot link to different ' +
+          throw new Error('sub-directories cannot link to different ' +
                           'org/projects than their parents');
         }
 
@@ -69,11 +69,11 @@ map.link = function (config, target) {
  */
 map.unlink = function (config, target) {
   if (!(config instanceof Config)) {
-    throw new TypeError('Must provdie a Config object');
+    throw new TypeError('Must provide a Config object');
   }
 
   if (!(target instanceof Target)) {
-    throw new TypeError('Must provide a Context object');
+    throw new TypeError('Must provide a Target object');
   }
 
   return new Promise(function (resolve, reject) {

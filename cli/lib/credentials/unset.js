@@ -25,13 +25,8 @@ unset.execute = function (ctx) {
 };
 
 unset.output.success = function (ctx, cred) {
-  var programName = ctx.program.name;
-
   console.log('Variable ' + cred.body.name + ' has been unset at ' +
               cred.body.pathexp + '/' + cred.body.name + '.\n');
-
-  console.log('You can view all variables for your current working ' +
-              'context using \'' + programName + ' view\'.\n');
 };
 
 unset.output.failure = function () {
