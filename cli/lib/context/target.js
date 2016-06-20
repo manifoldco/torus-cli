@@ -3,11 +3,12 @@
 var _ = require('lodash');
 var path = require('path');
 
+// Ordering of the properties matter
 var PROPS = [
   'org',
   'project',
-  'service',
-  'environment'
+  'environment', // XXX How ot deal with env/service ??
+  'service'
 ];
 
 function defineProperty(obj, key) {
@@ -49,6 +50,20 @@ module.exports = Target;
 Target.prototype.flags = function (flags) {
   if (!_.isPlainObject(flags)) {
     throw new TypeError('Must provide context object');
+  }
+
+  // if the org or project is different then reset everything, it doesnt matter
+  // if the env or service are different as they depend on project/org not each
+  // other.
+  if ((flags.org !== undefined || flags.project !== undefined) &&
+      (flags.org !== this.org || flags.project !== this.project)) {
+    if (flags.org !== undefined && flags.org !== this.org) {
+      this._values.org = null;
+    }
+
+    this._values.project = null;
+    this._values.service = null;
+    this._values.environment = null;
   }
 
   var self = this;
