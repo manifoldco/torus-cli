@@ -1,9 +1,16 @@
 'use strict';
 
 var gulp = require('gulp');
+var gulpIf = require('gulp-if');
 var mocha = require('gulp-mocha');
 var eslint = require('gulp-eslint');
 var runSequence = require('run-sequence');
+
+var LINT_FILES = ['./**/*.js', '!node_modules'];
+
+function isFixed(file) {
+  return file.eslint && file.eslint.fixed;
+}
 
 gulp.task('default', ['lint', 'mocha']);
 
@@ -12,10 +19,19 @@ gulp.task('test', function () {
 });
 
 gulp.task('lint', function () {
-  return gulp.src(['./lib/**/*.js', './tests/**/*.js', 'Gulpfile.js'])
-    .pipe(eslint({ extends: 'airbnb-base/legacy' }))
+  return gulp.src(LINT_FILES)
+    .pipe(eslint())
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
+});
+
+gulp.task('fmt', function () {
+  return gulp.src(LINT_FILES)
+    .pipe(eslint({
+      fix: true
+    }))
+    .pipe(eslint.format())
+    .pipe(gulpIf(isFixed, gulp.dest('./')));
 });
 
 gulp.task('mocha', function () {
