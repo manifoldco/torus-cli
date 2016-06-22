@@ -6,6 +6,7 @@ var Command = require('../../cli/command');
 var flags = require('../../flags');
 var envs = require('../../envs');
 var auth = require('../../middleware/auth');
+var target = require('../../middleware/target');
 
 var cmd = new Command(
   'envs',
@@ -25,6 +26,7 @@ var cmd = new Command(
 );
 
 cmd.hook('pre', auth());
+cmd.hook('pre', target());
 
 flags.add(cmd, 'org');
 flags.add(cmd, 'project', {

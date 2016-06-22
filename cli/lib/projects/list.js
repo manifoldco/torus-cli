@@ -49,7 +49,11 @@ list.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     client.auth(ctx.session.token);
 
-    var orgName = ctx.options.org.value;
+    ctx.target.flags({
+      org: ctx.option('org').value
+    });
+
+    var orgName = ctx.target.org;
     if (orgName) {
       var errors = validator({ org: orgName });
       if (errors.length > 0) {

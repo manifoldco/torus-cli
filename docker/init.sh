@@ -20,7 +20,6 @@ function build {
   echo ""
   echo "Target OS: $GOOS"
   echo "Target Architecture: $GOARCH"
-  echo "Build Directory: $BUILD_TARGET_DIR"
   echo ""
 
   pushd "$DIR/../daemon" > /dev/null

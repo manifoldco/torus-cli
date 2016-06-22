@@ -3,20 +3,23 @@
 var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
-var status = require('../context/status');
+
+var link = require('../context/link');
 var auth = require('../middleware/auth');
-var target = require('../middleware/target');
 
 var cmd = new Command(
-  'status',
-  'shows your current arigato status based on your identity and CWD',
+  'link',
+  'setup a link between this working directory and the arigato cloud',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      status.execute(ctx).then(function (identity) {
-        status.output.success(null, ctx, identity);
-        resolve();
+      link.execute(ctx).then(function (result) {
+        link.output.success(ctx, result);
+
+        resolve(true);
       }).catch(function (err) {
-        status.output.failure(err);
+        err.type = err.type || 'unknown';
+
+        link.output.failure();
         reject(err);
       });
     });
@@ -24,6 +27,5 @@ var cmd = new Command(
 );
 
 cmd.hook('pre', auth());
-cmd.hook('pre', target());
 
 module.exports = cmd;

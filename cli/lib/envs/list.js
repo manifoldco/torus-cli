@@ -62,17 +62,20 @@ envsList.execute = function (ctx) {
       throw new TypeError('Session object missing on Context');
     }
 
-    var orgName = ctx.options.org.value;
-    var projectName = ctx.options.project.value;
+    ctx.target.flags({
+      org: ctx.option('org').value
+    });
 
-    if (!orgName) {
+    var data = {
+      org: ctx.target.org,
+      project: ctx.option('project').value
+    };
+
+    if (!data.org) {
       throw new Error('--org is required.');
     }
 
-    var errors = validator({
-      org: orgName,
-      project: projectName
-    });
+    var errors = validator(data);
     if (errors.length > 0) {
       return reject(errors[0]);
     }
@@ -81,12 +84,12 @@ envsList.execute = function (ctx) {
 
     return client.get({
       url: '/orgs',
-      qs: { name: orgName }
+      qs: { name: data.org }
     }).then(function (res) {
       var org = res.body && res.body[0];
 
       if (!_.isObject(org)) {
-        return reject(new Error('org not found: ' + orgName));
+        return reject(new Error('org not found: ' + data.org));
       }
 
       // XXX: This returns all envs and all projects for an org, over time,
@@ -109,13 +112,13 @@ envsList.execute = function (ctx) {
         var projects = results[0] && results[0].body;
         var envs = results[1] && results[1].body;
 
-        if (projectName) {
+        if (data.project) {
           projects = projects.filter(function (project) {
-            return (project.body.name === projectName);
+            return (project.body.name === data.project);
           });
 
           if (projects.length === 0) {
-            throw new Error('project not found: ' + projectName);
+            throw new Error('project not found: ' + data.project);
           }
 
           envs = envs.filter(function (env) {

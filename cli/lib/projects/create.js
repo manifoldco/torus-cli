@@ -40,9 +40,13 @@ create.execute = function (ctx) {
 
       orgs = results.body;
 
+      ctx.target.flags({
+        org: ctx.option('org').value
+      });
+
       var data = {
         name: ctx.params[0],
-        org: ctx.options.org.value
+        org: ctx.target.org
       };
 
       if (data.name && data.org) {

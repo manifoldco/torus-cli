@@ -17,8 +17,14 @@ var validator = validate.build({
 
 invite.output = {};
 
-invite.output.success = output.create(function (username) {
-  console.log(username + ' has been invited to your org');
+invite.output.success = output.create(function (results) {
+  var username = results.profile.body.username;
+  var orgName = results.org.body.name;
+  var teamName = results.team.body.name;
+
+  console.log(
+    'You\'ve invited \'' + username + '\' to join your org ' +
+    '(' + orgName + ') as a member of the ' + teamName + ' team.\n');
 });
 
 invite.output.failure = output.create(function () {
@@ -31,12 +37,15 @@ invite.output.failure = output.create(function () {
  * @param {object} ctx - Command context
  */
 invite.execute = function (ctx) {
-  /* eslint-disable consistent-return, no-shadow */
   return new Promise(function (resolve, reject) {
+    ctx.target.flags({
+      org: ctx.option('org').value
+    });
+
     var data = {
       team: 'member',
       username: ctx.params[0],
-      org: ctx.option('org').value
+      org: ctx.target.org
     };
 
     if (!data.org) {
@@ -65,17 +74,18 @@ invite.execute = function (ctx) {
     var org;
     var team;
 
-    Promise.all([
+    return Promise.all([
       client.get(getUser),
       client.get(getOrg)
     ])
     .then(function (results) {
       user = _.get(results, '[0].body[0]', null);
+      org = _.get(results, '[1].body[0]', null);
+
       if (!user) {
         throw new Error('user not found: ' + data.username);
       }
 
-      org = _.get(results, '[1].body[0]', null);
       if (!org) {
         throw new Error('org not found: ' + data.org);
       }
@@ -112,7 +122,11 @@ invite.execute = function (ctx) {
       return client.post(postInvite);
     })
     .then(function () {
-      resolve(data.username);
+      resolve({
+        profile: user,
+        org: org,
+        team: team
+      });
     })
     .catch(reject);
   });

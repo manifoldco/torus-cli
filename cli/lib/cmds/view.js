@@ -6,6 +6,7 @@ var Command = require('../cli/command');
 var flags = require('../flags');
 var viewCred = require('../credentials/view');
 var auth = require('../middleware/auth');
+var target = require('../middleware/target');
 
 var view = new Command(
   'view',
@@ -25,6 +26,7 @@ var view = new Command(
 );
 
 view.hook('pre', auth());
+view.hook('pre', target());
 
 flags.add(view, 'org', {
   description: 'the org the credentials belongs to'

@@ -6,6 +6,7 @@ var flags = require('../../flags');
 var Command = require('../../cli/command');
 var create = require('../../projects/create');
 var auth = require('../../middleware/auth');
+var target = require('../../middleware/target');
 
 var cmd = new Command(
   'projects:create [name]',
@@ -26,6 +27,7 @@ var cmd = new Command(
 );
 
 cmd.hook('pre', auth());
+cmd.hook('pre', target());
 
 flags.add(cmd, 'org', {
   description: 'the organization this project will belong to'

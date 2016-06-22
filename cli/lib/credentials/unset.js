@@ -24,10 +24,11 @@ unset.execute = function (ctx) {
   });
 };
 
-unset.output.success = function () {
-  console.log('Credential has been unset!');
+unset.output.success = function (ctx, cred) {
+  console.log('Variable ' + cred.body.name + ' has been unset at ' +
+              cred.body.pathexp + '/' + cred.body.name + '.\n');
 };
 
 unset.output.failure = function () {
-  console.log('It failed ;(');
+  console.log('Failed to set credential value');
 };

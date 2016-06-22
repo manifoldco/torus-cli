@@ -123,7 +123,7 @@ credentials.create = function (session, params, value) {
             url: '/credentials',
             json: object
           }).then(function (cResult) {
-            resolve(cResult.body);
+            resolve(cResult.body[0]);
           });
         });
       });

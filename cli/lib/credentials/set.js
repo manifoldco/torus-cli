@@ -23,10 +23,11 @@ set.execute = function (ctx) {
   });
 };
 
-set.output.success = function () {
-  console.log('Credential has been set!');
+set.output.success = function (ctx, cred) {
+  console.log('Variable ' + cred.body.name + ' has been set at ' +
+              cred.body.pathexp + '/' + cred.body.name + '.\n');
 };
 
 set.output.failure = function () {
-  console.log('It failed ;(');
+  console.log('Failed to set credential value');
 };
