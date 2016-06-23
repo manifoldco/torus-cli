@@ -36,6 +36,11 @@ harvest.create = function (ctx) {
   }
 
   var name = ctx.params[0];
+  if (typeof name !== 'string') {
+    throw new TypeError('Expected the first paramter to be a string');
+  }
+
+  name = name.toLowerCase();
   var parts = name.split('/').filter(function (part) {
     return part.length !== 0;
   });
