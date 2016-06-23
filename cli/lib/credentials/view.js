@@ -19,7 +19,9 @@ view.execute = function (ctx) {
   });
 };
 
-view.output.success = function (creds) {
+view.output.success = function (ctx, creds) {
+  var isVerbose = ctx.option('verbose').value === true;
+
   creds.forEach(function (cred) {
     var value = cValue.parse(cred.body.value);
 
@@ -27,7 +29,14 @@ view.output.success = function (creds) {
       return;
     }
 
-    console.log(cred.body.name.toUpperCase() + '=' + value.body.value);
+    var line = cred.body.name.toUpperCase() + '=' + value.body.value;
+
+    if (isVerbose) {
+      line += ' (sourced from: ' + cred.body.pathexp + '/' +
+        cred.body.name + ')';
+    }
+
+    console.log(line);
   });
 };
 
