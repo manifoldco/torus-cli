@@ -17,7 +17,7 @@ run.execute = function (ctx) {
     var params = harvest.get(ctx);
 
     return credentials.get(ctx.session, params).then(function (creds) {
-      return run.spawn(ctx.daemon, ctx.params, creds);
+      return run.spawn(ctx.daemon, ctx.params, creds).then(resolve);
     }).catch(reject);
   });
 };
@@ -44,12 +44,8 @@ run.spawn = function (daemon, params, creds) {
     proc.stderr.pipe(process.stderr);
 
     function onClose(exitCode) {
-      // If the exitCode is 0 then propagate up a successful run to
-      // `bin/arigato` which will exit with a non-zero exitCode.
-      //
-      // TODO: Don't swallow the exitCode and propagate it all the way up.
       daemon.disconnect().then(function () {
-        resolve(exitCode === 0);
+        resolve(exitCode);
       }).catch(function (err) {
         console.error('Could not disconnect from daemon');
         reject(err);

@@ -60,13 +60,19 @@ Command.prototype.run = function (ctx) {
     return wrap(self._handler.run.bind(self._handler, ctx));
   }
 
-  return self.runHooks('pre', ctx).then(function (success) {
-    if (success === false) {
-      return false;
+  return self.runHooks('pre', ctx).then(function (preExitCode) {
+    if (preExitCode !== 0) {
+      return preExitCode;
     }
 
-    return call().then(function () {
-      return self.runHooks('post', ctx);
+    return call().then(function (exitCode) {
+      return self.runHooks('post', ctx).then(function (postExitCode) {
+        if (postExitCode !== 0) {
+          return postExitCode;
+        }
+
+        return exitCode;
+      });
     });
   });
 };

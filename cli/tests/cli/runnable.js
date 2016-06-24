@@ -108,8 +108,8 @@ describe('Runnable', function () {
       r.hook('pre', failStub);
       r.hook('pre', passStub);
 
-      return r.runHooks('pre', c).then(function (success) {
-        assert.strictEqual(success, false);
+      return r.runHooks('pre', c).then(function (exitCode) {
+        assert.strictEqual(exitCode, 1);
 
         sinon.assert.calledOnce(failStub);
         sinon.assert.notCalled(passStub);

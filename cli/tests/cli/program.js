@@ -189,8 +189,8 @@ describe('Program', function () {
       p.hook('pre', failStub);
       p.hook('pre', passStub);
 
-      return p.run(['x', 'x', 'hi']).then(function (success) {
-        assert.strictEqual(success, false);
+      return p.run(['x', 'x', 'hi']).then(function (exitCode) {
+        assert.strictEqual(exitCode, 1);
 
         sinon.assert.calledOnce(failStub);
         sinon.assert.notCalled(passStub);
@@ -204,8 +204,8 @@ describe('Program', function () {
       p.hook('post', failStub);
       p.hook('post', passStub);
 
-      return p.run(['x', 'x', 'hi']).then(function (success) {
-        assert.strictEqual(success, false);
+      return p.run(['x', 'x', 'hi']).then(function (exitCode) {
+        assert.strictEqual(exitCode, 1);
 
         sinon.assert.calledOnce(failStub);
         sinon.assert.notCalled(passStub);

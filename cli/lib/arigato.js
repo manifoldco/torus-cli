@@ -32,7 +32,7 @@ arigato.run = function (opts) {
     cmds.get().then(function (cmdList) {
       cmdList.forEach(program.command.bind(program));
 
-      program.run(opts.argv).then(resolve).catch(reject);
+      return program.run(opts.argv).then(resolve);
     }).catch(reject);
   });
 };

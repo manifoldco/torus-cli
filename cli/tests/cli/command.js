@@ -100,7 +100,7 @@ describe('Command', function () {
       });
     });
 
-    it('resolves success as false if pre middleware fails', function () {
+    it('resolves exitCode as 1 if pre middleware fails', function () {
       var failStub = sinon.stub().returns(Promise.resolve(false));
       var passStub = sinon.stub().returns(Promise.resolve(false));
       var ctx = new Context({});
@@ -110,15 +110,15 @@ describe('Command', function () {
       c.hook('pre', failStub);
       c.hook('pre', passStub);
 
-      return c.run(ctx).then(function (success) {
-        assert.strictEqual(success, false);
+      return c.run(ctx).then(function (exitCode) {
+        assert.strictEqual(exitCode, 1);
 
         sinon.assert.calledOnce(failStub);
         sinon.assert.notCalled(passStub);
       });
     });
 
-    it('resolves success as false if post middleware fails', function () {
+    it('resolves exitCode as 1 if post middleware fails', function () {
       var failStub = sinon.stub().returns(Promise.resolve(false));
       var passStub = sinon.stub().returns(Promise.resolve(false));
       var ctx = new Context({});
@@ -128,8 +128,8 @@ describe('Command', function () {
       c.hook('post', failStub);
       c.hook('post', passStub);
 
-      return c.run(ctx).then(function (success) {
-        assert.strictEqual(success, false);
+      return c.run(ctx).then(function (exitCode) {
+        assert.strictEqual(exitCode, 1);
 
         sinon.assert.calledOnce(failStub);
         sinon.assert.notCalled(passStub);
