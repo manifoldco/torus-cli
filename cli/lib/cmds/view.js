@@ -14,7 +14,7 @@ var view = new Command(
   function (ctx) {
     return new Promise(function (resolve, reject) {
       viewCred.execute(ctx).then(function (creds) {
-        viewCred.output.success(creds);
+        viewCred.output.success(ctx, creds);
         resolve(true);
       }).catch(function (err) {
         err.type = err.type || 'unknown';
@@ -43,5 +43,7 @@ flags.add(view, 'environment', {
 flags.add(view, 'instance', {
   description: 'the instance of the service belonging to the current user'
 });
+
+view.option('-v, --verbose', 'list the sources of the values');
 
 module.exports = view;
