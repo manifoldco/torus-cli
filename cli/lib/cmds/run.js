@@ -13,8 +13,8 @@ var runCmd = new Command(
   'run a process and inject credentials into its environment',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      run.execute(ctx).then(function (success) {
-        resolve(success);
+      run.execute(ctx).then(function (exitCode) {
+        resolve(exitCode);
       }).catch(function (err) {
         reject(err);
       });

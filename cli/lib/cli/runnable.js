@@ -33,12 +33,12 @@ Runnable.prototype.runHooks = function (type, ctx) {
   function runHooks(list) {
     var item = list.shift();
     if (!item) {
-      return Promise.resolve(true);
+      return Promise.resolve(0);
     }
 
-    return item().then(function (success) {
-      if (success === false) {
-        return false;
+    return item().then(function (exitCode) {
+      if (exitCode !== 0) {
+        return exitCode;
       }
 
       return runHooks(list);

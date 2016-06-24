@@ -144,13 +144,19 @@ Program.prototype.run = function (argv) {
   this._parseArgs(ctx, cmd, argv);
 
   var self = this;
-  return self.runHooks('pre', ctx).then(function (success) {
-    if (success === false) {
-      return false;
+  return self.runHooks('pre', ctx).then(function (preExitCode) {
+    if (preExitCode !== 0) {
+      return preExitCode;
     }
 
-    return cmd.run.call(cmd, ctx).then(function () {
-      return self.runHooks('post', ctx);
+    return cmd.run.call(cmd, ctx).then(function (exitCode) {
+      return self.runHooks('post', ctx).then(function (postExitCode) {
+        if (postExitCode !== 0) {
+          return postExitCode;
+        }
+
+        return exitCode;
+      });
     });
   });
 };

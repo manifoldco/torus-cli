@@ -51,14 +51,69 @@ describe('wrap', function () {
     });
   });
 
-  it('proxies the value back', function () {
-    var p = Promise.resolve({ a: 'hi' });
+  it('returns 0 if no value provided', function () {
+    var r = wrap(function () {});
+    return r.then(function (v) {
+      assert.strictEqual(v, 0);
+    });
+  });
+
+  it('returns 1 if false provided', function () {
     var r = wrap(function () {
-      return p;
+      return false;
     });
 
     return r.then(function (v) {
-      assert.strictEqual(v.a, 'hi');
+      assert.strictEqual(v, 1);
+    });
+  });
+
+  it('returns number if provided', function () {
+    var r = wrap(function () {
+      return 53;
+    });
+
+    return r.then(function (v) {
+      assert.strictEqual(v, 53);
+    });
+  });
+
+  it('rejects with error if number is > 127', function () {
+    var r = wrap(function () {
+      return 123123;
+    });
+
+    return r.then(function () {
+      assert.ok(false, 'should reject');
+    }, function (err) {
+      assert.ok(err);
+      assert.ok(err.message.match(/Exit code must be a positive integer/));
+    });
+  });
+
+  it('rejects with error if number < 0', function () {
+    var r = wrap(function () {
+      return -37;
+    });
+
+    return r.then(function () {
+      assert.ok(false, 'should reject');
+    }, function (err) {
+      assert.ok(err);
+      assert.ok(err.message.match(/Exit code must be a positive integer/));
+    });
+  });
+
+  it('rejects wtih error if not a valid result', function () {
+    var r = wrap(function () {
+      return 'sdfsdf';
+    });
+
+    return r.then(function () {
+      assert.ok(false, 'should reject');
+    }, function (err) {
+      assert.ok(err);
+      assert.ok(err.message.match(/Exit code must be undefined, boolean/));
     });
   });
 });
