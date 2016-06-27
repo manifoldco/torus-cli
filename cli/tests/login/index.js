@@ -6,10 +6,10 @@ var sinon = require('sinon');
 var assert = require('assert');
 var base64url = require('base64url');
 var Promise = require('es6-promise').Promise;
+var kdf = require('common/crypto/kdf');
+var user = require('common/crypto/user');
+var utils = require('common/crypto/utils');
 
-var kdf = require('../../lib/crypto/kdf');
-var user = require('../../lib/user/crypto');
-var utils = require('../../lib/crypto/utils');
 var login = require('../../lib/login');
 var client = require('../../lib/api/client').create();
 

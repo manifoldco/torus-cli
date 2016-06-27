@@ -4,14 +4,14 @@ var login = exports;
 
 var base64url = require('base64url');
 var Promise = require('es6-promise').Promise;
+var crypto = require('common/crypto');
+var kdf = require('common/crypto/kdf');
+var user = require('common/crypto/user');
 
 var Prompt = require('../cli/prompt');
 var output = require('../cli/output');
 var client = require('../api/client').create();
 var validate = require('../validate');
-var crypto = require('../crypto');
-var kdf = require('../crypto/kdf');
-var user = require('../user');
 var Session = require('../session');
 
 var TYPE_LOGIN = 'login';
@@ -121,7 +121,7 @@ login._execute = function (ctx, userInput) {
     loginToken = result.body.login_token;
     return kdf.generate(userInput.passphrase, salt)
       .then(function (buf) {
-        return user.crypto.pwh(buf);
+        return user.pwh(buf);
       });
   })
   .then(function (pwh) {
@@ -131,6 +131,7 @@ login._execute = function (ctx, userInput) {
   .then(function (result) {
     // Use the login token to make an authenticated login attempt
     client.auth(loginToken);
+
     return client.post({
       url: '/tokens',
       json: {
