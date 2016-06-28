@@ -2,10 +2,7 @@
 
 var login = exports;
 
-var base64url = require('base64url');
 var Promise = require('es6-promise').Promise;
-var crypto = require('common/crypto');
-var kdf = require('common/crypto/kdf');
 var user = require('common/crypto/user');
 
 var Prompt = require('../cli/prompt');
@@ -116,19 +113,13 @@ login._execute = function (ctx, userInput) {
     if (!result.body.salt || !result.body.login_token) {
       throw new Error('invalid response from api');
     }
-    // Derive a higher entropy password from plaintext passphrase
-    salt = base64url.toBuffer(result.body.salt);
+
+    salt = result.body.salt;
     loginToken = result.body.login_token;
-    return kdf.generate(userInput.passphrase, salt)
-      .then(function (buf) {
-        return user.pwh(buf);
-      });
+
+    return user.deriveLoginHmac(userInput.passphrase, salt, loginToken);
   })
-  .then(function (pwh) {
-    // Generate hmac of login token
-    return crypto.utils.hmac(loginToken, pwh);
-  })
-  .then(function (result) {
+  .then(function (loginTokenHmac) {
     // Use the login token to make an authenticated login attempt
     client.auth(loginToken);
 
@@ -136,7 +127,7 @@ login._execute = function (ctx, userInput) {
       url: '/tokens',
       json: {
         type: TYPE_AUTH,
-        login_token_hmac: base64url.encode(result)
+        login_token_hmac: loginTokenHmac
       }
     }).then(function (result) { // eslint-disable-line
       // Re-authorize the api client for subsequent requests

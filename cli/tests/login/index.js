@@ -6,9 +6,7 @@ var sinon = require('sinon');
 var assert = require('assert');
 var base64url = require('base64url');
 var Promise = require('es6-promise').Promise;
-var kdf = require('common/crypto/kdf');
 var user = require('common/crypto/user');
-var utils = require('common/crypto/utils');
 
 var login = require('../../lib/login');
 var client = require('../../lib/api/client').create();
@@ -20,7 +18,6 @@ var Daemon = require('../../lib/daemon/object').Daemon;
 var PLAINTEXT = 'password';
 var EMAIL = 'jeff@example.com';
 var BUFFER = new Buffer('buffering');
-var PWH = 'this_is_a_password_hash';
 var AUTH_TOKEN_RESPONSE = {
   body: {
     auth_token: 'you shall pass'
@@ -107,9 +104,8 @@ describe('Login', function () {
   });
   describe('_execute', function () {
     beforeEach(function () {
-      this.sandbox.stub(kdf, 'generate').returns(Promise.resolve(BUFFER));
-      this.sandbox.stub(utils, 'hmac').returns(Promise.resolve(BUFFER));
-      this.sandbox.stub(user, 'pwh').returns(PWH);
+      this.sandbox.stub(user, 'deriveLoginHmac')
+        .returns(Promise.resolve(base64url.encode(BUFFER)));
     });
     it('requests a loginToken from the registry', function () {
       return login._execute(CTX, {
@@ -125,25 +121,6 @@ describe('Login', function () {
             email: EMAIL
           }
         });
-      });
-    });
-    it('derives a high entropy password from plaintext pw', function () {
-      return login._execute(CTX, {
-        passphrase: PLAINTEXT,
-        email: EMAIL
-      }).then(function () {
-        sinon.assert.calledOnce(kdf.generate);
-        var salt = LOGIN_TOKEN_RESPONSE.body.salt;
-        kdf.generate.calledWith(PLAINTEXT, salt);
-      });
-    });
-    it('generates an hmac of the pwh and loginToken', function () {
-      return login._execute(CTX, {
-        passphrase: PLAINTEXT,
-        email: EMAIL
-      }).then(function () {
-        sinon.assert.calledOnce(utils.hmac);
-        utils.hmac.calledWith(BUFFER);
       });
     });
     it('exchanges loginToken and pwh_hmac for authToken', function () {
