@@ -17,9 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "backo": "1.1.0",
-    "base64url": "1.0.6",
-    "cbwrap": "1.1.0",
-    "common": "git+ssh://git@github.com/arigatomachine/common.git#v0.0.6",
+    "common": "git+ssh://git@github.com/arigatomachine/common.git#v0.0.10",
     "es6-promise": "3.1.2",
     "event-regulator": "0.2.0",
     "glob": "7.0.3",
@@ -27,12 +25,12 @@
     "lockfile": "1.0.1",
     "lodash": "4.8.1",
     "minimist": "1.2.0",
-    "node-uuid": "1.4.7",
+    "uuid": "2.0.2",
     "request": "2.72.0",
-    "triplesec": "3.0.25",
     "validator": "5.2.0"
   },
   "devDependencies": {
+    "base64url": "1.0.6",
     "eslint": "2.10.2",
     "eslint-config-airbnb-base": "3.0.1",
     "eslint-plugin-import": "1.8.1",
@@ -42,7 +40,6 @@
     "gulp-mocha": "2.2.0",
     "mocha": "2.3.4",
     "run-sequence": "1.2.1",
-    "sinon": "1.17.3",
-    "uuid": "2.0.2"
+    "sinon": "1.17.3"
   }
 }

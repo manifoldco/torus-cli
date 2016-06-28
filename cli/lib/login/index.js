@@ -2,16 +2,13 @@
 
 var login = exports;
 
-var base64url = require('base64url');
 var Promise = require('es6-promise').Promise;
+var user = require('common/crypto/user');
 
 var Prompt = require('../cli/prompt');
 var output = require('../cli/output');
 var client = require('../api/client').create();
 var validate = require('../validate');
-var crypto = require('../crypto');
-var kdf = require('../crypto/kdf');
-var user = require('../user');
 var Session = require('../session');
 
 var TYPE_LOGIN = 'login';
@@ -116,26 +113,21 @@ login._execute = function (ctx, userInput) {
     if (!result.body.salt || !result.body.login_token) {
       throw new Error('invalid response from api');
     }
-    // Derive a higher entropy password from plaintext passphrase
-    salt = base64url.toBuffer(result.body.salt);
+
+    salt = result.body.salt;
     loginToken = result.body.login_token;
-    return kdf.generate(userInput.passphrase, salt)
-      .then(function (buf) {
-        return user.crypto.pwh(buf);
-      });
+
+    return user.deriveLoginHmac(userInput.passphrase, salt, loginToken);
   })
-  .then(function (pwh) {
-    // Generate hmac of login token
-    return crypto.utils.hmac(loginToken, pwh);
-  })
-  .then(function (result) {
+  .then(function (loginTokenHmac) {
     // Use the login token to make an authenticated login attempt
     client.auth(loginToken);
+
     return client.post({
       url: '/tokens',
       json: {
         type: TYPE_AUTH,
-        login_token_hmac: base64url.encode(result)
+        login_token_hmac: loginTokenHmac
       }
     }).then(function (result) { // eslint-disable-line
       // Re-authorize the api client for subsequent requests

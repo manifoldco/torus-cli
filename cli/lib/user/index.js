@@ -8,8 +8,7 @@ var utils = require('common/utils');
 var client = require('../api/client').create();
 var validate = require('../validate');
 var output = require('../cli/output');
-
-user.crypto = require('./crypto');
+var userCrypto = require('common/crypto/user');
 
 user.output = {};
 
@@ -103,12 +102,13 @@ user.create = function (userInput) {
   };
 
   // Encrypt the password, generate the master key
-  return user.crypto.encryptPasswordObject(userInput.passphrase)
+  return userCrypto.encryptPasswordObject(userInput.passphrase)
     .then(function (result) {
       // Append the master and password objects to body
       object.body = _.extend(object.body, result);
       return object;
     }).then(function () {
+      console.log(object);
       return client.post({
         url: '/users',
         json: object
