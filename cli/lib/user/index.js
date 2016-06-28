@@ -108,7 +108,6 @@ user.create = function (userInput) {
       object.body = _.extend(object.body, result);
       return object;
     }).then(function () {
-      console.log(object);
       return client.post({
         url: '/users',
         json: object
