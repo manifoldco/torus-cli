@@ -4,7 +4,7 @@ var util = require('util');
 
 var Promise = require('es6-promise').Promise;
 var EventRegulator = require('event-regulator').EventRegulator;
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 
 var Config = require('../config');
 var Client = require('./client');
