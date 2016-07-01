@@ -1,5 +1,15 @@
 # Arigato CLI and Daemon
 
+## Issues and Process
+
+The
+[process](https://docs.google.com/document/d/1IejfO1_bJ0einojZOALeN3vEr5XkyhqttpUOHuBQRdo/edit#)
+we follow for managing issues, developing product, and implementation is
+available in our shared [Google Docs
+Drive](https://drive.google.com/drive/u/0/folders/0Bx72T5vLCOgmeVlQbjVlUVVQRDg).
+
+## Codebase
+
 This repository contains the code for both the arigato daemon and cli. It's
 also the home of all arigato issues (server and client).
 
