@@ -22,8 +22,7 @@ function Store(client) {
   this.state = {};
   this.types = [
     'org',
-    'project',
-    'service'
+    'project'
   ];
 
   this.client = client;
@@ -87,13 +86,6 @@ var GET_MAP = {
     url: '/projects',
     qs: [
       'org_id'
-    ]
-  },
-  service: {
-    url: '/services',
-    qs: [
-      'org_id',
-      'project_id'
     ]
   }
 };

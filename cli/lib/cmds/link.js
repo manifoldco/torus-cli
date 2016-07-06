@@ -4,8 +4,10 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 
+var flags = require('../flags');
 var link = require('../context/link');
 var auth = require('../middleware/auth');
+var target = require('../middleware/target');
 
 var cmd = new Command(
   'link',
@@ -27,5 +29,10 @@ var cmd = new Command(
 );
 
 cmd.hook('pre', auth());
+cmd.hook('pre', target());
+
+flags.add(cmd, 'force', {
+  description: 'overwrite the currently linked org and project'
+});
 
 module.exports = cmd;

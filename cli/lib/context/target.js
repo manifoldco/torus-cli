@@ -1,7 +1,6 @@
 'use strict';
 
 var _ = require('lodash');
-var path = require('path');
 
 // Ordering of the properties matter
 var PROPS = [
@@ -21,22 +20,22 @@ function defineProperty(obj, key) {
   });
 }
 
-function Target(targetPath, context) {
-  if (!_.isString(targetPath)) {
-    throw new TypeError('Must provide a path string');
+function Target(map) {
+  if (!_.isPlainObject(map)) {
+    throw new TypeError('Must provide map object');
   }
-  if (!path.isAbsolute(targetPath)) {
-    throw new TypeError('Must provide an absolute path');
+  if (!_.isString(map.path)) {
+    throw new TypeError('Must provide map.target path');
+  }
+  if (!_.isPlainObject(map.context) && !_.isNull(map.context)) {
+    throw new TypeError('Must provide map.context object or null');
   }
 
-  if (!_.isPlainObject(context)) {
-    throw new TypeError('Must provide context object');
-  }
-
-  this.path = targetPath;
+  this._map = map;
   this._values = {};
 
   var self = this;
+  var context = map.context || {};
   PROPS.forEach(function (prop) {
     var value = context[prop] || null;
 
@@ -47,14 +46,20 @@ function Target(targetPath, context) {
 
 module.exports = Target;
 
+Target.prototype.exists = function () {
+  return _.isPlainObject(this._map.context);
+};
+
+Target.prototype.path = function () {
+  return this._map.path;
+};
+
 Target.prototype.flags = function (flags) {
   if (!_.isPlainObject(flags)) {
     throw new TypeError('Must provide context object');
   }
 
   // if the org or project is different then reset everything, it doesnt matter
-  // if the env or service are different as they depend on project/org not each
-  // other.
   if ((flags.org !== undefined || flags.project !== undefined) &&
       (flags.org !== this.org || flags.project !== this.project)) {
     if (flags.org !== undefined && flags.org !== this.org) {

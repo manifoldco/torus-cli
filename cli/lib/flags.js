@@ -9,6 +9,11 @@ var Command = require('./cli/command');
 var flags = exports;
 
 var LIST = flags.LIST = {
+  force: {
+    usage: '-f, --force',
+    description: 'force override',
+    default: undefined
+  },
   project: {
     usage: '-p, --project [name]',
     description: 'specify the project',

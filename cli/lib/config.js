@@ -6,7 +6,6 @@ function Config(arigatoRoot, version) {
   this.arigatoRoot = arigatoRoot;
   this.socketPath = path.join(arigatoRoot, 'daemon.socket');
   this.pidPath = path.join(arigatoRoot, 'daemon.pid');
-  this.mapPath = path.join(arigatoRoot, 'map.json');
   this.version = version;
 }
 
