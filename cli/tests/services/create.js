@@ -73,7 +73,10 @@ describe('Services Create', function () {
       org: { value: ORG.body.name },
       project: { value: PROJECT.body.name }
     };
-    ctx.target = new Target(process.cwd(), {});
+    ctx.target = new Target({
+      path: process.cwd(),
+      context: null
+    });
 
     // Daemon with token
     this.sandbox.stub(ctx.daemon, 'set')

@@ -38,10 +38,12 @@ describe('Session', function () {
     ctx.config = new Config(process.cwd());
     ctx.daemon = new Daemon(ctx.config);
     ctx.session = new Session({ token: 'aa', passphrase: 'safsd' });
-    ctx.target = new Target(process.cwd(), {
-      org: 'myorg',
-      project: 'myproject',
-      service: 'myservice'
+    ctx.target = new Target({
+      path: process.cwd(),
+      context: {
+        org: 'myorg',
+        project: 'myproject'
+      }
     });
     this.sandbox.stub(status.output, 'success');
     this.sandbox.stub(status.output, 'failure');

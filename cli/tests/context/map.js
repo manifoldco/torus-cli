@@ -19,27 +19,29 @@ describe('targetMap', function () {
 
   beforeEach(function () {
     cfg = new Config(process.cwd(), '0.0.1');
-    target = new Target('/a/b/c/d', {
-      org: 'a',
-      project: 'b',
-      service: 'd',
-      environment: 'e'
+    target = new Target({
+      path: '/a/b/c/d',
+      context: {
+        org: 'a',
+        project: 'b'
+      }
     });
     sandbox = sinon.sandbox.create();
 
     sandbox.stub(lock, 'acquire').returns(Promise.resolve());
     sandbox.stub(lock, 'release').returns(Promise.resolve());
     sandbox.stub(map, '_writeFile').returns(Promise.resolve());
+    sandbox.stub(map, '_rmFile').returns(Promise.resolve());
   });
   afterEach(function () {
     sandbox.restore();
   });
 
   describe('#link', function () {
-    it('throws error if config not provided', function () {
+    it('throws error if target not provided', function () {
       assert.throws(function () {
-        map.link({}, {});
-      }, /Must provide a Config object/);
+        map.link({});
+      }, /Must provide a Target object/);
     });
 
     it('throws error if target not provided', function () {
@@ -51,7 +53,7 @@ describe('targetMap', function () {
     it('throws if cannot lock file', function () {
       lock.acquire.onCall(0).returns(Promise.reject(new Error('hi')));
 
-      return map.link(cfg, target).then(function () {
+      return map.link(target).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {
         assert.ok(err);
@@ -59,21 +61,10 @@ describe('targetMap', function () {
       });
     });
 
-    it('errors if map.get errors', function () {
-      sandbox.stub(map, 'get').returns(Promise.reject(new Error('woo')));
-
-      return map.link(cfg, target).then(function () {
-        assert.ok(false, 'should error');
-      }, function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'woo');
-      });
-    });
-
     it('errors if writeFile fails', function () {
       map._writeFile.onCall(0).returns(Promise.reject(new Error('woo')));
 
-      return map.link(cfg, target).then(function () {
+      return map.link(target).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {
         assert.ok(err);
@@ -81,46 +72,8 @@ describe('targetMap', function () {
       });
     });
 
-    it('rejects if org/project specified at higher level', function () {
-      sandbox.stub(map, 'get').returns(Promise.resolve({
-        '/a/b': {
-          org: 'a',
-          project: 'd',
-          service: 'd',
-          environment: 'd'
-        }
-      }));
-
-      return map.link(cfg, target).then(function () {
-        assert.ok(false, 'should error');
-      }, function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'sub-directories cannot link to ' +
-          'different org/projects than their parents');
-      });
-    });
-
-    it('writes the file and returns list', function () {
-      sandbox.stub(map, 'get').returns(Promise.resolve({
-        '/a/b': {
-          org: 'a',
-          project: 'b',
-          service: 'c',
-          environment: 'd'
-        },
-        '/a/b/c/e': {
-          org: 'a',
-          project: 'b',
-          service: 'e',
-          environment: 'd'
-        }
-      }));
-
-      return map.link(cfg, target).then(function (targets) {
-        assert.strictEqual(targets.length, 2);
-        assert.strictEqual(targets[0].path, '/a/b/c/d');
-        assert.strictEqual(targets[1].path, '/a/b');
-
+    it('writes the file', function () {
+      return map.link(target).then(function () {
         sinon.assert.calledOnce(map._writeFile);
       });
     });
@@ -129,8 +82,8 @@ describe('targetMap', function () {
   describe('#unlink', function () {
     it('throws error if config not provided', function () {
       assert.throws(function () {
-        map.unlink({}, {});
-      }, /Must provide a Config object/);
+        map.unlink({});
+      }, /Must provide a Target object/);
     });
 
     it('throws error if target not provided', function () {
@@ -139,28 +92,10 @@ describe('targetMap', function () {
       }, /Must provide a Target object/);
     });
 
-    it('throws if cannot lock file', function () {
-      lock.acquire.onCall(0).returns(Promise.reject(new Error('hi')));
-
-      return map.unlink(cfg, target).then(function () {
-        assert.ok(false, 'should error');
-      }, function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'hi');
-      });
-    });
-
     it('errors if path not in map', function () {
-      sandbox.stub(map, 'get').returns(Promise.resolve({
-        '/d/e/f': {
-          org: 'd',
-          project: 'e',
-          service: 'f',
-          environment: 'a'
-        }
-      }));
+      sandbox.stub(target, 'exists').returns(false);
 
-      return map.unlink(cfg, target).then(function () {
+      return map.unlink(target).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {
         assert.ok(err);
@@ -169,16 +104,8 @@ describe('targetMap', function () {
     });
 
     it('unlinks at exact path', function () {
-      sandbox.stub(map, 'get').returns(Promise.resolve({
-        '/a/b/c/d': {
-          org: 'a',
-          project: 'b',
-          service: 'c',
-          environment: 'd'
-        }
-      }));
-      return map.unlink(cfg, target).then(function (results) {
-        assert.deepEqual(results, []);
+      return map.unlink(target).then(function () {
+        sinon.assert.calledOnce(map._rmFile);
       });
     });
   });

@@ -92,7 +92,10 @@ describe('Envs List', function () {
       org: { value: ORG.body.name },
       project: { value: PROJECTS[0].body.name }
     };
-    ctx.target = new Target(process.cwd(), {});
+    ctx.target = new Target({
+      path: process.cwd(),
+      context: null
+    });
 
     // Daemon with session
     this.sandbox.stub(ctx.daemon, 'set')

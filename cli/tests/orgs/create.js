@@ -47,7 +47,10 @@ describe('Orgs Create', function () {
     ctx.daemon = new Daemon(ctx.config);
     ctx.params = ['abc123abc'];
 
-    ctx.target = new Target(process.cwd(), {});
+    ctx.target = new Target({
+      path: process.cwd(),
+      context: null
+    });
 
     // Daemon with token
     this.sandbox.stub(ctx.daemon, 'set')

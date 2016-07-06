@@ -1,12 +1,13 @@
 'use strict';
 
 var _ = require('lodash');
+var path = require('path');
 
 // Ordering of the properties matter
 var PROPS = [
   'org',
   'project',
-  'environment', // XXX How ot deal with env/service ??
+  'environment', // XXX How to deal with env/service ??
   'service'
 ];
 
@@ -25,7 +26,10 @@ function Target(map) {
     throw new TypeError('Must provide map object');
   }
   if (!_.isString(map.path)) {
-    throw new TypeError('Must provide map.target path');
+    throw new TypeError('Must provide map.path string');
+  }
+  if (!path.isAbsolute(map.path)) {
+    throw new Error('Must provide an absolute map.path');
   }
   if (!_.isPlainObject(map.context) && !_.isNull(map.context)) {
     throw new TypeError('Must provide map.context object or null');

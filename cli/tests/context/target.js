@@ -11,44 +11,49 @@ describe('Target', function () {
   describe('constructor', function () {
     it('throws error if path is not a string', function () {
       assert.throws(function () {
-        target = new Target(false);
-      }, /Must provide a path string/);
+        target = new Target({});
+      }, /Must provide map.path string/);
     });
 
     it('throws error if path is not absolute', function () {
       assert.throws(function () {
-        target = new Target('bcdefgh/g');
-      }, /Must provide an absolute path/);
+        target = new Target({
+          path: './a/b/c',
+          context: null
+        });
+      }, /Must provide an absolute map.path/);
     });
 
-    it('throws error if context object is not provided', function () {
+    it('throws error if context is not null or obj', function () {
       assert.throws(function () {
-        target = new Target('/a/b/c', false);
-      }, /Must provide context object/);
+        target = new Target({ path: '/' });
+      }, /Must provide map.context object or null/);
     });
 
     it('assigns the properties correctly', function () {
-      target = new Target('/a/b/c', {
-        org: 'a',
-        project: 'b',
-        environment: 'c',
-        service: 'd'
+      target = new Target({
+        path: '/a/b/c',
+        context: {
+          org: 'a',
+          project: 'b'
+        }
       });
 
       assert.strictEqual(target.org, 'a');
       assert.strictEqual(target.project, 'b');
-      assert.strictEqual(target.environment, 'c');
-      assert.strictEqual(target.service, 'd');
     });
   });
 
   describe('flags', function () {
     beforeEach(function () {
-      target = new Target('/a/b/c/d', {
-        org: 'a',
-        project: 'b',
-        environment: 'c',
-        service: 'd'
+      target = new Target({
+        path: '/a/b/c/d',
+        context: {
+          org: 'a',
+          project: 'b',
+          environment: 'c',
+          service: 'd'
+        }
       });
     });
 
