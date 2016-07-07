@@ -71,7 +71,10 @@ describe('Envs Create', function () {
       project: { value: PROJECT.body.name },
       org: { value: ORG.body.name }
     };
-    ctx.target = new Target(process.cwd(), {});
+    ctx.target = new Target({
+      path: process.cwd(),
+      context: null
+    });
 
     // Daemon with token
     this.sandbox.stub(ctx.daemon, 'set')

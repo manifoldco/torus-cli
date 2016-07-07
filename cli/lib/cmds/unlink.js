@@ -6,6 +6,7 @@ var Command = require('../cli/command');
 
 var unlink = require('../context/unlink');
 var auth = require('../middleware/auth');
+var target = require('../middleware/target');
 
 var cmd = new Command(
   'unlink',
@@ -27,5 +28,6 @@ var cmd = new Command(
 );
 
 cmd.hook('pre', auth());
+cmd.hook('pre', target());
 
 module.exports = cmd;

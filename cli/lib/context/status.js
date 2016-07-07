@@ -27,19 +27,28 @@ status.output.success = output.create(function (ctx, state) {
       ' use \'' + programName + ' link\' to link your project');
   }
 
+  var options = {};
+  if (state.target.service === null) {
+    options.service = ctx.option('service').value || '*';
+  }
+  if (state.target.environment === null) {
+    options.environment = 'dev-' + state.user.body.username;
+  }
+  ctx.target.flags(options);
+
   console.log('Org: ' + state.target.org);
   console.log('Project: ' + state.target.project);
-  console.log('Environment: dev-' + state.user.body.username);
+  console.log('Environment: ' + state.target.environment);
   console.log('Service: ' + state.target.service);
-  console.log('Instance: 1 (Default)');
+  console.log('Instance: *');
 
   return console.log('\nCredential Path: /' + [
     state.target.org,
     state.target.project,
-    'dev-' + state.user.body.username,
+    state.target.environment,
     state.target.service,
     state.user.body.username,
-    '1'
+    '*'
   ].join('/'));
 });
 

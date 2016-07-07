@@ -92,8 +92,11 @@ describe('Services List', function () {
         value: undefined
       }
     };
-    CTX.target = new Target(process.cwd(), {
-      org: ORG.body.name
+    CTX.target = new Target({
+      path: process.cwd(),
+      context: {
+        org: ORG.body.name
+      }
     });
   });
 

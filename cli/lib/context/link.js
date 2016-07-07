@@ -15,18 +15,15 @@ link.output = {};
 
 var CREATE_ORG_VALUE = 'Create New Org';
 var CREATE_PROJECT_VALUE = 'Create New Project';
-var CREATE_SERVICE_VALUE = 'Create New Service';
 
-link.output.success = function (ctx, objects) {
+link.output.success = function (ctx, target) {
   var programName = ctx.program.name;
-  var target = objects.target;
 
   console.log('\nYour current working directory and all sub directories have ' +
               'been linked to:\n');
+
   console.log('Org: ' + target.org);
-  console.log('Project: ' + target.project);
-  console.log('Environment: ' + target.environment);
-  console.log('Service: ' + target.service + '\n');
+  console.log('Project: ' + target.project + '\n');
 
   console.log('Use \'' + programName + ' status\' to display ' +
               'your current working context.\n');
@@ -40,32 +37,32 @@ link.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     client.auth(ctx.session.token);
 
+    var force = ctx.option('force').value;
+    var shouldOverwrite = force !== false;
+
+    // Display linked org/project unless --force supplied
+    if (!shouldOverwrite && ctx.target.exists()) {
+      return resolve(ctx.target);
+    }
+
+    // Prompt for org and project
     var store = new Store(client);
-    link._prompt(store).then(function (answers) {
+    return link._prompt(store).then(function (answers) {
+      // Retrieve data objects for supplied values
       return link._retrieveObjects(store, answers);
     }).then(function (objects) {
-      return client.get({ url: '/users/self' }).then(function (result) {
-        var user = result.body && result.body[0];
-
-        if (!user) {
-          throw new Error('Invalid result returned from API');
-        }
-
-        objects.user = user;
-
-        var target = new Target(process.cwd(), {
+      // Create target from inputs
+      var target = new Target({
+        path: ctx.target.path(),
+        context: {
           org: objects.org.body.name,
-          project: objects.project.body.name,
-          service: objects.service.body.name,
-          environment: 'dev-' + user.body.username
-        });
+          project: objects.project.body.name
+        }
+      });
 
-        return targetMap.link(ctx.config, target).then(function () {
-          resolve({
-            target: target,
-            user: user
-          });
-        });
+      // Link the current directory
+      return targetMap.link(target).then(function () {
+        return resolve(target);
       });
     })
     .catch(reject);
@@ -73,11 +70,11 @@ link.execute = function (ctx) {
 };
 
 /**
- * Retrieve or create the org, service, and environment objects using the store
+ * Retrieve or create the org, project objects using the store
  * and answers we got from the user.
  *
  * @param {Store} store
- * @param {Object} anwers
+ * @param {Object} answers
  * @returns {Promise}
  */
 link._retrieveObjects = function (store, answers) {
@@ -98,22 +95,10 @@ link._retrieveObjects = function (store, answers) {
       });
 
     return getProject.then(function (project) {
-      var getService = (answers.service) ?
-        Promise.resolve(answers.service) : store.create('service', {
-          body: {
-            name: answers.serviceName,
-            org_id: org.id,
-            project_id: project.id
-          }
-        });
-
-      return getService.then(function (service) {
-        return {
-          org: org,
-          project: project,
-          service: service
-        };
-      });
+      return {
+        org: org,
+        project: project
+      };
     });
   });
 };
@@ -227,60 +212,6 @@ link._questions = function (store) {
       validate: validate.slug,
       when: function (answers) {
         return (answers.project === undefined);
-      }
-    },
-    {
-      type: 'list',
-      name: 'service',
-      message: 'Select a service',
-      choices: function (answers) {
-        var filter = {
-          body: {
-            org_id: answers.org.id,
-            project_id: answers.project.id
-          }
-        };
-        return store.get('service', filter).then(function (services) {
-          var choices = services.map(function (service) {
-            return service.body.name;
-          });
-
-          choices.push(CREATE_SERVICE_VALUE);
-          return choices;
-        });
-      },
-      filter: function (serviceName) {
-        if (serviceName === CREATE_SERVICE_VALUE) {
-          return undefined;
-        }
-
-        var filter = {
-          body: {
-            org_id: state.org.id,
-            project_id: state.project.id,
-            name: serviceName
-          }
-        };
-        return store.get('service', filter).then(function (services) {
-          if (services.length !== 1) {
-            throw new Error('service not found: ' + serviceName);
-          }
-
-          state.service = services[0];
-          return state.service;
-        });
-      },
-      when: function (answers) {
-        return (answers.project !== undefined);
-      }
-    },
-    {
-      type: 'input',
-      name: 'serviceName',
-      message: 'New service name?',
-      validate: validate.slug,
-      when: function (answers) {
-        return (answers.service === undefined);
       }
     }
   ];

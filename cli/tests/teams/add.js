@@ -99,7 +99,10 @@ describe('Team Add', function () {
     ctx.options = {
       org: { value: ORG.body.name }
     };
-    ctx.target = new Target(process.cwd(), {});
+    ctx.target = new Target({
+      path: process.cwd(),
+      context: null
+    });
 
     // Daemon with session
     this.sandbox.stub(ctx.daemon, 'set')
