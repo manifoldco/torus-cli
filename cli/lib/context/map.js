@@ -40,9 +40,7 @@ map.link = function (target) {
     var targetPath = target.path();
     lock.wrap(targetPath, function () {
       return map._writeFile(targetPath, target.context())
-        .then(function () {
-          resolve();
-        });
+        .then(resolve);
     }).catch(reject);
   });
 };
@@ -131,6 +129,15 @@ map._readFile = function (mapPath) {
           data = JSON.parse(contents);
         } catch (err) {
           return reject(err);
+        }
+
+        var requiredFields = Object.keys(MAP_DEFAULTS);
+        var missingOrInvalid = _.filter(requiredFields, function (field) {
+          return _.isUndefined(data[field]) || !_.isString(data[field]);
+        });
+
+        if (missingOrInvalid.length > 0) {
+          throw new Error('Invalid ' + MAP_FILE_NAME);
         }
 
         return resolve(_.defaults(data, MAP_DEFAULTS));
