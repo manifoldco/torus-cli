@@ -7,9 +7,9 @@ var assert = require('assert');
 var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
+var api = require('../../lib/api');
 var envsList = require('../../lib/envs/list');
-var client = require('../../lib/api/client').create();
-var sessionMiddleware = require('../../lib/middleware/session');
+var Session = require('../../lib/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
@@ -66,26 +66,10 @@ describe('Envs List', function () {
   });
 
   beforeEach(function () {
-    this.sandbox.stub(envsList.output, 'success');
-    this.sandbox.stub(envsList.output, 'failure');
-    this.sandbox.stub(client, 'get')
-      .onFirstCall()
-      .returns(Promise.resolve({
-        body: [ORG]
-      }))
-      .onSecondCall()
-      .returns(Promise.resolve({
-        body: PROJECTS
-      }))
-      .onThirdCall()
-      .returns(Promise.resolve({
-        body: ENVS
-      }));
-    this.sandbox.spy(client, 'auth');
-
     // Context stub with session set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
+    ctx.session = new Session({ token: 'aa', passphrase: 'safsd' });
     ctx.daemon = new Daemon(ctx.config);
     ctx.params = [];
     ctx.options = {
@@ -96,15 +80,16 @@ describe('Envs List', function () {
       path: process.cwd(),
       context: null
     });
+    ctx.api = api.build({ auth_token: ctx.session.token });
 
-    // Daemon with session
-    this.sandbox.stub(ctx.daemon, 'set')
-      .returns(Promise.resolve());
-    this.sandbox.stub(ctx.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
-
-    // Run the session middleware to populate the context object
-    return sessionMiddleware()(ctx);
+    this.sandbox.stub(envsList.output, 'success');
+    this.sandbox.stub(envsList.output, 'failure');
+    this.sandbox.stub(ctx.api.orgs, 'get')
+      .returns(Promise.resolve([ORG]));
+    this.sandbox.stub(ctx.api.projects, 'get')
+      .returns(Promise.resolve(PROJECTS));
+    this.sandbox.stub(ctx.api.envs, 'get')
+      .returns(Promise.resolve(ENVS));
   });
 
   afterEach(function () {
@@ -161,8 +146,7 @@ describe('Envs List', function () {
     });
 
     it('errors if the org was not found', function () {
-      client.get.onCall(0).returns(Promise.resolve({ body: [] }));
-
+      ctx.api.orgs.get.onCall(0).returns(Promise.resolve([]));
       return envsList.execute(ctx).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {
@@ -172,8 +156,7 @@ describe('Envs List', function () {
     });
 
     it('errors if project provided and not found', function () {
-      client.get.onCall(1).returns(Promise.resolve({ body: [] }));
-
+      ctx.api.projects.get.onCall(0).returns(Promise.resolve([]));
       return envsList.execute(ctx).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {

@@ -8,8 +8,8 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var teamsAdd = require('../../lib/teams/add');
-var client = require('../../lib/api/client').create();
-var sessionMiddleware = require('../../lib/middleware/session');
+var Session = require('../../lib/session');
+var api = require('../../lib/api');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
@@ -53,47 +53,11 @@ describe('Team Add', function () {
   });
 
   beforeEach(function () {
-    this.sandbox.spy(client, 'auth');
-    this.sandbox.stub(teamsAdd.output, 'success');
-    this.sandbox.stub(teamsAdd.output, 'failure');
-    this.sandbox.stub(client, 'post')
-      .returns(Promise.resolve({ body: MEMBERSHIP }));
-    this.sandbox.stub(client, 'get')
-      .withArgs({ url: '/profiles/' + PROFILE.body.username })
-      .returns(Promise.resolve({
-        body: [PROFILE]
-      }))
-      .withArgs({
-        url: '/orgs',
-        qs: { name: ORG.body.name }
-      })
-      .returns(Promise.resolve({
-        body: [ORG]
-      }))
-      .withArgs({
-        url: '/memberships',
-        qs: {
-          org_id: ORG.id,
-          owner_id: PROFILE.id
-        }
-      })
-      .returns(Promise.resolve({
-        body: [MEMBERSHIP]
-      }))
-      .withArgs({
-        url: '/teams',
-        qs: {
-          org_id: ORG.id,
-          name: TEAM.body.name
-        }
-      })
-      .returns(Promise.resolve({
-        body: [TEAM]
-      }));
-
     // Context stub with session set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
+    ctx.session = new Session({ token: 'aa', passphrase: 'dd' });
+    ctx.api = api.build({ auth_token: ctx.session.token });
     ctx.daemon = new Daemon(ctx.config);
     ctx.params = [PROFILE.body.username, TEAM.body.name];
     ctx.options = {
@@ -104,14 +68,18 @@ describe('Team Add', function () {
       context: null
     });
 
-    // Daemon with session
-    this.sandbox.stub(ctx.daemon, 'set')
-      .returns(Promise.resolve());
-    this.sandbox.stub(ctx.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
-
-    // Run the session middleware to populate the context object
-    return sessionMiddleware()(ctx);
+    this.sandbox.stub(teamsAdd.output, 'success');
+    this.sandbox.stub(teamsAdd.output, 'failure');
+    this.sandbox.stub(ctx.api.memberships, 'create')
+      .returns(Promise.resolve(MEMBERSHIP));
+    this.sandbox.stub(ctx.api.users, 'profile')
+      .returns([PROFILE]);
+    this.sandbox.stub(ctx.api.orgs, 'get')
+      .returns([ORG]);
+    this.sandbox.stub(ctx.api.memberships, 'get')
+      .returns([MEMBERSHIP]);
+    this.sandbox.stub(ctx.api.teams, 'get')
+      .returns([TEAM]);
   });
 
   afterEach(function () {
@@ -119,12 +87,6 @@ describe('Team Add', function () {
   });
 
   describe('#execute', function () {
-    it('verify\'s the session', function () {
-      return teamsAdd.execute(ctx).then(function () {
-        sinon.assert.calledOnce(client.auth);
-      });
-    });
-
     it('errors without context and --org [name]', function () {
       ctx.options = { org: { value: undefined } };
 
@@ -195,47 +157,36 @@ describe('Team Add', function () {
 
     it('creates a new membership object', function () {
       return teamsAdd.execute(ctx).then(function () {
-        sinon.assert.calledWith(client.post, {
-          url: '/memberships',
-          json: {
-            body: {
-              org_id: ORG.id,
-              owner_id: PROFILE.id,
-              team_id: TEAM.id
-            }
-          }
+        sinon.assert.calledWith(ctx.api.memberships.create, {
+          org_id: ORG.id,
+          owner_id: PROFILE.id,
+          team_id: TEAM.id
         });
       });
     });
 
     [
       {
-        url: '/profiles/' + PROFILE.body.username,
+        stub: function () {
+          ctx.api.users.profile.returns(Promise.resolve(null));
+        },
         error: 'user not found: ' + PROFILE.body.username
       },
       {
-        url: '/orgs',
-        error: 'org not found: ' + ORG.body.name,
-        qs: { name: ORG.body.name }
+        stub: function () {
+          ctx.api.orgs.get.returns(Promise.resolve(null));
+        },
+        error: 'org not found: ' + ORG.body.name
       },
       {
-        url: '/teams',
-        error: 'team not found: ' + TEAM.body.name,
-        qs: {
-          org_id: ORG.id,
-          name: TEAM.body.name
-        }
+        stub: function () {
+          ctx.api.teams.get.returns(Promise.resolve(null));
+        },
+        error: 'team not found: ' + TEAM.body.name
       }
     ].map(function (testProps) {
-      var req = { url: testProps.url };
-
-      if (testProps.qs) {
-        req.qs = testProps.qs;
-      }
-
-      return it('errors if res from ' + req.url + ' is invalid', function () {
-        client.get.withArgs(req).returns(Promise.resolve({ body: null }));
-
+      return it('errors: ' + testProps.error, function () {
+        testProps.stub();
         return teamsAdd.execute(ctx).then(function () {
           assert.ok(false, 'should error');
         }, function (err) {

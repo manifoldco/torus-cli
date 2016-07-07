@@ -8,12 +8,12 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var orgsList = require('../../lib/orgs/list');
-var client = require('../../lib/api/client').create();
-var sessionMiddleware = require('../../lib/middleware/session');
+var Session = require('../../lib/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
 var Daemon = require('../../lib/daemon/object').Daemon;
+var api = require('../../lib/api');
 
 var ORG = {
   id: utils.id('org'),
@@ -37,22 +37,10 @@ describe('Orgs List', function () {
   });
 
   beforeEach(function () {
-    this.sandbox.stub(orgsList.output, 'success');
-    this.sandbox.stub(orgsList.output, 'failure');
-    this.sandbox.stub(client, 'get')
-      .withArgs({ url: '/users/self' })
-      .returns(Promise.resolve({
-        body: [SELF]
-      }))
-      .withArgs({ url: '/orgs' })
-      .returns(Promise.resolve({
-        body: [ORG]
-      }));
-    this.sandbox.spy(client, 'auth');
-
     // Context stub with session set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
+    ctx.session = new Session({ token: 'aa', passphrase: 'boo' });
     ctx.daemon = new Daemon(ctx.config);
     ctx.params = [];
     ctx.options = {
@@ -62,15 +50,12 @@ describe('Orgs List', function () {
       path: process.cwd(),
       context: null
     });
+    ctx.api = api.build({ auth_token: ctx.session.token });
 
-    // Daemon with session
-    this.sandbox.stub(ctx.daemon, 'set')
-      .returns(Promise.resolve());
-    this.sandbox.stub(ctx.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
-
-    // Run the session middleware to populate the context object
-    return sessionMiddleware()(ctx);
+    this.sandbox.stub(orgsList.output, 'success');
+    this.sandbox.stub(orgsList.output, 'failure');
+    this.sandbox.stub(ctx.api.users, 'self').returns(Promise.resolve([SELF]));
+    this.sandbox.stub(ctx.api.orgs, 'get').returns(Promise.resolve([ORG]));
   });
 
   afterEach(function () {
@@ -87,28 +72,9 @@ describe('Orgs List', function () {
       });
     });
 
-    it('errors if session is missing on ctx', function () {
-      ctx.session = null;
-
-      return orgsList.execute(ctx).then(function () {
-        assert.ok(false, 'should error');
-      }, function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'Session object missing on Context');
-      });
-    });
-
     it('errors if the org was not found', function () {
-      client.get
-        .withArgs({ url: '/users/self' })
-        .returns(Promise.resolve({
-          body: []
-        }))
-        .withArgs({ url: '/orgs' })
-        .returns(Promise.resolve({
-          body: []
-        }));
-
+      ctx.api.users.self.returns(Promise.resolve([]));
+      ctx.api.orgs.get.returns(Promise.resolve([]));
       return orgsList.execute(ctx).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {

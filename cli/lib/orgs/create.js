@@ -9,8 +9,6 @@ var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
 
-var client = require('../api/client').create();
-
 orgCreate.output = {};
 
 orgCreate.output.success = output.create(function () {
@@ -44,15 +42,8 @@ orgCreate.execute = function (ctx) {
       }
     }
 
-    client.auth(ctx.session.token);
-
     var createOrg = orgCreate._prompt(data).then(function (input) {
-      return client.post({
-        url: '/orgs',
-        json: {
-          body: input
-        }
-      });
+      return ctx.api.orgs.create(input);
     });
 
     return createOrg.then(resolve).catch(reject);

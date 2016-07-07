@@ -6,7 +6,6 @@ var Promise = require('es6-promise').Promise;
 
 var Target = require('../context/target');
 var output = require('../cli/output');
-var client = require('../api/client').create();
 
 status.output = {};
 
@@ -58,12 +57,8 @@ status.execute = function (ctx) {
       throw new Error('Target must be on the context object');
     }
 
-    client.auth(ctx.session.token);
-
-    return client.get({
-      url: '/users/self'
-    }).then(function (res) {
-      var user = res && res.body && res.body[0];
+    return ctx.api.users.self().then(function (res) {
+      var user = res && res[0];
       if (!user) {
         throw new Error('Invalid response returned from the API');
       }

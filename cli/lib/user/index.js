@@ -3,9 +3,7 @@
 var user = exports;
 
 var _ = require('lodash');
-var utils = require('common/utils');
 
-var client = require('../api/client').create();
 var validate = require('../validate');
 var output = require('../cli/output');
 var userCrypto = require('common/crypto/user');
@@ -89,28 +87,22 @@ user.questions = function () {
 /**
  * Create user object from inputs
  *
+ * @param {object} api api client
  * @param {object} userInput
  */
-user.create = function (userInput) {
+user.create = function (api, userInput) {
   var object = {
-    id: utils.id('user'), // generate user-object id
-    body: {
-      username: userInput.username,
-      name: userInput.name,
-      email: userInput.email
-    }
+    username: userInput.username,
+    name: userInput.name,
+    email: userInput.email
   };
 
   // Encrypt the password, generate the master key
   return userCrypto.encryptPasswordObject(userInput.passphrase)
     .then(function (result) {
       // Append the master and password objects to body
-      object.body = _.extend(object.body, result);
-      return object;
+      object = _.extend(object, result);
     }).then(function () {
-      return client.post({
-        url: '/users',
-        json: object
-      });
+      return api.users.create(object);
     });
 };

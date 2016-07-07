@@ -4,11 +4,9 @@ var verify = exports;
 
 var Promise = require('es6-promise').Promise;
 
-var Session = require('../session');
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
-var client = require('../api/client').create();
 
 verify.output = {};
 
@@ -72,7 +70,7 @@ verify.execute = function (ctx) {
   }
 
   return retrieveInput.then(function (userInput) {
-    return verify._execute(ctx.session, userInput);
+    return verify._execute(ctx.api, userInput);
   });
 };
 
@@ -105,23 +103,13 @@ verify._prompt = function () {
 /**
  * Attempt log with supplied credentials
  *
- * @param {object} session - Session object
+ * @param {object} api - api client object
  * @param {object} userInput
  */
-verify._execute = function (session, userInput) {
+verify._execute = function (api, userInput) {
   return new Promise(function (resolve, reject) {
-    if (!(session instanceof Session)) {
-      throw new TypeError('Session is not on Context object');
-    }
-
-    client.auth(session.token);
-    client.post({
-      url: '/users/verify',
-      json: {
-        // Trim spaces if provided in input
-        code: userInput.code.replace(/\s/g, '').toUpperCase()
-      }
-    }).then(function (result) {
+    var code = userInput.code.replace(/\s/g, '').toUpperCase();
+    api.users.verify({ code: code }).then(function (result) {
       resolve(result.user);
     }).catch(reject);
   });

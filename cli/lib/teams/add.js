@@ -6,7 +6,6 @@ var Promise = require('es6-promise').Promise;
 
 var output = require('../cli/output');
 var validate = require('../validate');
-var client = require('../api/client').create();
 
 add.output = {};
 
@@ -29,8 +28,6 @@ add.output.failure = output.create(function () {
 
 add.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    client.auth(ctx.session.token);
-
     ctx.target.flags({
       org: ctx.option('org').value
     });
@@ -57,17 +54,12 @@ add.execute = function (ctx) {
     var membershipData = {};
     var payload = {};
     return Promise.all([
-      client.get({
-        url: '/orgs',
-        qs: { name: data.org }
-      }),
-      client.get({
-        url: '/profiles/' + data.username
-      })
+      ctx.api.orgs.get({ name: data.org }),
+      ctx.api.users.profile({}, { username: data.username })
     ])
     .then(function (result) {
-      payload.org = result[0].body && result[0].body[0];
-      payload.user = result[1].body && result[1].body[0];
+      payload.org = result[0] && result[0][0];
+      payload.user = result[1] && result[1][0];
 
       if (!payload.org) {
         throw new Error('org not found: ' + data.org);
@@ -80,26 +72,20 @@ add.execute = function (ctx) {
       membershipData.org_id = payload.org.id;
       membershipData.owner_id = payload.user.id;
 
-      return client.get({
-        url: '/teams',
-        qs: {
-          org_id: payload.org.id,
-          name: data.team
-        }
+      return ctx.api.teams.get({
+        org_id: payload.org.id,
+        name: data.team
       });
     })
     .then(function (results) {
-      payload.team = results.body && results.body[0];
+      payload.team = results && results[0];
 
       if (!payload.team) {
         throw new Error('team not found: ' + data.team);
       }
 
       membershipData.team_id = payload.team.id;
-      return client.post({
-        url: '/memberships',
-        json: { body: membershipData }
-      });
+      return ctx.api.memberships.create(membershipData);
     })
     .then(function () {
       resolve(payload);

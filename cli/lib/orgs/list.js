@@ -6,8 +6,6 @@ var Promise = require('es6-promise').Promise;
 var _ = require('lodash');
 
 var output = require('../cli/output');
-var client = require('../api/client').create();
-var Session = require('../session');
 
 orgsList.output = {};
 
@@ -47,22 +45,12 @@ orgsList.output.failure = output.create(function () {
  */
 orgsList.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    if (!(ctx.session instanceof Session)) {
-      throw new TypeError('Session object missing on Context');
-    }
-
-    client.auth(ctx.session.token);
-
     return Promise.all([
-      client.get({
-        url: '/users/self'
-      }),
-      client.get({
-        url: '/orgs'
-      })
+      ctx.api.users.self(),
+      ctx.api.orgs.get()
     ]).then(function (res) {
-      var self = res[0].body[0];
-      var orgs = res[1].body;
+      var self = res[0][0];
+      var orgs = res[1];
 
       if (!_.isArray(orgs) || !_.isObject(self)) {
         return reject(new Error('No orgs found'));

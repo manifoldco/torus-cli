@@ -8,8 +8,8 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var teamsList = require('../../lib/teams/list');
-var client = require('../../lib/api/client').create();
-var sessionMiddleware = require('../../lib/middleware/session');
+var Session = require('../../lib/session');
+var api = require('../../lib/api');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
@@ -53,45 +53,15 @@ describe('Team List', function () {
   });
 
   beforeEach(function () {
-    this.sandbox.spy(client, 'auth');
     this.sandbox.stub(teamsList.output, 'success');
     this.sandbox.stub(teamsList.output, 'failure');
-    this.sandbox.stub(client, 'get')
-      .withArgs({ url: '/users/self' })
-      .returns(Promise.resolve({
-        body: [SELF]
-      }))
-      .withArgs({
-        url: '/orgs',
-        qs: { name: ORG.body.name }
-      })
-      .returns(Promise.resolve({
-        body: [ORG]
-      }))
-      .withArgs({
-        url: '/memberships',
-        qs: {
-          org_id: ORG.id,
-          owner_id: SELF.id
-        }
-      })
-      .returns(Promise.resolve({
-        body: [MEMBERSHIP]
-      }))
-      .withArgs({
-        url: '/teams',
-        qs: {
-          org_id: ORG.id
-        }
-      })
-      .returns(Promise.resolve({
-        body: [TEAM]
-      }));
 
     // Context stub with session set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
     ctx.daemon = new Daemon(ctx.config);
+    ctx.session = new Session({ token: 'dd', passphrase: 'ee' });
+    ctx.api = api.build({ auth_token: ctx.session.token });
     ctx.params = [];
     ctx.options = {
       org: { value: ORG.body.name }
@@ -101,14 +71,14 @@ describe('Team List', function () {
       context: null
     });
 
-    // Daemon with session
-    this.sandbox.stub(ctx.daemon, 'set')
-      .returns(Promise.resolve());
-    this.sandbox.stub(ctx.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
-
-    // Run the session middleware to populate the context object
-    return sessionMiddleware()(ctx);
+    this.sandbox.stub(ctx.api.users, 'self')
+      .returns(Promise.resolve([SELF]));
+    this.sandbox.stub(ctx.api.orgs, 'get')
+      .returns(Promise.resolve([ORG]));
+    this.sandbox.stub(ctx.api.memberships, 'get')
+      .returns(Promise.resolve([MEMBERSHIP]));
+    this.sandbox.stub(ctx.api.teams, 'get')
+      .returns(Promise.resolve([TEAM]));
   });
 
   afterEach(function () {
@@ -116,12 +86,6 @@ describe('Team List', function () {
   });
 
   describe('#execute', function () {
-    it('verify\'s the session', function () {
-      return teamsList.execute(ctx).then(function () {
-        sinon.assert.calledOnce(client.auth);
-      });
-    });
-
     it('errors without context and --org [name]', function () {
       ctx.options = { org: { value: undefined } };
 
@@ -158,37 +122,32 @@ describe('Team List', function () {
 
     [
       {
-        url: '/users/self',
+        stub: function () {
+          ctx.api.users.self.returns(Promise.resolve([]));
+        },
         error: 'current user could not be retrieved'
       },
       {
-        url: '/orgs',
-        error: 'org not found: ' + ORG.body.name,
-        qs: { name: ORG.body.name }
+        stub: function () {
+          ctx.api.orgs.get.returns(Promise.resolve([]));
+        },
+        error: 'org not found: ' + ORG.body.name
       },
       {
-        url: '/teams',
-        error: 'could not find team(s)',
-        qs: { org_id: ORG.id }
+        stub: function () {
+          ctx.api.teams.get.returns(Promise.resolve(null));
+        },
+        error: 'could not find team(s)'
       },
       {
-        url: '/memberships',
-        error: 'could not find memberships',
-        qs: {
-          org_id: ORG.id,
-          owner_id: SELF.id
-        }
+        stub: function () {
+          ctx.api.memberships.get.returns(Promise.resolve(null));
+        },
+        error: 'could not find memberships'
       }
     ].map(function (testProps) {
-      var req = { url: testProps.url };
-
-      if (testProps.qs) {
-        req.qs = testProps.qs;
-      }
-
-      return it('errors if res from ' + req.url + ' is invalid', function () {
-        client.get.withArgs(req).returns(Promise.resolve({ body: null }));
-
+      return it('errors: ' + testProps.error, function () {
+        testProps.stub();
         return teamsList.execute(ctx).then(function () {
           assert.ok(false, 'should error');
         }, function (err) {

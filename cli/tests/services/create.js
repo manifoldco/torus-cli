@@ -8,12 +8,12 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var serviceCreate = require('../../lib/services/create');
-var client = require('../../lib/api/client').create();
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
 var Daemon = require('../../lib/daemon/object').Daemon;
-var sessionMiddleware = require('../../lib/middleware/session');
+var Session = require('../../lib/session');
+var api = require('../../lib/api');
 
 var ORG = {
   id: utils.id('org'),
@@ -47,26 +47,10 @@ describe('Services Create', function () {
   });
 
   beforeEach(function () {
-    this.sandbox.stub(serviceCreate.output, 'success');
-    this.sandbox.stub(serviceCreate.output, 'failure');
-    this.sandbox.stub(client, 'get')
-      .onFirstCall()
-      .returns(Promise.resolve({
-        body: [ORG]
-      }))
-      .onSecondCall()
-      .returns(Promise.resolve({
-        body: [PROJECT]
-      }));
-    this.sandbox.stub(client, 'post')
-      .returns(Promise.resolve({
-        body: [SERVICE]
-      }));
-    this.sandbox.spy(client, 'auth');
-
     // Context stub with token set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
+    ctx.session = new Session({ token: 'aa', passphrase: 'deed' });
     ctx.daemon = new Daemon(ctx.config);
     ctx.params = ['abc123abc'];
     ctx.options = {
@@ -77,18 +61,15 @@ describe('Services Create', function () {
       path: process.cwd(),
       context: null
     });
+    ctx.api = api.build({ auth_token: ctx.session.token });
 
-    // Daemon with token
-    this.sandbox.stub(ctx.daemon, 'set')
-      .returns(Promise.resolve());
-    this.sandbox.stub(ctx.daemon, 'get')
-      .returns(Promise.resolve({
-        token: 'this is a token',
-        passphrase: 'a passphrase'
-      }));
-
-    // Run the token middleware to populate the context object
-    return sessionMiddleware()(ctx);
+    this.sandbox.stub(serviceCreate.output, 'success');
+    this.sandbox.stub(serviceCreate.output, 'failure');
+    this.sandbox.stub(ctx.api.orgs, 'get').returns(Promise.resolve([ORG]));
+    this.sandbox.stub(ctx.api.projects, 'get')
+      .returns(Promise.resolve([PROJECT]));
+    this.sandbox.stub(ctx.api.services, 'create')
+      .returns(Promise.resolve([SERVICE]));
   });
 
   afterEach(function () {
@@ -108,8 +89,7 @@ describe('Services Create', function () {
     });
 
     it('errors if org does not exist', function () {
-      client.get.onCall(0).returns(Promise.resolve({ body: [] }));
-
+      ctx.api.orgs.get.returns(Promise.resolve([]));
       return serviceCreate.execute(ctx).then(function () {
         assert.ok(false, 'should not pass');
       }, function (err) {
@@ -120,8 +100,7 @@ describe('Services Create', function () {
 
     it('errors if project specified and not found', function () {
       ctx.options.project.value = 'api';
-      client.get.onCall(1).returns(Promise.resolve({ body: [] }));
-
+      ctx.api.projects.get.returns(Promise.resolve([]));
       return serviceCreate.execute(ctx).then(function () {
         assert.ok(false, 'should not pass');
       }, function (err) {
@@ -132,8 +111,7 @@ describe('Services Create', function () {
 
     it('errors if project doesnt exist', function () {
       ctx.options.project.value = undefined;
-      client.get.onCall(1).returns(Promise.resolve({ body: [] }));
-
+      ctx.api.projects.get.returns(Promise.resolve([]));
       return serviceCreate.execute(ctx).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {
@@ -169,11 +147,12 @@ describe('Services Create', function () {
           service: SERVICE
         });
 
-        sinon.assert.calledWith(serviceCreate._execute, ORG, [PROJECT], {
-          name: ctx.params[0],
-          project: PROJECT.body.name,
-          org: ORG.body.name
-        });
+        sinon.assert.calledWith(serviceCreate._execute, ctx.api, ORG, [PROJECT],
+          {
+            name: ctx.params[0],
+            project: PROJECT.body.name,
+            org: ORG.body.name
+          });
       });
     });
 
@@ -202,7 +181,7 @@ describe('Services Create', function () {
     };
 
     it('errors if project not found', function () {
-      return serviceCreate._execute(ORG, [], data).then(function () {
+      return serviceCreate._execute(ctx.api, ORG, [], data).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {
         assert.ok(err);
@@ -211,9 +190,9 @@ describe('Services Create', function () {
     });
 
     it('returns error if api returns error', function () {
-      client.post.onCall(0).returns(Promise.reject(new Error('bad')));
-
-      return serviceCreate._execute(ORG, [PROJECT], data).then(function () {
+      ctx.api.services.create.returns(Promise.reject(new Error('bad')));
+      return serviceCreate._execute(ctx.api, ORG, [PROJECT], data)
+      .then(function () {
         assert.ok(false, 'should error');
       }, function (err) {
         assert.ok(err);
@@ -222,7 +201,7 @@ describe('Services Create', function () {
     });
 
     it('makes service object', function () {
-      return serviceCreate._execute(ORG, [PROJECT], data)
+      return serviceCreate._execute(ctx.api, ORG, [PROJECT], data)
       .then(function (result) {
         assert.deepEqual(result, {
           project: PROJECT,

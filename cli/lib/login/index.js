@@ -7,7 +7,6 @@ var user = require('common/crypto/user');
 
 var Prompt = require('../cli/prompt');
 var output = require('../cli/output');
-var client = require('../api/client').create();
 var validate = require('../validate');
 var Session = require('../session');
 
@@ -97,42 +96,37 @@ login._prompt = function () {
  * @param {object} userInput
  */
 login._execute = function (ctx, userInput) {
-  client.reset(); // Clear any existing authorization
+  ctx.api.reset(); // Clear any existing authorization
 
   var salt;
   var loginToken;
-  return client.post({
-    url: '/tokens',
-    json: {
-      type: TYPE_LOGIN,
-      email: userInput.email
-    }
+  return ctx.api.tokens.create({
+    type: TYPE_LOGIN,
+    email: userInput.email
   })
   .then(function (result) {
+    salt = result.salt;
+    loginToken = result.login_token;
+
     // Catch invalid data should API not return proper error status
-    if (!result.body.salt || !result.body.login_token) {
+    if (!salt || !loginToken) {
       throw new Error('invalid response from api');
     }
-
-    salt = result.body.salt;
-    loginToken = result.body.login_token;
 
     return user.deriveLoginHmac(userInput.passphrase, salt, loginToken);
   })
   .then(function (loginTokenHmac) {
     // Use the login token to make an authenticated login attempt
-    client.auth(loginToken);
+    ctx.api.auth(loginToken);
 
-    return client.post({
-      url: '/tokens',
-      json: {
-        type: TYPE_AUTH,
-        login_token_hmac: loginTokenHmac
-      }
-    }).then(function (result) { // eslint-disable-line
+    return ctx.api.tokens.create({
+      type: TYPE_AUTH,
+      login_token_hmac: loginTokenHmac
+    })
+    .then(function (result) { // eslint-disable-line
       // Re-authorize the api client for subsequent requests
-      var authToken = result.body.auth_token;
-      client.auth(authToken);
+      var authToken = result.auth_token;
+      ctx.api.auth(authToken);
 
       var sessionData = {
         token: authToken,

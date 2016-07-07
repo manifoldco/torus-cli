@@ -3,10 +3,6 @@
 var Promise = require('es6-promise').Promise;
 
 var cpath = require('common/cpath');
-var utils = require('common/utils');
-
-var Session = require('../session');
-var client = require('../api/client').create();
 var cValue = require('./value');
 
 var credentials = exports;
@@ -22,11 +18,8 @@ function getPath(user, params) {
   ].join('/');
 }
 
-credentials.create = function (session, params, value) {
+credentials.create = function (api, params, value) {
   return new Promise(function (resolve, reject) {
-    if (!(session instanceof Session)) {
-      throw new Error('Session must be provided');
-    }
     if (!(value instanceof cValue.CredentialValue)) {
       throw new Error('value must be provided');
     }
@@ -41,8 +34,6 @@ credentials.create = function (session, params, value) {
       throw new Error('Invalid path provided');
     }
 
-    client.auth(session.token);
-
     var cpathObj;
     if (params.path) {
       cpathObj = cpath.parseExp(params.path);
@@ -51,11 +42,11 @@ credentials.create = function (session, params, value) {
     var projectName = (cpathObj) ? cpathObj.project : params.project;
     var orgName = (cpathObj) ? cpathObj.org : params.org;
     return Promise.all([
-      client.get({ url: '/users/self' }),
-      client.get({ url: '/orgs?name=' + orgName })
+      api.users.self(),
+      api.orgs.get({ name: orgName })
     ]).then(function (results) {
-      var user = results[0] && results[0].body && results[0].body[0];
-      var org = results[1] && results[1].body && results[1].body[0];
+      var user = results[0] && results[0][0];
+      var org = results[1] && results[1][0];
 
       if (!user) {
         return reject(new Error('Could not find the user'));
@@ -65,17 +56,9 @@ credentials.create = function (session, params, value) {
         return reject(new Error('Unknown org: ' + orgName));
       }
 
-      var getProject = {
-        url: '/projects',
-        qs: {
-          name: projectName,
-          org_id: org.id
-        }
-      };
-
-      return client.get(getProject).then(function (result) {
-        var project = result.body && result.body[0];
-
+      var qs = { name: projectName, org_id: org.id };
+      return api.projects.get(qs).then(function (result) {
+        var project = result[0];
         if (!project) {
           return reject(new Error('Unknown project: ' + projectName));
         }
@@ -83,16 +66,9 @@ credentials.create = function (session, params, value) {
         var pathexp = (cpathObj) ?
           cpathObj.toString() : getPath(user, params);
 
-        var getCredential = {
-          url: '/credentials',
-          qs: {
-            name: params.name,
-            pathexp: pathexp
-          }
-        };
-
-        return client.get(getCredential).then(function (credResult) {
-          var cred = credResult.body && credResult.body[0];
+        var credsQs = { name: params.name, pathexp: pathexp };
+        return api.credentials.get(credsQs).then(function (credResult) {
+          var cred = credResult[0];
           var previous = (cred) ? cred.id : null;
           var version = (cred) ? cred.body.version + 1 : 1;
 
@@ -106,50 +82,41 @@ credentials.create = function (session, params, value) {
             }
           }
 
-          var object = {
-            id: utils.id('credential'),
-            body: {
-              name: params.name,
-              project_id: project.id,
-              org_id: org.id,
-              pathexp: pathexp,
-              version: version,
-              previous: previous,
-              value: value.toString()
-            }
+          var data = {
+            name: params.name,
+            project_id: project.id,
+            org_id: org.id,
+            pathexp: pathexp,
+            version: version,
+            previous: previous,
+            value: value.toString()
           };
 
-          return client.post({
-            url: '/credentials',
-            json: object
-          }).then(function (cResult) {
-            resolve(cResult.body[0]);
+          return api.credentials.create(data).then(function (creds) {
+            return creds[0];
           });
         });
       });
-    }).catch(reject);
+    })
+    .then(resolve)
+    .catch(reject);
   });
 };
 
-credentials.get = function (session, params) {
+credentials.get = function (api, params) {
   return new Promise(function (resolve, reject) {
-    if (!(session instanceof Session)) {
-      throw new Error('Session must be provided');
-    }
     if (!params.project || !params.service || !params.environment ||
         !params.instance || !params.org) {
       throw new Error(
         'Org, project, service, environment, and instance must be provided');
     }
 
-    client.auth(session.token);
-
     return Promise.all([
-      client.get({ url: '/users/self' }),
-      client.get({ url: '/orgs', qs: { name: params.org } })
+      api.users.self(),
+      api.orgs.get({ name: params.org })
     ]).then(function (results) {
-      var user = results[0] && results[0].body && results[0].body[0];
-      var org = results[1] && results[1].body && results[1].body[0];
+      var user = results[0] && results[0][0];
+      var org = results[1] && results[1][0];
 
       if (!user) {
         return reject(new Error('Could not find user'));
@@ -168,15 +135,7 @@ credentials.get = function (session, params) {
         params.instance
       ].join('/');
 
-      var getCreds = {
-        url: '/credentials',
-        qs: {
-          path: path
-        }
-      };
-      return client.get(getCreds).then(function (payload) {
-        return payload.body;
-      });
+      return api.credentials.get({ path: path });
     })
     .then(resolve)
     .catch(reject);

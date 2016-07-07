@@ -9,10 +9,10 @@ var Promise = require('es6-promise').Promise;
 var utils = require('common/utils');
 
 var Session = require('../../lib/session');
+var api = require('../../lib/api');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
 
-var client = require('../../lib/api/client').create();
 var serviceList = require('../../lib/services/list');
 
 var ORG = {
@@ -68,23 +68,19 @@ var SERVICES = [
 
 
 describe('Services List', function () {
-  var CTX;
+  var ctx;
   before(function () {
     this.sandbox = sinon.sandbox.create();
   });
   beforeEach(function () {
-    this.sandbox.stub(client, 'get')
-      .onFirstCall()
-      .returns(Promise.resolve({
-        body: [ORG]
-      }));
-    CTX = new Context({});
-    CTX.session = new Session({
+    ctx = new Context({});
+    ctx.session = new Session({
       token: 'abcdefgh',
       passphrase: 'hohohoho'
     });
-    CTX.params = ['hi-there'];
-    CTX.options = {
+    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.params = ['hi-there'];
+    ctx.options = {
       org: {
         value: ORG.body.name
       },
@@ -92,12 +88,18 @@ describe('Services List', function () {
         value: undefined
       }
     };
-    CTX.target = new Target({
+    ctx.target = new Target({
       path: process.cwd(),
       context: {
         org: ORG.body.name
       }
     });
+
+    this.sandbox.stub(ctx.api.orgs, 'get').returns(Promise.resolve([ORG]));
+    this.sandbox.stub(ctx.api.services, 'get')
+      .returns(Promise.resolve(SERVICES));
+    this.sandbox.stub(ctx.api.projects, 'get')
+      .returns(Promise.resolve(PROJECTS));
   });
 
   afterEach(function () {
@@ -106,9 +108,9 @@ describe('Services List', function () {
 
   describe('#execute', function () {
     it('requires an auth token', function () {
-      CTX.session = null;
+      ctx.session = null;
 
-      return serviceList.execute(CTX).then(function () {
+      return serviceList.execute(ctx).then(function () {
         assert.ok(false, 'should not resolve');
       }).catch(function (err) {
         assert.ok(err);
@@ -117,8 +119,9 @@ describe('Services List', function () {
     });
 
     it('does not throw if the user has no services or projects', function () {
-      client.get.returns(Promise.resolve({ body: [] }));
-      return serviceList.execute(CTX).then(function (payload) {
+      ctx.api.services.get.returns(Promise.resolve([]));
+      ctx.api.projects.get.returns(Promise.resolve([]));
+      return serviceList.execute(ctx).then(function (payload) {
         assert.deepEqual(payload, {
           projects: [],
           services: []
@@ -129,9 +132,9 @@ describe('Services List', function () {
     it('handles not found from api', function () {
       var err = new Error('service not found');
       err.type = 'not_found';
-      client.get.returns(Promise.reject(err));
 
-      return serviceList.execute(CTX).then(function () {
+      ctx.api.services.get.returns(Promise.reject(err));
+      return serviceList.execute(ctx).then(function () {
         assert.ok(false, 'should not resolve');
       }).catch(function (e) {
         assert.strictEqual(e.type, 'not_found');
@@ -139,10 +142,7 @@ describe('Services List', function () {
     });
 
     it('resolves with services and projects', function () {
-      client.get.onCall(1).returns(Promise.resolve({ body: PROJECTS }));
-      client.get.onCall(2).returns(Promise.resolve({ body: SERVICES }));
-
-      return serviceList.execute(CTX).then(function (payload) {
+      return serviceList.execute(ctx).then(function (payload) {
         assert.deepEqual(payload, {
           projects: PROJECTS,
           services: SERVICES
@@ -151,11 +151,10 @@ describe('Services List', function () {
     });
 
     it('returns an error if project is unknown', function () {
-      client.get.returns(Promise.resolve({ body: [] }));
+      ctx.options.project.value = 'api-3';
 
-      CTX.options.project.value = 'api-3';
-
-      return serviceList.execute(CTX).then(function () {
+      ctx.api.projects.get.returns(Promise.resolve([]));
+      return serviceList.execute(ctx).then(function () {
         assert.ok(false, 'should not resolve');
       }).catch(function (err) {
         assert.ok(err instanceof Error);
@@ -164,12 +163,8 @@ describe('Services List', function () {
     });
 
     it('resolves with services and proejcts w/ name provided', function () {
-      client.get.onCall(1).returns(Promise.resolve({ body: PROJECTS }));
-      client.get.onCall(2).returns(Promise.resolve({ body: SERVICES }));
-
-      CTX.options.project.value = PROJECTS[0].body.name;
-
-      return serviceList.execute(CTX).then(function (payload) {
+      ctx.options.project.value = PROJECTS[0].body.name;
+      return serviceList.execute(ctx).then(function (payload) {
         assert.deepEqual(payload, {
           projects: [PROJECTS[0]],
           services: [SERVICES[0]]
