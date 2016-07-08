@@ -21,31 +21,29 @@ status.output.success = output.create(function (ctx, state) {
     'Identity: ' + state.user.body.name + ' (' + state.user.body.email + ')');
   console.log('Username: ' + state.user.body.username);
 
+  if (state.target.disabled()) {
+    return console.log('\nContext is disabled for your CLI,' +
+      ' use \'' + programName + ' prefs\' to enabled it');
+  }
+
   if (state.target.org === null) {
     return console.log('\nYou are not inside a linked working directory,' +
       ' use \'' + programName + ' link\' to link your project');
   }
 
-  var options = {};
-  if (state.target.service === null) {
-    options.service = ctx.option('service').value || '*';
-  }
-  if (state.target.environment === null) {
-    options.environment = 'dev-' + state.user.body.username;
-  }
-  ctx.target.flags(options);
+  var service = state.target.service || '*';
 
   console.log('Org: ' + state.target.org);
   console.log('Project: ' + state.target.project);
   console.log('Environment: ' + state.target.environment);
-  console.log('Service: ' + state.target.service);
+  console.log('Service: ' + service);
   console.log('Instance: *');
 
   return console.log('\nCredential Path: /' + [
     state.target.org,
     state.target.project,
     state.target.environment,
-    state.target.service,
+    service,
     state.user.body.username,
     '*'
   ].join('/'));

@@ -18,18 +18,29 @@ var CREATE_PROJECT_VALUE = 'Create New Project';
 link.output.success = function (ctx, target) {
   var programName = ctx.program.name;
 
+  if (ctx.target && ctx.target.disabled()) {
+    return console.log('\nContext is disabled for your CLI,' +
+      ' use \'' + programName + ' prefs\' to enabled it\n');
+  }
+
   console.log('\nYour current working directory and all sub directories have ' +
               'been linked to:\n');
 
   console.log('Org: ' + target.org);
   console.log('Project: ' + target.project + '\n');
 
-  console.log('Use \'' + programName + ' status\' to display ' +
+  return console.log('Use \'' + programName + ' status\' to display ' +
               'your current working context.\n');
 };
 
-link.output.failure = function () {
-  console.log('Failed to link your current working directory.');
+link.output.failure = function (ctx) {
+  var programName = ctx.program.name;
+  if (ctx.target && ctx.target.disabled()) {
+    console.log('\nContext is disabled for your CLI,' +
+      ' use \'' + programName + ' prefs\' to enabled it\n');
+  } else {
+    console.log('\nFailed to link your current working directory.\n');
+  }
 };
 
 link.execute = function (ctx) {
@@ -37,8 +48,13 @@ link.execute = function (ctx) {
     var force = ctx.option('force').value;
     var shouldOverwrite = force !== false;
 
+    // Return early when context disabled
+    if (ctx.target.disabled()) {
+      return resolve(ctx.target);
+    }
+
     // Display linked org/project unless --force supplied
-    if (!shouldOverwrite && ctx.target.exists()) {
+    if (!shouldOverwrite && ctx.target && ctx.target.exists()) {
       return resolve(ctx.target);
     }
 

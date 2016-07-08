@@ -8,7 +8,10 @@ var DEFAULT_SECTION = 'default';
 
 // Map of valid sections, properties and validation functions
 var SECTIONS = {
-  default: {},
+  default: {
+    environment: _.isString,
+    service: _.isString
+  },
   core: {
     context: _.isBoolean
   }

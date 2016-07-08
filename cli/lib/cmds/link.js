@@ -21,7 +21,7 @@ var cmd = new Command(
       }).catch(function (err) {
         err.type = err.type || 'unknown';
 
-        link.output.failure();
+        link.output.failure(ctx);
         reject(err);
       });
     });

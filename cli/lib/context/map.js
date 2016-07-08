@@ -19,6 +19,7 @@ var MAP_DEFAULTS = {
   org: null,
   project: null
 };
+var MAP_KEYS = _.keys(MAP_DEFAULTS);
 
 // Return map path for cwd
 map.path = function () {
@@ -39,7 +40,7 @@ map.link = function (target) {
   return new Promise(function (resolve, reject) {
     var targetPath = target.path();
     lock.wrap(targetPath, function () {
-      return map._writeFile(targetPath, target.context())
+      return map._writeFile(targetPath, _.pick(target.context(), MAP_KEYS))
         .then(resolve);
     }).catch(reject);
   });
