@@ -13,7 +13,7 @@ view.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     var params = harvest.get(ctx);
 
-    return credentials.get(ctx.session, params)
+    return credentials.get(ctx.api, params)
     .then(resolve)
     .catch(reject);
   });

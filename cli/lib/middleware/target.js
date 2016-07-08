@@ -4,7 +4,6 @@ var Promise = require('es6-promise').Promise;
 
 var targetMap = require('../context/map');
 var Target = require('../context/target');
-var client = require('../api/client').create();
 
 module.exports = function () {
   return function (ctx) {
@@ -13,12 +12,8 @@ module.exports = function () {
         ctx.target = new Target(result);
 
         if (ctx.session && !ctx.target.environment) {
-          client.auth(ctx.session.token);
-
-          return client.get({
-            url: '/users/self'
-          }).then(function (res) {
-            var user = res.body && res.body[0];
+          return ctx.api.users.self().then(function (res) {
+            var user = res && res[0];
             if (!user) {
               return reject(new Error('Could not find the user'));
             }

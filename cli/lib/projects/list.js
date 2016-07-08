@@ -5,7 +5,6 @@ var Promise = require('es6-promise').Promise;
 
 var output = require('../cli/output');
 var validate = require('../validate');
-var client = require('../api/client').create();
 
 var list = exports;
 list.output = {};
@@ -47,8 +46,6 @@ list.output.failure = output.create(function () {
 
 list.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    client.auth(ctx.session.token);
-
     ctx.target.flags({
       org: ctx.option('org').value
     });
@@ -63,17 +60,13 @@ list.execute = function (ctx) {
 
     // if orgname given then just get that specific org data
     // otherwise get everything.
-    var getOrgs = {
-      url: '/orgs',
-      qs: {}
-    };
-
+    var qs = {};
     if (orgName) {
-      getOrgs.qs.name = orgName;
+      qs.name = orgName;
     }
 
-    return client.get(getOrgs).then(function (results) {
-      if (!results.body || results.body.length === 0) {
+    return ctx.api.orgs.get(qs).then(function (orgs) {
+      if (orgs.length === 0) {
         if (orgName) {
           return reject(new Error('Could not find org: ' + orgName));
         }
@@ -82,34 +75,27 @@ list.execute = function (ctx) {
       }
 
       // If we're selecting a sepcific org then just filtering it
-      // out of the results and return a single array.
+      // out of the orgs and return a single array.
       if (orgName) {
-        var org = _.find(results.body, function (o) {
+        var org = _.find(orgs, function (o) {
           return o.body.name === orgName;
         });
 
         return [org];
       }
 
-      return results.body;
+      return orgs;
     }).then(function (orgs) {
-      var getProjects = {
-        url: '/projects',
-        qs: {
-          org_id: orgs.map(function (org) {
-            return org.id;
-          })
-        }
-      };
-
-      return client.get(getProjects).then(function (results) {
-        if (!results.body) {
-          return reject(new Error('Could not find project(s'));
+      var orgIds = orgs.map(function (org) { return org.id; });
+      var orgsQs = { org_id: orgIds };
+      return ctx.api.projects.get(orgsQs).then(function (projects) {
+        if (!projects) {
+          return reject(new Error('Could not find project(s)'));
         }
 
         return resolve({
           orgs: orgs,
-          projects: results.body
+          projects: projects
         });
       });
     })

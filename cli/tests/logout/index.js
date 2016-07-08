@@ -7,17 +7,15 @@ var sinon = require('sinon');
 var Promise = require('es6-promise').Promise;
 
 var logout = require('../../lib/logout');
-var client = require('../../lib/api/client').create();
 
 var Session = require('../../lib/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Daemon = require('../../lib/daemon/object').Daemon;
-
+var api = require('../../lib/api');
 
 describe('Logout', function () {
   var ctx;
-  var session;
   before(function () {
     this.sandbox = sinon.sandbox.create();
   });
@@ -27,17 +25,15 @@ describe('Logout', function () {
 
     ctx.config = new Config(process.cwd());
     ctx.daemon = new Daemon(ctx.config);
-    session = ctx.session = new Session({
+    ctx.session = new Session({
       token: 'aedfasdf',
       passphrase: 'asdfsadf'
     });
+    ctx.api = api.build({ auth_token: ctx.session.token });
 
-    this.sandbox.stub(ctx.daemon, 'logout');
-    this.sandbox.stub(client, 'post');
-    this.sandbox.stub(client, 'get');
-    this.sandbox.stub(client, 'delete');
-    this.sandbox.stub(client, 'auth');
-    this.sandbox.stub(client, 'reset');
+    this.sandbox.spy(ctx.api, 'reset');
+    this.sandbox.stub(ctx.api.tokens, 'remove').returns(Promise.resolve());
+    this.sandbox.stub(ctx.daemon, 'logout').returns(Promise.resolve());
   });
 
   afterEach(function () {
@@ -45,40 +41,37 @@ describe('Logout', function () {
   });
 
   it('sends a logout request to the registry and daemon', function () {
-    client.post.returns(Promise.resolve());
     ctx.daemon.logout.returns(Promise.resolve());
 
     return logout(ctx).then(function () {
-      sinon.assert.calledWith(client.auth, session.token);
-      sinon.assert.calledWith(client.delete,
-                              { url: '/tokens/' + session.token });
       sinon.assert.calledOnce(ctx.daemon.logout);
-      sinon.assert.calledOnce(client.reset);
+      sinon.assert.calledOnce(ctx.api.tokens.remove);
+      sinon.assert.calledOnce(ctx.api.reset);
+
       assert.strictEqual(ctx.session, null);
     });
   });
 
   it('reports an error and destroys the token on client failure', function () {
-    client.post.returns(Promise.reject(new Error('err')));
+    ctx.api.tokens.remove.returns(Promise.reject(new Error('hi')));
     ctx.daemon.logout.returns(Promise.resolve());
 
     return logout(ctx).catch(function () {
-      sinon.assert.calledWith(client.auth, session.token);
       sinon.assert.calledOnce(ctx.daemon.logout);
-      sinon.assert.calledOnce(client.reset);
+      sinon.assert.calledOnce(ctx.api.tokens.remove);
+      sinon.assert.calledOnce(ctx.api.reset);
+
       assert.strictEqual(ctx.session, null);
     });
   });
 
   it('reports an error and destroys the token on daemon failure', function () {
-    client.post.returns(Promise.resolve());
     ctx.daemon.logout.returns(Promise.reject(new Error('err')));
-
     return logout(ctx).catch(function () {
-      sinon.assert.calledWith(client.auth, session.token);
-      sinon.assert.calledWith(client.delete,
-                              { url: '/tokens/' + session.token });
-      sinon.assert.calledOnce(client.reset);
+      sinon.assert.calledOnce(ctx.daemon.logout);
+      sinon.assert.calledOnce(ctx.api.tokens.remove);
+      sinon.assert.calledOnce(ctx.api.reset);
+
       assert.strictEqual(ctx.session, null);
     });
   });

@@ -5,7 +5,6 @@ var invite = exports;
 var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
 
-var client = require('../api/client').create();
 var output = require('../cli/output');
 var validate = require('../validate');
 
@@ -57,30 +56,17 @@ invite.execute = function (ctx) {
       return reject(errors[0]);
     }
 
-    client.auth(ctx.session.token);
-
-    var getUser = {
-      url: '/profiles/' + data.username
-    };
-
-    var getOrg = {
-      url: '/orgs',
-      qs: {
-        name: data.org
-      }
-    };
 
     var user;
     var org;
     var team;
-
     return Promise.all([
-      client.get(getUser),
-      client.get(getOrg)
+      ctx.api.users.profile({}, { username: data.username }),
+      ctx.api.orgs.get({ name: data.org })
     ])
     .then(function (results) {
-      user = _.get(results, '[0].body[0]', null);
-      org = _.get(results, '[1].body[0]', null);
+      user = _.get(results, '[0][0]', null);
+      org = _.get(results, '[1][0]', null);
 
       if (!user) {
         throw new Error('user not found: ' + data.username);
@@ -91,35 +77,20 @@ invite.execute = function (ctx) {
       }
     })
     .then(function () {
-      var getTeam = {
-        url: '/teams',
-        qs: {
-          org_id: org.id,
-          name: data.team
-        }
-      };
-
-      return client.get(getTeam).then(function (teams) {
-        team = _.get(teams, 'body[0]', null);
-
+      var qs = { org_id: org.id, name: data.team };
+      return ctx.api.teams.get(qs).then(function (teams) {
+        team = teams[0];
         if (!team) {
           throw new Error('team not found: ' + data.team);
         }
       });
     })
     .then(function () {
-      var postInvite = {
-        url: '/memberships',
-        json: {
-          body: {
-            org_id: org.id,
-            owner_id: user.id,
-            team_id: team.id
-          }
-        }
-      };
-
-      return client.post(postInvite);
+      return ctx.api.memberships.create({
+        org_id: org.id,
+        owner_id: user.id,
+        team_id: team.id
+      });
     })
     .then(function () {
       resolve({

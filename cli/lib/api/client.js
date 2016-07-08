@@ -32,6 +32,20 @@ function Client(opts) {
   this._initialize();
 }
 
+Client.prototype.attach = function (name, module) {
+  this[name] = {};
+
+  var target = this[name];
+  var c = this;
+  _.each(module, function (method, apiName) {
+    if (typeof method !== 'function') {
+      return;
+    }
+
+    target[apiName] = method.bind(module, c);
+  });
+};
+
 /**
  * Set authtoken property
  *
@@ -71,6 +85,16 @@ Client.prototype._initialize = function () {
 Client.prototype._req = function (verb, opts) {
   var self = this;
   return new Promise(function (resolve, reject) {
+    if (opts.url.indexOf(':') > -1) {
+      if (!opts.param || Object.keys(opts.params).length === 0) {
+        throw new Error('Request to ' + opts.url + ' requires params');
+      }
+
+      _.each(opts.params, function (value, name) {
+        opts.url = opts.url.replace(':' + name, value);
+      });
+    }
+
     opts = _.extend({}, opts, {
       method: verb,
       url: self.endpoint + opts.url,
@@ -144,17 +168,3 @@ Client.prototype._statusSuccess = function (res) {
 };
 
 client.Client = Client;
-
-client.client = null;
-
-/**
- * Create new api client with opts
- *
- * @param {object} opts
- */
-client.create = function (opts) {
-  if (!client.client) {
-    client.client = new Client(opts);
-  }
-  return client.client;
-};

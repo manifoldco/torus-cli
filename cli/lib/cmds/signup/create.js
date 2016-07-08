@@ -22,7 +22,7 @@ module.exports = new Command(
       // Begin asking questions
       prompt.start().then(function (userInput) {
         // Create user object from input
-        return user.create(userInput).then(function () {
+        return user.create(ctx.api, userInput).then(function () {
           return userInput;
         });
 

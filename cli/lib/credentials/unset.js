@@ -19,7 +19,7 @@ unset.execute = function (ctx) {
     var value = cValue.create(undefined);
     var params = harvest.create(ctx);
 
-    return credentials.create(ctx.session, params, value)
+    return credentials.create(ctx.api, params, value)
       .then(resolve).catch(reject);
   });
 };

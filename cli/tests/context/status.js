@@ -9,23 +9,21 @@ var utils = require('common/utils');
 
 var Session = require('../../lib/session');
 var status = require('../../lib/context/status');
-var client = require('../../lib/api/client').create();
 var Target = require('../../lib/context/target');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Daemon = require('../../lib/daemon/object').Daemon;
+var api = require('../../lib/api');
 
-var USER_RESPONSE = {
-  body: [
-    {
-      id: utils.id('user'),
-      body: {
-        name: 'Jim Bob',
-        email: 'jim@example.com'
-      }
+var USER_RESPONSE = [
+  {
+    id: utils.id('user'),
+    body: {
+      name: 'Jim Bob',
+      email: 'jim@example.com'
     }
-  ]
-};
+  }
+];
 
 describe('Session', function () {
   before(function () {
@@ -45,9 +43,10 @@ describe('Session', function () {
         project: 'myproject'
       }
     });
+    ctx.api = api.build({ auth_token: ctx.session.token });
     this.sandbox.stub(status.output, 'success');
     this.sandbox.stub(status.output, 'failure');
-    this.sandbox.stub(client, 'get')
+    this.sandbox.stub(ctx.api.users, 'self')
       .returns(Promise.resolve(USER_RESPONSE));
   });
   afterEach(function () {
@@ -67,8 +66,7 @@ describe('Session', function () {
     });
 
     it('errors if api response is invalid', function () {
-      client.get.onCall(0).returns(Promise.resolve({ body: null }));
-
+      ctx.api.users.self.onCall(0).returns(Promise.resolve(null));
       return status.execute(ctx).then(function () {
         assert.ok(false, 'should not pass');
       }, function (err) {
@@ -81,7 +79,7 @@ describe('Session', function () {
     it('returns the right properties', function () {
       return status.execute(ctx).then(function (result) {
         assert.deepEqual(result, {
-          user: USER_RESPONSE.body[0],
+          user: USER_RESPONSE[0],
           target: ctx.target
         });
       });

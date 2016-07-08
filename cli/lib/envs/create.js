@@ -9,8 +9,6 @@ var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
 
-var client = require('../api/client').create();
-
 envCreate.output = {};
 
 envCreate.output.success = output.create(function () {
@@ -48,34 +46,20 @@ envCreate.execute = function (ctx) {
       throw new Error('--org is required.');
     }
 
-    client.auth(ctx.session.token);
-
-    var getOrgs = {
-      url: '/orgs',
-      qs: { name: data.org }
-    };
-    client.get(getOrgs).then(function (orgResult) {
-      var org = orgResult.body && orgResult.body[0];
+    ctx.api.orgs.get({ name: data.org }).then(function (orgResult) {
+      var org = orgResult[0];
       if (!org) {
         throw new Error('org not found: ' + data.org);
       }
 
       return org;
     }).then(function (org) {
-      var getProjects = {
-        url: '/projects',
-        qs: {
-          org_id: org.id
-        }
-      };
-
+      var qs = { org_id: org.id };
       if (data.project) {
-        getProjects.qs.name = data.project;
+        qs.name = data.project;
       }
 
-      return client.get(getProjects).then(function (projectResult) {
-        var projects = projectResult.body;
-
+      return ctx.api.projects.get(qs).then(function (projects) {
         if (!Array.isArray(projects)) {
           throw new Error('Invalid result from project retrieval');
         }
@@ -95,12 +79,14 @@ envCreate.execute = function (ctx) {
             return reject(errors[0]);
           }
 
-          return envCreate._execute(org, projects, data).then(resolve);
+          return envCreate._execute(ctx.api, org, projects, data)
+            .then(resolve);
         }
 
         var projectNames = _.map(projects, 'body.name');
         return envCreate._prompt(data, projectNames).then(function (input) {
-          return envCreate._execute(org, projects, input).then(resolve);
+          return envCreate._execute(ctx.api, org, projects, input)
+            .then(resolve);
         });
       });
     })
@@ -125,7 +111,7 @@ envCreate._prompt = function (defaults, projectNames) {
   });
 };
 
-envCreate._execute = function (org, projects, input) {
+envCreate._execute = function (api, org, projects, input) {
   return new Promise(function (resolve, reject) {
     var project = _.find(projects, function (p) {
       return (p.body.name === input.project &&
@@ -136,19 +122,12 @@ envCreate._execute = function (org, projects, input) {
       throw new Error('project not found: ' + input.project);
     }
 
-    var postEnvs = {
-      url: '/envs',
-      json: {
-        body: {
-          org_id: org.id,
-          project_id: project.id,
-          name: input.name
-        }
-      }
-    };
-
-    return client.post(postEnvs).then(function (result) {
-      var env = result && result.body[0];
+    return api.envs.create({
+      org_id: org.id,
+      project_id: project.id,
+      name: input.name
+    }).then(function (result) {
+      var env = result[0];
       if (!env) {
         throw new Error('Invalid service creation result');
       }

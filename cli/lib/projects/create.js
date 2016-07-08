@@ -6,7 +6,6 @@ var Promise = require('es6-promise').Promise;
 var output = require('../cli/output');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
-var client = require('../api/client').create();
 
 var create = exports;
 create.output = {};
@@ -26,19 +25,12 @@ create.output.failure = output.create(function () {
 
 create.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    client.auth(ctx.session.token);
-
-    var getOrgs = {
-      url: '/orgs'
-    };
-
     var orgs;
-    client.get(getOrgs).then(function (results) {
-      if (!results.body || results.body.length < 1) {
+    ctx.api.orgs.get().then(function (orgResults) {
+      orgs = orgResults;
+      if (orgs.length === 0) {
         throw new Error('Could not locate organizations');
       }
-
-      orgs = results.body;
 
       ctx.target.flags({
         org: ctx.option('org').value
@@ -68,21 +60,12 @@ create.execute = function (ctx) {
         throw new Error('Unknown org: ' + data.org);
       }
 
-      var createProject = {
-        url: '/projects',
-        json: {
-          body: {
-            org_id: org.id,
-            name: data.name
-          }
-        }
-      };
-
-      return client.post(createProject);
+      return ctx.api.projects.create({
+        org_id: org.id,
+        name: data.name
+      });
     })
-    .then(function (result) {
-      resolve(result.body);
-    })
+    .then(resolve)
     .catch(reject);
   });
 };

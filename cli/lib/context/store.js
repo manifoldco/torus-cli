@@ -21,8 +21,8 @@ var Promise = require('es6-promise').Promise;
 function Store(client) {
   this.state = {};
   this.types = [
-    'org',
-    'project'
+    'orgs',
+    'projects'
   ];
 
   this.client = client;
@@ -42,27 +42,14 @@ Store.prototype.get = function (type, filter) {
   });
 };
 
-var CREATE_MAP = {
-  org: {
-    url: '/orgs'
-  },
-  project: {
-    url: '/projects'
-  },
-  service: {
-    url: '/services'
-  }
-};
-
 Store.prototype.create = function (type, data) {
-  var create = {
-    url: CREATE_MAP[type].url,
-    json: data
-  };
+  if (this.types.indexOf(type) === -1) {
+    throw new TypeError('unknown object type: ' + type);
+  }
 
   var self = this;
-  return this.client.post(create).then(function (result) {
-    var object = result && result.body && result.body[0];
+  return this.client[type].create(data).then(function (result) {
+    var object = result && result[0];
     if (!object) {
       throw new Error('Invalid result returned from API');
     }
@@ -76,43 +63,11 @@ Store.prototype.create = function (type, data) {
   });
 };
 
-// XXX: This only supports querying against properties on the body
-var GET_MAP = {
-  org: {
-    url: '/orgs',
-    qs: []
-  },
-  project: {
-    url: '/projects',
-    qs: [
-      'org_id'
-    ]
-  }
-};
-
 // XXX: We assume _initialize only gets run once!
 Store.prototype._initialize = function (type, filter) {
-  if (!GET_MAP[type]) {
-    throw new TypeError('Invalid get type for _initialize: ' + type);
-  }
-
-  var get = {
-    url: GET_MAP[type].url,
-    qs: {}
-  };
-
-  GET_MAP[type].qs.forEach(function (property) {
-    var value = _.get(filter, 'body.' + property);
-    if (!value) {
-      throw new TypeError('Missing required property on filter: ' + property);
-    }
-
-    get.qs[property] = value;
-  });
-
   var self = this;
-  return this.client.get(get).then(function (result) {
-    var objects = result && result.body;
+  var query = (filter && filter.body) ? filter.body : {};
+  return this.client[type].get(query).then(function (objects) {
     if (!objects) {
       throw new Error('Invalid result returned from server');
     }

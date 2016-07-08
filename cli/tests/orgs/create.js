@@ -7,12 +7,12 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var orgCreate = require('../../lib/orgs/create');
-var client = require('../../lib/api/client').create();
-var sessionMiddleware = require('../../lib/middleware/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
 var Daemon = require('../../lib/daemon/object').Daemon;
+var Session = require('../../lib/session');
+var api = require('../../lib/api');
 
 var ORG = {
   id: utils.id('org'),
@@ -29,22 +29,12 @@ describe('Orgs Create', function () {
   });
 
   beforeEach(function () {
-    this.sandbox.stub(orgCreate.output, 'success');
-    this.sandbox.stub(orgCreate.output, 'failure');
-    this.sandbox.stub(orgCreate, '_prompt')
-      .returns(Promise.resolve({
-        name: ORG.body.name
-      }));
-    this.sandbox.stub(client, 'post')
-      .returns(Promise.resolve({
-        body: [ORG]
-      }));
-    this.sandbox.spy(client, 'auth');
-
     // Context stub with session set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
     ctx.daemon = new Daemon(ctx.config);
+    ctx.session = new Session({ token: 'bb', passphrase: 'dd' });
+    ctx.api = api.build({ auth_token: ctx.session.token });
     ctx.params = ['abc123abc'];
 
     ctx.target = new Target({
@@ -52,13 +42,13 @@ describe('Orgs Create', function () {
       context: null
     });
 
-    // Daemon with token
-    this.sandbox.stub(ctx.daemon, 'set')
-      .returns(Promise.resolve());
-    this.sandbox.stub(ctx.daemon, 'get')
-      .returns(Promise.resolve({ token: 'this is a token', passphrase: 'hi' }));
-
-    return sessionMiddleware()(ctx);
+    this.sandbox.stub(orgCreate.output, 'success');
+    this.sandbox.stub(orgCreate.output, 'failure');
+    this.sandbox.stub(orgCreate, '_prompt')
+    .returns(Promise.resolve({
+      name: ORG.body.name
+    }));
+    this.sandbox.stub(ctx.api.orgs, 'create').returns(Promise.resolve([ORG]));
   });
 
   afterEach(function () {
@@ -96,13 +86,12 @@ describe('Orgs Create', function () {
 
     it('creates an org', function () {
       return orgCreate.execute(ctx).then(function (result) {
-        assert.deepEqual(result, { body: [ORG] });
+        assert.deepEqual(result, [ORG]);
       });
     });
 
     it('returns error if api returns error', function () {
-      client.post.returns(Promise.reject(new Error('bad')));
-
+      ctx.api.orgs.create.returns(Promise.reject(new Error('bad')));
       return orgCreate.execute(ctx).then(function () {
         assert.ok(false, 'should error');
       }, function (err) {

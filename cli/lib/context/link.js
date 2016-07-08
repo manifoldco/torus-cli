@@ -5,7 +5,6 @@ var Promise = require('es6-promise').Promise;
 var Store = require('./store');
 var validate = require('../validate');
 var Prompt = require('../cli/prompt');
-var client = require('../api/client').create();
 
 var targetMap = require('./map');
 var Target = require('./target');
@@ -35,8 +34,6 @@ link.output.failure = function () {
 
 link.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    client.auth(ctx.session.token);
-
     var force = ctx.option('force').value;
     var shouldOverwrite = force !== false;
 
@@ -46,7 +43,7 @@ link.execute = function (ctx) {
     }
 
     // Prompt for org and project
-    var store = new Store(client);
+    var store = new Store(ctx.api);
     return link._prompt(store).then(function (answers) {
       // Retrieve data objects for supplied values
       return link._retrieveObjects(store, answers);
@@ -79,19 +76,15 @@ link.execute = function (ctx) {
  */
 link._retrieveObjects = function (store, answers) {
   var getOrg = (answers.org) ?
-    Promise.resolve(answers.org) : store.create('org', {
-      body: {
-        name: answers.orgName
-      }
+    Promise.resolve(answers.org) : store.create('orgs', {
+      name: answers.orgName
     });
 
   return getOrg.then(function (org) {
     var getProject = (answers.project) ?
-      Promise.resolve(answers.project) : store.create('project', {
-        body: {
-          name: answers.projectName,
-          org_id: org.id
-        }
+      Promise.resolve(answers.project) : store.create('projects', {
+        name: answers.projectName,
+        org_id: org.id
       });
 
     return getProject.then(function (project) {
@@ -131,7 +124,7 @@ link._questions = function (store) {
       name: 'org',
       message: 'Select an org',
       choices: function () {
-        return store.get('org').then(function (orgs) {
+        return store.get('orgs').then(function (orgs) {
           var choices = orgs.map(function (org) {
             return org.body.name;
           });
@@ -147,7 +140,7 @@ link._questions = function (store) {
         }
 
         var filter = { body: { name: orgName } };
-        return store.get('org', filter).then(function (orgs) {
+        return store.get('orgs', filter).then(function (orgs) {
           if (orgs.length !== 1) {
             throw new Error('org not found: ' + orgName);
           }
@@ -172,7 +165,7 @@ link._questions = function (store) {
       message: 'Select a project',
       choices: function (answers) {
         var filter = { body: { org_id: answers.org.id } };
-        return store.get('project', filter).then(function (projects) {
+        return store.get('projects', filter).then(function (projects) {
           var choices = projects.map(function (project) {
             return project.body.name;
           });
@@ -192,7 +185,7 @@ link._questions = function (store) {
             name: projectName
           }
         };
-        return store.get('project', filter).then(function (projects) {
+        return store.get('projects', filter).then(function (projects) {
           if (projects.length !== 1) {
             throw new Error('project not found: ' + projectName);
           }

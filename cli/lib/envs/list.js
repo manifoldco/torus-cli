@@ -7,7 +7,6 @@ var _ = require('lodash');
 
 var validate = require('../validate');
 var output = require('../cli/output');
-var client = require('../api/client').create();
 var Session = require('../session');
 
 envsList.output = {};
@@ -80,14 +79,8 @@ envsList.execute = function (ctx) {
       return reject(errors[0]);
     }
 
-    client.auth(ctx.session.token);
-
-    return client.get({
-      url: '/orgs',
-      qs: { name: data.org }
-    }).then(function (res) {
-      var org = res.body && res.body[0];
-
+    return ctx.api.orgs.get({ name: data.org }).then(function (orgs) {
+      var org = orgs[0];
       if (!_.isObject(org)) {
         return reject(new Error('org not found: ' + data.org));
       }
@@ -96,21 +89,11 @@ envsList.execute = function (ctx) {
       // as the number of projects and environments scale in an org this will
       // fall over and get really slow.
       return Promise.all([
-        client.get({
-          url: '/projects',
-          qs: {
-            org_id: org.id
-          }
-        }),
-        client.get({
-          url: '/envs',
-          qs: {
-            org_id: org.id
-          }
-        })
+        ctx.api.projects.get({ org_id: org.id }),
+        ctx.api.envs.get({ org_id: org.id })
       ]).then(function (results) {
-        var projects = results[0] && results[0].body;
-        var envs = results[1] && results[1].body;
+        var projects = results[0];
+        var envs = results[1];
 
         if (data.project) {
           projects = projects.filter(function (project) {
