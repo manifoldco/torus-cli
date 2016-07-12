@@ -2,12 +2,24 @@ package main
 
 import "os"
 import "log"
+import "path"
 import "os/signal"
-
-var hasShutdown = false
+import "github.com/natefinch/lumberjack"
 
 func main() {
-	daemon, err := NewDaemon(os.Getenv("ARIGATO_ROOT"))
+	cfg, err := NewConfig(os.Getenv("ARIGATO_ROOT"))
+	if err != nil {
+		log.Fatalf("Failed to load config: %s", err)
+	}
+
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   path.Join(cfg.ArigatoRoot, "daemon.log"),
+		MaxSize:    10, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28, // days
+	})
+
+	daemon, err := NewDaemon(cfg)
 	if err != nil {
 		log.Fatalf("Failed to create daemon: %s", err)
 	}

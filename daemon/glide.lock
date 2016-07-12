@@ -1,6 +1,8 @@
-hash: f73fa24b236d93147ea11707d494a4423d558c231ea32d0cfb29fbe4c72f49af
-updated: 2016-04-18T13:54:31.033959296-03:00
+hash: 9c6e721adf8b051fc258dc0c299d5a6f8acdf221951aa0e929b88da1270f4cd2
+updated: 2016-07-12T23:21:55.343918127-03:00
 imports:
+- name: github.com/natefinch/lumberjack
+  version: 514cbda263a734ae8caac038dadf05f8f3f9f738
 - name: github.com/nightlyone/lockfile
   version: b30dcbfa86e3a1eaa4e6622de2ce57be2c138c10
 - name: github.com/satori/go.uuid
