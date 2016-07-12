@@ -2,7 +2,6 @@ package main
 
 import "os"
 import "fmt"
-import "errors"
 import "github.com/nightlyone/lockfile"
 import "github.com/arigatomachine/cli/daemon/socket"
 
@@ -17,13 +16,12 @@ type Daemon struct {
 func NewDaemon(arigatoRoot string) (*Daemon, error) {
 	cfg, err := NewConfig(arigatoRoot)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Failed to start: %s", err))
+		return nil, fmt.Errorf("Failed to start: %s", err)
 	}
 
 	lock, err := lockfile.New(cfg.PidPath)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf(
-			"Failed to create lockfile object: %s", err))
+		return nil, fmt.Errorf("Failed to create lockfile object: %s", err)
 	}
 
 	// Checks if there is a file; if there is an error and its not a
@@ -36,8 +34,8 @@ func NewDaemon(arigatoRoot string) (*Daemon, error) {
 
 	err = lock.TryLock()
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf(
-			"Failed to create lockfile[%s]: %s", cfg.PidPath, err))
+		return nil, fmt.Errorf(
+			"Failed to create lockfile[%s]: %s", cfg.PidPath, err)
 	}
 
 	// Recover from the panic and return the error; this way we can
@@ -50,7 +48,7 @@ func NewDaemon(arigatoRoot string) (*Daemon, error) {
 
 	server, err := socket.NewServer(cfg.SocketPath)
 	if err != nil {
-		panic(errors.New(fmt.Sprintf("Failed to construct server: %s", err)))
+		panic(fmt.Errorf("Failed to construct server: %s", err))
 	}
 
 	session := NewSession()
@@ -84,11 +82,11 @@ func (d *Daemon) Shutdown() error {
 
 	d.hasShutdown = true
 	if err := d.lock.Unlock(); err != nil {
-		return errors.New(fmt.Sprintf("Could not unlock: %s", err))
+		return fmt.Errorf("Could not unlock: %s", err)
 	}
 
 	if err := d.server.Close(); err != nil {
-		return errors.New(fmt.Sprintf("Could not shutdown server: %s", err))
+		return fmt.Errorf("Could not shutdown server: %s", err)
 	}
 
 	return nil
