@@ -7,6 +7,7 @@ import "github.com/arigatomachine/cli/daemon/socket"
 
 type Daemon struct {
 	server      socket.Listener
+	proxy       *socket.AuthProxy
 	lock        lockfile.Lockfile // actually a string
 	session     Session
 	config      *Config
@@ -44,12 +45,19 @@ func NewDaemon(cfg *Config) (*Daemon, error) {
 
 	server, err := socket.NewServer(cfg.SocketPath)
 	if err != nil {
-		panic(fmt.Errorf("Failed to construct server: %s", err))
+		return nil, fmt.Errorf("Failed to construct server: %s", err)
 	}
 
 	session := NewSession()
+
+	proxy, err := socket.NewAuthProxy(cfg.API, cfg.ProxySocketPath, session)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create auth proxy: %s", err)
+	}
+
 	daemon := &Daemon{
 		server:      server,
+		proxy:       proxy,
 		lock:        lock,
 		session:     session,
 		config:      cfg,
@@ -60,6 +68,8 @@ func NewDaemon(cfg *Config) (*Daemon, error) {
 }
 
 func (d *Daemon) Run() error {
+	d.proxy.Listen()
+
 	for {
 		client, err := d.server.Accept()
 		if err != nil {
@@ -83,6 +93,10 @@ func (d *Daemon) Shutdown() error {
 
 	if err := d.server.Close(); err != nil {
 		return fmt.Errorf("Could not shutdown server: %s", err)
+	}
+
+	if err := d.proxy.Close(); err != nil {
+		return fmt.Errorf("Could not stop http proxy: %s", err)
 	}
 
 	return nil

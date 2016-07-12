@@ -4,12 +4,7 @@ var api = require('../api');
 
 module.exports = function () {
   return function (ctx) {
-    ctx.api = api.build();
-
-    if (ctx.session && ctx.session.token) {
-      ctx.api.auth(ctx.session.token);
-    }
-
+    ctx.api = api.build({ proxySocketUrl: ctx.config.proxySocketUrl });
     return true;
   };
 };

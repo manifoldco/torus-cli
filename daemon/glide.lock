@@ -1,6 +1,12 @@
-hash: 9c6e721adf8b051fc258dc0c299d5a6f8acdf221951aa0e929b88da1270f4cd2
-updated: 2016-07-12T23:21:55.343918127-03:00
+hash: e57495fabdcea45959bfa3151ec5b86309db3415a3ea1d8aec81e6f0451b497f
+updated: 2016-07-13T12:22:23.260187335-03:00
 imports:
+- name: github.com/facebookgo/clock
+  version: 600d898af40aa09a7a93ecb9265d87b0504b6f03
+- name: github.com/facebookgo/httpdown
+  version: a3b1354551a26449fbe05f5d855937f6e7acbd71
+- name: github.com/facebookgo/stats
+  version: 1b76add642e42c6ffba7211ad7b3939ce654526e
 - name: github.com/natefinch/lumberjack
   version: 514cbda263a734ae8caac038dadf05f8f3f9f738
 - name: github.com/nightlyone/lockfile
