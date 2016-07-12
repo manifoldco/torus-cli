@@ -3,7 +3,6 @@ package main
 import "os"
 import "fmt"
 import "path"
-import "errors"
 
 var version = "development"
 
@@ -27,8 +26,7 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 	}
 
 	if err == nil && !src.IsDir() {
-		return nil, errors.New(
-			fmt.Sprintf("%s exists but is not a dir", arigatoRoot))
+		return nil, fmt.Errorf("%s exists but is not a dir", arigatoRoot)
 	}
 
 	if os.IsNotExist(err) {
@@ -45,9 +43,8 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 
 	fMode := src.Mode()
 	if fMode.Perm() != REQUIRED_PERM {
-		return nil, errors.New(fmt.Sprintf(
-			"%s has permissions %d requires %d",
-			arigatoRoot, fMode.Perm(), REQUIRED_PERM))
+		return nil, fmt.Errorf("%s has permissions %d requires %d",
+			arigatoRoot, fMode.Perm(), REQUIRED_PERM)
 	}
 
 	cfg := &Config{
