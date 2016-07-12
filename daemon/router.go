@@ -3,14 +3,15 @@ package main
 import "io"
 import "log"
 import "fmt"
+import "github.com/arigatomachine/cli/daemon/socket"
 
 type Router struct {
-	client  Client
+	client  socket.Client
 	session Session
 	config  *Config
 }
 
-func NewRouter(client Client, cfg *Config, session Session) *Router {
+func NewRouter(client socket.Client, cfg *Config, session Session) *Router {
 	return &Router{client: client, config: cfg, session: session}
 }
 
@@ -21,7 +22,7 @@ func (r *Router) process() {
 
 			// TODO: Use our own internal error objects so we can filter out
 			// errors properly
-			err := r.client.Write(CreateError("Internal Error", nil))
+			err := r.client.Write(socket.CreateError("Internal Error", nil))
 			if err != nil {
 				log.Printf("Client[%s] caught err on write: %s", r.client, err)
 			}
@@ -60,7 +61,7 @@ func (r *Router) process() {
 			err = r.version(m)
 		default:
 			msg := fmt.Sprintf("Unknown Command: %s", m.Command)
-			err = r.client.Write(CreateError(msg, m))
+			err = r.client.Write(socket.CreateError(msg, m))
 		}
 
 		if err != nil {
@@ -71,11 +72,11 @@ func (r *Router) process() {
 	}
 }
 
-func (r *Router) status(m *Message) error {
+func (r *Router) status(m *socket.Message) error {
 	hasToken := r.session.HasToken()
 	hasPassphrase := r.session.HasPassphrase()
 
-	reply := CreateReply(m)
+	reply := socket.CreateReply(m)
 	reply.Body.HasToken = &hasToken
 	reply.Body.HasPassphrase = &hasPassphrase
 
@@ -84,9 +85,9 @@ func (r *Router) status(m *Message) error {
 	return r.client.Write(reply)
 }
 
-func (r *Router) set(m *Message) error {
+func (r *Router) set(m *socket.Message) error {
 	if len(m.Body.Passphrase) == 0 && len(m.Body.Token) == 0 {
-		return r.client.Write(CreateError("Missing value", m))
+		return r.client.Write(socket.CreateError("Missing value", m))
 	}
 
 	if len(m.Body.Passphrase) > 0 {
@@ -98,14 +99,14 @@ func (r *Router) set(m *Message) error {
 		r.session.SetToken(m.Body.Token)
 	}
 
-	reply := CreateReply(m)
+	reply := socket.CreateReply(m)
 
 	log.Printf("Client[%s] has set the value", r.client)
 	return r.client.Write(reply)
 }
 
-func (r *Router) get(m *Message) error {
-	reply := CreateReply(m)
+func (r *Router) get(m *socket.Message) error {
+	reply := socket.CreateReply(m)
 	reply.Body.Passphrase = r.session.GetPassphrase()
 	reply.Body.Token = r.session.GetToken()
 
@@ -113,16 +114,16 @@ func (r *Router) get(m *Message) error {
 	return r.client.Write(reply)
 }
 
-func (r *Router) logout(m *Message) error {
-	reply := CreateReply(m)
+func (r *Router) logout(m *socket.Message) error {
+	reply := socket.CreateReply(m)
 	r.session.Logout()
 
 	log.Printf("Client[%s] has logged us out", r.client)
 	return r.client.Write(reply)
 }
 
-func (r *Router) version(m *Message) error {
-	reply := CreateReply(m)
+func (r *Router) version(m *socket.Message) error {
+	reply := socket.CreateReply(m)
 	reply.Body.Version = version
 
 	log.Printf(

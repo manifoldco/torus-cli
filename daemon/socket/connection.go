@@ -1,4 +1,4 @@
-package main
+package socket
 
 import "strconv"
 import "net"

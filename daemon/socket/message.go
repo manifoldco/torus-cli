@@ -1,4 +1,4 @@
-package main
+package socket
 
 import "github.com/satori/go.uuid"
 

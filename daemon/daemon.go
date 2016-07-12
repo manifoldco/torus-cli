@@ -4,9 +4,10 @@ import "os"
 import "fmt"
 import "errors"
 import "github.com/nightlyone/lockfile"
+import "github.com/arigatomachine/cli/daemon/socket"
 
 type Daemon struct {
-	server      Listener
+	server      socket.Listener
 	lock        lockfile.Lockfile // actually a string
 	session     Session
 	config      *Config
@@ -47,7 +48,7 @@ func NewDaemon(arigatoRoot string) (*Daemon, error) {
 		}
 	}()
 
-	server, err := NewServer(cfg)
+	server, err := socket.NewServer(cfg.SocketPath)
 	if err != nil {
 		panic(errors.New(fmt.Sprintf("Failed to construct server: %s", err)))
 	}
