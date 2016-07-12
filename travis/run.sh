@@ -13,5 +13,5 @@ popd > /dev/null
 echo "Logging into docker as $DOCKER_USERNAME"
 docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
 
-./cli/scripts/build-container.sh
-./cli/scripts/test.sh
+./scripts/build-container.sh
+./scripts/test.sh

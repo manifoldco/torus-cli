@@ -1,30 +1,22 @@
 # Arigato Daemon
 
-Simple go service for storing passwords in guarded memory using libsodium
-through c-go. Communicates with clients using a local unix socket.
+This folder contains the `Arigato Daemon` which is responsible for performing
+all cryptographic operations on behalf of the user (through the CLI).
 
-## Setup
-
-Ensure you have go1.6 and your `$GOPATH` setup. This is all done for you if you
-use the [vagrant imagine](https://github.com/arigatomachine/vagrant).
-
-Then run `glide install` inside the daemon folder. Once complete you should be
-able to run `make` to compile the binary.
+More details are available in the [High-Level Architecture Document](https://docs.google.com/document/d/1t_u3Xk3THQ2TABcEwz8ioIdpSBZHr5iog0lfiGPPXHo/edit).
 
 ## Building and Linting
 
-You can build the daemon using make with `make build`. You can install
-dependencies using `glide install`.
+You can build the daemon using the `arigato/cli` Docker container through the
+`$REPO_HOME/scripts/build.sh` script. To build the container use
+`$REPO_HOME/scripts/build-container.sh`.
 
-To lint you can just run `make lint` and to run vet `make vet`.
-
-You must have the CLI repository checked out in your $GOPATH.
-
-For example: `~/code/arigato/src/github.com/arigatomachine/cli`.
+You can develop outside the container using `make build` after `glide install`.
+However, you will manually have to place the binary in
+`$REPO_HOME/cli/bin/ag-daemon`.
 
 ## Dependencies
 
 * Go 1.6
 * [Glide](https://github.com/Masterminds/glide) for package vendoring
-* [libsodium](https://download.libsodium.org/doc/)
-* [golint](https://github.com/golang/lint) for linting
+
