@@ -18,7 +18,7 @@ var daemon = exports;
 daemon.DAEMON_PATH = path.join(__dirname, '../../bin/ag-daemon');
 
 /**
- * Retrieves a deamon object, returns null if the daemon is not running
+ * Retrieves a daemon object, returns null if the daemon is not running
  *
  * @param cfg {Config}
  * @returns Promise
