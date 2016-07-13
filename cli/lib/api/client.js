@@ -23,7 +23,7 @@ var HTTP_VERBS = [
  */
 function Client(opts) {
   opts = opts || {};
-  this.endpoint = opts.endpoint || 'https://arigato.tools';
+  this.endpoint = opts.proxySocketUrl;
   this.authToken = opts.authToken || null;
   this.version = {
     cli: CLI_VERSION,
@@ -99,7 +99,6 @@ Client.prototype._req = function (verb, opts) {
       method: verb,
       url: self.endpoint + opts.url,
       headers: self._headers(opts),
-      strictSSL: false, // TODO: proper development cert
       time: true,
       gzip: true,
       timeout: 3000
@@ -135,7 +134,8 @@ Client.prototype._req = function (verb, opts) {
 Client.prototype._headers = function (opts) {
   var headers = {
     'User-Agent': 'Arigato CLI ' + this.version.cli,
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    Host: 'arigato.tools'
   };
 
   if (this.version.api) {

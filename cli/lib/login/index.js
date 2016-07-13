@@ -124,12 +124,11 @@ login._execute = function (ctx, userInput) {
       login_token_hmac: loginTokenHmac
     })
     .then(function (result) { // eslint-disable-line
-      // Re-authorize the api client for subsequent requests
-      var authToken = result.auth_token;
-      ctx.api.auth(authToken);
+      //  Reset auth. the daemon will handle auth now
+      ctx.api.reset();
 
       var sessionData = {
-        token: authToken,
+        token: result.auth_token,
         passphrase: userInput.passphrase
       };
 
