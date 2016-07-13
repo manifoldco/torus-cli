@@ -13,11 +13,7 @@ type Daemon struct {
 	hasShutdown bool
 }
 
-func NewDaemon(arigatoRoot string) (*Daemon, error) {
-	cfg, err := NewConfig(arigatoRoot)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to start: %s", err)
-	}
+func NewDaemon(cfg *Config) (*Daemon, error) {
 
 	lock, err := lockfile.New(cfg.PidPath)
 	if err != nil {

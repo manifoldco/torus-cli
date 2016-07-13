@@ -1,3 +1,5 @@
 package: github.com/arigatomachine/cli/daemon
 import:
 - package: github.com/satori/go.uuid
+- package: github.com/natefinch/lumberjack
+- package: github.com/nightlyone/lockfile
