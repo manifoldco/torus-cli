@@ -1,10 +1,14 @@
 package main
 
-import "os"
-import "log"
-import "path"
-import "os/signal"
-import "github.com/natefinch/lumberjack"
+import (
+	"log"
+	"os"
+	"os/signal"
+	"path"
+	"syscall"
+
+	"github.com/natefinch/lumberjack"
+)
 
 func main() {
 	cfg, err := NewConfig(os.Getenv("ARIGATO_ROOT"))
@@ -36,8 +40,7 @@ func main() {
 
 func watch(daemon *Daemon) {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, os.Kill)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	s := <-c
 
 	log.Printf("Caught a signal: %s", s)
