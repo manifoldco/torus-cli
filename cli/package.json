@@ -17,7 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "backo": "1.1.0",
-    "common": "git+ssh://git@github.com/arigatomachine/common.git#v0.1.0",
+    "common": "git+ssh://git@github.com/arigatomachine/common.git#v0.2.0",
     "es6-promise": "3.1.2",
     "event-regulator": "0.2.0",
     "glob": "7.0.3",
