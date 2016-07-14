@@ -17,6 +17,7 @@ var api = require('../../lib/api');
 
 var ORG = {
   id: utils.id('org'),
+  version: 1,
   body: {
     name: 'jeff-arigato-sh'
   }
@@ -24,6 +25,7 @@ var ORG = {
 
 var SELF = {
   id: utils.id('user'),
+  version: 1,
   body: {
     username: 'skywalker'
   }

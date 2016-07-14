@@ -16,6 +16,7 @@ var Daemon = require('../../lib/daemon/object').Daemon;
 
 var ORG = {
   id: utils.id('org'),
+  version: 1,
   body: {
     name: 'jeff-arigato-sh'
   }
@@ -23,6 +24,7 @@ var ORG = {
 
 var PROJECT = {
   id: utils.id('project'),
+  version: 1,
   body: {
     name: 'api-1',
     org_id: ORG.id
@@ -31,6 +33,7 @@ var PROJECT = {
 
 var ENV = {
   id: utils.id('env'),
+  version: 1,
   body: {
     name: 'staging',
     project_id: PROJECT.id,

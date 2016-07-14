@@ -16,6 +16,7 @@ var api = require('../../lib/api');
 
 var ORG = {
   id: utils.id('org'),
+  version: 1,
   body: {
     name: 'knotty-buoy'
   }

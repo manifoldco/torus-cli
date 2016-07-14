@@ -18,6 +18,7 @@ var api = require('../../lib/api');
 var USER_RESPONSE = [
   {
     id: utils.id('user'),
+    version: 1,
     body: {
       name: 'Jim Bob',
       email: 'jim@example.com'

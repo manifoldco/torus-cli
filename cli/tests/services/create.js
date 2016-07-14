@@ -17,6 +17,7 @@ var api = require('../../lib/api');
 
 var ORG = {
   id: utils.id('org'),
+  version: 1,
   body: {
     name: 'my-org'
   }
@@ -24,6 +25,7 @@ var ORG = {
 
 var PROJECT = {
   id: utils.id('project'),
+  version: 1,
   body: {
     name: 'api',
     org_id: ORG.id
@@ -32,6 +34,7 @@ var PROJECT = {
 
 var SERVICE = {
   id: utils.id('service'),
+  version: 1,
   body: {
     name: 'www',
     project_id: PROJECT.id,

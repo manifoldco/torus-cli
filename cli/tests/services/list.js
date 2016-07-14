@@ -17,6 +17,7 @@ var serviceList = require('../../lib/services/list');
 
 var ORG = {
   id: utils.id('org'),
+  version: 1,
   body: {
     name: 'my-org'
   }
@@ -25,6 +26,7 @@ var ORG = {
 var PROJECTS = [
   {
     id: utils.id('project'),
+    version: 1,
     body: {
       name: 'api-1',
       org_id: ORG.id
@@ -32,6 +34,7 @@ var PROJECTS = [
   },
   {
     id: utils.id('project'),
+    version: 1,
     body: {
       name: 'api-2',
       org_id: ORG.id
@@ -42,6 +45,7 @@ var PROJECTS = [
 var SERVICES = [
   {
     id: utils.id('service'),
+    version: 1,
     body: {
       name: 'api-1',
       org_id: ORG.id,
@@ -50,6 +54,7 @@ var SERVICES = [
   },
   {
     id: utils.id('service'),
+    version: 1,
     body: {
       name: 'api-2',
       org_id: ORG.id,
@@ -58,6 +63,7 @@ var SERVICES = [
   },
   {
     id: utils.id('service'),
+    version: 1,
     body: {
       name: 'api-2-1',
       org_id: ORG.id,
