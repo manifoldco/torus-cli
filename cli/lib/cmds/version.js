@@ -9,7 +9,7 @@ var version = new Command(
   'displays versions of the cli and daemon',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      ctx.daemon.version().then(function (msg) {
+      ctx.api.versionApi.get().then(function (msg) {
         console.log('CLI Version: ' + ctx.config.version);
         console.log('Daemon Version: ' + msg.version);
 

@@ -99,10 +99,6 @@ Daemon.prototype.logout = function () {
   return this._command('logout');
 };
 
-Daemon.prototype.version = function () {
-  return this._command('version');
-};
-
 Daemon.prototype._command = function (cmd) {
   var id = uuid.v4();
   var msg = {
