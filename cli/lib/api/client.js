@@ -23,7 +23,7 @@ var HTTP_VERBS = [
  */
 function Client(opts) {
   opts = opts || {};
-  this.endpoint = opts.proxySocketUrl;
+  this.endpoint = opts.proxySocketUrl + '/proxy';
   this.authToken = opts.authToken || null;
   this.version = {
     cli: CLI_VERSION,

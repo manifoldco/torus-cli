@@ -37,6 +37,7 @@ func NewAuthProxy(upstream string, socketPath string, t TokenReader) (*AuthProxy
 }
 
 func (p *AuthProxy) Listen() {
+	mux := http.NewServeMux()
 	proxy := &httputil.ReverseProxy{
 		// XXX: We must validate certs, and figure something out for local dev
 		// see https://github.com/arigatomachine/cli/issues/432
@@ -47,6 +48,7 @@ func (p *AuthProxy) Listen() {
 			r.URL.Scheme = p.u.Scheme
 			r.URL.Host = p.u.Host
 			r.Host = p.u.Host
+			r.URL.Path = r.URL.Path[6:]
 
 			tok := p.t.GetToken()
 			if tok != "" {
@@ -55,8 +57,10 @@ func (p *AuthProxy) Listen() {
 		},
 	}
 
+	mux.Handle("/proxy/", proxy)
+
 	h := httpdown.HTTP{}
-	p.s = h.Serve(&http.Server{Handler: loggingHandler(proxy)}, p.l)
+	p.s = h.Serve(&http.Server{Handler: loggingHandler(mux)}, p.l)
 }
 
 func (p *AuthProxy) Close() error {
