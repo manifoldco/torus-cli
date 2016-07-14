@@ -2,6 +2,7 @@ package: github.com/arigatomachine/cli/daemon
 import:
 - package: github.com/satori/go.uuid
 - package: github.com/natefinch/lumberjack
+  version: ^2
 - package: github.com/nightlyone/lockfile
 - package: github.com/facebookgo/httpdown
 - package: github.com/go-zoo/bone
