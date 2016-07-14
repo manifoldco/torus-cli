@@ -54,8 +54,6 @@ func (r *Router) process() {
 			r.client, m.Id, m.Command)
 
 		switch m.Command {
-		case "status":
-			err = r.status(m)
 		case "get":
 			err = r.get(m)
 		case "set":
@@ -73,19 +71,6 @@ func (r *Router) process() {
 			panic(err)
 		}
 	}
-}
-
-func (r *Router) status(m *socket.Message) error {
-	hasToken := r.session.HasToken()
-	hasPassphrase := r.session.HasPassphrase()
-
-	reply := socket.CreateReply(m)
-	reply.Body.HasToken = &hasToken
-	reply.Body.HasPassphrase = &hasPassphrase
-
-	log.Printf(
-		"Client[%s] has retrieved session status: %s", r.client, r.session)
-	return r.client.Write(reply)
 }
 
 func (r *Router) set(m *socket.Message) error {
