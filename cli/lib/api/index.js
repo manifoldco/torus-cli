@@ -14,7 +14,8 @@ api.modules = {
   projects: require('./projects'),
   envs: require('./envs'),
   services: require('./services'),
-  credentials: require('./credentials')
+  credentials: require('./credentials'),
+  versionApi: require('./versionApi')
 };
 
 api.Client = require('./client').Client;

@@ -4,3 +4,4 @@ import:
 - package: github.com/natefinch/lumberjack
 - package: github.com/nightlyone/lockfile
 - package: github.com/facebookgo/httpdown
+- package: github.com/go-zoo/bone

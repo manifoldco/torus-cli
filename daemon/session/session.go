@@ -1,10 +1,10 @@
-package main
+package session
 
 import "errors"
 import "sync"
 import "fmt"
 
-type MemorySession struct {
+type memorySession struct {
 	token      string
 	passphrase string
 	mutex      *sync.Mutex
@@ -22,10 +22,10 @@ type Session interface {
 }
 
 func NewSession() Session {
-	return &MemorySession{token: "", passphrase: "", mutex: &sync.Mutex{}}
+	return &memorySession{token: "", passphrase: "", mutex: &sync.Mutex{}}
 }
 
-func (s *MemorySession) SetToken(token string) error {
+func (s *memorySession) SetToken(token string) error {
 
 	if len(token) == 0 {
 		return errors.New("Token must not be empty")
@@ -38,7 +38,7 @@ func (s *MemorySession) SetToken(token string) error {
 	return nil
 }
 
-func (s *MemorySession) SetPassphrase(passphrase string) error {
+func (s *memorySession) SetPassphrase(passphrase string) error {
 	if len(passphrase) == 0 {
 		return errors.New("Passphrase must not be empty")
 	}
@@ -50,29 +50,29 @@ func (s *MemorySession) SetPassphrase(passphrase string) error {
 	return nil
 }
 
-func (s *MemorySession) GetToken() string {
+func (s *memorySession) GetToken() string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	return s.token
 }
 
-func (s *MemorySession) GetPassphrase() string {
+func (s *memorySession) GetPassphrase() string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	return s.passphrase
 }
 
-func (s *MemorySession) HasToken() bool {
+func (s *memorySession) HasToken() bool {
 	return (len(s.token) > 0)
 }
 
-func (s *MemorySession) HasPassphrase() bool {
+func (s *memorySession) HasPassphrase() bool {
 	return (len(s.passphrase) > 0)
 }
 
-func (s *MemorySession) Logout() {
+func (s *memorySession) Logout() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -80,10 +80,10 @@ func (s *MemorySession) Logout() {
 	s.passphrase = ""
 }
 
-func (s *MemorySession) String() string {
+func (s *memorySession) String() string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	return fmt.Sprintf(
-		"MemorySession{token:%t,passphrase:%t}", s.HasToken(), s.HasPassphrase())
+		"memorySession{token:%t,passphrase:%t}", s.HasToken(), s.HasPassphrase())
 }

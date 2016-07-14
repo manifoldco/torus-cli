@@ -8,10 +8,12 @@ import (
 	"syscall"
 
 	"github.com/natefinch/lumberjack"
+
+	"github.com/arigatomachine/cli/daemon/config"
 )
 
 func main() {
-	cfg, err := NewConfig(os.Getenv("ARIGATO_ROOT"))
+	cfg, err := config.NewConfig(os.Getenv("ARIGATO_ROOT"))
 	if err != nil {
 		log.Fatalf("Failed to load config: %s", err)
 	}

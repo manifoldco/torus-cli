@@ -1,20 +1,26 @@
 package main
 
-import "os"
-import "fmt"
-import "github.com/nightlyone/lockfile"
-import "github.com/arigatomachine/cli/daemon/socket"
+import (
+	"fmt"
+	"os"
+
+	"github.com/nightlyone/lockfile"
+
+	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/daemon/session"
+	"github.com/arigatomachine/cli/daemon/socket"
+)
 
 type Daemon struct {
 	server      socket.Listener
 	proxy       *socket.AuthProxy
 	lock        lockfile.Lockfile // actually a string
-	session     Session
-	config      *Config
+	session     session.Session
+	config      *config.Config
 	hasShutdown bool
 }
 
-func NewDaemon(cfg *Config) (*Daemon, error) {
+func NewDaemon(cfg *config.Config) (*Daemon, error) {
 
 	lock, err := lockfile.New(cfg.PidPath)
 	if err != nil {
@@ -48,9 +54,9 @@ func NewDaemon(cfg *Config) (*Daemon, error) {
 		return nil, fmt.Errorf("Failed to construct server: %s", err)
 	}
 
-	session := NewSession()
+	session := session.NewSession()
 
-	proxy, err := socket.NewAuthProxy(cfg.API, cfg.ProxySocketPath, session)
+	proxy, err := socket.NewAuthProxy(cfg, session)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create auth proxy: %s", err)
 	}

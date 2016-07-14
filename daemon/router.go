@@ -1,17 +1,22 @@
 package main
 
-import "io"
-import "log"
-import "fmt"
-import "github.com/arigatomachine/cli/daemon/socket"
+import (
+	"fmt"
+	"io"
+	"log"
+
+	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/daemon/session"
+	"github.com/arigatomachine/cli/daemon/socket"
+)
 
 type Router struct {
 	client  socket.Client
-	session Session
-	config  *Config
+	session session.Session
+	config  *config.Config
 }
 
-func NewRouter(client socket.Client, cfg *Config, session Session) *Router {
+func NewRouter(client socket.Client, cfg *config.Config, session session.Session) *Router {
 	return &Router{client: client, config: cfg, session: session}
 }
 
@@ -57,8 +62,6 @@ func (r *Router) process() {
 			err = r.set(m)
 		case "logout":
 			err = r.logout(m)
-		case "version":
-			err = r.version(m)
 		default:
 			msg := fmt.Sprintf("Unknown Command: %s", m.Command)
 			err = r.client.Write(socket.CreateError(msg, m))
@@ -119,14 +122,5 @@ func (r *Router) logout(m *socket.Message) error {
 	r.session.Logout()
 
 	log.Printf("Client[%s] has logged us out", r.client)
-	return r.client.Write(reply)
-}
-
-func (r *Router) version(m *socket.Message) error {
-	reply := socket.CreateReply(m)
-	reply.Body.Version = version
-
-	log.Printf(
-		"Client[%s] has asked for the version: %s", r.client, r.config.Version)
 	return r.client.Write(reply)
 }

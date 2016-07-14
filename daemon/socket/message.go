@@ -4,7 +4,6 @@ import "github.com/satori/go.uuid"
 
 type Body struct {
 	Message    string `json:"message,omitempty"`
-	Version    string `json:"version,omitempty"`
 	Passphrase string `json:"passphrase,omitempty"`
 	Token      string `json:"token,omitempty"`
 

@@ -23,7 +23,8 @@ var HTTP_VERBS = [
  */
 function Client(opts) {
   opts = opts || {};
-  this.endpoint = opts.proxySocketUrl;
+  this.proxyEndpoint = opts.proxySocketUrl + '/proxy';
+  this.v1Endpoint = opts.proxySocketUrl + '/v1';
   this.authToken = opts.authToken || null;
   this.version = {
     cli: CLI_VERSION,
@@ -82,7 +83,7 @@ Client.prototype._initialize = function () {
  * @param {string} verb
  * @param {object} opts
  */
-Client.prototype._req = function (verb, opts) {
+Client.prototype._req = function (verb, opts, isV1) {
   var self = this;
   return new Promise(function (resolve, reject) {
     if (opts.url.indexOf(':') > -1) {
@@ -97,7 +98,7 @@ Client.prototype._req = function (verb, opts) {
 
     opts = _.extend({}, opts, {
       method: verb,
-      url: self.endpoint + opts.url,
+      url: (isV1 ? self.v1Endpoint : self.proxyEndpoint) + opts.url,
       headers: self._headers(opts),
       time: true,
       gzip: true,
