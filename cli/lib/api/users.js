@@ -27,6 +27,7 @@ users.create = function (client, body) {
     url: '/users',
     json: {
       id: utils.id('user'),
+      version: 1,
       body: body
     }
   }).then(function (res) {

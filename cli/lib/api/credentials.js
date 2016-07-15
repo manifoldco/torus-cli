@@ -18,6 +18,7 @@ credentials.create = function (client, data) {
     url: '/credentials',
     json: {
       id: utils.id('credential'),
+      version: 1,
       body: {
         name: data.name,
         project_id: data.project_id,

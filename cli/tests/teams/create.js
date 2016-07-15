@@ -19,6 +19,7 @@ var USER_TYPE = 'user';
 
 var ORG = {
   id: utils.id('org'),
+  version: 1,
   body: {
     name: 'rebel-alliance'
   }
@@ -26,6 +27,7 @@ var ORG = {
 
 var TEAM = {
   id: utils.id('team'),
+  version: 1,
   body: {
     name: 'fighter-squad'
   }

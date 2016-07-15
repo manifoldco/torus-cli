@@ -17,6 +17,7 @@ var Daemon = require('../../lib/daemon/object').Daemon;
 
 var SELF = {
   id: utils.id('user'),
+  version: 1,
   body: {
     username: 'skywalker'
   }
@@ -24,6 +25,7 @@ var SELF = {
 
 var ORG = {
   id: utils.id('org'),
+  version: 1,
   body: {
     name: 'rebel-alliance'
   }
@@ -31,6 +33,7 @@ var ORG = {
 
 var TEAM = {
   id: utils.id('team'),
+  version: 1,
   body: {
     name: 'fighter-squad'
   }
@@ -38,6 +41,7 @@ var TEAM = {
 
 var MEMBERSHIP = {
   id: utils.id('membership'),
+  version: 1,
   body: {
     owner_id: SELF.id,
     org_id: ORG.id,
