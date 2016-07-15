@@ -87,7 +87,7 @@ Client.prototype._req = function (verb, opts, isV1) {
   var self = this;
   return new Promise(function (resolve, reject) {
     if (opts.url.indexOf(':') > -1) {
-      if (!opts.param || Object.keys(opts.params).length === 0) {
+      if (!opts.params || Object.keys(opts.params).length === 0) {
         throw new Error('Request to ' + opts.url + ' requires params');
       }
 
