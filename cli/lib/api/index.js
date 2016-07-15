@@ -16,6 +16,7 @@ api.modules = {
   services: require('./services'),
   credentials: require('./credentials'),
   versionApi: require('./versionApi'),
+  login: require('./login'),
   logout: require('./logout')
 };
 

@@ -1,39 +1,129 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 
 	"github.com/go-zoo/bone"
 
 	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/session"
 )
-
-func login(w http.ResponseWriter, r *http.Request) {
-
-}
-
-type Version struct {
-	Version string `json:"version"`
-}
-
-type Status struct {
-	Token      bool `json:"token"`
-	Passphrase bool `json:"passphrase"`
-}
-
-type Error struct {
-	Message string `json:"message"`
-}
 
 func NewRouteMux(c *config.Config, s session.Session,
 	t *http.Transport) *bone.Mux {
 
 	client := http.Client{Transport: t}
 	mux := bone.New()
-	mux.PostFunc("/login", login)
+
+	mux.PostFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		dec := json.NewDecoder(r.Body)
+
+		creds := Login{}
+		err := dec.Decode(&creds)
+		if err != nil {
+			encodeResponseErr(w)
+			return
+		}
+
+		if creds.Email == "" || creds.Passphrase == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			enc := json.NewEncoder(w)
+			enc.Encode(&Error{Message: "email and passphrase required"})
+			return
+		}
+
+		b := &bytes.Buffer{}
+		enc := json.NewEncoder(b)
+		err = enc.Encode(&LoginTokenRequest{Type: TokenTypeLogin, Email: creds.Email})
+		if err != nil {
+			log.Printf("Error encoding login token request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		req, err := newReq(c, "", "POST", "/tokens", b)
+		if err != nil {
+			log.Printf("Error building http request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		defer resp.Body.Close()
+
+		salt := LoginTokenResponse{}
+		dec = json.NewDecoder(resp.Body)
+		err = dec.Decode(&salt)
+		if err != nil {
+			log.Printf("Error decoding api response: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		if resp.StatusCode != 201 {
+			log.Printf("Failed to get login token from server: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		hmac, err := crypto.DeriveLoginHMAC(creds.Passphrase, salt.Salt,
+			salt.Token)
+		if err != nil {
+			log.Printf("Error generating login token hmac: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		b.Reset()
+		enc = json.NewEncoder(b)
+		enc.Encode(&AuthTokenRequest{Type: "auth", TokenHMAC: hmac})
+		if err != nil {
+			log.Printf("Error encoding auth token request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		req, err = newReq(c, salt.Token, "POST", "/tokens", b)
+		if err != nil {
+			log.Printf("Error building http request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		resp, err = client.Do(req)
+		if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		defer resp.Body.Close()
+
+		auth := AuthTokenResponse{}
+		dec = json.NewDecoder(resp.Body)
+		err = dec.Decode(&auth)
+		if err != nil {
+			log.Printf("Error decoding api response: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		s.Set(creds.Passphrase, auth.Token)
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	mux.PostFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
 		tok := s.GetToken()
 
@@ -42,18 +132,13 @@ func NewRouteMux(c *config.Config, s session.Session,
 			return
 		}
 
-		req, err := http.NewRequest(
-			"DELETE",
-			c.API+"/tokens/"+tok,
-			nil,
-		)
+		req, err := newReq(c, tok, "DELETE", "/tokens/"+tok, nil)
 		if err != nil {
 			log.Printf("Error building http request: %s", err)
 			encodeResponseErr(w)
 			return
 		}
 
-		req.Header.Set("Authorization", "bearer "+tok)
 		resp, err := client.Do(req)
 		if err != nil {
 			log.Printf("Error making api request: %s", err)
@@ -113,4 +198,19 @@ func encodeResponseErr(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusInternalServerError)
 	enc := json.NewEncoder(w)
 	enc.Encode(&Error{Message: "Internal server error"})
+}
+
+func newReq(c *config.Config, t, m, p string, b io.Reader) (*http.Request,
+	error) {
+	req, err := http.NewRequest(m, c.API+p, b)
+	if err != nil {
+		return nil, err
+	}
+
+	if t != "" {
+		req.Header.Set("Authorization", "bearer "+t)
+	}
+	req.Header.Set("Content-type", "application/json")
+
+	return req, nil
 }

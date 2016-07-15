@@ -1,5 +1,5 @@
-hash: 78f9c61f06ac6b02060ac47a6a1620891b47b9426a46266f21704d0129221753
-updated: 2016-07-14T16:26:22.077376581-03:00
+hash: 0e093864b0e581d82965666ac01e83b408b87f808c91a7d3f1e13331db8ac166
+updated: 2016-07-15T18:26:10.755000796-03:00
 imports:
 - name: github.com/facebookgo/clock
   version: 600d898af40aa09a7a93ecb9265d87b0504b6f03
@@ -15,4 +15,6 @@ imports:
   version: b30dcbfa86e3a1eaa4e6622de2ce57be2c138c10
 - name: github.com/satori/go.uuid
   version: f9ab0dce87d815821e221626b772e3475a0d2749
+- name: golang.org/x/crypto
+  version: 10c26747e67d76ad4fafe6087c6f4073c3b22942
 devImports: []

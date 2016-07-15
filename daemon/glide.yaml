@@ -6,3 +6,4 @@ import:
 - package: github.com/nightlyone/lockfile
 - package: github.com/facebookgo/httpdown
 - package: github.com/go-zoo/bone
+- package: golang.org/x/crypto
