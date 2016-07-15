@@ -58,8 +58,6 @@ func (r *Router) process() {
 			err = r.get(m)
 		case "set":
 			err = r.set(m)
-		case "logout":
-			err = r.logout(m)
 		default:
 			msg := fmt.Sprintf("Unknown Command: %s", m.Command)
 			err = r.client.Write(socket.CreateError(msg, m))
@@ -99,13 +97,5 @@ func (r *Router) get(m *socket.Message) error {
 	reply.Body.Token = r.session.GetToken()
 
 	log.Printf("Client[%s] has retrieved the value", r.client)
-	return r.client.Write(reply)
-}
-
-func (r *Router) logout(m *socket.Message) error {
-	reply := socket.CreateReply(m)
-	r.session.Logout()
-
-	log.Printf("Client[%s] has logged us out", r.client)
 	return r.client.Write(reply)
 }

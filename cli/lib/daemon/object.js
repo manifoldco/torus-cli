@@ -91,10 +91,6 @@ Daemon.prototype.set = function (data) {
   return p;
 };
 
-Daemon.prototype.logout = function () {
-  return this._command('logout');
-};
-
 Daemon.prototype._command = function (cmd) {
   var id = uuid.v4();
   var msg = {

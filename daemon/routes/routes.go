@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/go-zoo/bone"
@@ -11,10 +12,6 @@ import (
 )
 
 func login(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func logout(w http.ResponseWriter, r *http.Request) {
 
 }
 
@@ -31,10 +28,60 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-func NewRouteMux(c *config.Config, s session.Session) *bone.Mux {
+func NewRouteMux(c *config.Config, s session.Session,
+	t *http.Transport) *bone.Mux {
+
+	client := http.Client{Transport: t}
 	mux := bone.New()
 	mux.PostFunc("/login", login)
-	mux.PostFunc("/logout", logout)
+	mux.PostFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		tok := s.GetToken()
+
+		if tok == "" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		req, err := http.NewRequest(
+			"DELETE",
+			c.API+"/tokens/"+tok,
+			nil,
+		)
+		if err != nil {
+			log.Printf("Error building http request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		req.Header.Set("Authorization", "bearer "+tok)
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w)
+			return
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= 200 || resp.StatusCode < 300 {
+			s.Logout()
+			w.WriteHeader(http.StatusNoContent)
+		} else if resp.StatusCode >= 500 {
+			// On a 5XX response, we don't know for sure that the server has
+			// successfully removed the auth token. Keep the copy in the daemon,
+			// so the user may try again.
+			encodeResponseErr(w)
+		} else {
+			// A 4XX error indicates either the token isn't found, or we're
+			// not allowed to remove it (or the server is a teapot).
+			//
+			// In any case, the daemon has gotten out of sync with the server.
+			// Remove our local copy of the auth token.
+			log.Printf("Got 4XX removing auth token. Treating as success")
+			s.Logout()
+			w.WriteHeader(http.StatusNoContent)
+		}
+	})
 
 	mux.GetFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)

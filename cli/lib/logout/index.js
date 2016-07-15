@@ -20,22 +20,14 @@ module.exports = function (ctx) {
       ctx.session = null;
     }
 
-    function fail(err) {
-      resetClient();
-      reject(err);
-    }
-
-    return ctx.api.tokens.remove({}, { auth_token: ctx.session.token })
+    return ctx.api.logout.post()
     .then(function () {
-      return ctx.daemon.logout().then(function () {
-        resetClient();
-        resolve();
-      }).catch(fail);
+      resetClient();
+      resolve();
     })
     .catch(function (err) {
-      return ctx.daemon.logout().then(function () {
-        fail(err);
-      }).catch(fail);
+      resetClient();
+      reject(err);
     });
   });
 };

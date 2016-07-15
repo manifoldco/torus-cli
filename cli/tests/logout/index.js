@@ -32,8 +32,7 @@ describe('Logout', function () {
     ctx.api = api.build({ auth_token: ctx.session.token });
 
     this.sandbox.spy(ctx.api, 'reset');
-    this.sandbox.stub(ctx.api.tokens, 'remove').returns(Promise.resolve());
-    this.sandbox.stub(ctx.daemon, 'logout').returns(Promise.resolve());
+    this.sandbox.stub(ctx.api.logout, 'post').returns(Promise.resolve());
   });
 
   afterEach(function () {
@@ -41,35 +40,19 @@ describe('Logout', function () {
   });
 
   it('sends a logout request to the registry and daemon', function () {
-    ctx.daemon.logout.returns(Promise.resolve());
-
     return logout(ctx).then(function () {
-      sinon.assert.calledOnce(ctx.daemon.logout);
-      sinon.assert.calledOnce(ctx.api.tokens.remove);
+      sinon.assert.calledOnce(ctx.api.logout.post);
       sinon.assert.calledOnce(ctx.api.reset);
 
       assert.strictEqual(ctx.session, null);
     });
   });
 
-  it('reports an error and destroys the token on client failure', function () {
-    ctx.api.tokens.remove.returns(Promise.reject(new Error('hi')));
-    ctx.daemon.logout.returns(Promise.resolve());
+  it('reports an error on client failure', function () {
+    ctx.api.logout.post.returns(Promise.reject(new Error('hi')));
 
     return logout(ctx).catch(function () {
-      sinon.assert.calledOnce(ctx.daemon.logout);
-      sinon.assert.calledOnce(ctx.api.tokens.remove);
-      sinon.assert.calledOnce(ctx.api.reset);
-
-      assert.strictEqual(ctx.session, null);
-    });
-  });
-
-  it('reports an error and destroys the token on daemon failure', function () {
-    ctx.daemon.logout.returns(Promise.reject(new Error('err')));
-    return logout(ctx).catch(function () {
-      sinon.assert.calledOnce(ctx.daemon.logout);
-      sinon.assert.calledOnce(ctx.api.tokens.remove);
+      sinon.assert.calledOnce(ctx.api.logout.post);
       sinon.assert.calledOnce(ctx.api.reset);
 
       assert.strictEqual(ctx.session, null);
