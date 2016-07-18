@@ -15,7 +15,8 @@ api.modules = {
   envs: require('./envs'),
   services: require('./services'),
   credentials: require('./credentials'),
-  versionApi: require('./versionApi')
+  versionApi: require('./versionApi'),
+  logout: require('./logout')
 };
 
 api.Client = require('./client').Client;

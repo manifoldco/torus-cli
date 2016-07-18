@@ -64,10 +64,6 @@ Daemon.prototype.disconnect = function () {
   });
 };
 
-Daemon.prototype.status = function () {
-  return this._command('status');
-};
-
 Daemon.prototype.get = function () {
   return this._command('get');
 };
@@ -93,10 +89,6 @@ Daemon.prototype.set = function (data) {
   this.client.send(msg).catch(p.reject);
 
   return p;
-};
-
-Daemon.prototype.logout = function () {
-  return this._command('logout');
 };
 
 Daemon.prototype._command = function (cmd) {

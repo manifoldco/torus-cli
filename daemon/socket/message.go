@@ -6,11 +6,6 @@ type Body struct {
 	Message    string `json:"message,omitempty"`
 	Passphrase string `json:"passphrase,omitempty"`
 	Token      string `json:"token,omitempty"`
-
-	// Use a pointer to a bool so we can omit it if the value is
-	// not set
-	HasToken      *bool `json:"has_token,omitempty"`
-	HasPassphrase *bool `json:"has_passphrase,omitempty"`
 }
 
 type Headers struct {

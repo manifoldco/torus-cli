@@ -40,12 +40,12 @@ func NewAuthProxy(c *config.Config, sess session.Session) (*AuthProxy, error) {
 
 func (p *AuthProxy) Listen() {
 	mux := bone.New()
+	// XXX: We must validate certs, and figure something out for local dev
+	// see https://github.com/arigatomachine/cli/issues/432
+	t := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+
 	proxy := &httputil.ReverseProxy{
-		// XXX: We must validate certs, and figure something out for local dev
-		// see https://github.com/arigatomachine/cli/issues/432
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
+		Transport: t,
 		Director: func(r *http.Request) {
 			r.URL.Scheme = p.u.Scheme
 			r.URL.Host = p.u.Host
@@ -60,7 +60,7 @@ func (p *AuthProxy) Listen() {
 	}
 
 	mux.Handle("/proxy/", proxy)
-	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess))
+	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, t))
 
 	h := httpdown.HTTP{}
 	p.s = h.Serve(&http.Server{Handler: loggingHandler(mux)}, p.l)
