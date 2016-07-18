@@ -37,7 +37,8 @@ describe('config middleware', function () {
       sinon.assert.calledWith(fs.mkdir, '/tmp/folder', 448, sinon.match.any);
 
       assert.strictEqual(ctx.config.arigatoRoot, '/tmp/folder');
-      assert.strictEqual(ctx.config.socketPath, '/tmp/folder/daemon.socket');
+      assert.strictEqual(ctx.config.socketUrl,
+                         'http://unix:/tmp/folder/daemon.socket:');
       assert.strictEqual(ctx.config.pidPath, '/tmp/folder/daemon.pid');
       assert.strictEqual(ctx.config.version, 'banana');
     });

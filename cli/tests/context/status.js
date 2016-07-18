@@ -7,12 +7,10 @@ var assert = require('assert');
 var Promise = require('es6-promise').Promise;
 var utils = require('common/utils');
 
-var Session = require('../../lib/session');
 var status = require('../../lib/context/status');
 var Target = require('../../lib/context/target');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
-var Daemon = require('../../lib/daemon/object').Daemon;
 var api = require('../../lib/api');
 
 var USER_RESPONSE = [
@@ -26,7 +24,7 @@ var USER_RESPONSE = [
   }
 ];
 
-describe('Session', function () {
+describe('Status', function () {
   before(function () {
     this.sandbox = sinon.sandbox.create();
   });
@@ -35,8 +33,6 @@ describe('Session', function () {
   beforeEach(function () {
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.daemon = new Daemon(ctx.config);
-    ctx.session = new Session({ token: 'aa', passphrase: 'safsd' });
     ctx.target = new Target({
       path: process.cwd(),
       context: {
@@ -44,7 +40,7 @@ describe('Session', function () {
         project: 'myproject'
       }
     });
-    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.api = api.build();
     this.sandbox.stub(status.output, 'success');
     this.sandbox.stub(status.output, 'failure');
     this.sandbox.stub(ctx.api.users, 'self')

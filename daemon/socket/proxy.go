@@ -25,7 +25,7 @@ type AuthProxy struct {
 }
 
 func NewAuthProxy(c *config.Config, sess session.Session) (*AuthProxy, error) {
-	l, err := MakeSocket(c.ProxySocketPath)
+	l, err := MakeSocket(c.SocketPath)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func NewAuthProxy(c *config.Config, sess session.Session) (*AuthProxy, error) {
 	return &AuthProxy{u: u, l: l, c: c, sess: sess}, nil
 }
 
-func (p *AuthProxy) Listen() {
+func (p *AuthProxy) Listen() error {
 	mux := bone.New()
 	// XXX: We must validate certs, and figure something out for local dev
 	// see https://github.com/arigatomachine/cli/issues/432
@@ -64,10 +64,16 @@ func (p *AuthProxy) Listen() {
 
 	h := httpdown.HTTP{}
 	p.s = h.Serve(&http.Server{Handler: loggingHandler(mux)}, p.l)
+
+	return p.s.Wait()
 }
 
 func (p *AuthProxy) Close() error {
 	return p.s.Stop()
+}
+
+func (p *AuthProxy) Addr() string {
+	return p.l.Addr().String()
 }
 
 func loggingHandler(next http.Handler) http.Handler {

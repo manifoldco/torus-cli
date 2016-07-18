@@ -15,6 +15,7 @@ type Status struct {
 }
 
 type Error struct {
+	Err     string `json:"error"`
 	Message string `json:"message"`
 }
 

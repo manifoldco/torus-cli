@@ -33,7 +33,7 @@ func main() {
 	go watch(daemon)
 	defer daemon.Shutdown()
 
-	log.Printf("Daemon is now listening on %s", daemon.server.Addr())
+	log.Printf("Daemon is now listening on %s", daemon.Addr())
 	err = daemon.Run()
 	if err != nil {
 		log.Printf("Error while running daemon: %s", err)

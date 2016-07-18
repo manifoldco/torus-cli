@@ -10,7 +10,6 @@ var cmds = require('./cmds');
 
 var config = require('./middleware/config');
 var daemon = require('./middleware/daemon');
-var session = require('./middleware/session');
 var api = require('./middleware/api');
 
 var arigato = exports;
@@ -27,9 +26,7 @@ arigato.run = function (opts) {
     var program = new Program('arigato', pkg.version, templates);
     program.hook('pre', config(opts.arigatoRoot));
     program.hook('pre', daemon.preHook());
-    program.hook('pre', session());
     program.hook('pre', api());
-    program.hook('post', daemon.postHook());
 
     cmds.get().then(function (cmdList) {
       cmdList.forEach(program.command.bind(program));

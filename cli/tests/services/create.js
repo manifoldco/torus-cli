@@ -11,8 +11,6 @@ var serviceCreate = require('../../lib/services/create');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
-var Daemon = require('../../lib/daemon/object').Daemon;
-var Session = require('../../lib/session');
 var api = require('../../lib/api');
 
 var ORG = {
@@ -53,8 +51,6 @@ describe('Services Create', function () {
     // Context stub with token set
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.session = new Session({ token: 'aa', passphrase: 'deed' });
-    ctx.daemon = new Daemon(ctx.config);
     ctx.params = ['abc123abc'];
     ctx.options = {
       org: { value: ORG.body.name },
@@ -64,7 +60,7 @@ describe('Services Create', function () {
       path: process.cwd(),
       context: null
     });
-    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.api = api.build();
 
     this.sandbox.stub(serviceCreate.output, 'success');
     this.sandbox.stub(serviceCreate.output, 'failure');

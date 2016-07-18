@@ -7,7 +7,6 @@ var api = exports;
 
 api.modules = {
   users: require('./users'),
-  tokens: require('./tokens'),
   orgs: require('./orgs'),
   teams: require('./teams'),
   memberships: require('./memberships'),
@@ -17,7 +16,8 @@ api.modules = {
   credentials: require('./credentials'),
   versionApi: require('./versionApi'),
   login: require('./login'),
-  logout: require('./logout')
+  logout: require('./logout'),
+  session: require('./session')
 };
 
 api.Client = require('./client').Client;

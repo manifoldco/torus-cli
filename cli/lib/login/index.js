@@ -3,14 +3,10 @@
 var login = exports;
 
 var Promise = require('es6-promise').Promise;
-var user = require('common/crypto/user');
 
 var Prompt = require('../cli/prompt');
 var output = require('../cli/output');
 var validate = require('../validate');
-
-var TYPE_LOGIN = 'login';
-var TYPE_AUTH = 'auth';
 
 login.output = {};
 
@@ -95,8 +91,6 @@ login._prompt = function () {
  * @param {object} userInput
  */
 login._execute = function (ctx, userInput) {
-  var salt;
-  var loginToken;
   return ctx.api.login.post({
     email: userInput.email,
     passphrase: userInput.passphrase

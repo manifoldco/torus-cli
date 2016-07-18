@@ -8,7 +8,6 @@ var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
 var Backoff = require('backo');
 
-var Daemon = require('./object').Daemon;
 var Config = require('../config');
 
 var daemon = exports;
@@ -16,32 +15,6 @@ var daemon = exports;
 // The daemon binary is placed in the cli's `bin` folder during the build
 // process.
 daemon.DAEMON_PATH = path.join(__dirname, '../../bin/ag-daemon');
-
-/**
- * Retrieves a daemon object, returns null if the daemon is not running
- *
- * @param cfg {Config}
- * @returns Promise
- */
-daemon.get = function (cfg) {
-  return new Promise(function (resolve, reject) {
-    if (!(cfg instanceof Config)) {
-      return reject(new TypeError('cfg must be a Config object'));
-    }
-
-    return daemon.status(cfg).then(function (status) {
-      if (!status.exists) {
-        return resolve(null);
-      }
-
-
-      var d = new Daemon(cfg);
-      return d.connect().then(function () {
-        resolve(d);
-      }).catch(reject);
-    }).catch(reject);
-  });
-};
 
 /**
  * Starts the daemon and returns a daemon instance. Rejects the promise with an
@@ -62,12 +35,12 @@ daemon.start = function (cfg) {
       }
 
       return setTimeout(function () {
-        daemon.get(cfg).then(function (d) {
-          if (!d) {
+        daemon.status(cfg).then(function (status) {
+          if (!status.exists) {
             return retry(backoff);
           }
 
-          return resolve(d);
+          return resolve(status);
         }).catch(reject);
       }, backoff.duration());
     }

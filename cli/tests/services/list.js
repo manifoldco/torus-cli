@@ -8,7 +8,6 @@ var sinon = require('sinon');
 var Promise = require('es6-promise').Promise;
 var utils = require('common/utils');
 
-var Session = require('../../lib/session');
 var api = require('../../lib/api');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
@@ -80,11 +79,7 @@ describe('Services List', function () {
   });
   beforeEach(function () {
     ctx = new Context({});
-    ctx.session = new Session({
-      token: 'abcdefgh',
-      passphrase: 'hohohoho'
-    });
-    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.api = api.build();
     ctx.params = ['hi-there'];
     ctx.options = {
       org: {
@@ -113,17 +108,6 @@ describe('Services List', function () {
   });
 
   describe('#execute', function () {
-    it('requires an auth token', function () {
-      ctx.session = null;
-
-      return serviceList.execute(ctx).then(function () {
-        assert.ok(false, 'should not resolve');
-      }).catch(function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'Session object not on Context');
-      });
-    });
-
     it('does not throw if the user has no services or projects', function () {
       ctx.api.services.get.returns(Promise.resolve([]));
       ctx.api.projects.get.returns(Promise.resolve([]));

@@ -23,9 +23,8 @@ var HTTP_VERBS = [
  */
 function Client(opts) {
   opts = opts || {};
-  this.proxyEndpoint = opts.proxySocketUrl + '/proxy';
-  this.v1Endpoint = opts.proxySocketUrl + '/v1';
-  this.authToken = opts.authToken || null;
+  this.proxyEndpoint = opts.socketUrl + '/proxy';
+  this.v1Endpoint = opts.socketUrl + '/v1';
   this.version = {
     cli: CLI_VERSION,
     api: opts.apiVersion || null
@@ -45,26 +44,6 @@ Client.prototype.attach = function (name, module) {
 
     target[apiName] = method.bind(module, c);
   });
-};
-
-/**
- * Set authtoken property
- *
- * @param {string} authToken
- */
-Client.prototype.auth = function (authToken) {
-  if (typeof authToken !== 'string') {
-    throw new Error('auth token must be a string');
-  }
-
-  this.authToken = authToken;
-};
-
-/**
- * Remove the authtoken property
- */
-Client.prototype.reset = function () {
-  this.authToken = undefined;
 };
 
 /**
@@ -141,9 +120,6 @@ Client.prototype._headers = function (opts) {
 
   if (this.version.api) {
     headers['x-arigato-version'] = this.version.api;
-  }
-  if (this.authToken) {
-    headers.Authorization = 'Bearer ' + this.authToken;
   }
   return _.extend({}, opts.headers, headers);
 };

@@ -12,7 +12,6 @@ import (
 )
 
 type Daemon struct {
-	server      socket.Listener
 	proxy       *socket.AuthProxy
 	lock        lockfile.Lockfile // actually a string
 	session     session.Session
@@ -49,11 +48,6 @@ func NewDaemon(cfg *config.Config) (*Daemon, error) {
 		}
 	}()
 
-	server, err := socket.NewServer(cfg.SocketPath)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to construct server: %s", err)
-	}
-
 	session := session.NewSession()
 
 	proxy, err := socket.NewAuthProxy(cfg, session)
@@ -62,7 +56,6 @@ func NewDaemon(cfg *config.Config) (*Daemon, error) {
 	}
 
 	daemon := &Daemon{
-		server:      server,
 		proxy:       proxy,
 		lock:        lock,
 		session:     session,
@@ -73,18 +66,12 @@ func NewDaemon(cfg *config.Config) (*Daemon, error) {
 	return daemon, nil
 }
 
+func (d *Daemon) Addr() string {
+	return d.proxy.Addr()
+}
+
 func (d *Daemon) Run() error {
-	d.proxy.Listen()
-
-	for {
-		client, err := d.server.Accept()
-		if err != nil {
-			return err
-		}
-
-		router := NewRouter(client, d.config, d.session)
-		go router.process()
-	}
+	return d.proxy.Listen()
 }
 
 func (d *Daemon) Shutdown() error {
@@ -95,10 +82,6 @@ func (d *Daemon) Shutdown() error {
 	d.hasShutdown = true
 	if err := d.lock.Unlock(); err != nil {
 		return fmt.Errorf("Could not unlock: %s", err)
-	}
-
-	if err := d.server.Close(); err != nil {
-		return fmt.Errorf("Could not shutdown server: %s", err)
 	}
 
 	if err := d.proxy.Close(); err != nil {

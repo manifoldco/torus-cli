@@ -35,10 +35,8 @@ module.exports = new Command(
         };
         return login.subcommand(ctx, params);
       })
-      .then(function (session) {
+      .then(function () {
         user.output.success();
-
-        ctx.session = session;
 
         verify.output.intermediate({ top: false });
         return verify.subcommand(ctx).then(function (result) {

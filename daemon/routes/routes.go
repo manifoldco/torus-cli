@@ -33,7 +33,7 @@ func NewRouteMux(c *config.Config, s session.Session,
 		if creds.Email == "" || creds.Passphrase == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			enc := json.NewEncoder(w)
-			enc.Encode(&Error{Message: "email and passphrase required"})
+			enc.Encode(&Error{Err: "email and passphrase required"})
 			return
 		}
 
@@ -168,8 +168,17 @@ func NewRouteMux(c *config.Config, s session.Session,
 		}
 	})
 
-	mux.GetFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+	mux.GetFunc("/session", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
+		if !(s.HasToken() && s.HasPassphrase()) {
+			w.WriteHeader(http.StatusNotFound)
+			err := enc.Encode(&Error{Err: "Not logged in"})
+			if err != nil {
+				encodeResponseErr(w)
+			}
+			return
+		}
+
 		err := enc.Encode(&Status{
 			Token:      s.HasToken(),
 			Passphrase: s.HasPassphrase(),
@@ -197,7 +206,7 @@ func NewRouteMux(c *config.Config, s session.Session,
 func encodeResponseErr(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusInternalServerError)
 	enc := json.NewEncoder(w)
-	enc.Encode(&Error{Message: "Internal server error"})
+	enc.Encode(&Error{Err: "Internal server error"})
 }
 
 func newReq(c *config.Config, t, m, p string, b io.Reader) (*http.Request,
