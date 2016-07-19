@@ -8,12 +8,10 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var teamsCreate = require('../../lib/teams/create');
-var Session = require('../../lib/session');
 var api = require('../../lib/api');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
-var Daemon = require('../../lib/daemon/object').Daemon;
 
 var USER_TYPE = 'user';
 
@@ -41,12 +39,10 @@ describe('Team Create', function () {
   });
 
   beforeEach(function () {
-    // Context stub with session set
+    // Context stub
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.session = new Session({ token: 'as', passphrase: 'dd' });
-    ctx.api = api.build({ auth_token: ctx.session.token });
-    ctx.daemon = new Daemon(ctx.config);
+    ctx.api = api.build();
     ctx.params = [TEAM.body.name];
     ctx.options = {
       org: { value: ORG.body.name }

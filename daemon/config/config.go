@@ -9,12 +9,11 @@ var version = "development"
 const REQUIRED_PERM = 0700
 
 type Config struct {
-	ArigatoRoot     string
-	API             string
-	SocketPath      string
-	ProxySocketPath string
-	PidPath         string
-	Version         string
+	ArigatoRoot string
+	API         string
+	SocketPath  string
+	PidPath     string
+	Version     string
 }
 
 func NewConfig(arigatoRoot string) (*Config, error) {
@@ -53,11 +52,10 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 		ArigatoRoot: arigatoRoot,
 		// XXX: the hostname should be configurable, defaulting to our prod
 		// service. see https://github.com/arigatomachine/cli/issues/431
-		API:             "https://arigato.tools",
-		SocketPath:      path.Join(arigatoRoot, "daemon.socket"),
-		ProxySocketPath: path.Join(arigatoRoot, "daemon_proxy.socket"),
-		PidPath:         path.Join(arigatoRoot, "daemon.pid"),
-		Version:         version,
+		API:        "https://arigato.tools",
+		SocketPath: path.Join(arigatoRoot, "daemon.socket"),
+		PidPath:    path.Join(arigatoRoot, "daemon.pid"),
+		Version:    version,
 	}
 
 	return cfg, nil

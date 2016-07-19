@@ -9,11 +9,9 @@ var Promise = require('es6-promise').Promise;
 
 var api = require('../../lib/api');
 var envsList = require('../../lib/envs/list');
-var Session = require('../../lib/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
-var Daemon = require('../../lib/daemon/object').Daemon;
 
 var ORG = {
   id: utils.id('org'),
@@ -71,11 +69,9 @@ describe('Envs List', function () {
   });
 
   beforeEach(function () {
-    // Context stub with session set
+    // Context stub
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.session = new Session({ token: 'aa', passphrase: 'safsd' });
-    ctx.daemon = new Daemon(ctx.config);
     ctx.params = [];
     ctx.options = {
       org: { value: ORG.body.name },
@@ -85,7 +81,7 @@ describe('Envs List', function () {
       path: process.cwd(),
       context: null
     });
-    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.api = api.build();
 
     this.sandbox.stub(envsList.output, 'success');
     this.sandbox.stub(envsList.output, 'failure');
@@ -102,17 +98,6 @@ describe('Envs List', function () {
   });
 
   describe('#execute', function () {
-    it('errors if session is missing on ctx', function () {
-      ctx.session = null;
-
-      return envsList.execute(ctx).then(function () {
-        assert.ok(false, 'should error');
-      }, function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'Session object missing on Context');
-      });
-    });
-
     it('errors if org is not provided', function () {
       ctx.options.org.value = undefined;
 

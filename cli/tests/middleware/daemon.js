@@ -2,14 +2,11 @@
 
 'use strict';
 
-var assert = require('assert');
-
 var sinon = require('sinon');
 var Promise = require('es6-promise').Promise;
 
 var Context = require('../../lib/cli/context');
 var Config = require('../../lib/config');
-var Daemon = require('../../lib/daemon/object').Daemon;
 var daemon = require('../../lib/daemon');
 var middleware = require('../../lib/middleware/daemon');
 
@@ -27,39 +24,27 @@ describe('daemon middleware', function () {
   });
 
   describe('preHook', function () {
-    it('retrieves the daemon', function () {
-      var d = new Daemon(ctx.config);
-      sandbox.stub(daemon, 'get').returns(Promise.resolve(d));
+    it('does not try and start the daemon if already running', function () {
+      sandbox.stub(daemon, 'status').returns(Promise.resolve({
+        exists: true,
+        pid: 100
+      }));
+      sandbox.stub(daemon, 'start').returns(Promise.resolve());
 
       return middleware.preHook()(ctx).then(function () {
-        assert.ok(ctx.daemon instanceof Daemon);
-        assert.strictEqual(ctx.daemon, d);
+        sinon.assert.notCalled(daemon.start);
       });
     });
 
     it('starts daemon if its not running', function () {
-      var d = new Daemon(ctx.config);
-
-      sandbox.stub(daemon, 'get').returns(Promise.resolve(null));
-      sandbox.stub(daemon, 'start').returns(Promise.resolve(d));
+      sandbox.stub(daemon, 'status').returns(Promise.resolve({
+        exists: false,
+        pid: null
+      }));
+      sandbox.stub(daemon, 'start').returns(Promise.resolve());
 
       return middleware.preHook()(ctx).then(function () {
-        assert.ok(ctx.daemon instanceof Daemon);
-        assert.strictEqual(ctx.daemon, d);
-      });
-    });
-  });
-
-  describe('postHook', function () {
-    it('disconnects from the running daemon', function () {
-      var d = new Daemon(ctx.config);
-      ctx.daemon = d;
-
-      sandbox.stub(d, 'connected').returns(true);
-      sandbox.stub(d, 'disconnect').returns(Promise.resolve());
-
-      return middleware.postHook()(ctx).then(function () {
-        sinon.assert.calledOnce(d.disconnect);
+        sinon.assert.calledOnce(daemon.start);
       });
     });
   });

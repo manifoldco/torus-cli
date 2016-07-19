@@ -8,11 +8,9 @@ var assert = require('assert');
 var Promise = require('es6-promise').Promise;
 
 var verify = require('../../lib/verify');
-var Session = require('../../lib/session');
 var api = require('../../lib/api');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
-var Daemon = require('../../lib/daemon/object').Daemon;
 
 var USER = {
   id: uuid.v4(),
@@ -34,10 +32,8 @@ describe('Verify', function () {
   beforeEach(function () {
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.daemon = new Daemon(ctx.config);
     ctx.params = ['ABC123ABC'];
-    ctx.session = new Session({ token: 'aa', passphrase: 'dd' });
-    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.api = api.build();
 
     this.sandbox.stub(verify.output, 'success');
     this.sandbox.stub(verify.output, 'failure');

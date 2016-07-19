@@ -11,7 +11,6 @@ var sinon = require('sinon');
 
 var Config = require('../../lib/config');
 var daemon = require('../../lib/daemon');
-var Daemon = require('../../lib/daemon/object').Daemon;
 
 describe('Daemon API', function () {
   var cfg;
@@ -25,33 +24,6 @@ describe('Daemon API', function () {
   });
   afterEach(function () {
     sandbox.restore();
-  });
-
-  describe('#get', function () {
-    it('returns null if not availabe', function () {
-      sandbox.stub(daemon, 'status').returns(Promise.resolve({
-        exists: false,
-        pid: null
-      }));
-
-      return daemon.get(cfg).then(function (d) {
-        assert.strictEqual(d, null);
-      });
-    });
-
-    it('connects if available', function () {
-      sandbox.stub(Daemon.prototype, 'connect').returns(Promise.resolve());
-      sandbox.stub(daemon, 'status').returns(Promise.resolve({
-        exists: true,
-        pid: 231
-      }));
-
-      return daemon.get(cfg).then(function (d) {
-        assert.ok(d instanceof Daemon);
-
-        sinon.assert.calledOnce(d.connect);
-      });
-    });
   });
 
   describe('#start', function () {
@@ -72,24 +44,26 @@ describe('Daemon API', function () {
       });
     });
 
-    it('spawns a child process and returns a daemon object', function () {
+    it('spawns a child process', function () {
       var unrefSpy = sinon.spy();
-      sandbox.stub(daemon, 'status').returns(Promise.resolve({
+      var status = sandbox.stub(daemon, 'status');
+      status.onCall(0).returns(Promise.resolve({
         exists: false,
         pid: null
+      }));
+      status.onCall(1).returns(Promise.resolve({
+        exists: true,
+        pid: 100
       }));
       sandbox.stub(childProcess, 'spawn', function () {
         return {
           unref: unrefSpy
         };
       });
-      sandbox.stub(daemon, 'get').returns(Promise.resolve(new Daemon(cfg)));
 
-      return daemon.start(cfg).then(function (d) {
+      return daemon.start(cfg).then(function () {
         sinon.assert.calledOnce(childProcess.spawn);
         sinon.assert.calledOnce(unrefSpy);
-
-        assert.ok(d instanceof Daemon);
       });
     });
 
@@ -104,7 +78,6 @@ describe('Daemon API', function () {
           unref: unrefSpy
         };
       });
-      sandbox.stub(daemon, 'get').returns(Promise.resolve(null));
 
       return daemon.start(cfg).then(function () {
         assert.ok(false, 'shouldnt happen');

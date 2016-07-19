@@ -11,8 +11,7 @@ type memorySession struct {
 }
 
 type Session interface {
-	SetToken(string) error
-	SetPassphrase(string) error
+	Set(string, string) error
 	GetToken() string
 	GetPassphrase() string
 	HasToken() bool
@@ -25,28 +24,21 @@ func NewSession() Session {
 	return &memorySession{token: "", passphrase: "", mutex: &sync.Mutex{}}
 }
 
-func (s *memorySession) SetToken(token string) error {
+func (s *memorySession) Set(passphrase, token string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if len(passphrase) == 0 {
+		return errors.New("Passphrase must not be empty")
+	}
 
 	if len(token) == 0 {
 		return errors.New("Token must not be empty")
 	}
 
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	s.token = token
-	return nil
-}
-
-func (s *memorySession) SetPassphrase(passphrase string) error {
-	if len(passphrase) == 0 {
-		return errors.New("Passphrase must not be empty")
-	}
-
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
 	s.passphrase = passphrase
+	s.token = token
+
 	return nil
 }
 

@@ -3,15 +3,10 @@
 var login = exports;
 
 var Promise = require('es6-promise').Promise;
-var user = require('common/crypto/user');
 
 var Prompt = require('../cli/prompt');
 var output = require('../cli/output');
 var validate = require('../validate');
-var Session = require('../session');
-
-var TYPE_LOGIN = 'login';
-var TYPE_AUTH = 'auth';
 
 login.output = {};
 
@@ -96,45 +91,8 @@ login._prompt = function () {
  * @param {object} userInput
  */
 login._execute = function (ctx, userInput) {
-  ctx.api.reset(); // Clear any existing authorization
-
-  var salt;
-  var loginToken;
-  return ctx.api.tokens.create({
-    type: TYPE_LOGIN,
-    email: userInput.email
-  })
-  .then(function (result) {
-    salt = result.salt;
-    loginToken = result.login_token;
-
-    // Catch invalid data should API not return proper error status
-    if (!salt || !loginToken) {
-      throw new Error('invalid response from api');
-    }
-
-    return user.deriveLoginHmac(userInput.passphrase, salt, loginToken);
-  })
-  .then(function (loginTokenHmac) {
-    // Use the login token to make an authenticated login attempt
-    ctx.api.auth(loginToken);
-
-    return ctx.api.tokens.create({
-      type: TYPE_AUTH,
-      login_token_hmac: loginTokenHmac
-    })
-    .then(function (result) { // eslint-disable-line
-      //  Reset auth. the daemon will handle auth now
-      ctx.api.reset();
-
-      var sessionData = {
-        token: result.auth_token,
-        passphrase: userInput.passphrase
-      };
-
-      return ctx.daemon.set(sessionData).then(function () {
-        return new Session(sessionData);
-      });
-    });
+  return ctx.api.login.post({
+    email: userInput.email,
+    passphrase: userInput.passphrase
   });
 };

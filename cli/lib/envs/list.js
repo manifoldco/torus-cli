@@ -7,7 +7,6 @@ var _ = require('lodash');
 
 var validate = require('../validate');
 var output = require('../cli/output');
-var Session = require('../session');
 
 envsList.output = {};
 
@@ -57,10 +56,6 @@ var validator = validate.build({
  */
 envsList.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    if (!(ctx.session instanceof Session)) {
-      throw new TypeError('Session object missing on Context');
-    }
-
     ctx.target.flags({
       org: ctx.option('org').value
     });

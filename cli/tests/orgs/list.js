@@ -8,11 +8,9 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var orgsList = require('../../lib/orgs/list');
-var Session = require('../../lib/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
-var Daemon = require('../../lib/daemon/object').Daemon;
 var api = require('../../lib/api');
 
 var ORG = {
@@ -39,11 +37,9 @@ describe('Orgs List', function () {
   });
 
   beforeEach(function () {
-    // Context stub with session set
+    // Context stub
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.session = new Session({ token: 'aa', passphrase: 'boo' });
-    ctx.daemon = new Daemon(ctx.config);
     ctx.params = [];
     ctx.options = {
       org: { value: ORG.body.name }
@@ -52,7 +48,7 @@ describe('Orgs List', function () {
       path: process.cwd(),
       context: null
     });
-    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.api = api.build();
 
     this.sandbox.stub(orgsList.output, 'success');
     this.sandbox.stub(orgsList.output, 'failure');

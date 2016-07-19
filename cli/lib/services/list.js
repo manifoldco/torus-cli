@@ -4,7 +4,6 @@ var servicesList = exports;
 var Promise = require('es6-promise').Promise;
 var _ = require('lodash');
 
-var Session = require('../session');
 var output = require('../cli/output');
 var validate = require('../validate');
 
@@ -53,10 +52,6 @@ var validator = validate.build({
  */
 servicesList.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
-    if (!(ctx.session instanceof Session)) {
-      return reject(new TypeError('Session object not on Context'));
-    }
-
     ctx.target.flags({
       org: ctx.option('org').value
     });

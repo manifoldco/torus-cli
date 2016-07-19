@@ -8,11 +8,9 @@ var Promise = require('es6-promise').Promise;
 
 var envCreate = require('../../lib/envs/create');
 var api = require('../../lib/api');
-var Session = require('../../lib/session');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
-var Daemon = require('../../lib/daemon/object').Daemon;
 
 var ORG = {
   id: utils.id('org'),
@@ -49,12 +47,10 @@ describe('Envs Create', function () {
   });
 
   beforeEach(function () {
-    // Context stub with session set
+    // Context stub
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.session = new Session({ token: 'aa', passphrase: 'beetlejuice' });
-    ctx.api = api.build({ auth_token: ctx.session.token });
-    ctx.daemon = new Daemon(ctx.config);
+    ctx.api = api.build();
     ctx.params = ['abc123abc'];
     ctx.options = {
       project: { value: PROJECT.body.name },

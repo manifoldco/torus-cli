@@ -8,12 +8,10 @@ var utils = require('common/utils');
 var Promise = require('es6-promise').Promise;
 
 var teamsList = require('../../lib/teams/list');
-var Session = require('../../lib/session');
 var api = require('../../lib/api');
 var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var Target = require('../../lib/context/target');
-var Daemon = require('../../lib/daemon/object').Daemon;
 
 var SELF = {
   id: utils.id('user'),
@@ -60,12 +58,10 @@ describe('Team List', function () {
     this.sandbox.stub(teamsList.output, 'success');
     this.sandbox.stub(teamsList.output, 'failure');
 
-    // Context stub with session set
+    // Context stub
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
-    ctx.daemon = new Daemon(ctx.config);
-    ctx.session = new Session({ token: 'dd', passphrase: 'ee' });
-    ctx.api = api.build({ auth_token: ctx.session.token });
+    ctx.api = api.build();
     ctx.params = [];
     ctx.options = {
       org: { value: ORG.body.name }

@@ -11,7 +11,7 @@ module.exports = function () {
       targetMap.get().then(function (result) {
         ctx.target = new Target(result);
 
-        if (ctx.session && !ctx.target.environment) {
+        if (!ctx.target.environment) {
           return ctx.api.users.self().then(function (res) {
             var user = res && res[0];
             if (!user) {
