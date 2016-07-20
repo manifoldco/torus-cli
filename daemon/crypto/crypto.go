@@ -16,14 +16,12 @@ const (
 )
 
 func DeriveLoginHMAC(password, salt, token string) (string, error) {
-	// TODO: handle err
 	s := make([]byte, base64.RawURLEncoding.DecodedLen(len(salt)))
 	l, err := base64.RawURLEncoding.Decode(s, []byte(salt))
 	if err != nil {
 		return "", err
 	}
 
-	// XXX: deal wiht error
 	k, err := scrypt.Key([]byte(password), s[:l], n, r, p, keyLen)
 	if err != nil {
 		return "", err

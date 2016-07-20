@@ -1,6 +1,8 @@
-hash: 1505a84352f176923d83bd3677f0e3c4483456786f52715a62d22f497b63ec32
-updated: 2016-07-25T15:21:13.509721912-03:00
+hash: 52c55b793541e5d53bf715d92d196571396984f94e0d41322747c3dc04342f2d
+updated: 2016-07-26T11:11:27.041273905-03:00
 imports:
+- name: github.com/dchest/blake2b
+  version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/facebookgo/clock
   version: 600d898af40aa09a7a93ecb9265d87b0504b6f03
 - name: github.com/facebookgo/httpdown
@@ -13,6 +15,10 @@ imports:
   version: 0237f0c5455f175a6513e21afe050e128902dc7f
 - name: github.com/kardianos/osext
   version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
+- name: github.com/keybase/go-triplesec
+  version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
+  subpackages:
+  - sha3
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/natefinch/lumberjack
@@ -24,6 +30,15 @@ imports:
 - name: golang.org/x/crypto
   version: 10c26747e67d76ad4fafe6087c6f4073c3b22942
   subpackages:
+  - ed25519
+  - nacl/box
   - scrypt
+  - salsa20
+  - twofish
+  - ed25519/internal/edwards25519
+  - curve25519
+  - nacl/secretbox
+  - salsa20/salsa
   - pbkdf2
+  - poly1305
 devImports: []
