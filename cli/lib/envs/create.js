@@ -126,8 +126,7 @@ envCreate._execute = function (api, org, projects, input) {
       org_id: org.id,
       project_id: project.id,
       name: input.name
-    }).then(function (result) {
-      var env = result[0];
+    }).then(function (env) {
       if (!env) {
         throw new Error('Invalid service creation result');
       }

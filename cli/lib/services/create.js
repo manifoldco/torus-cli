@@ -125,8 +125,7 @@ serviceCreate._execute = function (api, org, projects, input) {
       name: input.name
     };
 
-    return api.services.create(data).then(function (result) {
-      var service = result[0];
+    return api.services.create(data).then(function (service) {
       if (!service) {
         throw new Error('Invalid service creation result');
       }

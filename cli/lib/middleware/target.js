@@ -12,8 +12,7 @@ module.exports = function () {
         ctx.target = new Target(result);
 
         if (!ctx.target.environment) {
-          return ctx.api.users.self().then(function (res) {
-            var user = res && res[0];
+          return ctx.api.users.self().then(function (user) {
             if (!user) {
               return reject(new Error('Could not find the user'));
             }

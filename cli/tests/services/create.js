@@ -68,7 +68,7 @@ describe('Services Create', function () {
     this.sandbox.stub(ctx.api.projects, 'get')
       .returns(Promise.resolve([PROJECT]));
     this.sandbox.stub(ctx.api.services, 'create')
-      .returns(Promise.resolve([SERVICE]));
+      .returns(Promise.resolve(SERVICE));
   });
 
   afterEach(function () {

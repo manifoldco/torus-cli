@@ -45,7 +45,7 @@ credentials.create = function (api, params, value) {
       api.users.self(),
       api.orgs.get({ name: orgName })
     ]).then(function (results) {
-      var user = results[0] && results[0][0];
+      var user = results[0];
       var org = results[1] && results[1][0];
 
       if (!user) {
@@ -92,9 +92,7 @@ credentials.create = function (api, params, value) {
             value: value.toString()
           };
 
-          return api.credentials.create(data).then(function (creds) {
-            return creds[0];
-          });
+          return api.credentials.create(data);
         });
       });
     })
@@ -115,7 +113,7 @@ credentials.get = function (api, params) {
       api.users.self(),
       api.orgs.get({ name: params.org })
     ]).then(function (results) {
-      var user = results[0] && results[0][0];
+      var user = results[0];
       var org = results[1] && results[1][0];
 
       if (!user) {

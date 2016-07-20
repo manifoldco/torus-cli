@@ -72,7 +72,7 @@ describe('Team List', function () {
     });
 
     this.sandbox.stub(ctx.api.users, 'self')
-      .returns(Promise.resolve([SELF]));
+      .returns(Promise.resolve(SELF));
     this.sandbox.stub(ctx.api.orgs, 'get')
       .returns(Promise.resolve([ORG]));
     this.sandbox.stub(ctx.api.memberships, 'get')
@@ -123,7 +123,7 @@ describe('Team List', function () {
     [
       {
         stub: function () {
-          ctx.api.users.self.returns(Promise.resolve([]));
+          ctx.api.users.self.returns(Promise.resolve(null));
         },
         error: 'current user could not be retrieved'
       },

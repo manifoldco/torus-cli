@@ -49,7 +49,7 @@ orgsList.execute = function (ctx) {
       ctx.api.users.self(),
       ctx.api.orgs.get()
     ]).then(function (res) {
-      var self = res[0][0];
+      var self = res[0];
       var orgs = res[1];
 
       if (!_.isArray(orgs) || !_.isObject(self)) {

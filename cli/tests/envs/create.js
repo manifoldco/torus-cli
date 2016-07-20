@@ -67,7 +67,7 @@ describe('Envs Create', function () {
       .returns(Promise.resolve([ORG]));
     this.sandbox.stub(ctx.api.projects, 'get')
       .returns(Promise.resolve([PROJECT]));
-    this.sandbox.stub(ctx.api.envs, 'create').returns(Promise.resolve([ENV]));
+    this.sandbox.stub(ctx.api.envs, 'create').returns(Promise.resolve(ENV));
   });
 
   afterEach(function () {

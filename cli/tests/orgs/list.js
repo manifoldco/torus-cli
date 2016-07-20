@@ -52,7 +52,7 @@ describe('Orgs List', function () {
 
     this.sandbox.stub(orgsList.output, 'success');
     this.sandbox.stub(orgsList.output, 'failure');
-    this.sandbox.stub(ctx.api.users, 'self').returns(Promise.resolve([SELF]));
+    this.sandbox.stub(ctx.api.users, 'self').returns(Promise.resolve(SELF));
     this.sandbox.stub(ctx.api.orgs, 'get').returns(Promise.resolve([ORG]));
   });
 
@@ -71,7 +71,7 @@ describe('Orgs List', function () {
     });
 
     it('errors if the org was not found', function () {
-      ctx.api.users.self.returns(Promise.resolve([]));
+      ctx.api.users.self.returns(Promise.resolve(null));
       ctx.api.orgs.get.returns(Promise.resolve([]));
       return orgsList.execute(ctx).then(function () {
         assert.ok(false, 'should error');
