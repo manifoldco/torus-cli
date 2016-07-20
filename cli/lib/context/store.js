@@ -48,8 +48,7 @@ Store.prototype.create = function (type, data) {
   }
 
   var self = this;
-  return this.client[type].create(data).then(function (result) {
-    var object = result && result[0];
+  return this.client[type].create(data).then(function (object) {
     if (!object) {
       throw new Error('Invalid result returned from API');
     }
