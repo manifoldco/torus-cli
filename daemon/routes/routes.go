@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -9,11 +12,12 @@ import (
 
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
+	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
-func NewRouteMux(c *config.Config, s session.Session,
+func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	t *http.Transport) *bone.Mux {
 
 	client := registry.NewClient(c.API, s, t)
@@ -83,13 +87,43 @@ func NewRouteMux(c *config.Config, s session.Session,
 			return
 		}
 
+		req, err = client.NewTokenRequest(auth.Token, "GET", "/users/self", nil)
+		if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		self := registry.SelfResponse{}
+		resp, err = client.Do(req, &self)
+		if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		err = validateSelf(&self)
+		if err != nil {
+			log.Printf("Invalid user self: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		mk, err := base64.RawURLEncoding.DecodeString(self.Body.Master.Value)
+		if err != nil {
+			log.Printf("Could not decode master key: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		db.SetMasterKey(mk)
 		s.Set(creds.Passphrase, auth.Token)
 
 		w.WriteHeader(http.StatusNoContent)
 	})
 
 	mux.PostFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		tok := s.GetToken()
+		tok := s.Token()
 
 		if tok == "" {
 			w.WriteHeader(http.StatusNotFound)
@@ -176,4 +210,28 @@ func encodeResponseErr(w http.ResponseWriter, err error) {
 		w.WriteHeader(http.StatusInternalServerError)
 		enc.Encode(&Error{Err: "Internal server error"})
 	}
+}
+
+func validateSelf(s *registry.SelfResponse) error {
+	if s.Version != 1 {
+		return errors.New("version must be 1")
+	}
+
+	if s.Body == nil {
+		return errors.New("missing body")
+	}
+
+	if s.Body.Master == nil {
+		return errors.New("missing master key section")
+	}
+
+	if s.Body.Master.Alg != "triplesec-v3" {
+		return fmt.Errorf("Unknown alg: %s", s.Body.Master.Alg)
+	}
+
+	if len(s.Body.Master.Value) == 0 {
+		return errors.New("Zero length master key found")
+	}
+
+	return nil
 }

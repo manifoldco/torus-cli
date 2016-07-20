@@ -29,3 +29,13 @@ type AuthTokenRequest struct {
 type AuthTokenResponse struct {
 	Token string `json:"auth_token"`
 }
+
+type SelfResponse struct {
+	Version uint8 `json:"version"`
+	Body    *struct {
+		Master *struct {
+			Alg   string `json:"alg"`
+			Value string `json:"value"`
+		} `json:"master"`
+	} `json:"body"`
+}

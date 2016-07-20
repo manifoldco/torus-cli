@@ -12,8 +12,8 @@ type memorySession struct {
 
 type Session interface {
 	Set(string, string) error
-	GetToken() string
-	GetPassphrase() string
+	Token() string
+	Passphrase() string
 	HasToken() bool
 	HasPassphrase() bool
 	Logout()
@@ -42,14 +42,14 @@ func (s *memorySession) Set(passphrase, token string) error {
 	return nil
 }
 
-func (s *memorySession) GetToken() string {
+func (s *memorySession) Token() string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	return s.token
 }
 
-func (s *memorySession) GetPassphrase() string {
+func (s *memorySession) Passphrase() string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
