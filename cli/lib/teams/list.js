@@ -77,7 +77,7 @@ list.execute = function (ctx) {
     ])
     .then(function (results) {
       payload.org = results[0][0];
-      payload.self = results[1][0];
+      payload.self = results[1];
 
       if (!payload.org) {
         throw new Error('org not found: ' + data.org);

@@ -13,16 +13,14 @@ var Config = require('../../lib/config');
 var Context = require('../../lib/cli/context');
 var api = require('../../lib/api');
 
-var USER_RESPONSE = [
-  {
-    id: utils.id('user'),
-    version: 1,
-    body: {
-      name: 'Jim Bob',
-      email: 'jim@example.com'
-    }
+var USER_RESPONSE = {
+  id: utils.id('user'),
+  version: 1,
+  body: {
+    name: 'Jim Bob',
+    email: 'jim@example.com'
   }
-];
+};
 
 describe('Status', function () {
   before(function () {
@@ -76,7 +74,7 @@ describe('Status', function () {
     it('returns the right properties', function () {
       return status.execute(ctx).then(function (result) {
         assert.deepEqual(result, {
-          user: USER_RESPONSE[0],
+          user: USER_RESPONSE,
           target: ctx.target
         });
       });

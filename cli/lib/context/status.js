@@ -57,8 +57,7 @@ status.execute = function (ctx) {
       throw new Error('Target must be on the context object');
     }
 
-    return ctx.api.users.self().then(function (res) {
-      var user = res && res[0];
+    return ctx.api.users.self().then(function (user) {
       if (!user) {
         throw new Error('Invalid response returned from the API');
       }
