@@ -1,9 +1,7 @@
 package routes
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 
@@ -11,13 +9,14 @@ import (
 
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
+	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
 func NewRouteMux(c *config.Config, s session.Session,
 	t *http.Transport) *bone.Mux {
 
-	client := http.Client{Transport: t}
+	client := registry.NewClient(c.API, s, t)
 	mux := bone.New()
 
 	mux.PostFunc("/login", func(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +25,7 @@ func NewRouteMux(c *config.Config, s session.Session,
 		creds := Login{}
 		err := dec.Decode(&creds)
 		if err != nil {
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 			return
 		}
 
@@ -37,43 +36,26 @@ func NewRouteMux(c *config.Config, s session.Session,
 			return
 		}
 
-		b := &bytes.Buffer{}
-		enc := json.NewEncoder(b)
-		err = enc.Encode(&LoginTokenRequest{Type: TokenTypeLogin, Email: creds.Email})
-		if err != nil {
-			log.Printf("Error encoding login token request: %s", err)
-			encodeResponseErr(w)
-			return
-		}
-
-		req, err := newReq(c, "", "POST", "/tokens", b)
+		req, err := client.NewRequest("POST", "/tokens",
+			&registry.LoginTokenRequest{
+				Type:  TokenTypeLogin,
+				Email: creds.Email,
+			})
 		if err != nil {
 			log.Printf("Error building http request: %s", err)
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 			return
 		}
 
-		resp, err := client.Do(req)
-		if err != nil {
-			log.Printf("Error making api request: %s", err)
-			encodeResponseErr(w)
-			return
-		}
-
-		defer resp.Body.Close()
-
-		salt := LoginTokenResponse{}
-		dec = json.NewDecoder(resp.Body)
-		err = dec.Decode(&salt)
-		if err != nil {
-			log.Printf("Error decoding api response: %s", err)
-			encodeResponseErr(w)
-			return
-		}
-
-		if resp.StatusCode != 201 {
+		salt := registry.LoginTokenResponse{}
+		resp, err := client.Do(req, &salt)
+		if err != nil && resp != nil && resp.StatusCode != 201 {
 			log.Printf("Failed to get login token from server: %s", err)
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
+			return
+		} else if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w, err)
 			return
 		}
 
@@ -81,41 +63,23 @@ func NewRouteMux(c *config.Config, s session.Session,
 			salt.Token)
 		if err != nil {
 			log.Printf("Error generating login token hmac: %s", err)
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 			return
 		}
 
-		b.Reset()
-		enc = json.NewEncoder(b)
-		enc.Encode(&AuthTokenRequest{Type: "auth", TokenHMAC: hmac})
-		if err != nil {
-			log.Printf("Error encoding auth token request: %s", err)
-			encodeResponseErr(w)
-			return
-		}
-
-		req, err = newReq(c, salt.Token, "POST", "/tokens", b)
+		req, err = client.NewTokenRequest(salt.Token, "POST", "/tokens",
+			&registry.AuthTokenRequest{Type: "auth", TokenHMAC: hmac})
 		if err != nil {
 			log.Printf("Error building http request: %s", err)
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 			return
 		}
 
-		resp, err = client.Do(req)
+		auth := registry.AuthTokenResponse{}
+		resp, err = client.Do(req, &auth)
 		if err != nil {
 			log.Printf("Error making api request: %s", err)
-			encodeResponseErr(w)
-			return
-		}
-
-		defer resp.Body.Close()
-
-		auth := AuthTokenResponse{}
-		dec = json.NewDecoder(resp.Body)
-		err = dec.Decode(&auth)
-		if err != nil {
-			log.Printf("Error decoding api response: %s", err)
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 			return
 		}
 
@@ -132,21 +96,19 @@ func NewRouteMux(c *config.Config, s session.Session,
 			return
 		}
 
-		req, err := newReq(c, tok, "DELETE", "/tokens/"+tok, nil)
+		req, err := client.NewTokenRequest(tok, "DELETE", "/tokens/"+tok, nil)
 		if err != nil {
 			log.Printf("Error building http request: %s", err)
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 			return
 		}
 
-		resp, err := client.Do(req)
-		if err != nil {
+		resp, err := client.Do(req, nil)
+		if err != nil && resp == nil {
 			log.Printf("Error making api request: %s", err)
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 			return
 		}
-
-		defer resp.Body.Close()
 
 		if resp.StatusCode >= 200 || resp.StatusCode < 300 {
 			s.Logout()
@@ -155,7 +117,7 @@ func NewRouteMux(c *config.Config, s session.Session,
 			// On a 5XX response, we don't know for sure that the server has
 			// successfully removed the auth token. Keep the copy in the daemon,
 			// so the user may try again.
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 		} else {
 			// A 4XX error indicates either the token isn't found, or we're
 			// not allowed to remove it (or the server is a teapot).
@@ -174,7 +136,7 @@ func NewRouteMux(c *config.Config, s session.Session,
 			w.WriteHeader(http.StatusNotFound)
 			err := enc.Encode(&Error{Err: "Not logged in"})
 			if err != nil {
-				encodeResponseErr(w)
+				encodeResponseErr(w, err)
 			}
 			return
 		}
@@ -185,7 +147,7 @@ func NewRouteMux(c *config.Config, s session.Session,
 		})
 
 		if err != nil {
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 		}
 	})
 
@@ -193,7 +155,7 @@ func NewRouteMux(c *config.Config, s session.Session,
 		enc := json.NewEncoder(w)
 		err := enc.Encode(&Version{Version: c.Version})
 		if err != nil {
-			encodeResponseErr(w)
+			encodeResponseErr(w, err)
 		}
 	})
 
@@ -203,23 +165,15 @@ func NewRouteMux(c *config.Config, s session.Session,
 // if encoding has errored, our struct is either bad, or our writer
 // is broken. Try writing an error back to the client, but ignore any
 // problems (ie the writer is broken).
-func encodeResponseErr(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusInternalServerError)
+func encodeResponseErr(w http.ResponseWriter, err error) {
 	enc := json.NewEncoder(w)
-	enc.Encode(&Error{Err: "Internal server error"})
-}
 
-func newReq(c *config.Config, t, m, p string, b io.Reader) (*http.Request,
-	error) {
-	req, err := http.NewRequest(m, c.API+p, b)
-	if err != nil {
-		return nil, err
+	rErr, ok := err.(*registry.Error)
+	if ok {
+		w.WriteHeader(rErr.StatusCode)
+		enc.Encode(rErr)
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+		enc.Encode(&Error{Err: "Internal server error"})
 	}
-
-	if t != "" {
-		req.Header.Set("Authorization", "bearer "+t)
-	}
-	req.Header.Set("Content-type", "application/json")
-
-	return req, nil
 }
