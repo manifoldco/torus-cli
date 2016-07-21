@@ -1,11 +1,10 @@
-/* eslint-disable */
-
 'use strict';
 
-// TODO: Accept and validate teams
 // TODO: Import the policy to an organization
 // TODO: Attach the policy to a team
 // TODO: Dream up some naming conventions for policies
+// TODO: Pretty Output
+// TODO: Remove return true on 88
 
 var allow = exports;
 
@@ -27,7 +26,7 @@ allow.output.success = output.create(function () {
 });
 
 allow.output.failure = output.create(function () {
-  console.log('Boo-hoo, policies')
+  console.log('Boo-hoo, policies');
 });
 
 /**
@@ -41,13 +40,7 @@ allow.execute = function (ctx) {
       return reject(new Error('You must provide two parameters'));
     }
 
-    // harvest(ctx);
-
-    var params = {
-      actions: ctx.params[0],
-      path: ctx.params[1],
-      team: ctx.params[2]
-    };
+    var params = harvest(ctx);
 
     var pathSegments = ctx.params[1].split('/');
 
@@ -58,12 +51,10 @@ allow.execute = function (ctx) {
       reject(new Error('boom'));
     }
 
-    var resourcesMap = resources.fromPath(path, secret);
-    var extendedResources = resources.explode(resourcesMap);
+    var resourceMap = resources.fromPath(path, secret);
+    var extendedResources = resources.explode(resourceMap);
 
     var policy = new Policy('generated policy');
-
-    var defaultActions = [Statement.ACTIONS.READ, Statement.ACTIONS.LIST]
 
     _.each(extendedResources, function (r) {
       var statement = new Statement(EFFECT_ALLOW);
@@ -77,12 +68,12 @@ allow.execute = function (ctx) {
 
     var org;
     var team;
-    return ctx.api.orgs.get({ name: 'knotty-buoy' })
+    return ctx.api.orgs.get({ name: resourceMap.org })
       .then(function (res) {
         org = res[0];
 
         if (!org) {
-          return reject(new Error('Unknown org: ' + 'ddf'));
+          return reject(new Error('Unknown org: ' + resourceMap.org));
         }
 
         return ctx.api.teams.get({ name: params.team, org_id: org.id });
@@ -95,6 +86,7 @@ allow.execute = function (ctx) {
         }
 
         // return ctx.api.policies.create(policy)
+        return true;
       })
       .catch(reject);
   });

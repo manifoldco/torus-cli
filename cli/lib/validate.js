@@ -6,6 +6,8 @@ var util = require('util');
 
 var _ = require('lodash');
 var validator = require('validator');
+var resources = require('./access/resources');
+
 
 /**
  * TODO: Change js validation for json schema
@@ -56,6 +58,19 @@ validate.build = function (ruleMap, requireAll) {
 };
 
 var CRED_NAME = new RegExp(/^[a-z][a-z0-9_]{0,63}$/);
+var ACTION_SHORTHAND = new RegExp(/^(?:([crudl])(?!.*\1))+$/);
+
+validate.expResourcePath = function (input) {
+  var error = 'Invalid resource path provided';
+
+  return resources.validPath(input) ? true : error;
+};
+
+validate.actionShorthand = function (input) {
+  var error = 'Actions must be some combination of valid action shorthands (c, r, u, d, l)';
+
+  return ACTION_SHORTHAND.test(input) ? true : error;
+};
 
 validate.credName = function (input) {
   var error =
