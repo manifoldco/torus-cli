@@ -12,6 +12,12 @@ unlink.output.success = function (ctx) {
   var currentPath = targetMap.path();
   var isParent = (currentPath.length === projectMap.length);
 
+  if (ctx.target && ctx.target.disabled()) {
+    var programName = ctx.program.name;
+    return console.log('\nContext is disabled for your CLI,' +
+      ' use \'' + programName + ' prefs\' to enabled it\n');
+  }
+
   if (isParent) {
     return console.log('\nYour current working directory has been unlinked.\n');
   }
@@ -26,6 +32,10 @@ unlink.output.failure = function () {
 
 unlink.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
+    // Context is disabled, skip
+    if (ctx.target.disabled()) {
+      return resolve();
+    }
     return targetMap.unlink(ctx.target).then(function () {
       return ctx.target;
     })

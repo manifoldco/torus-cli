@@ -50,12 +50,29 @@ function Target(map) {
 
 module.exports = Target;
 
+Target.prototype.disabled = function () {
+  return !!this._map.disabled;
+};
+
 Target.prototype.exists = function () {
   return _.isPlainObject(this._map.context);
 };
 
 Target.prototype.path = function () {
   return this._map.path;
+};
+
+Target.prototype.defaults = function (defaults) {
+  if (!_.isPlainObject(defaults)) {
+    throw new TypeError('Must provide context object');
+  }
+
+  if (defaults.env || defaults.environment) {
+    this._values.environment = defaults.env || defaults.environment;
+  }
+  if (defaults.service) {
+    this._values.service = defaults.service;
+  }
 };
 
 Target.prototype.flags = function (flags) {
