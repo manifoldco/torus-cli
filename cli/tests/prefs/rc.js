@@ -117,6 +117,28 @@ describe('rc', function () {
       sandbox.stub(rc, 'stat').returns(Promise.resolve(true));
     });
 
+    it('returns empty obj if file does not exist', function () {
+      rc.stat.returns(Promise.resolve(false));
+
+      return rc.read('/s/d/f').then(function (contents) {
+        assert.deepEqual(contents, {});
+      });
+    });
+
+    it('returns obj', function () {
+      rc._read.returns(Promise.resolve({
+        defaults: {},
+        core: { context: false }
+      }));
+
+      return rc.read('/s/d/f').then(function (contents) {
+        assert.deepEqual(contents, {
+          defaults: {},
+          core: { context: false }
+        });
+      });
+    });
+
     it('throws if rcPath is invalid', function () {
       assert.throws(function () {
         rc.read(null);
