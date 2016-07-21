@@ -5,7 +5,6 @@ var Promise = require('es6-promise').Promise;
 var Command = require('../../cli/command');
 
 var set = require('../../prefs/set');
-var target = require('../../middleware/target');
 
 var cmd = new Command(
   'prefs:set [key] [value]',
@@ -23,7 +22,5 @@ var cmd = new Command(
     });
   }
 );
-
-cmd.hook('pre', target());
 
 module.exports = cmd;
