@@ -8,6 +8,7 @@ function Config(arigatoRoot, version) {
   this.arigatoRoot = arigatoRoot;
   this.socketUrl = 'http://unix:' + socketPath + ':';
   this.pidPath = path.join(arigatoRoot, 'daemon.pid');
+  this.rcPath = path.join(process.env.HOME, '.arigatorc');
   this.version = version;
 }
 

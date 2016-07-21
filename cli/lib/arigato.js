@@ -9,6 +9,7 @@ var Program = require('./cli/program');
 var cmds = require('./cmds');
 
 var config = require('./middleware/config');
+var prefs = require('./middleware/prefs');
 var daemon = require('./middleware/daemon');
 var api = require('./middleware/api');
 
@@ -25,6 +26,7 @@ arigato.run = function (opts) {
 
     var program = new Program('arigato', pkg.version, templates);
     program.hook('pre', config(opts.arigatoRoot));
+    program.hook('pre', prefs());
     program.hook('pre', daemon.preHook());
     program.hook('pre', api());
 
