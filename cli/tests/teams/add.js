@@ -73,7 +73,7 @@ describe('Team Add', function () {
     this.sandbox.stub(ctx.api.memberships, 'create')
       .returns(Promise.resolve(MEMBERSHIP));
     this.sandbox.stub(ctx.api.users, 'profile')
-      .returns([PROFILE]);
+      .returns(PROFILE);
     this.sandbox.stub(ctx.api.orgs, 'get')
       .returns([ORG]);
     this.sandbox.stub(ctx.api.memberships, 'get')

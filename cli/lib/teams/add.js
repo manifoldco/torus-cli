@@ -59,7 +59,7 @@ add.execute = function (ctx) {
     ])
     .then(function (result) {
       payload.org = result[0] && result[0][0];
-      payload.user = result[1] && result[1][0];
+      payload.user = result[1];
 
       if (!payload.org) {
         throw new Error('org not found: ' + data.org);
