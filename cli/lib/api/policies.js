@@ -20,9 +20,9 @@ policies.create = function (client, data) {
     url: '/policies',
     json: {
       id: utils.id('policy'),
+      version: 1 || data.version,
       body: {
         org_id: data.org_id,
-        version: 1 || data.version,
         previous: null || data.previous,
         type: USER_TYPE,
         policy: data.policy

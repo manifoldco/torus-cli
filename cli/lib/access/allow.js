@@ -9,7 +9,7 @@ var Promise = require('es6-promise').Promise;
 var Policy = require('./policy').Policy;
 var Statement = require('./policy').Statement;
 var output = require('../cli/output');
-var resources = require('./resources');
+var rpath = require('common/rpath');
 var harvest = require('./harvest');
 
 var EFFECT_ALLOW = Statement.EFFECTS.ALLOW;
@@ -66,8 +66,8 @@ allow.execute = function (ctx) {
     var secret = _.takeRight(pathSegments);
     var path = _.take(pathSegments, pathSegments.length - 1).join('/');
 
-    var resourceMap = resources.fromPath(path, secret);
-    var extendedResources = resources.explode(resourceMap);
+    var resourceMap = rpath.parse(path, secret);
+    var extendedResources = rpath.explode(resourceMap);
 
     var policy = new Policy('generated-policy');
 

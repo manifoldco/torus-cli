@@ -6,7 +6,10 @@ var util = require('util');
 
 var _ = require('lodash');
 var validator = require('validator');
-var resources = require('./access/resources');
+var rpath = require('common/rpath');
+
+var CRED_NAME = new RegExp(/^[a-z][a-z0-9_]{0,63}$/);
+var ACTION_SHORTHAND = new RegExp(/^(?:([crudl])(?!.*\1))+$/);
 
 
 /**
@@ -57,13 +60,10 @@ validate.build = function (ruleMap, requireAll) {
   };
 };
 
-var CRED_NAME = new RegExp(/^[a-z][a-z0-9_]{0,63}$/);
-var ACTION_SHORTHAND = new RegExp(/^(?:([crudl])(?!.*\1))+$/);
-
 validate.expResourcePath = function (input) {
   var error = 'Invalid resource path provided';
 
-  return resources.validPath(input) ? true : error;
+  return rpath.validate(input) ? true : error;
 };
 
 validate.actionShorthand = function (input) {
