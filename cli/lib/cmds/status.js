@@ -32,4 +32,8 @@ flags.add(cmd, 'service', {
   description: 'the service to add to context'
 });
 
+flags.add(cmd, 'environment', {
+  description: 'the environment to add to context'
+});
+
 module.exports = cmd;

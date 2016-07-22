@@ -38,9 +38,8 @@ module.exports = function () {
         });
 
         // Look up user's default environment
-        if (ctx.session && !ctx.target.environment) {
-          return ctx.api.users.self().then(function (res) {
-            var user = res && res[0];
+        if (ctx.loggedIn && !ctx.target.environment) {
+          return ctx.api.users.self().then(function (user) {
             if (!user) {
               return reject(new Error('Could not find the user'));
             }

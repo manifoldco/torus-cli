@@ -8,6 +8,7 @@ module.exports = function () {
       var name = ctx.program.name;
       var slug = ctx.slug;
       ctx.api.session.get().then(function () {
+        ctx.loggedIn = true;
         return resolve();
       }).catch(function () {
         console.log('You must be logged-in to execute \'' +
