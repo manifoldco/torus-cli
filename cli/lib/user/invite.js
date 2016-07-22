@@ -65,7 +65,7 @@ invite.execute = function (ctx) {
       ctx.api.orgs.get({ name: data.org })
     ])
     .then(function (results) {
-      user = _.get(results, '[0][0]', null);
+      user = _.get(results, '[0]', null);
       org = _.get(results, '[1][0]', null);
 
       if (!user) {
