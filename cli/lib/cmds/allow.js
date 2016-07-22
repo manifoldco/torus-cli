@@ -13,10 +13,8 @@ var command = new Command(
   function (ctx) {
     return new Promise(function (resolve, reject) {
       allow.execute(ctx).then(function (payload) {
-        allow.output.success(payload);
+        allow.output.success(null, payload);
         resolve();
-
-      // Account creation failed
       }).catch(function (err) {
         err.type = err.type || 'unknown';
         allow.output.failure();

@@ -1,10 +1,6 @@
 'use strict';
 
-// TODO: Import the policy to an organization
-// TODO: Attach the policy to a team
 // TODO: Dream up some naming conventions for policies
-// TODO: Pretty Output
-// TODO: Remove return true on 88
 
 var allow = exports;
 
@@ -21,12 +17,35 @@ var DEFAULT_ACTIONS = [Statement.ACTIONS.READ, Statement.ACTIONS.LIST];
 
 allow.output = {};
 
-allow.output.success = output.create(function () {
-  console.log('Woo-hoo, policies');
+allow.output.success = output.create(function (payload) {
+  var team = payload.team.body;
+  var policy = payload.policy.body.policy;
+  var secretStatements = _.filter(policy.statements, function (statement) {
+    return statement.resource.split('/').length > 6;
+  });
+
+  var msg = 'Policy generated and attached to the ' + team.name + ' team.';
+  msg += '\n';
+
+  _.each(secretStatements, function (statement, i) {
+    msg += '\n  Effect: ' + statement.effect;
+    msg += '\n  Action(s): ' + statement.action.join(', ');
+    msg += '\n  Resource: ' + statement.resource;
+
+    if (secretStatements.length !== i + 1 && secretStatements.length > 0) {
+      msg += '\n  -';
+    }
+  });
+
+  msg += '\n';
+  msg += '\nNecessary permissions (read, list) have also been granted.';
+  msg += '\nUse \'ag access\' to view the complete policy.';
+
+  console.log(msg);
 });
 
 allow.output.failure = output.create(function () {
-  console.log('Boo-hoo, policies');
+  console.log('Policy could not be generated, please try again.');
 });
 
 /**
@@ -98,7 +117,9 @@ allow.execute = function (ctx) {
           policy_id: payload.policy.id
         });
       })
-      .then(function () { return payload; })
+      .then(function () {
+        return resolve(payload);
+      })
       .catch(reject);
   });
 };
