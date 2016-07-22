@@ -9,6 +9,8 @@ api.modules = {
   users: require('./users'),
   orgs: require('./orgs'),
   teams: require('./teams'),
+  policies: require('./policies'),
+  policyAttachments: require('./policy_attachments'),
   memberships: require('./memberships'),
   projects: require('./projects'),
   envs: require('./envs'),

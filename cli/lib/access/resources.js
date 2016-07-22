@@ -71,11 +71,11 @@ resources.expand = function (map, explode) {
     p.push(value);
 
     if (explode) {
-      resourcePerms.push(p.join('/'));
+      resourcePerms.push('/' + p.join('/'));
     }
 
     if (!explode && p.length === 6) {
-      resourcePerms.push(p.join('/'));
+      resourcePerms.push('/' + p.join('/'));
     }
 
     expandResource(_.slice(s, 1), p, m);

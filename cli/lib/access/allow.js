@@ -42,19 +42,15 @@ allow.execute = function (ctx) {
 
     var params = harvest(ctx);
 
-    var pathSegments = ctx.params[1].split('/');
+    var pathSegments = params.path.split('/');
 
     var secret = _.takeRight(pathSegments);
     var path = _.take(pathSegments, pathSegments.length - 1).join('/');
 
-    if (!resources.validPath(path, secret)) {
-      reject(new Error('boom'));
-    }
-
     var resourceMap = resources.fromPath(path, secret);
     var extendedResources = resources.explode(resourceMap);
 
-    var policy = new Policy('generated policy');
+    var policy = new Policy('generated-policy');
 
     _.each(extendedResources, function (r) {
       var statement = new Statement(EFFECT_ALLOW);
@@ -66,28 +62,43 @@ allow.execute = function (ctx) {
       policy.addStatement(statement);
     });
 
-    var org;
-    var team;
-    return ctx.api.orgs.get({ name: resourceMap.org })
+    var payload = {};
+    return ctx.api.orgs.get({ name: pathSegments[1] })
       .then(function (res) {
-        org = res[0];
+        payload.org = res[0];
 
-        if (!org) {
-          return reject(new Error('Unknown org: ' + resourceMap.org));
+        if (!payload.org) {
+          return reject(new Error('Unknown org: ' + pathSegments[1]));
         }
 
-        return ctx.api.teams.get({ name: params.team, org_id: org.id });
+        return ctx.api.teams.get({ name: params.team, org_id: payload.org.id });
       })
       .then(function (res) {
-        team = res[0];
+        payload.team = res[0];
 
-        if (!team) {
+        if (!payload.team) {
           return reject(new Error('Unknown team: ' + params.team));
         }
 
-        // return ctx.api.policies.create(policy)
-        return true;
+        return ctx.api.policies.create({
+          org_id: payload.org.id,
+          policy: _.toPlainObject(policy)
+        });
       })
+      .then(function (res) {
+        payload.policy = res;
+
+        if (!payload.policy) {
+          return reject(new Error('Error creating policy'));
+        }
+
+        return ctx.api.policyAttachments.create({
+          org_id: payload.org.id,
+          owner_id: payload.team.id,
+          policy_id: payload.policy.id
+        });
+      })
+      .then(function () { return payload; })
       .catch(reject);
   });
 };

@@ -61,7 +61,7 @@ Statement.prototype.setActions = function (actions) {
     throw new Error('no valid actions provided');
   }
 
-  this.actions = actions;
+  this.action = actions;
 };
 
 function Policy(name, description) {
@@ -71,7 +71,13 @@ function Policy(name, description) {
 }
 
 Policy.prototype.addStatement = function (statement) {
-  this.statements.push(statement);
+  var plainStatement = _.pick(_.toPlainObject(statement), ['effect', 'action', 'resource']);
+
+  this.statements.push(plainStatement);
+};
+
+Policy.prototype.toPlainObject = function () {
+  return _.pick(this, ['name', 'description', 'statements']);
 };
 
 module.exports = {
