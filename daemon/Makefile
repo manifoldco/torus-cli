@@ -7,7 +7,7 @@ GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
 all: server
 
 server:
-	go build -i -v -o ${OUT} -ldflags="-X main.version=${VERSION}" ${PKG}
+	go build -i -v -o ${OUT} -ldflags="-X ${PKG}/config.version=${VERSION}" ${PKG}
 
 test:
 	@go test -short ${PKG_LIST}
@@ -21,7 +21,7 @@ lint:
 	    done
 
 static: vet lint
-	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X main.version=${VERSION}" ${PKG}
+	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/config.version=${VERSION}" ${PKG}
 
 clean:
 	-@rm ${OUT} ${OUT}-v*
