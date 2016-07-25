@@ -8,6 +8,23 @@ we follow for managing issues, developing product, and implementation is
 available in our shared [Google Docs
 Drive](https://drive.google.com/drive/u/0/folders/0Bx72T5vLCOgmeVlQbjVlUVVQRDg).
 
+## Setup
+
+There are several steps required to get up and running locally with the
+daemon/cli and [registry](https://github.com/arigatomachine/registry).
+
+1. Ensure you have a working local development environment of the
+   [registry](https://github.com/arigatomachine/registry#setup). Make sure
+   you've run the migration and seed scripts!
+2. Once setup, build the development docker container for the CLI and Daemon
+   using `npm run build-container` inside the `$CLI_REPO/cli` folder.
+3. Now, you can build the daemon using `npm run build` inside the
+   `$CLI_REPO/cli` folder.
+4. Finally, before you can start working with the daemon and cli you must
+   override the arigato root key with your local development keys. Using
+   `bin/arigato prefs:set core.public_key_file $REGISTRY_REPO/keys/offline-pub.json`
+5. Now you should be able to begin interacting with the CLI and Daemon.
+
 ## Codebase
 
 This repository contains the code for both the arigato daemon and cli. It's
