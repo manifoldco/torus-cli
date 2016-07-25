@@ -15,7 +15,6 @@ var RC_PERM_STRING = '0644';
 var rc = module.exports = {};
 
 rc.stat = function (rcPath) {
-
   return fsWrap.stat(rcPath).then(function (stat) {
     if (!stat.isFile()) {
       return Promise.reject(new Error('.arigatorc must be a file: ' + rcPath));
@@ -66,8 +65,8 @@ rc.read = function (rcPath) {
         return {};
       }
 
-      return fsWrap.read().then(function (contents) {
-        return ini.parse(contents);
+      return fsWrap.read(rcPath).then(function (contents) {
+        return ini.parse(contents.toString('utf-8'));
       });
     });
   });

@@ -13,7 +13,8 @@ var SECTIONS = {
     service: _.isString
   },
   core: {
-    context: _.isBoolean
+    context: _.isBoolean,
+    public_key_file: _.isString
   }
 };
 
