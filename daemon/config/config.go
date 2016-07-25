@@ -1,8 +1,10 @@
 package config
 
-import "os"
-import "fmt"
-import "path"
+import (
+	"fmt"
+	"os"
+	"path"
+)
 
 var version = "development"
 
@@ -14,6 +16,7 @@ type Config struct {
 	SocketPath  string
 	PidPath     string
 	Version     string
+	PublicKey   *PublicKey
 }
 
 func NewConfig(arigatoRoot string) (*Config, error) {
@@ -48,6 +51,16 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 			arigatoRoot, fMode.Perm(), REQUIRED_PERM)
 	}
 
+	prefs, err := NewPreferences()
+	if err != nil {
+		return nil, err
+	}
+
+	publicKey, err := loadPublicKey(prefs)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
 		ArigatoRoot: arigatoRoot,
 		// XXX: the hostname should be configurable, defaulting to our prod
@@ -56,6 +69,7 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 		SocketPath: path.Join(arigatoRoot, "daemon.socket"),
 		PidPath:    path.Join(arigatoRoot, "daemon.pid"),
 		Version:    version,
+		PublicKey:  publicKey,
 	}
 
 	return cfg, nil

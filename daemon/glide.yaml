@@ -7,3 +7,6 @@ import:
 - package: github.com/facebookgo/httpdown
 - package: github.com/go-zoo/bone
 - package: golang.org/x/crypto
+- package: github.com/go-ini/ini
+- package: github.com/kardianos/osext
+- package: github.com/mitchellh/go-homedir
