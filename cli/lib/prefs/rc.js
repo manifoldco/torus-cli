@@ -3,10 +3,11 @@
 var _ = require('lodash');
 var path = require('path');
 var ini = require('ini');
-var fs = require('fs');
 var lock = require('../util/lock');
 var Prefs = require('../prefs');
 var Promise = require('es6-promise').Promise;
+
+var fsWrap = require('../util/fswrap');
 
 // XXX: This should be 0600 not 0700
 var RC_PERM_STRING = '0644';
@@ -14,29 +15,26 @@ var RC_PERM_STRING = '0644';
 var rc = module.exports = {};
 
 rc.stat = function (rcPath) {
-  return new Promise(function (resolve, reject) {
-    fs.stat(rcPath, function (err, stat) {
-      if (err && err.code === 'ENOENT') {
-        return resolve(false);
-      }
+  return fsWrap.stat(rcPath).then(function (stat) {
+    if (!stat.isFile()) {
+      return Promise.reject(new Error('.arigatorc must be a file: ' + rcPath));
+    }
 
-      if (err) {
-        return reject(err);
-      }
+    var fileMode = '0' + (stat.mode & parseInt('777', 8)).toString(8);
 
-      if (!stat.isFile()) {
-        return reject(new Error('.arigatorc must be a file: ' + rcPath));
-      }
+    if (fileMode !== RC_PERM_STRING) {
+      var msg = 'rc file permission error: ' + rcPath + ' ' + fileMode +
+        ' not ' + RC_PERM_STRING;
+      return Promise.reject(new Error(msg));
+    }
 
-      var fileMode = '0' + (stat.mode & parseInt('777', 8)).toString(8);
+    return true;
+  }).catch(function (err) {
+    if (err && err.code === 'ENOENT') {
+      return Promise.resolve(false);
+    }
 
-      if (fileMode !== RC_PERM_STRING) {
-        var msg = 'rc file permission error: ' + rcPath + ' ' + fileMode + ' not ' + RC_PERM_STRING;
-        return reject(new Error(msg));
-      }
-
-      return resolve(true);
-    });
+    return Promise.reject(err);
   });
 };
 
@@ -47,19 +45,7 @@ rc.write = function (prefs) {
 
   return lock.wrap(prefs.path, function () {
     return rc.stat(prefs.path).then(function () {
-      return rc._write(prefs.path, prefs.values);
-    });
-  });
-};
-
-rc._write = function (rcPath, contents) {
-  return new Promise(function (resolve, reject) {
-    fs.writeFile(rcPath, ini.stringify(contents), function (err) {
-      if (err) {
-        return reject(err);
-      }
-
-      return resolve();
+      return fsWrap.write(prefs.path, ini.stringify(prefs.values));
     });
   });
 };
@@ -79,19 +65,9 @@ rc.read = function (rcPath) {
         return {};
       }
 
-      return rc._read(rcPath);
-    });
-  });
-};
-
-rc._read = function (rcPath) {
-  return new Promise(function (resolve, reject) {
-    fs.readFile(rcPath, 'utf8', function (err, contents) {
-      if (err) {
-        return reject(err);
-      }
-
-      return resolve(ini.parse(contents));
+      return fsWrap.read(rcPath).then(function (contents) {
+        return ini.parse(contents.toString('utf-8'));
+      });
     });
   });
 };

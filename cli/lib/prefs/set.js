@@ -3,9 +3,22 @@
 var set = exports;
 
 var _ = require('lodash');
+var path = require('path');
 var Promise = require('es6-promise').Promise;
+
 var output = require('../cli/output');
 var rc = require('./rc');
+var keyFile = require('../util/keyfile');
+
+var validation = {
+  'core.public_key_file': keyFile.validate
+};
+
+var preparation = {
+  'core.public_key_file': function (keyFilePath) {
+    return Promise.resolve(path.resolve(process.cwd(), keyFilePath));
+  }
+};
 
 set.output = {};
 
@@ -19,32 +32,42 @@ set.output.failure = output.create(function () {
 
 set.execute = function (ctx) {
   var prefs = ctx.prefs;
-  var params = {
-    prefsKey: ctx.params[0],
-    prefsVal: ctx.params[1] || true
-  };
 
-  if (!params.prefsKey && !_.isString(params.prefsKey)) {
+  var key = ctx.params[0];
+  var value = ctx.params[1] || true;
+
+  if (!key && !_.isString(key)) {
     return Promise.reject(new Error('Missing required [key] parameter'));
   }
 
-  if (params.prefsVal === 'true') {
-    params.prefsVal = true;
+  key = key.toLowerCase();
+
+  if (value === 'true') {
+    value = true;
   }
 
-  if (params.prefsVal === 'false') {
-    params.prefsVal = false;
+  if (value === 'false') {
+    value = false;
   }
 
-  if (!_.isBoolean(params.prefsVal) && !_.isString(params.prefsVal)) {
+  if (!_.isBoolean(value) && !_.isString(value)) {
     return Promise.reject(new Error('Missing required [value] parameter'));
   }
 
-  try {
-    prefs.set(params.prefsKey, params.prefsVal);
-  } catch (err) {
-    return Promise.reject(err);
-  }
+  var validator = validation[key] ?
+    validation[key](value) : Promise.resolve(true);
 
-  return rc.write(prefs);
+  return validator.then(function (validationStr) {
+    if (_.isString(validationStr)) {
+      throw new Error(key + ' is not valid: ' + validationStr);
+    }
+
+    var preparator = preparation[key] ?
+      preparation[key](value) : Promise.resolve(value);
+
+    return preparator.then(function (preparedValue) {
+      prefs.set(key, preparedValue);
+      return rc.write(prefs);
+    });
+  });
 };

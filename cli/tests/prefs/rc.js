@@ -4,10 +4,13 @@
 
 var assert = require('assert');
 
+var ini = require('ini');
 var Promise = require('es6-promise').Promise;
 var sinon = require('sinon');
 
 var rc = require('../../lib/prefs/rc');
+
+var fsWrap = require('../../lib/util/fswrap');
 
 var fs = require('fs');
 var lock = require('../../lib/util/lock');
@@ -32,8 +35,8 @@ describe('rc', function () {
     sandbox.stub(fs, 'stat').callsArgWith(1, null, stat);
     sandbox.stub(lock, 'acquire').returns(Promise.resolve());
     sandbox.stub(lock, 'release').returns(Promise.resolve());
-    sandbox.stub(rc, '_write').returns(Promise.resolve());
-    sandbox.stub(rc, '_read').returns(Promise.resolve());
+    sandbox.stub(fsWrap, 'read').returns(Promise.resolve());
+    sandbox.stub(fsWrap, 'write').returns(Promise.resolve());
   });
 
   afterEach(function () {
@@ -105,9 +108,9 @@ describe('rc', function () {
       });
     });
 
-    it('will call _write', function () {
+    it('will call fsWrap.write', function () {
       rc.write(prefs).then(function () {
-        assert(rc._write.calledWith(rcPath, rcContents));
+        assert(fsWrap.write.calledWith(rcPath, rcContents));
       });
     });
   });
@@ -126,14 +129,13 @@ describe('rc', function () {
     });
 
     it('returns obj', function () {
-      rc._read.returns(Promise.resolve({
+      fsWrap.read.returns(Promise.resolve(ini.stringify({
         defaults: {},
         core: { context: false }
-      }));
+      })));
 
       return rc.read('/s/d/f').then(function (contents) {
         assert.deepEqual(contents, {
-          defaults: {},
           core: { context: false }
         });
       });
@@ -151,9 +153,9 @@ describe('rc', function () {
       }, /Must provide an absolute rc path/);
     });
 
-    it('will call _read', function () {
+    it('will call fsWrap.read', function () {
       rc.read(rcPath).then(function () {
-        assert(rc._read.calledWith(rcPath));
+        assert(fsWrap.read.calledWith(rcPath));
       });
     });
   });
