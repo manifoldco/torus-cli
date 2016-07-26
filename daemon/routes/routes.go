@@ -202,6 +202,12 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			encodeResponseErr(w, err)
 		}
 
+		// sigclaim
+		_, err = registry.NewEnvelope(engine,
+			registry.NewClaim(genReq.OrgID, userID, pubsig.ID, pubsig.ID,
+				registry.SignatureClaimType),
+			pubsig.ID, &kp.Signature)
+
 		pubenc, err := packagePublicKey(engine, userID, genReq.OrgID,
 			registry.EncryptionKeyType,
 			kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
@@ -215,6 +221,12 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		if err != nil {
 			encodeResponseErr(w, err)
 		}
+
+		// encclaim
+		_, err = registry.NewEnvelope(engine,
+			registry.NewClaim(genReq.OrgID, userID, pubenc.ID, pubenc.ID,
+				registry.SignatureClaimType),
+			pubsig.ID, &kp.Signature)
 
 		w.WriteHeader(http.StatusNoContent)
 	})

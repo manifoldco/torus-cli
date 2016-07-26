@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"encoding/json"
-	"strconv"
 	"time"
 
 	"github.com/arigatomachine/cli/daemon/crypto"
@@ -35,7 +33,7 @@ func packagePublicKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
 		Expires: now.Add(time.Hour * 8760), // one year
 	}
 
-	return envelope(engine, &body, sigID, sigKP)
+	return registry.NewEnvelope(engine, &body, sigID, sigKP)
 }
 
 func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
@@ -56,38 +54,5 @@ func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
 		},
 	}
 
-	return envelope(engine, &body, sigID, sigKP)
-}
-
-func envelope(engine *crypto.Engine, body registry.AgObject, sigID *registry.ID,
-	sigKP *crypto.SignatureKeyPair) (*registry.Envelope, error) {
-
-	b, err := json.Marshal(&body)
-	if err != nil {
-		return nil, err
-	}
-
-	s, err := engine.Sign(*sigKP, append([]byte(strconv.Itoa(1)), b...))
-	if err != nil {
-		return nil, err
-	}
-
-	sv := registry.Base64Value(s)
-	sig := registry.Signature{
-		PublicKeyID: sigID,
-		Algorithm:   "eddsa",
-		Value:       &sv,
-	}
-
-	id, err := registry.NewID(1, body, &sig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &registry.Envelope{
-		ID:        &id,
-		Version:   1,
-		Body:      body,
-		Signature: sig,
-	}, nil
+	return registry.NewEnvelope(engine, &body, sigID, sigKP)
 }

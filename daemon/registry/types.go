@@ -70,15 +70,6 @@ func (bv *Base64Value) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Envelope is the generic format for encapsulating request/response objects
-// to/from arigato.
-type Envelope struct {
-	ID        *ID         `json:"id"`
-	Version   uint8       `json:"version"`
-	Body      interface{} `json:"body"`
-	Signature Signature   `json:"sig"`
-}
-
 const (
 	EncryptionKeyType = "encryption"
 	SigningKeyType    = "signing"
@@ -107,6 +98,7 @@ func (pk *PrivateKey) Type() byte {
 type PublicKeyValue struct {
 	Value *Base64Value `json:"value"`
 }
+
 type PublicKey struct {
 	Algorithm string         `json:"alg"`
 	Created   time.Time      `json:"created_at"`
@@ -119,6 +111,36 @@ type PublicKey struct {
 
 func (pk *PublicKey) Type() byte {
 	return byte(0x06)
+}
+
+const (
+	SignatureClaimType  = "signature"
+	RevocationClaimType = "revocation"
+)
+
+type Claim struct {
+	Created     time.Time `json:"created_at"`
+	OrgID       *ID       `json:"org_id"`
+	OwnerID     *ID       `json:"owner_id"`
+	Previous    *ID       `json:"previous"`
+	PublicKeyID *ID       `json:"public_key_id"`
+	KeyType     string    `json:"type"`
+}
+
+func (c *Claim) Type() byte {
+	return byte(0x08)
+}
+
+// NewClaim returns a new Claim, with the created time set to now
+func NewClaim(orgID, ownerID, previous, pubKeyID *ID, keyType string) *Claim {
+	return &Claim{
+		OrgID:       orgID,
+		OwnerID:     ownerID,
+		Previous:    previous,
+		PublicKeyID: pubKeyID,
+		KeyType:     keyType,
+		Created:     time.Now().UTC(),
+	}
 }
 
 // Signature, while not technically a payload, is still immutable, and must be

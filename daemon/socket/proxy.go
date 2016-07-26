@@ -26,8 +26,8 @@ type AuthProxy struct {
 	sess session.Session
 }
 
-func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB) (
-	*AuthProxy, error) {
+func NewAuthProxy(c *config.Config, sess session.Session,
+	db *db.DB) (*AuthProxy, error) {
 
 	l, err := MakeSocket(c.SocketPath)
 	if err != nil {
