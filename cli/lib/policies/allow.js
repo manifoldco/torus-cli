@@ -69,7 +69,7 @@ allow.execute = function (ctx) {
     var resourceMap = rpath.parse(path, secret);
     var extendedResources = rpath.explode(resourceMap);
 
-    var policy = new Policy('generated-policy');
+    var policy = new Policy('generated-allow-' + Math.floor(Date.now() / 1000));
 
     _.each(extendedResources, function (r) {
       var statement = new Statement(EFFECT_ALLOW);

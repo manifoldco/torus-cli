@@ -61,7 +61,7 @@ deny.execute = function (ctx) {
     var resourceMap = rpath.parse(path, secret);
     var expandedResources = rpath.expand(resourceMap);
 
-    var policy = new Policy('generated-policy');
+    var policy = new Policy('generated-deny-' + Math.floor(Date.now() / 1000));
 
     _.each(expandedResources, function (r) {
       var statement = new Statement(EFFECT_DENY);
