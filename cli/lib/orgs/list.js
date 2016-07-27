@@ -20,7 +20,7 @@ orgsList.output.success = output.create(function (payload) {
 
   var msg = ' orgs (' + orgs.length + ')\n';
 
-  var personalOrg = _.takeWhile(orgs, function (o) {
+  var personalOrg = _.filter(orgs, function (o) {
     return o.body.name === self.body.username;
   });
 
