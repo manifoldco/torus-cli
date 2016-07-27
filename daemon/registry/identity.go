@@ -57,6 +57,10 @@ func NewIDFromString(raw string) (*ID, error) {
 	return id, err
 }
 
+func (id *ID) Type() byte {
+	return id[1]
+}
+
 func (id *ID) MarshalJSON() ([]byte, error) {
 	b32 := LowerBase32.EncodeToString(id[:])
 	return []byte("\"" + strings.TrimRight(b32, "=") + "\""), nil

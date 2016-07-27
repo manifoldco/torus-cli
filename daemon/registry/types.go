@@ -42,8 +42,8 @@ type SelfResponse struct {
 	Version uint8  `json:"version"`
 	Body    *struct {
 		Master *struct {
-			Alg   string `json:"alg"`
-			Value string `json:"value"`
+			Alg   string       `json:"alg"`
+			Value *Base64Value `json:"value"`
 		} `json:"master"`
 	} `json:"body"`
 }
@@ -68,6 +68,12 @@ func (bv *Base64Value) UnmarshalJSON(b []byte) error {
 	v := reflect.ValueOf(bv).Elem()
 	v.SetBytes(out[:n])
 	return nil
+}
+
+type KeyPairsCreateRequest struct { // Its the response, too!
+	PublicKey  *Envelope  `json:"public_key"`
+	PrivateKey *Envelope  `json:"private_key"`
+	Claims     []Envelope `json:"claims"`
 }
 
 const (

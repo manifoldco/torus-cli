@@ -1,10 +1,7 @@
 package routes
 
 import (
-	"encoding/base64"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -41,25 +38,8 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		req, err := client.NewRequest("POST", "/tokens",
-			&registry.LoginTokenRequest{
-				Type:  TokenTypeLogin,
-				Email: creds.Email,
-			})
+		salt, err := client.Tokens.PostLogin(creds.Email)
 		if err != nil {
-			log.Printf("Error building http request: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		salt := registry.LoginTokenResponse{}
-		resp, err := client.Do(req, &salt)
-		if err != nil && resp != nil && resp.StatusCode != 201 {
-			log.Printf("Failed to get login token from server: %s", err)
-			encodeResponseErr(w, err)
-			return
-		} else if err != nil {
-			log.Printf("Error making api request: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
@@ -72,52 +52,19 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		req, err = client.NewTokenRequest(salt.Token, "POST", "/tokens",
-			&registry.AuthTokenRequest{Type: "auth", TokenHMAC: hmac})
+		auth, err := client.Tokens.PostAuth(salt.Token, hmac)
 		if err != nil {
-			log.Printf("Error building http request: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
 
-		auth := registry.AuthTokenResponse{}
-		resp, err = client.Do(req, &auth)
+		self, err := client.Users.GetSelf(auth.Token)
 		if err != nil {
-			log.Printf("Error making api request: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
 
-		req, err = client.NewTokenRequest(auth.Token, "GET", "/users/self", nil)
-		if err != nil {
-			log.Printf("Error making api request: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		self := registry.SelfResponse{}
-		resp, err = client.Do(req, &self)
-		if err != nil {
-			log.Printf("Error making api request: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		err = validateSelf(&self)
-		if err != nil {
-			log.Printf("Invalid user self: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		mk, err := base64.RawURLEncoding.DecodeString(self.Body.Master.Value)
-		if err != nil {
-			log.Printf("Could not decode master key: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		db.SetMasterKey(mk)
+		db.SetMasterKey(*self.Body.Master.Value)
 		s.Set(self.ID, creds.Passphrase, auth.Token)
 
 		w.WriteHeader(http.StatusNoContent)
@@ -131,37 +78,30 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		req, err := client.NewTokenRequest(tok, "DELETE", "/tokens/"+tok, nil)
-		if err != nil {
-			log.Printf("Error building http request: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		resp, err := client.Do(req, nil)
-		if err != nil && resp == nil {
-			log.Printf("Error making api request: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		if resp.StatusCode >= 200 || resp.StatusCode < 300 {
+		err := client.Tokens.Delete(tok)
+		switch err := err.(type) {
+		case *registry.Error:
+			switch {
+			case err.StatusCode >= 500:
+				// On a 5XX response, we don't know for sure that the server
+				// has successfully removed the auth token. Keep the copy in
+				// the daemon, so the user may try again.
+				encodeResponseErr(w, err)
+			case err.StatusCode >= 400:
+				// A 4XX error indicates either the token isn't found, or we're
+				// not allowed to remove it (or the server is a teapot).
+				//
+				// In any case, the daemon has gotten out of sync with the
+				// server. Remove our local copy of the auth token.
+				log.Printf("Got 4XX removing auth token. Treating as success")
+				s.Logout()
+				w.WriteHeader(http.StatusNoContent)
+			}
+		case nil:
 			s.Logout()
 			w.WriteHeader(http.StatusNoContent)
-		} else if resp.StatusCode >= 500 {
-			// On a 5XX response, we don't know for sure that the server has
-			// successfully removed the auth token. Keep the copy in the daemon,
-			// so the user may try again.
+		default:
 			encodeResponseErr(w, err)
-		} else {
-			// A 4XX error indicates either the token isn't found, or we're
-			// not allowed to remove it (or the server is a teapot).
-			//
-			// In any case, the daemon has gotten out of sync with the server.
-			// Remove our local copy of the auth token.
-			log.Printf("Got 4XX removing auth token. Treating as success")
-			s.Logout()
-			w.WriteHeader(http.StatusNoContent)
 		}
 	})
 
@@ -188,45 +128,68 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			encodeResponseErr(w, err)
 			return
 		}
+
 		pubsig, err := packagePublicKey(engine, userID, genReq.OrgID,
 			registry.SigningKeyType,
 			kp.Signature.Public, nil, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
+			return
 		}
-		// privsig
-		_, err = packagePrivateKey(engine, userID, genReq.OrgID,
+
+		privsig, err := packagePrivateKey(engine, userID, genReq.OrgID,
 			kp.Signature.PNonce, kp.Signature.Private, pubsig.ID, pubsig.ID,
 			&kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
+			return
 		}
 
-		// sigclaim
-		_, err = registry.NewEnvelope(engine,
+		sigclaim, err := registry.NewEnvelope(engine,
 			registry.NewClaim(genReq.OrgID, userID, pubsig.ID, pubsig.ID,
 				registry.SignatureClaimType),
 			pubsig.ID, &kp.Signature)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		_, _, _, err = client.KeyPairs.Post(pubsig, privsig, sigclaim)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
 
 		pubenc, err := packagePublicKey(engine, userID, genReq.OrgID,
 			registry.EncryptionKeyType,
 			kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
+			return
 		}
-		// privenc
-		_, err = packagePrivateKey(engine, userID, genReq.OrgID,
+
+		privenc, err := packagePrivateKey(engine, userID, genReq.OrgID,
 			kp.Encryption.PNonce, kp.Encryption.Private, pubenc.ID, pubsig.ID,
 			&kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
+			return
 		}
 
-		// encclaim
-		_, err = registry.NewEnvelope(engine,
+		encclaim, err := registry.NewEnvelope(engine,
 			registry.NewClaim(genReq.OrgID, userID, pubenc.ID, pubenc.ID,
 				registry.SignatureClaimType),
 			pubsig.ID, &kp.Signature)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		_, _, _, err = client.KeyPairs.Post(pubenc, privenc, encclaim)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
 
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -277,28 +240,4 @@ func encodeResponseErr(w http.ResponseWriter, err error) {
 		w.WriteHeader(http.StatusInternalServerError)
 		enc.Encode(&Error{Err: "Internal server error"})
 	}
-}
-
-func validateSelf(s *registry.SelfResponse) error {
-	if s.Version != 1 {
-		return errors.New("version must be 1")
-	}
-
-	if s.Body == nil {
-		return errors.New("missing body")
-	}
-
-	if s.Body.Master == nil {
-		return errors.New("missing master key section")
-	}
-
-	if s.Body.Master.Alg != crypto.Triplesec {
-		return fmt.Errorf("Unknown alg: %s", s.Body.Master.Alg)
-	}
-
-	if len(s.Body.Master.Value) == 0 {
-		return errors.New("Zero length master key found")
-	}
-
-	return nil
 }

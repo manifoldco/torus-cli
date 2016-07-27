@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	nonceSize = 24
+	nonceSize = 16
 	blakeSize = 16
 )
 
@@ -51,7 +51,7 @@ func (e *Engine) Seal(pt []byte) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	nonce := make([]byte, 24)
+	nonce := make([]byte, nonceSize)
 	_, err = rand.Read(nonce)
 	if err != nil {
 		return nil, nil, err

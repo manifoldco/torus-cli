@@ -2,6 +2,7 @@ package registry
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/arigatomachine/cli/daemon/crypto"
@@ -48,4 +49,37 @@ func NewEnvelope(engine *crypto.Engine, body AgObject, sigID *ID,
 		Body:      body,
 		Signature: sig,
 	}, nil
+}
+
+type outEnvelope struct {
+	ID        *ID             `json:"id"`
+	Version   uint8           `json:"version"`
+	Body      json.RawMessage `json:"body"`
+	Signature Signature       `json:"sig"`
+}
+
+func (e *Envelope) UnmarshalJSON(b []byte) error {
+	o := outEnvelope{}
+	err := json.Unmarshal(b, &o)
+	if err != nil {
+		return err
+	}
+
+	e.ID = o.ID
+	e.Version = o.Version
+	e.Signature = o.Signature
+
+	t := o.ID.Type()
+	switch t {
+	case 0x06:
+		e.Body = &PublicKey{}
+	case 0x07:
+		e.Body = &PrivateKey{}
+	case 0x08:
+		e.Body = &Claim{}
+	default:
+		return fmt.Errorf("Unknown type: %s", t)
+	}
+
+	return json.Unmarshal(o.Body, e.Body)
 }
