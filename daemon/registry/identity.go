@@ -16,6 +16,7 @@ const (
 )
 
 type AgObject interface {
+	Version() int
 	Type() byte
 }
 
@@ -23,13 +24,13 @@ var LowerBase32 = base32.NewEncoding(base32Alphabet)
 
 type ID [18]byte
 
-func NewID(version uint8, body AgObject, sig *Signature) (ID, error) {
+func NewID(body AgObject, sig *Signature) (ID, error) {
 	h, err := blake2b.New(&blake2b.Config{Size: 16})
 	if err != nil {
 		return ID{}, err
 	}
 
-	h.Write([]byte(strconv.Itoa(int(version))))
+	h.Write([]byte(strconv.Itoa(body.Version())))
 
 	b, err := json.Marshal(body)
 	if err != nil {

@@ -24,7 +24,8 @@ func NewEnvelope(engine *crypto.Engine, body AgObject, sigID *ID,
 		return nil, err
 	}
 
-	s, err := engine.Sign(*sigKP, append([]byte(strconv.Itoa(1)), b...))
+	s, err := engine.Sign(*sigKP,
+		append([]byte(strconv.Itoa(body.Version())), b...))
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +37,7 @@ func NewEnvelope(engine *crypto.Engine, body AgObject, sigID *ID,
 		Value:       &sv,
 	}
 
-	id, err := NewID(1, body, &sig)
+	id, err := NewID(body, &sig)
 	if err != nil {
 		return nil, err
 	}

@@ -91,6 +91,10 @@ type PrivateKey struct {
 	PublicKeyID *ID             `json:"public_key_id"`
 }
 
+func (pk *PrivateKey) Version() int {
+	return 1
+}
+
 func (pk *PrivateKey) Type() byte {
 	return byte(0x07)
 }
@@ -109,6 +113,10 @@ type PublicKey struct {
 	KeyType   string         `json:"type"`
 }
 
+func (pk *PublicKey) Version() int {
+	return 1
+}
+
 func (pk *PublicKey) Type() byte {
 	return byte(0x06)
 }
@@ -125,6 +133,10 @@ type Claim struct {
 	Previous    *ID       `json:"previous"`
 	PublicKeyID *ID       `json:"public_key_id"`
 	KeyType     string    `json:"type"`
+}
+
+func (c *Claim) Version() int {
+	return 1
 }
 
 func (c *Claim) Type() byte {
