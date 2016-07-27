@@ -4,20 +4,21 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 
-var allow = require('../access/allow');
+var deny = require('../access/deny');
 var auth = require('../middleware/auth');
 
 var command = new Command(
-  'allow [crudl] [path] [team]',
-  'Grant a team permissions on a resource.',
+  'deny [crudl] [path] [team]',
+  'Explicitly deny a team permissions access to a secret[\'s]',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      allow.execute(ctx).then(function (payload) {
-        allow.output.success(null, payload);
+      deny.execute(ctx).then(function (payload) {
+        deny.output.success(null, payload);
+
         resolve();
       }).catch(function (err) {
         err.type = err.type || 'unknown';
-        allow.output.failure();
+        deny.output.failure();
         reject(err);
       });
     });
