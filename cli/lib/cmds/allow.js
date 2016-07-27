@@ -8,8 +8,8 @@ var allow = require('../access/allow');
 var auth = require('../middleware/auth');
 
 var command = new Command(
-  'allow',
-  'Grant a team permissions on a resource',
+  'allow [crudl] [path] [team]',
+  'Grant a team permissions on a resource.',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       allow.execute(ctx).then(function (payload) {

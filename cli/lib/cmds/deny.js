@@ -8,7 +8,7 @@ var deny = require('../access/deny');
 var auth = require('../middleware/auth');
 
 var command = new Command(
-  'deny',
+  'deny [crudl] [path] [team]',
   'Explicitly deny a team permissions access to a secret[\'s]',
   function (ctx) {
     return new Promise(function (resolve, reject) {
