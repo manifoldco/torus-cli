@@ -7,6 +7,7 @@ import (
 	"github.com/nightlyone/lockfile"
 
 	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/session"
 	"github.com/arigatomachine/cli/daemon/socket"
 )
@@ -50,7 +51,9 @@ func NewDaemon(cfg *config.Config) (*Daemon, error) {
 
 	session := session.NewSession()
 
-	proxy, err := socket.NewAuthProxy(cfg, session)
+	db := &db.DB{}
+
+	proxy, err := socket.NewAuthProxy(cfg, session, db)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create auth proxy: %s", err)
 	}

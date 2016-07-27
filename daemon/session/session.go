@@ -5,15 +5,18 @@ import "sync"
 import "fmt"
 
 type memorySession struct {
+	id string
+	// sensitive values
 	token      string
 	passphrase string
 	mutex      *sync.Mutex
 }
 
 type Session interface {
-	Set(string, string) error
-	GetToken() string
-	GetPassphrase() string
+	Set(string, string, string) error
+	ID() string
+	Token() string
+	Passphrase() string
 	HasToken() bool
 	HasPassphrase() bool
 	Logout()
@@ -21,12 +24,16 @@ type Session interface {
 }
 
 func NewSession() Session {
-	return &memorySession{token: "", passphrase: "", mutex: &sync.Mutex{}}
+	return &memorySession{mutex: &sync.Mutex{}}
 }
 
-func (s *memorySession) Set(passphrase, token string) error {
+func (s *memorySession) Set(id, passphrase, token string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	if len(id) == 0 {
+		return errors.New("ID must not be empty")
+	}
 
 	if len(passphrase) == 0 {
 		return errors.New("Passphrase must not be empty")
@@ -36,20 +43,28 @@ func (s *memorySession) Set(passphrase, token string) error {
 		return errors.New("Token must not be empty")
 	}
 
+	s.id = id
 	s.passphrase = passphrase
 	s.token = token
 
 	return nil
 }
 
-func (s *memorySession) GetToken() string {
+func (s *memorySession) ID() string {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	return s.id
+}
+
+func (s *memorySession) Token() string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	return s.token
 }
 
-func (s *memorySession) GetPassphrase() string {
+func (s *memorySession) Passphrase() string {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

@@ -12,6 +12,7 @@ import (
 	"github.com/go-zoo/bone"
 
 	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/routes"
 	"github.com/arigatomachine/cli/daemon/session"
 )
@@ -21,10 +22,13 @@ type AuthProxy struct {
 	l    net.Listener
 	s    httpdown.Server
 	c    *config.Config
+	db   *db.DB
 	sess session.Session
 }
 
-func NewAuthProxy(c *config.Config, sess session.Session) (*AuthProxy, error) {
+func NewAuthProxy(c *config.Config, sess session.Session,
+	db *db.DB) (*AuthProxy, error) {
+
 	l, err := MakeSocket(c.SocketPath)
 	if err != nil {
 		return nil, err
@@ -35,7 +39,7 @@ func NewAuthProxy(c *config.Config, sess session.Session) (*AuthProxy, error) {
 		return nil, err
 	}
 
-	return &AuthProxy{u: u, l: l, c: c, sess: sess}, nil
+	return &AuthProxy{u: u, l: l, c: c, sess: sess, db: db}, nil
 }
 
 func (p *AuthProxy) Listen() error {
@@ -52,7 +56,7 @@ func (p *AuthProxy) Listen() error {
 			r.Host = p.u.Host
 			r.URL.Path = r.URL.Path[6:]
 
-			tok := p.sess.GetToken()
+			tok := p.sess.Token()
 			if tok != "" {
 				r.Header["Authorization"] = []string{"Bearer " + tok}
 			}
@@ -60,7 +64,7 @@ func (p *AuthProxy) Listen() error {
 	}
 
 	mux.Handle("/proxy/", proxy)
-	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, t))
+	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, t))
 
 	h := httpdown.HTTP{}
 	p.s = h.Serve(&http.Server{Handler: loggingHandler(mux)}, p.l)

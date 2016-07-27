@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -9,13 +12,15 @@ import (
 
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
+	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
-func NewRouteMux(c *config.Config, s session.Session,
+func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	t *http.Transport) *bone.Mux {
 
+	engine := crypto.NewEngine(s, db)
 	client := registry.NewClient(c.API, s, t)
 	mux := bone.New()
 
@@ -83,13 +88,43 @@ func NewRouteMux(c *config.Config, s session.Session,
 			return
 		}
 
-		s.Set(creds.Passphrase, auth.Token)
+		req, err = client.NewTokenRequest(auth.Token, "GET", "/users/self", nil)
+		if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		self := registry.SelfResponse{}
+		resp, err = client.Do(req, &self)
+		if err != nil {
+			log.Printf("Error making api request: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		err = validateSelf(&self)
+		if err != nil {
+			log.Printf("Invalid user self: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		mk, err := base64.RawURLEncoding.DecodeString(self.Body.Master.Value)
+		if err != nil {
+			log.Printf("Could not decode master key: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		db.SetMasterKey(mk)
+		s.Set(self.ID, creds.Passphrase, auth.Token)
 
 		w.WriteHeader(http.StatusNoContent)
 	})
 
 	mux.PostFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		tok := s.GetToken()
+		tok := s.Token()
 
 		if tok == "" {
 			w.WriteHeader(http.StatusNotFound)
@@ -128,6 +163,72 @@ func NewRouteMux(c *config.Config, s session.Session,
 			s.Logout()
 			w.WriteHeader(http.StatusNoContent)
 		}
+	})
+
+	mux.PostFunc("/keypairs/generate", func(w http.ResponseWriter,
+		r *http.Request) {
+
+		dec := json.NewDecoder(r.Body)
+		genReq := KeyPairGenerate{}
+		err := dec.Decode(&genReq)
+		if err != nil || genReq.OrgID == nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		kp, err := engine.GenerateKeyPairs()
+		if err != nil {
+			log.Printf("Error generating keypairs: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		userID, err := registry.NewIDFromString(s.ID())
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+		pubsig, err := packagePublicKey(engine, userID, genReq.OrgID,
+			registry.SigningKeyType,
+			kp.Signature.Public, nil, &kp.Signature)
+		if err != nil {
+			encodeResponseErr(w, err)
+		}
+		// privsig
+		_, err = packagePrivateKey(engine, userID, genReq.OrgID,
+			kp.Signature.PNonce, kp.Signature.Private, pubsig.ID, pubsig.ID,
+			&kp.Signature)
+		if err != nil {
+			encodeResponseErr(w, err)
+		}
+
+		// sigclaim
+		_, err = registry.NewEnvelope(engine,
+			registry.NewClaim(genReq.OrgID, userID, pubsig.ID, pubsig.ID,
+				registry.SignatureClaimType),
+			pubsig.ID, &kp.Signature)
+
+		pubenc, err := packagePublicKey(engine, userID, genReq.OrgID,
+			registry.EncryptionKeyType,
+			kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
+		if err != nil {
+			encodeResponseErr(w, err)
+		}
+		// privenc
+		_, err = packagePrivateKey(engine, userID, genReq.OrgID,
+			kp.Encryption.PNonce, kp.Encryption.Private, pubenc.ID, pubsig.ID,
+			&kp.Signature)
+		if err != nil {
+			encodeResponseErr(w, err)
+		}
+
+		// encclaim
+		_, err = registry.NewEnvelope(engine,
+			registry.NewClaim(genReq.OrgID, userID, pubenc.ID, pubenc.ID,
+				registry.SignatureClaimType),
+			pubsig.ID, &kp.Signature)
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	mux.GetFunc("/session", func(w http.ResponseWriter, r *http.Request) {
@@ -176,4 +277,28 @@ func encodeResponseErr(w http.ResponseWriter, err error) {
 		w.WriteHeader(http.StatusInternalServerError)
 		enc.Encode(&Error{Err: "Internal server error"})
 	}
+}
+
+func validateSelf(s *registry.SelfResponse) error {
+	if s.Version != 1 {
+		return errors.New("version must be 1")
+	}
+
+	if s.Body == nil {
+		return errors.New("missing body")
+	}
+
+	if s.Body.Master == nil {
+		return errors.New("missing master key section")
+	}
+
+	if s.Body.Master.Alg != crypto.Triplesec {
+		return fmt.Errorf("Unknown alg: %s", s.Body.Master.Alg)
+	}
+
+	if len(s.Body.Master.Value) == 0 {
+		return errors.New("Zero length master key found")
+	}
+
+	return nil
 }

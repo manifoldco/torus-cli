@@ -28,7 +28,7 @@ func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
 func (c *Client) NewRequest(method, path string, body interface{}) (
 	*http.Request, error) {
 
-	return c.NewTokenRequest(c.sess.GetToken(), method, path, body)
+	return c.NewTokenRequest(c.sess.Token(), method, path, body)
 }
 
 func (c *Client) NewTokenRequest(token, method, path string, body interface{}) (

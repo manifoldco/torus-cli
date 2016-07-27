@@ -44,9 +44,13 @@ module.exports = new Command(
           login.output.success({ top: false });
           return result;
         });
-
-      // Flow complete
       })
+      .then(ctx.api.orgs.get)
+      .then(function (orgs) {
+        return { org_id: orgs[0].id };
+      })
+      .then(ctx.api.keypairs.generate)
+      // Flow complete
       .then(function () {
         resolve();
 

@@ -14,10 +14,13 @@ api.modules = {
   envs: require('./envs'),
   services: require('./services'),
   credentials: require('./credentials'),
+
+  // non-proxied daemon apis
   versionApi: require('./versionApi'),
   login: require('./login'),
   logout: require('./logout'),
-  session: require('./session')
+  session: require('./session'),
+  keypairs: require('./keypairs')
 };
 
 api.Client = require('./client').Client;

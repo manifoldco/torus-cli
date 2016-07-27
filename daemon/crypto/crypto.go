@@ -9,6 +9,13 @@ import (
 )
 
 const (
+	Triplesec  = "triplesec-v3"
+	EdDSA      = "eddsa"
+	Curve25519 = "curve25519"
+)
+
+// scrypt parameter constants
+const (
 	n      = 32768 // 2^15
 	r      = 8
 	p      = 1
@@ -16,14 +23,12 @@ const (
 )
 
 func DeriveLoginHMAC(password, salt, token string) (string, error) {
-	// TODO: handle err
 	s := make([]byte, base64.RawURLEncoding.DecodedLen(len(salt)))
 	l, err := base64.RawURLEncoding.Decode(s, []byte(salt))
 	if err != nil {
 		return "", err
 	}
 
-	// XXX: deal wiht error
 	k, err := scrypt.Key([]byte(password), s[:l], n, r, p, keyLen)
 	if err != nil {
 		return "", err

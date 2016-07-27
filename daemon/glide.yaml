@@ -10,3 +10,5 @@ import:
 - package: github.com/go-ini/ini
 - package: github.com/kardianos/osext
 - package: github.com/mitchellh/go-homedir
+- package: github.com/keybase/go-triplesec
+- package: github.com/dchest/blake2b
