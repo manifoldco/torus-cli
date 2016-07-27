@@ -9,6 +9,13 @@ import (
 )
 
 const (
+	Triplesec  = "triplesec-v3"
+	EdDSA      = "eddsa"
+	Curve25519 = "curve25519"
+)
+
+// scrypt parameter constants
+const (
 	n      = 32768 // 2^15
 	r      = 8
 	p      = 1

@@ -292,7 +292,7 @@ func validateSelf(s *registry.SelfResponse) error {
 		return errors.New("missing master key section")
 	}
 
-	if s.Body.Master.Alg != "triplesec-v3" {
+	if s.Body.Master.Alg != crypto.Triplesec {
 		return fmt.Errorf("Unknown alg: %s", s.Body.Master.Alg)
 	}
 

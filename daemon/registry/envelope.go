@@ -33,7 +33,7 @@ func NewEnvelope(engine *crypto.Engine, body AgObject, sigID *ID,
 	sv := Base64Value(s)
 	sig := Signature{
 		PublicKeyID: sigID,
-		Algorithm:   "eddsa",
+		Algorithm:   crypto.EdDSA,
 		Value:       &sv,
 	}
 

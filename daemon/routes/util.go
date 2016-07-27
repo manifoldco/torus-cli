@@ -11,9 +11,9 @@ func packagePublicKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
 	keyType string, public []byte, sigID *registry.ID,
 	sigKP *crypto.SignatureKeyPair) (*registry.Envelope, error) {
 
-	alg := "curve25519"
+	alg := crypto.Curve25519
 	if keyType == registry.SigningKeyType {
-		alg = "eddsa"
+		alg = crypto.EdDSA
 	}
 
 	now := time.Now().UTC()
@@ -49,7 +49,7 @@ func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
 		PublicKeyID: pubID,
 
 		Key: registry.PrivateKeyValue{
-			Algorithm: "triplesec-v3",
+			Algorithm: crypto.Triplesec,
 			Value:     &kv,
 		},
 	}
