@@ -9,7 +9,7 @@ module.exports.preHook = function () {
       // The daemon won't start in some circumstances without a public_key_file
       // preference set. We can't set a preference if we require the daemon to
       // be running!
-      if (ctx.group === 'prefs') {
+      if (ctx.cmd.group === 'prefs') {
         return resolve();
       }
 

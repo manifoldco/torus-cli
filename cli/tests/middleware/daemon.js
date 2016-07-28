@@ -18,6 +18,7 @@ describe('daemon middleware', function () {
     sandbox = sinon.sandbox.create();
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
+    ctx.cmd = {};
   });
   afterEach(function () {
     sandbox.restore();
@@ -45,6 +46,17 @@ describe('daemon middleware', function () {
 
       return middleware.preHook()(ctx).then(function () {
         sinon.assert.calledOnce(daemon.start);
+      });
+    });
+
+    it('skips daemon creation if cmd group is prefs', function () {
+      sandbox.spy(daemon, 'status');
+      sandbox.spy(daemon, 'start');
+      ctx.cmd.group = 'prefs';
+
+      return middleware.preHook()(ctx).then(function () {
+        sinon.assert.notCalled(daemon.start);
+        sinon.assert.notCalled(daemon.status);
       });
     });
   });
