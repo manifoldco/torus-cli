@@ -27,7 +27,7 @@ list.output.success = output.create(function (payload) {
   _.each(policies, function (policy) {
     msg += ' \n ' + policy.body.policy.name;
 
-    var attachments = policyAttachmentsByPolicy[policy.id];
+    var attachments = policyAttachmentsByPolicy[policy.id] || [];
 
     if (attachments.length < 1) return;
 

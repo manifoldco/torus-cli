@@ -29,3 +29,11 @@ policyAttachments.create = function (client, data) {
     return res.body;
   });
 };
+
+policyAttachments.delete = function (client, data) {
+  return client.delete({
+    url: '/policy-attachments/' + data.id
+  }).then(function (res) {
+    return res.body;
+  });
+};
