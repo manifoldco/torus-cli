@@ -1,6 +1,8 @@
 'use strict';
 
-var deny = exports;
+// TODO: Dream up some naming conventions for policies
+
+var allow = exports;
 
 var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
@@ -10,11 +12,12 @@ var output = require('../cli/output');
 var rpath = require('common/rpath');
 var harvest = require('./harvest');
 
-var EFFECT_DENY = Statement.EFFECTS.DENY;
+var EFFECT_ALLOW = Statement.EFFECTS.ALLOW;
+var DEFAULT_ACTIONS = [Statement.ACTIONS.READ, Statement.ACTIONS.LIST];
 
-deny.output = {};
+allow.output = {};
 
-deny.output.success = output.create(function (payload) {
+allow.output.success = output.create(function (payload) {
   var team = payload.team.body;
   var policy = payload.policy.body.policy;
   var secretStatements = _.filter(policy.statements, function (statement) {
@@ -34,18 +37,23 @@ deny.output.success = output.create(function (payload) {
     }
   });
 
+  msg += '\n';
+  msg += '\nNecessary permissions (read, list) have also been granted.';
+  msg += '\nUse \'ag access\' to view the complete policy.';
+
   console.log(msg);
 });
-deny.output.failure = output.create(function () {
+
+allow.output.failure = output.create(function () {
   console.log('Policy could not be generated, please try again.');
 });
 
 /**
- * Create prompt for deny
+ * Create prompt for allow
  *
  * @param {object} ctx - Command context
  */
-deny.execute = function (ctx) {
+allow.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     if (ctx.params.length < 2) {
       return reject(new Error('You must provide two parameters'));
@@ -59,14 +67,15 @@ deny.execute = function (ctx) {
     var path = _.take(pathSegments, pathSegments.length - 1).join('/');
 
     var resourceMap = rpath.parse(path, secret);
-    var expandedResources = rpath.expand(resourceMap);
+    var extendedResources = rpath.explode(resourceMap);
 
-    var policy = new Policy('generated-policy');
+    var policy = new Policy('generated-allow-' + Math.floor(Date.now() / 1000));
 
-    _.each(expandedResources, function (r) {
-      var statement = new Statement(EFFECT_DENY);
+    _.each(extendedResources, function (r) {
+      var statement = new Statement(EFFECT_ALLOW);
+      var actions = r.split('/').length < 6 ? DEFAULT_ACTIONS : params.actions;
 
-      statement.setActions(params.actions);
+      statement.setActions(actions);
       statement.setResource(r);
 
       policy.addStatement(statement);

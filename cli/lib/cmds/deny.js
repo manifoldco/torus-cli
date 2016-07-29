@@ -4,7 +4,7 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 
-var deny = require('../access/deny');
+var deny = require('../policies/deny');
 var auth = require('../middleware/auth');
 
 var command = new Command(

@@ -4,7 +4,7 @@ var Promise = require('es6-promise').Promise;
 
 var Command = require('../cli/command');
 
-var allow = require('../access/allow');
+var allow = require('../policies/allow');
 var auth = require('../middleware/auth');
 
 var command = new Command(
