@@ -17,6 +17,7 @@ type Daemon struct {
 	lock        lockfile.Lockfile // actually a string
 	session     session.Session
 	config      *config.Config
+	db          *db.DB
 	hasShutdown bool
 }
 
@@ -51,7 +52,10 @@ func NewDaemon(cfg *config.Config) (*Daemon, error) {
 
 	session := session.NewSession()
 
-	db := &db.DB{}
+	db, err := db.NewDB(cfg.DBPath)
+	if err != nil {
+		return nil, err
+	}
 
 	proxy, err := socket.NewAuthProxy(cfg, session, db)
 	if err != nil {
@@ -63,6 +67,7 @@ func NewDaemon(cfg *config.Config) (*Daemon, error) {
 		lock:        lock,
 		session:     session,
 		config:      cfg,
+		db:          db,
 		hasShutdown: false,
 	}
 
@@ -89,6 +94,10 @@ func (d *Daemon) Shutdown() error {
 
 	if err := d.proxy.Close(); err != nil {
 		return fmt.Errorf("Could not stop http proxy: %s", err)
+	}
+
+	if err := d.db.Close(); err != nil {
+		return fmt.Errorf("Could not close db: %s", err)
 	}
 
 	return nil

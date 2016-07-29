@@ -1,6 +1,8 @@
-hash: 52c55b793541e5d53bf715d92d196571396984f94e0d41322747c3dc04342f2d
-updated: 2016-07-26T11:11:27.041273905-03:00
+hash: 432f13041d67d1ced6e79d47364c5c440ac6f1e8fbd539a02d5cc095ddebcf04
+updated: 2016-07-29T10:40:12.580934595-03:00
 imports:
+- name: github.com/boltdb/bolt
+  version: 5cc10bbbc5c141029940133bb33c9e969512a698
 - name: github.com/dchest/blake2b
   version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/facebookgo/clock

@@ -1,19 +1,23 @@
 package registry
 
-import "log"
+import (
+	"log"
+
+	"github.com/arigatomachine/cli/daemon/envelope"
+)
 
 type KeyPairs struct {
 	client *Client
 }
 
-func (k *KeyPairs) Post(pubKey, privKey, claim *Envelope) (*Envelope, *Envelope,
-	[]Envelope, error) {
+func (k *KeyPairs) Post(pubKey, privKey, claim *envelope.Signed) (
+	*envelope.Signed, *envelope.Signed, []envelope.Signed, error) {
 
 	req, err := k.client.NewRequest("POST", "/keypairs",
 		KeyPairsCreateRequest{
 			PublicKey:  pubKey,
 			PrivateKey: privKey,
-			Claims:     []Envelope{*claim},
+			Claims:     []envelope.Signed{*claim},
 		})
 	if err != nil {
 		log.Printf("Error building http request: %s", err)

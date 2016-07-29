@@ -1,4 +1,4 @@
-package registry
+package identity
 
 import (
 	"encoding/base32"
@@ -24,7 +24,8 @@ var LowerBase32 = base32.NewEncoding(base32Alphabet)
 
 type ID [18]byte
 
-func NewID(body AgObject, sig *Signature) (ID, error) {
+// sig should be a registry.Signature type
+func New(body AgObject, sig interface{}) (ID, error) {
 	h, err := blake2b.New(&blake2b.Config{Size: 16})
 	if err != nil {
 		return ID{}, err
@@ -49,12 +50,6 @@ func NewID(body AgObject, sig *Signature) (ID, error) {
 	copy(id[2:], h.Sum(nil))
 
 	return id, nil
-}
-
-func NewIDFromString(raw string) (*ID, error) {
-	id := &ID{}
-	err := id.fillID([]byte(raw))
-	return id, err
 }
 
 func (id *ID) Type() byte {

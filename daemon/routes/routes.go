@@ -10,6 +10,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
+	"github.com/arigatomachine/cli/daemon/primitive"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
@@ -64,7 +65,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		db.SetMasterKey(*self.Body.Master.Value)
+		db.Set(self)
 		s.Set(self.ID, creds.Passphrase, auth.Token)
 
 		w.WriteHeader(http.StatusNoContent)
@@ -123,21 +124,14 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		userID, err := registry.NewIDFromString(s.ID())
+		pubsig, err := packagePublicKey(engine, s.ID(), genReq.OrgID,
+			SigningKeyType, kp.Signature.Public, nil, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
-		pubsig, err := packagePublicKey(engine, userID, genReq.OrgID,
-			registry.SigningKeyType,
-			kp.Signature.Public, nil, &kp.Signature)
-		if err != nil {
-			encodeResponseErr(w, err)
-			return
-		}
-
-		privsig, err := packagePrivateKey(engine, userID, genReq.OrgID,
+		privsig, err := packagePrivateKey(engine, s.ID(), genReq.OrgID,
 			kp.Signature.PNonce, kp.Signature.Private, pubsig.ID, pubsig.ID,
 			&kp.Signature)
 		if err != nil {
@@ -145,9 +139,9 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		sigclaim, err := registry.NewEnvelope(engine,
-			registry.NewClaim(genReq.OrgID, userID, pubsig.ID, pubsig.ID,
-				registry.SignatureClaimType),
+		sigclaim, err := engine.SignedEnvelope(
+			primitive.NewClaim(genReq.OrgID, s.ID(), pubsig.ID, pubsig.ID,
+				primitive.SignatureClaimType),
 			pubsig.ID, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
@@ -160,15 +154,15 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		pubenc, err := packagePublicKey(engine, userID, genReq.OrgID,
-			registry.EncryptionKeyType,
-			kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
+		pubenc, err := packagePublicKey(engine, s.ID(), genReq.OrgID,
+			EncryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
+			&kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
-		privenc, err := packagePrivateKey(engine, userID, genReq.OrgID,
+		privenc, err := packagePrivateKey(engine, s.ID(), genReq.OrgID,
 			kp.Encryption.PNonce, kp.Encryption.Private, pubenc.ID, pubsig.ID,
 			&kp.Signature)
 		if err != nil {
@@ -176,9 +170,9 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		encclaim, err := registry.NewEnvelope(engine,
-			registry.NewClaim(genReq.OrgID, userID, pubenc.ID, pubenc.ID,
-				registry.SignatureClaimType),
+		encclaim, err := engine.SignedEnvelope(
+			primitive.NewClaim(genReq.OrgID, s.ID(), pubenc.ID, pubenc.ID,
+				primitive.SignatureClaimType),
 			pubsig.ID, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)

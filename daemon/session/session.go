@@ -1,11 +1,16 @@
 package session
 
-import "errors"
-import "sync"
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"sync"
+
+	"github.com/arigatomachine/cli/daemon/identity"
+)
 
 type memorySession struct {
-	id string
+	id *identity.ID
+
 	// sensitive values
 	token      string
 	passphrase string
@@ -13,8 +18,8 @@ type memorySession struct {
 }
 
 type Session interface {
-	Set(string, string, string) error
-	ID() string
+	Set(*identity.ID, string, string) error
+	ID() *identity.ID
 	Token() string
 	Passphrase() string
 	HasToken() bool
@@ -27,7 +32,7 @@ func NewSession() Session {
 	return &memorySession{mutex: &sync.Mutex{}}
 }
 
-func (s *memorySession) Set(id, passphrase, token string) error {
+func (s *memorySession) Set(id *identity.ID, passphrase, token string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -50,7 +55,7 @@ func (s *memorySession) Set(id, passphrase, token string) error {
 	return nil
 }
 
-func (s *memorySession) ID() string {
+func (s *memorySession) ID() *identity.ID {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
