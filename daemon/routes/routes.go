@@ -10,6 +10,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
+	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/primitive"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
@@ -148,7 +149,20 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		_, _, _, err = client.KeyPairs.Post(pubsig, privsig, sigclaim)
+		pubsig, privsig, claims, err := client.KeyPairs.Post(pubsig, privsig,
+			sigclaim)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		objs := make([]envelope.Envelope, len(claims)+2)
+		objs[0] = pubsig
+		objs[1] = privsig
+		for i, claim := range claims {
+			objs[i+2] = &claim
+		}
+		err = db.Set(objs...)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -179,7 +193,20 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
-		_, _, _, err = client.KeyPairs.Post(pubenc, privenc, encclaim)
+		pubenc, privenc, claims, err = client.KeyPairs.Post(pubenc, privenc,
+			encclaim)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		objs = make([]envelope.Envelope, len(claims)+2)
+		objs[0] = pubenc
+		objs[1] = privenc
+		for i, claim := range claims {
+			objs[i+2] = &claim
+		}
+		err = db.Set(objs...)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return

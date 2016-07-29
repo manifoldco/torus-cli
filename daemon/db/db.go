@@ -100,20 +100,27 @@ func (db *DB) checkMeta() (bool, error) {
 
 // Set stores the serialized value of env into the db, under key id.
 // Stored values are grouped by their type.
-func (db *DB) Set(env envelope.Envelope) error {
-	id := env.GetID()
-
-	b, err := json.Marshal(env)
-	if err != nil {
-		return err
-	}
-
+func (db *DB) Set(envs ...envelope.Envelope) error {
 	return db.db.Update(func(tx *bolt.Tx) error {
-		bucket, err := tx.CreateBucketIfNotExists([]byte{id.Type()})
-		if err != nil {
-			return err
+		for _, env := range envs {
+			id := env.GetID()
+
+			b, err := json.Marshal(env)
+			if err != nil {
+				return err
+			}
+
+			bucket, err := tx.CreateBucketIfNotExists([]byte{id.Type()})
+			if err != nil {
+				return err
+			}
+			err = bucket.Put(id[:], b)
+			if err != nil {
+				return err
+			}
 		}
-		return bucket.Put(id[:], b)
+
+		return nil
 	})
 }
 
