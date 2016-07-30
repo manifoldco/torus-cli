@@ -1,3 +1,5 @@
+// Package primitive contains definitions of the primitive types used
+// in ag.
 package primitive
 
 import (
@@ -7,23 +9,30 @@ import (
 	"github.com/arigatomachine/cli/daemon/identity"
 )
 
+// v1Schema embeds in other structs to indicate their schema version is 1.
+type v1Schema struct{}
+
+// Version returns the schema version of structs that embed this type.
+func (v *v1Schema) Version() int {
+	return 1
+}
+
+// User holds the details of a user, including their encrypted master key.
 type User struct {
+	v1Schema
 	Master *struct {
 		Alg   string        `json:"alg"`
 		Value *base64.Value `json:"value"`
 	} `json:"master"`
 }
 
-func (u *User) Version() int {
-	return 1
-}
-
+// Type returns the enumerated byte representation of User.
 func (u *User) Type() byte {
 	return byte(0x01)
 }
 
-// Signature, while not technically a payload, is still immutable, and must be
-// orderer properly so that ID generation is correct.
+// Signature is an immutable object, but not technically a payload. Its fields
+// must be ordered properly so that ID generation is correct.
 //
 // If PublicKeyID is nil, the signature is self-signed.
 type Signature struct {
@@ -35,12 +44,15 @@ type Signature struct {
 // Immutable object payloads. Their fields must be lexicographically ordered by
 // the json value, so we can correctly calculate the signature.
 
+// PrivateKeyValue holds the encrypted value of the PrivateKey.
 type PrivateKeyValue struct {
 	Algorithm string        `json:"alg"`
 	Value     *base64.Value `json:"value"`
 }
 
+// PrivateKey is the private portion of an asymetric key.
 type PrivateKey struct {
+	v1Schema
 	Key         PrivateKeyValue `json:"key"`
 	OrgID       *identity.ID    `json:"org_id"`
 	OwnerID     *identity.ID    `json:"owner_id"`
@@ -48,19 +60,19 @@ type PrivateKey struct {
 	PublicKeyID *identity.ID    `json:"public_key_id"`
 }
 
-func (pk *PrivateKey) Version() int {
-	return 1
-}
-
+// Type returns the enumerated byte representation of PrivateKey.
 func (pk *PrivateKey) Type() byte {
 	return byte(0x07)
 }
 
+// PublicKeyValue is the actual value of a PublicKey.
 type PublicKeyValue struct {
 	Value *base64.Value `json:"value"`
 }
 
+// PublicKey is the public portion of an asymetric key.
 type PublicKey struct {
+	v1Schema
 	Algorithm string         `json:"alg"`
 	Created   time.Time      `json:"created_at"`
 	Expires   time.Time      `json:"expires_at"`
@@ -70,20 +82,20 @@ type PublicKey struct {
 	KeyType   string         `json:"type"`
 }
 
-func (pk *PublicKey) Version() int {
-	return 1
-}
-
+// Type returns the enumerated byte representation of PublicKey.
 func (pk *PublicKey) Type() byte {
 	return byte(0x06)
 }
 
+// Types of claims that can be made against public keys.
 const (
 	SignatureClaimType  = "signature"
 	RevocationClaimType = "revocation"
 )
 
+// Claim is a signature or revocation claim against a public key.
 type Claim struct {
+	v1Schema
 	Created     time.Time    `json:"created_at"`
 	OrgID       *identity.ID `json:"org_id"`
 	OwnerID     *identity.ID `json:"owner_id"`
@@ -92,10 +104,7 @@ type Claim struct {
 	KeyType     string       `json:"type"`
 }
 
-func (c *Claim) Version() int {
-	return 1
-}
-
+// Type returns the enumerated byte representation of Claim.
 func (c *Claim) Type() byte {
 	return byte(0x08)
 }

@@ -23,6 +23,8 @@ const (
 	keyLen = 224
 )
 
+// DeriveLoginHMAC HMACs the provided token with a key derived from password
+// and the provided base64 encoded salt.
 func DeriveLoginHMAC(password, salt, token string) (string, error) {
 	s := make([]byte, base64.RawURLEncoding.DecodedLen(len(salt)))
 	l, err := base64.RawURLEncoding.Decode(s, []byte(salt))

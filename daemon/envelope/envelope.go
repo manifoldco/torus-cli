@@ -1,3 +1,5 @@
+// Package envelope defines the generic encapsulating format for Arigato
+// objects.
 package envelope
 
 import (
@@ -8,23 +10,28 @@ import (
 	"github.com/arigatomachine/cli/daemon/primitive"
 )
 
+// Envelope is the interface implemented by objects that encapsulate 'true'
+// Arigato objects.
 type Envelope interface {
 	GetID() *identity.ID // avoid field collision
 }
 
-// Signed is the generic format for encapsulating signed
+// Signed is the generic format for encapsulating signed immutable
 // request/response objects to/from arigato.
 type Signed struct {
-	ID        *identity.ID        `json:"id"`
-	Version   uint8               `json:"version"`
-	Body      identity.AgObject   `json:"body"`
-	Signature primitive.Signature `json:"sig"`
+	ID        *identity.ID          `json:"id"`
+	Version   uint8                 `json:"version"`
+	Body      identity.Identifiable `json:"body"`
+	Signature primitive.Signature   `json:"sig"`
 }
 
+// GetID returns the ID of the object encapsulated in this envelope.
 func (e *Signed) GetID() *identity.ID {
 	return e.ID
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface for Signed
+// envelopes.
 func (e *Signed) UnmarshalJSON(b []byte) error {
 	o, body, err := envelopeUnmarshal(b)
 	if err != nil {
@@ -39,16 +46,21 @@ func (e *Signed) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// Unsigned is the generic format for encapsulating unsigned mutable
+// request/response objects to/from arigato.
 type Unsigned struct {
-	ID      *identity.ID      `json:"id"`
-	Version uint8             `json:"version"`
-	Body    identity.AgObject `json:"body"`
+	ID      *identity.ID          `json:"id"`
+	Version uint8                 `json:"version"`
+	Body    identity.Identifiable `json:"body"`
 }
 
+// GetID returns the ID of the object encapsulated in this envelope.
 func (e *Unsigned) GetID() *identity.ID {
 	return e.ID
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface for Unsigned
+// envelopes.
 func (e *Unsigned) UnmarshalJSON(b []byte) error {
 	o, body, err := envelopeUnmarshal(b)
 	if err != nil {
@@ -63,14 +75,14 @@ func (e *Unsigned) UnmarshalJSON(b []byte) error {
 }
 
 // Shared unmarshaling for signed and unsigned Envelopes
-func envelopeUnmarshal(b []byte) (*outEnvelope, identity.AgObject, error) {
+func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
 	o := outEnvelope{}
 	err := json.Unmarshal(b, &o)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var body identity.AgObject
+	var body identity.Identifiable
 
 	t := o.ID.Type()
 	switch t {

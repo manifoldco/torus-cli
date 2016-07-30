@@ -1,3 +1,5 @@
+// Package identity defines the ID format used for uniquely identifying
+// objects in Arigato.
 package identity
 
 import (
@@ -15,17 +17,27 @@ const (
 	idVersion      = 0x01
 )
 
-type AgObject interface {
+// Identifiable is the interface implemented by objects that can be given
+// IDs.
+type Identifiable interface {
 	Version() int
 	Type() byte
 }
 
-var LowerBase32 = base32.NewEncoding(base32Alphabet)
+var lowerBase32 = base32.NewEncoding(base32Alphabet)
 
+// ID is an encoded unique identifier for an object.
+//
+// The first byte holds the schema version of the id itself.
+// The second byte holds the type of the object.
+// The remaining 16 bytes hold a digest of the contents of the object for
+// immutable objects, or a random value for mutable objects.
 type ID [18]byte
 
+// New returns a new signed ID for an immutable object.
+//
 // sig should be a registry.Signature type
-func New(body AgObject, sig interface{}) (ID, error) {
+func New(body Identifiable, sig interface{}) (ID, error) {
 	h, err := blake2b.New(&blake2b.Config{Size: 16})
 	if err != nil {
 		return ID{}, err
@@ -52,15 +64,20 @@ func New(body AgObject, sig interface{}) (ID, error) {
 	return id, nil
 }
 
+// Type returns the binary encoded object type represented by this ID.
 func (id *ID) Type() byte {
 	return id[1]
 }
 
+// MarshalJSON implements the json.Marshaler interface for IDs.
+//
+// IDs are encoded in unpadded base32.
 func (id *ID) MarshalJSON() ([]byte, error) {
-	b32 := LowerBase32.EncodeToString(id[:])
+	b32 := lowerBase32.EncodeToString(id[:])
 	return []byte("\"" + strings.TrimRight(b32, "=") + "\""), nil
 }
 
+// UnmarshalJSON implements the json.Unmarshaler interface for IDs.
 func (id *ID) UnmarshalJSON(b []byte) error {
 	if len(b) < 2 || b[0] != byte('"') || b[len(b)-1] != byte('"') {
 		return errors.New("value is not a string")
@@ -77,7 +94,7 @@ func (id *ID) fillID(raw []byte) error {
 		nb[len(raw)+i] = '='
 	}
 
-	out, err := LowerBase32.DecodeString(string(nb))
+	out, err := lowerBase32.DecodeString(string(nb))
 	if err != nil {
 		return err
 	}

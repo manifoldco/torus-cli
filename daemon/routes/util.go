@@ -10,12 +10,18 @@ import (
 	"github.com/arigatomachine/cli/daemon/primitive"
 )
 
+// public key types
+const (
+	encryptionKeyType = "encryption"
+	signingKeyType    = "signing"
+)
+
 func packagePublicKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
 	keyType string, public []byte, sigID *identity.ID,
 	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
 	alg := crypto.Curve25519
-	if keyType == SigningKeyType {
+	if keyType == signingKeyType {
 		alg = crypto.EdDSA
 	}
 
