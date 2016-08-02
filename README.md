@@ -106,3 +106,12 @@ for running tests which are defined in the `.travis.yml` file.
 The ssh key used by travis (which is included encrypted in `id_rsa.enc`) has
 been assigned to the `arigato-automated` github account which allows us to
 bring in private dependencies.
+
+### Troubleshooting TL;DR
+
+1. Are you up to date with master in both registry, and cli?
+2. Did you rebuild your daemon with `npm run build`?
+3. Did you kill your daemon process after rebuild?
+4. Does your `~/.arigatorc` point to the offline signing public key?
+ - Under `[core]` set `public_key_file=$REGISTRY_REPO/keys/offline-pub.json` where `$REGISTRY_REPO` is the path to your repo on disk.
+5. What does `tail -f ~/.arigato/daemon.log` say?
