@@ -10,10 +10,12 @@ import (
 	"github.com/arigatomachine/cli/daemon/primitive"
 )
 
+// Users represents the  registry `/users` endpoints.
 type Users struct {
 	client *Client
 }
 
+// GetSelf returns the logged in user.
 func (u *Users) GetSelf(token string) (*envelope.Unsigned, error) {
 	req, err := u.client.NewTokenRequest(token, "GET", "/users/self", nil)
 	if err != nil {

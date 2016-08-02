@@ -16,6 +16,8 @@ import (
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
+// NewRouteMux returns a *bone.Mux responsible for handling the cli to daemon
+// http api.
 func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	t *http.Transport) *bone.Mux {
 
@@ -26,7 +28,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.PostFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		dec := json.NewDecoder(r.Body)
 
-		creds := Login{}
+		creds := login{}
 		err := dec.Decode(&creds)
 		if err != nil {
 			encodeResponseErr(w, err)
@@ -36,38 +38,38 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		if creds.Email == "" || creds.Passphrase == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			enc := json.NewEncoder(w)
-			enc.Encode(&Error{Err: "email and passphrase required"})
+			enc.Encode(&errorMsg{Err: "email and passphrase required"})
 			return
 		}
 
-		salt, err := client.Tokens.PostLogin(creds.Email)
+		salt, loginToken, err := client.Tokens.PostLogin(creds.Email)
+		log.Print(salt)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
-		hmac, err := crypto.DeriveLoginHMAC(creds.Passphrase, salt.Salt,
-			salt.Token)
+		hmac, err := crypto.DeriveLoginHMAC(creds.Passphrase, salt, loginToken)
 		if err != nil {
 			log.Printf("Error generating login token hmac: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
 
-		auth, err := client.Tokens.PostAuth(salt.Token, hmac)
+		authToken, err := client.Tokens.PostAuth(loginToken, hmac)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
-		self, err := client.Users.GetSelf(auth.Token)
+		self, err := client.Users.GetSelf(authToken)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
 		db.Set(self)
-		s.Set(self.ID, creds.Passphrase, auth.Token)
+		s.Set(self.ID, creds.Passphrase, authToken)
 
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -111,7 +113,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		r *http.Request) {
 
 		dec := json.NewDecoder(r.Body)
-		genReq := KeyPairGenerate{}
+		genReq := keyPairGenerate{}
 		err := dec.Decode(&genReq)
 		if err != nil || genReq.OrgID == nil {
 			encodeResponseErr(w, err)
@@ -126,7 +128,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		}
 
 		pubsig, err := packagePublicKey(engine, s.ID(), genReq.OrgID,
-			SigningKeyType, kp.Signature.Public, nil, &kp.Signature)
+			signingKeyType, kp.Signature.Public, nil, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -169,7 +171,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		}
 
 		pubenc, err := packagePublicKey(engine, s.ID(), genReq.OrgID,
-			EncryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
+			encryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
 			&kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
@@ -219,14 +221,14 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		enc := json.NewEncoder(w)
 		if !(s.HasToken() && s.HasPassphrase()) {
 			w.WriteHeader(http.StatusNotFound)
-			err := enc.Encode(&Error{Err: "Not logged in"})
+			err := enc.Encode(&errorMsg{Err: "Not logged in"})
 			if err != nil {
 				encodeResponseErr(w, err)
 			}
 			return
 		}
 
-		err := enc.Encode(&Status{
+		err := enc.Encode(&status{
 			Token:      s.HasToken(),
 			Passphrase: s.HasPassphrase(),
 		})
@@ -238,7 +240,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 
 	mux.GetFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
-		err := enc.Encode(&Version{Version: c.Version})
+		err := enc.Encode(&version{Version: c.Version})
 		if err != nil {
 			encodeResponseErr(w, err)
 		}
@@ -259,6 +261,6 @@ func encodeResponseErr(w http.ResponseWriter, err error) {
 		enc.Encode(rErr)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
-		enc.Encode(&Error{Err: "Internal server error"})
+		enc.Encode(&errorMsg{Err: "Internal server error"})
 	}
 }

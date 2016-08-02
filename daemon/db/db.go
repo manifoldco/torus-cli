@@ -18,6 +18,7 @@ import (
 
 var schemaVersion = []byte{0x01}
 
+// DB is a persistent store for encrypted or non-sensitvie values.
 type DB struct {
 	db *bolt.DB
 }

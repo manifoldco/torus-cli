@@ -1,3 +1,5 @@
+// Package config exposes static configuration data, and loaded user
+// preferences.
 package config
 
 import (
@@ -8,8 +10,10 @@ import (
 
 var version = "development"
 
-const REQUIRED_PERM = 0700
+const requiredPermissions = 0700
 
+// Config represents the static and user defined configuration data
+// for Arigato.
 type Config struct {
 	ArigatoRoot string
 	API         string
@@ -20,6 +24,7 @@ type Config struct {
 	PublicKey   *PublicKey
 }
 
+// NewConfig returns a new Config, with loaded user preferences.
 func NewConfig(arigatoRoot string) (*Config, error) {
 	if len(arigatoRoot) == 0 {
 		arigatoRoot = path.Join(os.Getenv("HOME"), ".arigato")
@@ -35,7 +40,7 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 	}
 
 	if os.IsNotExist(err) {
-		err = os.Mkdir(arigatoRoot, REQUIRED_PERM)
+		err = os.Mkdir(arigatoRoot, requiredPermissions)
 		if err != nil {
 			return nil, err
 		}
@@ -47,12 +52,12 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 	}
 
 	fMode := src.Mode()
-	if fMode.Perm() != REQUIRED_PERM {
+	if fMode.Perm() != requiredPermissions {
 		return nil, fmt.Errorf("%s has permissions %d requires %d",
-			arigatoRoot, fMode.Perm(), REQUIRED_PERM)
+			arigatoRoot, fMode.Perm(), requiredPermissions)
 	}
 
-	prefs, err := NewPreferences()
+	prefs, err := newPreferences()
 	if err != nil {
 		return nil, err
 	}

@@ -1,3 +1,4 @@
+// Package registry provides access to the Arigato registry REST API.
 package registry
 
 import (
@@ -9,6 +10,20 @@ import (
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
+// Error represents API errors from the registry service.
+type Error struct {
+	StatusCode int
+
+	Type string   `json:"type"`
+	Err  []string `json:"error"`
+}
+
+// Error implements the error interface for registry errors.
+func (e *Error) Error() string {
+	return e.Type
+}
+
+// Client exposes the registry REST API.
 type Client struct {
 	client *http.Client
 	prefix string
@@ -19,6 +34,7 @@ type Client struct {
 	Users    *Users
 }
 
+// NewClient returns a new Client.
 func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
 	c := &Client{
 		client: &http.Client{Transport: t},
@@ -33,12 +49,18 @@ func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
 	return c
 }
 
+// NewRequest constructs a new http.Request, with a body containing the json
+// representation of body, if provided.
 func (c *Client) NewRequest(method, path string, body interface{}) (
 	*http.Request, error) {
 
 	return c.NewTokenRequest(c.sess.Token(), method, path, body)
 }
 
+// NewTokenRequest constructs a new http.Request, with a body containing the
+// json representation of body, if provided.
+//
+// The request will be authorized with the provided token.
 func (c *Client) NewTokenRequest(token, method, path string, body interface{}) (
 	*http.Request, error) {
 
@@ -64,6 +86,11 @@ func (c *Client) NewTokenRequest(token, method, path string, body interface{}) (
 	return req, nil
 }
 
+// Do executes an http.Request, populating v with the JSON response
+// on success.
+//
+// If the request errors with a JSON formatted response body, it will be
+// unmarshaled into the returned error.
 func (c *Client) Do(r *http.Request, v interface{}) (*http.Response, error) {
 	resp, err := c.client.Do(r)
 	if err != nil {

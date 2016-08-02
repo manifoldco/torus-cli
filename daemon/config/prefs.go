@@ -10,29 +10,28 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-const PUBLIC_KEY_FILENAME = "public_key.json"
-const RC_FILENAME = ".arigatorc"
+const (
+	publicKeyFilename = "public_key.json"
+	rcFilename        = ".arigatorc"
+)
 
-type Preferences struct {
-	*Default
-	*Core
+type preferences struct {
+	Core core `ini:"core"`
 }
 
-type Default struct{}
-type Core struct {
+type core struct {
 	PublicKeyFile string `ini:"public_key_file"`
 }
 
-func NewPreferences() (*Preferences, error) {
+func newPreferences() (*preferences, error) {
 	exeFolder, err := osext.ExecutableFolder()
 	if err != nil {
 		return nil, fmt.Errorf("Could not determine executable folder: %s", err)
 	}
 
-	defaultKeyPath := path.Join(exeFolder, PUBLIC_KEY_FILENAME)
-	prefs := &Preferences{
-		Default: &Default{},
-		Core: &Core{
+	defaultKeyPath := path.Join(exeFolder, publicKeyFilename)
+	prefs := &preferences{
+		Core: core{
 			PublicKeyFile: defaultKeyPath,
 		},
 	}
@@ -42,7 +41,7 @@ func NewPreferences() (*Preferences, error) {
 		return nil, err
 	}
 
-	filePath := path.Join(homePath, RC_FILENAME)
+	filePath := path.Join(homePath, rcFilename)
 	_, err = os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return prefs, nil
@@ -52,14 +51,9 @@ func NewPreferences() (*Preferences, error) {
 		return nil, err
 	}
 
-	cfg, err := ini.Load(filePath)
+	err = ini.MapTo(prefs, filePath)
 	if err != nil {
 		return nil, err
-	}
-
-	publicKeyFileValue := cfg.Section("core").Key("public_key_file").String()
-	if publicKeyFileValue != "" {
-		prefs.Core.PublicKeyFile = publicKeyFileValue
 	}
 
 	return prefs, nil

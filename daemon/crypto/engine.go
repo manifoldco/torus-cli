@@ -1,3 +1,4 @@
+// Package crypto provides access to secure encryption and signing methods
 package crypto
 
 import (
@@ -23,28 +24,42 @@ const (
 	blakeSize = 16
 )
 
+// SignatureKeyPair is an ed25519/eddsa digital signature keypair.
+// The private portion of the keypair is encrypted with triplesec.
+//
+// PNonce contains the nonce used when deriving the password used to encrypt
+// the private portion.
 type SignatureKeyPair struct {
 	Public  ed25519.PublicKey
 	Private []byte
 	PNonce  []byte
 }
 
+// EncryptionKeyPair is a curve25519 encryption keypair.
+// The private portion of the keypair is encrypted with triplesec.
+//
+// PNonce contains the nonce used when deriving the password used to encrypt
+// the private portion.
 type EncryptionKeyPair struct {
 	Public  [32]byte
 	Private []byte
 	PNonce  []byte
 }
 
+// KeyPairs contains a signature and an encryption keypair for a user.
 type KeyPairs struct {
 	Signature  SignatureKeyPair
 	Encryption EncryptionKeyPair
 }
 
+// Engine exposes methods to encrypt, unencrypt and sign values, using
+// the logged in user's credentials.
 type Engine struct {
 	db   *db.DB
 	sess session.Session
 }
 
+// NewEngine returns a new Engine
 func NewEngine(sess session.Session, db *db.DB) *Engine {
 	return &Engine{db: db, sess: sess}
 }
@@ -137,7 +152,7 @@ func (e *Engine) Verify(s SignatureKeyPair, b, sig []byte) bool {
 }
 
 // SignedEnvelope returns a new SignedEnvelope containing body
-func (e *Engine) SignedEnvelope(body identity.AgObject,
+func (e *Engine) SignedEnvelope(body identity.Identifiable,
 	sigID *identity.ID, sigKP *SignatureKeyPair) (*envelope.Signed,
 	error) {
 

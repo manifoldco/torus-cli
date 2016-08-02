@@ -2,35 +2,25 @@ package routes
 
 import "github.com/arigatomachine/cli/daemon/identity"
 
-type Login struct {
+type login struct {
 	Email      string `json:"email"`
 	Passphrase string `json:"passphrase"`
 }
 
-type Version struct {
+type version struct {
 	Version string `json:"version"`
 }
 
-type Status struct {
+type status struct {
 	Token      bool `json:"token"`
 	Passphrase bool `json:"passphrase"`
 }
 
-type KeyPairGenerate struct {
+type keyPairGenerate struct {
 	OrgID *identity.ID `json:"org_id"`
 }
 
-type Error struct {
+type errorMsg struct {
 	Err     string `json:"error"`
 	Message string `json:"message"`
 }
-
-const (
-	TokenTypeLogin = "login"
-	TokenTypeAuth  = "auth"
-)
-
-const (
-	EncryptionKeyType = "encryption"
-	SigningKeyType    = "signing"
-)

@@ -12,6 +12,8 @@ import (
 	"github.com/arigatomachine/cli/daemon/socket"
 )
 
+// Daemon is the arigato coprocess that contains session secrets, handles
+// cryptographic operations, and communication with the registry.
 type Daemon struct {
 	proxy       *socket.AuthProxy
 	lock        lockfile.Lockfile // actually a string
@@ -21,6 +23,7 @@ type Daemon struct {
 	hasShutdown bool
 }
 
+// NewDaemon creates a new Daemon.
 func NewDaemon(cfg *config.Config) (*Daemon, error) {
 
 	lock, err := lockfile.New(cfg.PidPath)
@@ -74,14 +77,18 @@ func NewDaemon(cfg *config.Config) (*Daemon, error) {
 	return daemon, nil
 }
 
+// Addr returns the domain socket the Daemon is listening on.
 func (d *Daemon) Addr() string {
 	return d.proxy.Addr()
 }
 
+// Run starts the daemon main loop. It returns on failure, or when the daemon
+// has been gracefully shut down.
 func (d *Daemon) Run() error {
 	return d.proxy.Listen()
 }
 
+// Shutdown gracefully shuts down the daemon.
 func (d *Daemon) Shutdown() error {
 	if d.hasShutdown {
 		return nil

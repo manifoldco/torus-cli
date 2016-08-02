@@ -42,6 +42,7 @@ function run_tests {
   pushd "$DIR/../daemon" >/dev/null
     fmt
     make vet
+    make lint
     make test
   popd
   echo "Daemon tests have passed"

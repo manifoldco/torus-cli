@@ -8,11 +8,12 @@ import (
 	"github.com/arigatomachine/cli/daemon/base64"
 )
 
+// PublicKey is en ed25519 public key.
 type PublicKey struct {
 	PublicKey base64.Value `json:"public_key"`
 }
 
-func loadPublicKey(prefs *Preferences) (*PublicKey, error) {
+func loadPublicKey(prefs *preferences) (*PublicKey, error) {
 	filePath := prefs.Core.PublicKeyFile
 
 	fd, err := os.Open(filePath)
