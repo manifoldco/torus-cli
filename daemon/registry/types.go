@@ -1,10 +1,7 @@
 package registry
 
 import (
-	"encoding/base64"
-	"errors"
-	"reflect"
-	"time"
+	"github.com/arigatomachine/cli/daemon/envelope"
 )
 
 type Error struct {
@@ -37,130 +34,8 @@ type AuthTokenResponse struct {
 	Token string `json:"auth_token"`
 }
 
-type SelfResponse struct {
-	ID      string `json:"ID"`
-	Version uint8  `json:"version"`
-	Body    *struct {
-		Master *struct {
-			Alg   string `json:"alg"`
-			Value string `json:"value"`
-		} `json:"master"`
-	} `json:"body"`
-}
-
-type Base64Value []byte
-
-func (bv *Base64Value) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + base64.RawURLEncoding.EncodeToString(*bv) + "\""), nil
-}
-
-func (bv *Base64Value) UnmarshalJSON(b []byte) error {
-	if len(b) < 2 || b[0] != byte('"') || b[len(b)-1] != byte('"') {
-		return errors.New("value is not a string")
-	}
-
-	out := make([]byte, base64.RawURLEncoding.DecodedLen(len(b)-2))
-	n, err := base64.RawURLEncoding.Decode(out, b[1:len(b)-1])
-	if err != nil {
-		return err
-	}
-
-	v := reflect.ValueOf(bv).Elem()
-	v.SetBytes(out[:n])
-	return nil
-}
-
-const (
-	EncryptionKeyType = "encryption"
-	SigningKeyType    = "signing"
-)
-
-// Immutable object payloads. Their fields must be lexicographically ordered by
-// the json value, so we can correctly calculate the signature.
-
-type PrivateKeyValue struct {
-	Algorithm string       `json:"alg"`
-	Value     *Base64Value `json:"value"`
-}
-
-type PrivateKey struct {
-	Key         PrivateKeyValue `json:"key"`
-	OrgID       *ID             `json:"org_id"`
-	OwnerID     *ID             `json:"owner_id"`
-	PNonce      *Base64Value    `json:"pnonce"`
-	PublicKeyID *ID             `json:"public_key_id"`
-}
-
-func (pk *PrivateKey) Version() int {
-	return 1
-}
-
-func (pk *PrivateKey) Type() byte {
-	return byte(0x07)
-}
-
-type PublicKeyValue struct {
-	Value *Base64Value `json:"value"`
-}
-
-type PublicKey struct {
-	Algorithm string         `json:"alg"`
-	Created   time.Time      `json:"created_at"`
-	Expires   time.Time      `json:"expires_at"`
-	Key       PublicKeyValue `json:"key"`
-	OrgID     *ID            `json:"org_id"`
-	OwnerID   *ID            `json:"owner_id"`
-	KeyType   string         `json:"type"`
-}
-
-func (pk *PublicKey) Version() int {
-	return 1
-}
-
-func (pk *PublicKey) Type() byte {
-	return byte(0x06)
-}
-
-const (
-	SignatureClaimType  = "signature"
-	RevocationClaimType = "revocation"
-)
-
-type Claim struct {
-	Created     time.Time `json:"created_at"`
-	OrgID       *ID       `json:"org_id"`
-	OwnerID     *ID       `json:"owner_id"`
-	Previous    *ID       `json:"previous"`
-	PublicKeyID *ID       `json:"public_key_id"`
-	KeyType     string    `json:"type"`
-}
-
-func (c *Claim) Version() int {
-	return 1
-}
-
-func (c *Claim) Type() byte {
-	return byte(0x08)
-}
-
-// NewClaim returns a new Claim, with the created time set to now
-func NewClaim(orgID, ownerID, previous, pubKeyID *ID, keyType string) *Claim {
-	return &Claim{
-		OrgID:       orgID,
-		OwnerID:     ownerID,
-		Previous:    previous,
-		PublicKeyID: pubKeyID,
-		KeyType:     keyType,
-		Created:     time.Now().UTC(),
-	}
-}
-
-// Signature, while not technically a payload, is still immutable, and must be
-// orderer properly so that ID generation is correct.
-//
-// If PublicKeyID is nil, the signature is self-signed.
-type Signature struct {
-	Algorithm   string       `json:"alg"`
-	PublicKeyID *ID          `json:"public_key_id"`
-	Value       *Base64Value `json:"value"`
+type KeyPairsCreateRequest struct { // Its the response, too!
+	PublicKey  *envelope.Signed  `json:"public_key"`
+	PrivateKey *envelope.Signed  `json:"private_key"`
+	Claims     []envelope.Signed `json:"claims"`
 }

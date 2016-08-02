@@ -15,6 +15,7 @@ type Config struct {
 	API         string
 	SocketPath  string
 	PidPath     string
+	DBPath      string
 	Version     string
 	PublicKey   *PublicKey
 }
@@ -68,6 +69,7 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 		API:        "https://arigato.tools",
 		SocketPath: path.Join(arigatoRoot, "daemon.socket"),
 		PidPath:    path.Join(arigatoRoot, "daemon.pid"),
+		DBPath:     path.Join(arigatoRoot, "daemon.db"),
 		Version:    version,
 		PublicKey:  publicKey,
 	}

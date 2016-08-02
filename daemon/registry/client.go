@@ -13,6 +13,10 @@ type Client struct {
 	client *http.Client
 	prefix string
 	sess   session.Session
+
+	KeyPairs *KeyPairs
+	Tokens   *Tokens
+	Users    *Users
 }
 
 func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
@@ -21,6 +25,10 @@ func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
 		prefix: prefix,
 		sess:   sess,
 	}
+
+	c.KeyPairs = &KeyPairs{client: c}
+	c.Tokens = &Tokens{client: c}
+	c.Users = &Users{client: c}
 
 	return c
 }

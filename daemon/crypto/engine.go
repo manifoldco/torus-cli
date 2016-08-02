@@ -2,18 +2,24 @@ package crypto
 
 import (
 	"crypto/rand"
+	"encoding/json"
+	"strconv"
 
 	"github.com/dchest/blake2b"
 	triplesec "github.com/keybase/go-triplesec"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"
 
+	"github.com/arigatomachine/cli/daemon/base64"
 	"github.com/arigatomachine/cli/daemon/db"
+	"github.com/arigatomachine/cli/daemon/envelope"
+	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/daemon/primitive"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
 const (
-	nonceSize = 24
+	nonceSize = 16
 	blakeSize = 16
 )
 
@@ -51,7 +57,7 @@ func (e *Engine) Seal(pt []byte) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	nonce := make([]byte, 24)
+	nonce := make([]byte, nonceSize)
 	_, err = rand.Read(nonce)
 	if err != nil {
 		return nil, nil, err
@@ -124,15 +130,58 @@ func (e *Engine) Sign(s SignatureKeyPair, b []byte) ([]byte, error) {
 	return ed25519.Sign(pk, b), nil
 }
 
+// Verify verifies that sig is the correct signature for b given
+// SignatureKeyPair s.
 func (e *Engine) Verify(s SignatureKeyPair, b, sig []byte) bool {
 	return ed25519.Verify(s.Public, b, sig)
+}
+
+// SignedEnvelope returns a new SignedEnvelope containing body
+func (e *Engine) SignedEnvelope(body identity.AgObject,
+	sigID *identity.ID, sigKP *SignatureKeyPair) (*envelope.Signed,
+	error) {
+
+	b, err := json.Marshal(&body)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := e.Sign(*sigKP, append([]byte(strconv.Itoa(body.Version())), b...))
+	if err != nil {
+		return nil, err
+	}
+
+	sv := base64.Value(s)
+	sig := primitive.Signature{
+		PublicKeyID: sigID,
+		Algorithm:   EdDSA,
+		Value:       &sv,
+	}
+
+	id, err := identity.New(body, &sig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &envelope.Signed{
+		ID:        &id,
+		Version:   1,
+		Body:      body,
+		Signature: sig,
+	}, nil
 }
 
 // unsealMasterKey uses the scrypt stretched password to decrypt the master
 // password, which is encrypted with triplesec-v3
 func (e *Engine) unsealMasterKey() ([]byte, error) {
 	ts := newTriplesec([]byte(e.sess.Passphrase()))
-	mk, err := ts.Decrypt(e.db.MasterKey())
+	self := envelope.Unsigned{}
+	err := e.db.Get(e.sess.ID(), &self)
+	if err != nil {
+		return nil, err
+	}
+
+	mk, err := ts.Decrypt(*(self.Body.(*primitive.User).Master.Value))
 	return mk, err
 }
 

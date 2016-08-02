@@ -1,6 +1,6 @@
 package routes
 
-import "github.com/arigatomachine/cli/daemon/registry"
+import "github.com/arigatomachine/cli/daemon/identity"
 
 type Login struct {
 	Email      string `json:"email"`
@@ -17,7 +17,7 @@ type Status struct {
 }
 
 type KeyPairGenerate struct {
-	OrgID *registry.ID `json:"org_id"`
+	OrgID *identity.ID `json:"org_id"`
 }
 
 type Error struct {
@@ -28,4 +28,9 @@ type Error struct {
 const (
 	TokenTypeLogin = "login"
 	TokenTypeAuth  = "auth"
+)
+
+const (
+	EncryptionKeyType = "encryption"
+	SigningKeyType    = "signing"
 )

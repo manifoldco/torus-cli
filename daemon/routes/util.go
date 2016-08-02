@@ -3,29 +3,32 @@ package routes
 import (
 	"time"
 
+	"github.com/arigatomachine/cli/daemon/base64"
 	"github.com/arigatomachine/cli/daemon/crypto"
-	"github.com/arigatomachine/cli/daemon/registry"
+	"github.com/arigatomachine/cli/daemon/envelope"
+	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/daemon/primitive"
 )
 
-func packagePublicKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
-	keyType string, public []byte, sigID *registry.ID,
-	sigKP *crypto.SignatureKeyPair) (*registry.Envelope, error) {
+func packagePublicKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
+	keyType string, public []byte, sigID *identity.ID,
+	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
 	alg := crypto.Curve25519
-	if keyType == registry.SigningKeyType {
+	if keyType == SigningKeyType {
 		alg = crypto.EdDSA
 	}
 
 	now := time.Now().UTC()
 
-	kv := registry.Base64Value(public)
-	body := registry.PublicKey{
+	kv := base64.Value(public)
+	body := primitive.PublicKey{
 		OrgID:     orgID,
 		OwnerID:   ownerID,
 		KeyType:   keyType,
 		Algorithm: alg,
 
-		Key: registry.PublicKeyValue{
+		Key: primitive.PublicKeyValue{
 			Value: &kv,
 		},
 
@@ -33,26 +36,26 @@ func packagePublicKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
 		Expires: now.Add(time.Hour * 8760), // one year
 	}
 
-	return registry.NewEnvelope(engine, &body, sigID, sigKP)
+	return engine.SignedEnvelope(&body, sigID, sigKP)
 }
 
-func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *registry.ID,
-	pnonce, private []byte, pubID, sigID *registry.ID,
-	sigKP *crypto.SignatureKeyPair) (*registry.Envelope, error) {
+func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
+	pnonce, private []byte, pubID, sigID *identity.ID,
+	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
-	kv := registry.Base64Value(private)
-	pv := registry.Base64Value(pnonce)
-	body := registry.PrivateKey{
+	kv := base64.Value(private)
+	pv := base64.Value(pnonce)
+	body := primitive.PrivateKey{
 		OrgID:       orgID,
 		OwnerID:     ownerID,
 		PNonce:      &pv,
 		PublicKeyID: pubID,
 
-		Key: registry.PrivateKeyValue{
+		Key: primitive.PrivateKeyValue{
 			Algorithm: crypto.Triplesec,
 			Value:     &kv,
 		},
 	}
 
-	return registry.NewEnvelope(engine, &body, sigID, sigKP)
+	return engine.SignedEnvelope(&body, sigID, sigKP)
 }

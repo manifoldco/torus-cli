@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/scrypt"
 )
 
+// Crypto Algorithm name constants.
 const (
 	Triplesec  = "triplesec-v3"
 	EdDSA      = "eddsa"
