@@ -130,6 +130,11 @@ Client.prototype._headers = function (opts) {
  * @param {object} body
  */
 Client.prototype._extractError = function (body) {
+  body = (body && body.error && body.type) ? body : {
+    error: 'invalid error received',
+    type: 'internal_error'
+  };
+
   var err = new Error(body.error);
   err.type = body.type;
   return err;
