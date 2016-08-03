@@ -38,7 +38,10 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		if creds.Email == "" || creds.Passphrase == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			enc := json.NewEncoder(w)
-			enc.Encode(&errorMsg{Err: "email and passphrase required"})
+			enc.Encode(&errorMsg{
+				Type:    badRequestError,
+				Message: "email and passphrase required",
+			})
 			return
 		}
 
@@ -221,7 +224,10 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		enc := json.NewEncoder(w)
 		if !(s.HasToken() && s.HasPassphrase()) {
 			w.WriteHeader(http.StatusNotFound)
-			err := enc.Encode(&errorMsg{Err: "Not logged in"})
+			err := enc.Encode(&errorMsg{
+				Type:    unauthorizedError,
+				Message: "Not logged in",
+			})
 			if err != nil {
 				encodeResponseErr(w, err)
 			}
@@ -261,6 +267,9 @@ func encodeResponseErr(w http.ResponseWriter, err error) {
 		enc.Encode(rErr)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
-		enc.Encode(&errorMsg{Err: "Internal server error"})
+		enc.Encode(&errorMsg{
+			Type:    internalServerError,
+			Message: "Internal server error",
+		})
 	}
 }

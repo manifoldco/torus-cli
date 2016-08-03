@@ -2,6 +2,17 @@ package routes
 
 import "github.com/arigatomachine/cli/daemon/identity"
 
+type errorType string
+
+const (
+	badRequestError   = "bad_request"
+	unauthorizedError = "unauthorized"
+	notFoundError     = "not_found"
+
+	internalServerError = "internal_server"
+	notImplementedError = "not_implemented"
+)
+
 type login struct {
 	Email      string `json:"email"`
 	Passphrase string `json:"passphrase"`
@@ -21,6 +32,6 @@ type keyPairGenerate struct {
 }
 
 type errorMsg struct {
-	Err     string `json:"error"`
-	Message string `json:"message"`
+	Type    errorType `json:"type"`
+	Message string    `json:"message"`
 }
