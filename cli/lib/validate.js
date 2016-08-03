@@ -10,7 +10,7 @@ var rpath = require('common/rpath');
 
 var CRED_NAME = new RegExp(/^[a-z][a-z0-9_]{0,63}$/);
 var ACTION_SHORTHAND = new RegExp(/^(?:([crudl])(?!.*\1))+$/);
-
+var INVITE_CODE_REGEX = new RegExp(/^[0-9a-ht-zjkmnpqr]{10}$/);
 
 /**
  * TODO: Change js validation for json schema
@@ -51,12 +51,25 @@ validate.build = function (ruleMap, requireAll) {
         return null;
       }
 
-      var output = rule(input[name]);
-      return (typeof output === 'string') ?
-        new ValidationError(name + ': ' + output) : null;
+      if (!rule) {
+        throw new Error('Undefined Rule Provided: ' + name);
+      }
+
+      var values = Array.isArray(input[name]) ? input[name] : [input[name]];
+      var output = values.map(rule).map(function (err) {
+        return (typeof err === 'string') ?
+          new ValidationError(name + ': ' + err) : null;
+      });
+
+      return output;
     });
 
-    return errs.filter(function (err) { return err !== null; });
+    // Finally, only return non-null values
+    errs = _.flatten(errs);
+
+    return errs.filter(function (err) {
+      return err !== null && err !== undefined;
+    });
   };
 };
 
@@ -80,8 +93,8 @@ validate.credName = function (input) {
 };
 
 validate.name = function (input) {
-  var error = 'Please provide your full name';
-  return input.length < 3 || input.length > 64 ? error : true;
+  var error = 'Please provide your fullname [a-zA-Z ,.\'-\\pL]';
+  return validator.matches(input, /^[a-zA-Z\s,\.'\-pL]{1,64}$/) ? true : error;
 };
 
 validate.slug = function (input) {
@@ -110,4 +123,9 @@ validate.code = function (input) {
   var error = 'Verification code must be exactly 9 characters';
   var trimmed = input.replace(/\s/g, '');
   return trimmed.length !== 9 ? error : true;
+};
+
+validate.inviteCode = function (code) {
+  return !INVITE_CODE_REGEX.test(code) ?
+    'Invite code must be 10 base32 characters' : null;
 };
