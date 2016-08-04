@@ -127,5 +127,5 @@ validate.code = function (input) {
 
 validate.inviteCode = function (code) {
   return !INVITE_CODE_REGEX.test(code) ?
-    'Invite code must be 10 base32 characters' : null;
+    'Invite code must be 10 base32 characters' : true;
 };
