@@ -66,3 +66,13 @@ invites.accept = function (client, body) {
     return res.body;
   });
 };
+
+invites.approve = function (client, query, params) {
+  return client.post({
+    url: '/org-invites/:id/approve',
+    qs: query || {},
+    params: params || {}
+  }).then(function (res) {
+    return res.body;
+  });
+};
