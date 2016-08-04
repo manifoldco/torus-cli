@@ -16,6 +16,8 @@ api.modules = {
   envs: require('./envs'),
   services: require('./services'),
   credentials: require('./credentials'),
+  invites: require('./invites'),
+  profiles: require('./profiles'),
 
   // non-proxied daemon apis
   versionApi: require('./versionApi'),

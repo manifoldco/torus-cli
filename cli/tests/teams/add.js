@@ -72,7 +72,7 @@ describe('Team Add', function () {
     this.sandbox.stub(teamsAdd.output, 'failure');
     this.sandbox.stub(ctx.api.memberships, 'create')
       .returns(Promise.resolve(MEMBERSHIP));
-    this.sandbox.stub(ctx.api.users, 'profile')
+    this.sandbox.stub(ctx.api.profiles, 'get')
       .returns(PROFILE);
     this.sandbox.stub(ctx.api.orgs, 'get')
       .returns([ORG]);
@@ -168,7 +168,7 @@ describe('Team Add', function () {
     [
       {
         stub: function () {
-          ctx.api.users.profile.returns(Promise.resolve(null));
+          ctx.api.profiles.get.returns(Promise.resolve(null));
         },
         error: 'user not found: ' + PROFILE.body.username
       },

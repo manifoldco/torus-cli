@@ -55,7 +55,7 @@ add.execute = function (ctx) {
     var payload = {};
     return Promise.all([
       ctx.api.orgs.get({ name: data.org }),
-      ctx.api.users.profile({}, { username: data.username })
+      ctx.api.profiles.get({}, { username: data.username })
     ])
     .then(function (result) {
       payload.org = result[0] && result[0][0];

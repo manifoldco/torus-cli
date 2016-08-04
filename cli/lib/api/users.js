@@ -12,24 +12,15 @@ users.self = function (client) {
   });
 };
 
-users.profile = function (client, query, params) {
-  return client.get({
-    url: '/profiles/:username',
-    qs: query || {},
-    params: params || {}
-  }).then(function (res) {
-    return res.body;
-  });
-};
-
-users.create = function (client, body) {
+users.create = function (client, body, query) {
   return client.post({
     url: '/users',
     json: {
       id: utils.id('user'),
       version: 1,
       body: body
-    }
+    },
+    qs: query || {}
   }).then(function (res) {
     return res.body;
   });

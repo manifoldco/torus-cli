@@ -2,7 +2,6 @@
 
 var Promise = require('es6-promise').Promise;
 
-var Prompt = require('../../cli/prompt');
 var Command = require('../../cli/command');
 
 var user = require('../../user');
@@ -14,26 +13,15 @@ module.exports = new Command(
   'create an Arigato account',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      // Create prompt from user questions
-      var prompt = new Prompt({
-        stages: user.questions
-      });
-
-      // Begin asking questions
-      prompt.start().then(function (userInput) {
-        // Create user object from input
-        return user.create(ctx.api, userInput).then(function () {
-          return userInput;
-        });
-
-      // Success, account created but now login
-      })
-      .then(function (userInput) {
+      user.execute(ctx).then(function (userInput) {
         var params = {
           email: userInput.email,
           passphrase: userInput.passphrase
         };
         return login.subcommand(ctx, params);
+      })
+      .then(function () {
+        return user.finalize(ctx);
       })
       .then(function () {
         user.output.success();
@@ -45,17 +33,9 @@ module.exports = new Command(
           return result;
         });
       })
-      .then(ctx.api.orgs.get)
-      .then(function (orgs) {
-        return { org_id: orgs[0].id };
-      })
-      .then(ctx.api.keypairs.generate)
       // Flow complete
-      .then(function () {
-        resolve();
-
+      .then(resolve)
       // Account creation failed
-      })
       .catch(function (err) {
         if (err && err.output !== false) {
           err.type = err.type || 'unknown';

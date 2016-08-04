@@ -4,6 +4,7 @@ var user = exports;
 
 var _ = require('lodash');
 
+var Prompt = require('../cli/prompt');
 var validate = require('../validate');
 var output = require('../cli/output');
 var userCrypto = require('common/crypto/user');
@@ -85,12 +86,39 @@ user.questions = function () {
 };
 
 /**
+ * Execute user creation from inputs
+ */
+user.execute = function (ctx, params) {
+  // Create prompt from user questions
+  var prompt = new Prompt({
+    stages: user.questions
+  });
+
+  // Begin asking questions
+  return prompt.start().then(function (userInput) {
+    // Create user object from input
+    return user._create(ctx.api, userInput, params).then(function () {
+      return userInput;
+    });
+  });
+};
+
+/**
+ * Finalize user signup *after* the user has logged in
+ */
+user.finalize = function (ctx) {
+  return ctx.api.orgs.get().then(function (orgs) {
+    return ctx.api.keypairs.generate({ org_id: orgs[0].id });
+  });
+};
+
+/**
  * Create user object from inputs
  *
  * @param {object} api api client
  * @param {object} userInput
  */
-user.create = function (api, userInput) {
+user._create = function (api, userInput, params) {
   var object = {
     username: userInput.username,
     name: userInput.name,
@@ -103,6 +131,6 @@ user.create = function (api, userInput) {
       // Append the master and password objects to body
       object = _.extend(object, result);
     }).then(function () {
-      return api.users.create(object);
+      return api.users.create(object, params);
     });
 };
