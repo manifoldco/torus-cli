@@ -30,16 +30,16 @@ set.hook('pre', auth());
 set.hook('pre', target());
 
 flags.add(set, 'org', {
-  description: 'the org the credential will belong to'
+  description: 'the org the secret will belong to'
 });
 flags.add(set, 'project', {
-  description: 'the project the credential will belong to'
+  description: 'the project the secret will belong to'
 });
 flags.add(set, 'environment', {
-  description: 'the environment the credential will belong to'
+  description: 'the environment the secret will belong to'
 });
 flags.add(set, 'service', {
-  description: 'the service the credential will belong to'
+  description: 'the service the secret will belong to'
 });
 flags.add(set, 'instance', {
   description: 'the instance of the service belonging to the current user'

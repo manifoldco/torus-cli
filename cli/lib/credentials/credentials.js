@@ -78,7 +78,7 @@ credentials.create = function (api, params, value) {
             curCredValue = cValue.parse(cred.body.value);
 
             if (curCredValue.body.type === 'undefined') {
-              return reject(new Error('You cannot unset a credential twice'));
+              return reject(new Error('You cannot unset a secret twice'));
             }
           }
 

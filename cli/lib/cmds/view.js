@@ -10,7 +10,7 @@ var target = require('../middleware/target');
 
 var view = new Command(
   'view',
-  'view credentials for the current service and environment',
+  'view secrets for the current service and environment',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       viewCred.execute(ctx).then(function (creds) {
@@ -29,16 +29,16 @@ view.hook('pre', auth());
 view.hook('pre', target());
 
 flags.add(view, 'org', {
-  description: 'the org the credentials belongs to'
+  description: 'the org the secrets belongs to'
 });
 flags.add(view, 'project', {
-  description: 'the project the credentials belongs to'
+  description: 'the project the secrets belongs to'
 });
 flags.add(view, 'service', {
-  description: 'the service the credentials belong to'
+  description: 'the service the secrets belong to'
 });
 flags.add(view, 'environment', {
-  description: 'the environment the credentiasl belong to'
+  description: 'the environment the secrets belong to'
 });
 flags.add(view, 'instance', {
   description: 'the instance of the service belonging to the current user'
