@@ -12,14 +12,15 @@ users.self = function (client) {
   });
 };
 
-users.create = function (client, body) {
+users.create = function (client, body, query) {
   return client.post({
     url: '/users',
     json: {
       id: utils.id('user'),
       version: 1,
       body: body
-    }
+    },
+    qs: query || {}
   }).then(function (res) {
     return res.body;
   });
