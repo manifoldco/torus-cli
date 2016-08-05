@@ -1,6 +1,7 @@
 'use strict';
 
 var credentials = exports;
+credentials.isNewAPI = true;
 
 var utils = require('common/utils');
 
@@ -8,7 +9,7 @@ credentials.get = function (client, query) {
   return client.get({
     url: '/credentials',
     qs: query || {}
-  }).then(function (res) {
+  }, credentials.isNewAPI).then(function (res) {
     return res.body;
   });
 };

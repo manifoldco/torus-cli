@@ -32,6 +32,6 @@ type keyPairGenerate struct {
 }
 
 type errorMsg struct {
-	Type    errorType `json:"type"`
-	Message string    `json:"message"`
+	Type  errorType `json:"type"`
+	Error string    `json:"error"`
 }

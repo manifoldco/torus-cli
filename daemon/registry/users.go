@@ -17,7 +17,7 @@ type Users struct {
 
 // GetSelf returns the logged in user.
 func (u *Users) GetSelf(token string) (*envelope.Unsigned, error) {
-	req, err := u.client.NewTokenRequest(token, "GET", "/users/self", nil)
+	req, err := u.client.NewTokenRequest(token, "GET", "/users/self", nil, nil)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 		return nil, err

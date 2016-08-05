@@ -42,7 +42,7 @@ type Tokens struct {
 func (t *Tokens) PostLogin(email string) (string, string, error) {
 	salt := loginTokenResponse{}
 
-	req, err := t.client.NewRequest("POST", "/tokens",
+	req, err := t.client.NewRequest("POST", "/tokens", nil,
 		&loginTokenRequest{
 			Type:  tokenTypeLogin,
 			Email: email,
@@ -67,7 +67,7 @@ func (t *Tokens) PostLogin(email string) (string, string, error) {
 func (t *Tokens) PostAuth(token, hmac string) (string, error) {
 	auth := authTokenResponse{}
 
-	req, err := t.client.NewTokenRequest(token, "POST", "/tokens",
+	req, err := t.client.NewTokenRequest(token, "POST", "/tokens", nil,
 		&authTokenRequest{Type: tokenTypeAuth, TokenHMAC: hmac})
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
@@ -85,7 +85,7 @@ func (t *Tokens) PostAuth(token, hmac string) (string, error) {
 // Delete deletes the token with the provided value from the registry. This
 // effectively logs a user out.
 func (t *Tokens) Delete(token string) error {
-	req, err := t.client.NewTokenRequest(token, "DELETE", "/tokens/"+token, nil)
+	req, err := t.client.NewTokenRequest(token, "DELETE", "/tokens/"+token, nil, nil)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return err

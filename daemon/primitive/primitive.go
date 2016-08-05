@@ -121,3 +121,32 @@ func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID,
 		Created:     time.Now().UTC(),
 	}
 }
+
+// Credential is a secret value shared between a group of services based
+// on users identity, operating environment, project, and organization
+type Credential struct {
+	v1Schema
+	Name              string       `json:"name"`
+	OrgID             *identity.ID `json:"org_id"`
+	ProjectID         *identity.ID `json:"project_id"`
+	PathExp           string       `json:"pathexp"`
+	Previous          *identity.ID `json:"previous"`
+	Value             string       `json:"value"`
+	CredentialVersion int          `json:"version"`
+}
+
+// Type returns the enumerated byte representation of Credential
+func (c *Credential) Type() byte {
+	return byte(0xb)
+}
+
+// Org is a grouping of users that collaborate with each other
+type Org struct {
+	v1Schema
+	Name string `json:"name"`
+}
+
+// Type returns the enumerated byte representation of Org
+func (o *Org) Type() byte {
+	return byte(0xd)
+}

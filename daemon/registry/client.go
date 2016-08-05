@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
 
 	"github.com/arigatomachine/cli/daemon/session"
 )
@@ -29,9 +30,11 @@ type Client struct {
 	prefix string
 	sess   session.Session
 
-	KeyPairs *KeyPairs
-	Tokens   *Tokens
-	Users    *Users
+	KeyPairs    *KeyPairs
+	Tokens      *Tokens
+	Users       *Users
+	Credentials *Credentials
+	Orgs        *Orgs
 }
 
 // NewClient returns a new Client.
@@ -45,23 +48,24 @@ func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
 	c.KeyPairs = &KeyPairs{client: c}
 	c.Tokens = &Tokens{client: c}
 	c.Users = &Users{client: c}
+	c.Credentials = &Credentials{client: c}
+	c.Orgs = &Orgs{client: c}
 
 	return c
 }
 
 // NewRequest constructs a new http.Request, with a body containing the json
 // representation of body, if provided.
-func (c *Client) NewRequest(method, path string, body interface{}) (
+func (c *Client) NewRequest(method, path string, query *url.Values, body interface{}) (
 	*http.Request, error) {
-
-	return c.NewTokenRequest(c.sess.Token(), method, path, body)
+	return c.NewTokenRequest(c.sess.Token(), method, path, query, body)
 }
 
 // NewTokenRequest constructs a new http.Request, with a body containing the
 // json representation of body, if provided.
 //
 // The request will be authorized with the provided token.
-func (c *Client) NewTokenRequest(token, method, path string, body interface{}) (
+func (c *Client) NewTokenRequest(token, method, path string, query *url.Values, body interface{}) (
 	*http.Request, error) {
 
 	b := &bytes.Buffer{}
@@ -73,7 +77,12 @@ func (c *Client) NewTokenRequest(token, method, path string, body interface{}) (
 		}
 	}
 
-	req, err := http.NewRequest(method, c.prefix+path, b)
+	if query == nil {
+		query = &url.Values{}
+	}
+
+	fullPath := c.prefix + path + "?" + query.Encode()
+	req, err := http.NewRequest(method, fullPath, b)
 	if err != nil {
 		return nil, err
 	}
