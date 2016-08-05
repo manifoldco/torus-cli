@@ -81,7 +81,7 @@ Client.prototype._req = function (verb, opts, isV1) {
       headers: self._headers(opts),
       time: true,
       gzip: true,
-      timeout: 3000
+      timeout: 60000
     });
 
     request(opts, function (err, res, body) {
