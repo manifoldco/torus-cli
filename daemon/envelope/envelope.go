@@ -94,8 +94,12 @@ func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
 		body = &primitive.PrivateKey{}
 	case 0x08:
 		body = &primitive.Claim{}
+	case 0x0b:
+		body = &primitive.Credential{}
+	case 0x0d:
+		body = &primitive.Org{}
 	default:
-		return nil, nil, fmt.Errorf("Unknown type: %d", t)
+		return nil, nil, fmt.Errorf("Unknown primitive type id: %d", t)
 	}
 
 	err = json.Unmarshal(o.Body, body)

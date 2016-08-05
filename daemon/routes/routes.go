@@ -219,6 +219,24 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		w.WriteHeader(http.StatusNoContent)
 	})
 
+	mux.GetFunc("/credentials", func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		creds, err := client.Credentials.List(q.Get("name"), q.Get("path"), q.Get("pathexp"))
+		if err != nil {
+			log.Printf("error retrieving credentials: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		enc := json.NewEncoder(w)
+		err = enc.Encode(creds)
+		if err != nil {
+			log.Printf("error encoding credentials: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+	})
+
 	mux.GetFunc("/session", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
 		if !(s.HasToken() && s.HasPassphrase()) {
