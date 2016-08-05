@@ -46,7 +46,6 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		}
 
 		salt, loginToken, err := client.Tokens.PostLogin(creds.Email)
-		log.Print(salt)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
