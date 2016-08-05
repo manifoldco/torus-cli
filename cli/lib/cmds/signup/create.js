@@ -8,12 +8,12 @@ var user = require('../../user');
 var login = require('../../login');
 var verify = require('../../verify');
 
-module.exports = new Command(
-  'signup',
-  'create an Arigato account',
+var signup = new Command(
+  'signup [email] [code]',
+  'join the alpha',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      user.execute(ctx).then(function (userInput) {
+      user.execute(ctx, ctx.params).then(function (userInput) {
         var params = {
           email: userInput.email,
           passphrase: userInput.passphrase
@@ -46,3 +46,5 @@ module.exports = new Command(
     });
   }
 );
+
+module.exports = signup;

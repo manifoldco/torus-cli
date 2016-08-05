@@ -41,26 +41,36 @@ user.output.failure = function (err) {
  */
 user.questions = function () {
   var self = this;
-  return [
-    // Stage one
+  var passwordStage;
+
+  var INVITE_CODE = [
+    {
+      name: 'code',
+      message: 'Invite code',
+      validate: validate.inviteCode
+    }
+  ];
+
+  var questions = [
     [
-      {
-        name: 'username',
-        message: 'Username',
-        validate: validate.slug
-      },
       {
         name: 'name',
         message: 'Full name',
         validate: validate.name
       },
       {
+        name: 'username',
+        message: 'Username',
+        validate: validate.slug
+      }
+    ],
+    [
+      {
         name: 'email',
         message: 'Email',
         validate: validate.email
       }
     ],
-    // Stage two
     [
       {
         type: 'password',
@@ -78,19 +88,40 @@ user.questions = function () {
           var failed = input !== answers.passphrase;
           // When failed, tell prompt which stage failed to recurse
           // if the maximum attempts has been reached
-          return failed ? self.failed(1, error) : true;
+          return failed ? self.failed(passwordStage, error) : true;
         }
       }
     ]
   ];
+
+  // All non-dev environments require invite code
+  if (process.env.NODE_ENV !== 'development') {
+    questions.splice(1, 0, INVITE_CODE);
+  }
+
+  passwordStage = questions.length - 1;
+  return questions;
 };
 
 /**
  * Execute user creation from inputs
  */
 user.execute = function (ctx, params) {
+  var defaults;
+  if (_.isArray(params)) {
+    defaults = {
+      email: params[0],
+      code: params[1]
+    };
+  } else if (_.isPlainObject(params)) {
+    defaults = {
+      email: params.email,
+      code: params.code
+    };
+  }
   // Create prompt from user questions
   var prompt = new Prompt({
+    defaults: defaults,
     stages: user.questions
   });
 
@@ -118,12 +149,17 @@ user.finalize = function (ctx) {
  * @param {object} api api client
  * @param {object} userInput
  */
-user._create = function (api, userInput, params) {
+user._create = function (api, userInput) {
   var object = {
     username: userInput.username,
     name: userInput.name,
     email: userInput.email
   };
+
+  var query = {};
+  if (userInput.code) {
+    query.code = userInput.code;
+  }
 
   // Encrypt the password, generate the master key
   return userCrypto.encryptPasswordObject(userInput.passphrase)
@@ -131,6 +167,6 @@ user._create = function (api, userInput, params) {
       // Append the master and password objects to body
       object = _.extend(object, result);
     }).then(function () {
-      return api.users.create(object, params);
+      return api.users.create(object, query);
     });
 };
