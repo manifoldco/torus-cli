@@ -12,6 +12,22 @@ type Credentials struct {
 	client *Client
 }
 
+func (c *Credentials) Create(credential *envelope.Unsigned) (*envelope.Unsigned, error) {
+	req, err := c.client.NewRequest("POST", "/credentials", nil, credential)
+	if err != nil {
+		log.Printf("Error building http request: %s", err)
+		return nil, err
+	}
+
+	resp := &envelope.Unsigned{}
+	_, err = c.client.Do(req, resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 func (c *Credentials) List(name, path, pathexp string) ([]envelope.Unsigned, error) {
 	query := url.Values{}
 

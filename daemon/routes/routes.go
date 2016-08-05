@@ -219,6 +219,33 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		w.WriteHeader(http.StatusNoContent)
 	})
 
+	mux.PostFunc("/credentials", func(w http.ResponseWriter, r *http.Request) {
+		dec := json.NewDecoder(r.Body)
+		cred := &envelope.Unsigned{}
+
+		err := dec.Decode(&cred)
+		if err != nil {
+			log.Printf("error decoding credential: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		cred, err = client.Credentials.Create(cred)
+		if err != nil {
+			log.Printf("error creating credential: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		enc := json.NewEncoder(w)
+		err = enc.Encode(cred)
+		if err != nil {
+			log.Printf("error encoding credential create resp: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+	})
+
 	mux.GetFunc("/credentials", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		creds, err := client.Credentials.List(q.Get("name"), q.Get("path"), q.Get("pathexp"))
