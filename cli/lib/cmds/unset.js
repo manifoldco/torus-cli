@@ -30,16 +30,16 @@ unset.hook('pre', auth());
 unset.hook('pre', target());
 
 flags.add(unset, 'org', {
-  description: 'the org the credential will belong to'
+  description: 'the org the secret will belong to'
 });
 flags.add(unset, 'project', {
-  description: 'the project the credential will belong to'
+  description: 'the project the secret will belong to'
 });
 flags.add(unset, 'environment', {
-  description: 'the environment the credential will belong to'
+  description: 'the environment the secret will belong to'
 });
 flags.add(unset, 'service', {
-  description: 'the service the credential will belong to'
+  description: 'the service the secret will belong to'
 });
 flags.add(unset, 'instance', {
   description: 'the instance of the service belonging to the current user'
