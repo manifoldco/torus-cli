@@ -128,8 +128,11 @@ user.execute = function (ctx, params) {
   // Begin asking questions
   return prompt.start().then(function (userInput) {
     // Create user object from input
-    return user._create(ctx.api, userInput, params).then(function () {
-      return userInput;
+    return user._create(ctx.api, userInput, params).then(function (userObj) {
+      return {
+        inputs: userInput,
+        user: userObj
+      };
     });
   });
 };
