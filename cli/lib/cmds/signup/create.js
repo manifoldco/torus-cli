@@ -13,11 +13,13 @@ var signup = new Command(
   'join the alpha',
   function (ctx) {
     return new Promise(function (resolve, reject) {
-      user.execute(ctx, ctx.params).then(function (userInput) {
+      var usr;
+      user.execute(ctx, ctx.params).then(function (res) {
         var params = {
-          email: userInput.email,
-          passphrase: userInput.passphrase
+          email: res.inputs.email,
+          passphrase: res.inputs.passphrase
         };
+        usr = res.user;
         return login.subcommand(ctx, params);
       })
       .then(function () {
@@ -25,6 +27,10 @@ var signup = new Command(
       })
       .then(function () {
         user.output.success();
+
+        if (usr.body.state === 'active') {
+          return Promise.resolve();
+        }
 
         verify.output.intermediate({ top: false });
         return verify.subcommand(ctx).then(function (result) {
