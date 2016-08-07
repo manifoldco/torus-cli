@@ -107,18 +107,18 @@ user.questions = function () {
  * Execute user creation from inputs
  */
 user.execute = function (ctx, params) {
-  var defaults;
-  if (_.isArray(params)) {
-    defaults = {
-      email: params[0],
-      code: params[1]
-    };
-  } else if (_.isPlainObject(params)) {
-    defaults = {
-      email: params.email,
-      code: params.code
-    };
-  }
+  var acceptOrgInvite = params && params.length === 3;
+  var orgIndex = acceptOrgInvite ? 0 : -1;
+  var codeIndex = acceptOrgInvite ? 2 : 1;
+  var emailIndex = acceptOrgInvite ? 1 : 0;
+
+  var defaults = {
+    // Params is mixed type, fallback to array
+    email: _.get(params, 'email', params[emailIndex]),
+    code: _.get(params, 'code', params[codeIndex]),
+    org: _.get(params, 'org', params[orgIndex])
+  };
+
   // Create prompt from user questions
   var prompt = new Prompt({
     defaults: defaults,
@@ -127,8 +127,13 @@ user.execute = function (ctx, params) {
 
   // Begin asking questions
   return prompt.start().then(function (userInput) {
+    var opts = {
+      params: params,
+      defaults: defaults,
+      userInput: userInput
+    };
     // Create user object from input
-    return user._create(ctx.api, userInput, params).then(function (userObj) {
+    return user._create(ctx.api, opts).then(function (userObj) {
       return {
         inputs: userInput,
         user: userObj
@@ -150,9 +155,12 @@ user.finalize = function (ctx) {
  * Create user object from inputs
  *
  * @param {object} api api client
- * @param {object} userInput
+ * @param {object} opts
  */
-user._create = function (api, userInput) {
+user._create = function (api, opts) {
+  var defaults = opts.defaults || {};
+  var userInput = opts.userInput;
+  var params = opts.params;
   var object = {
     username: userInput.username,
     name: userInput.name,
@@ -162,6 +170,12 @@ user._create = function (api, userInput) {
   var query = {};
   if (userInput.code) {
     query.code = userInput.code;
+  }
+  if (userInput.email) {
+    query.email = userInput.email;
+  }
+  if (params.org || defaults.org) {
+    query.org = params.org || defaults.org;
   }
 
   // Encrypt the password, generate the master key
