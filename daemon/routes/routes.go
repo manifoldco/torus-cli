@@ -268,11 +268,20 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 
 	mux.GetFunc("/credentials", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
-		creds, err := client.Credentials.List(q.Get("name"), q.Get("path"), q.Get("pathexp"))
+		trees, err := client.CredentialTree.List(
+			q.Get("Name"), q.Get("path"), q.Get("pathexp"), s.ID())
 		if err != nil {
-			log.Printf("error retrieving credentials: %s", err)
+			log.Printf("error retrieving credential trees: %s", err)
 			encodeResponseErr(w, err)
 			return
+		}
+
+		// Loop over the trees and unpack the credentials; later on we will
+		// actually do real work and decrypt each of these credentials but for
+		// now we just need ot return a list of them!
+		creds := []envelope.Unsigned{}
+		for _, tree := range trees {
+			creds = append(creds, tree.Credentials...)
 		}
 
 		enc := json.NewEncoder(w)
