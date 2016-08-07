@@ -230,6 +230,26 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 			return
 		}
 
+		// Get matching credentials
+		credBody := cred.Body.(*primitive.Credential)
+		creds, err := client.Credentials.List(credBody.Name, "", credBody.PathExp)
+		if err != nil {
+			log.Printf("error retrieving previous cred: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		if len(creds) == 0 {
+			credBody.Previous = nil
+			credBody.CredentialVersion = 1
+		} else {
+			previousCred := creds[len(creds)-1]
+			previousCredBody := previousCred.Body.(*primitive.Credential)
+
+			credBody.Previous = previousCred.ID
+			credBody.CredentialVersion = previousCredBody.CredentialVersion + 1
+		}
+
 		cred, err = client.Credentials.Create(cred)
 		if err != nil {
 			log.Printf("error creating credential: %s", err)

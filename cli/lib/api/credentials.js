@@ -30,7 +30,7 @@ credentials.create = function (client, data) {
         value: data.value
       }
     }
-  }).then(function (res) {
+  }, credentials.isNewAPI).then(function (res) {
     return res.body;
   });
 };

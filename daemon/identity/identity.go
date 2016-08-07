@@ -69,6 +69,10 @@ func (id *ID) Type() byte {
 	return id[1]
 }
 
+func (id *ID) String() string {
+	return lowerBase32.EncodeToString(id[:])
+}
+
 // MarshalJSON implements the json.Marshaler interface for IDs.
 //
 // IDs are encoded in unpadded base32.
