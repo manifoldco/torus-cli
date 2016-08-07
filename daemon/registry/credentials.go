@@ -8,10 +8,13 @@ import (
 	"github.com/arigatomachine/cli/daemon/envelope"
 )
 
+// Credentials represents the `/credentials` registry endpoint, used for
+// accessing encrypted credentials/secrets.
 type Credentials struct {
 	client *Client
 }
 
+// Create creates the provided credential in the registry.
 func (c *Credentials) Create(credential *envelope.Unsigned) (*envelope.Unsigned, error) {
 	req, err := c.client.NewRequest("POST", "/credentials", nil, credential)
 	if err != nil {
@@ -28,6 +31,7 @@ func (c *Credentials) Create(credential *envelope.Unsigned) (*envelope.Unsigned,
 	return resp, nil
 }
 
+// List returns all credentials that match the given  arguments.
 func (c *Credentials) List(name, path, pathexp string) ([]envelope.Unsigned, error) {
 	query := url.Values{}
 

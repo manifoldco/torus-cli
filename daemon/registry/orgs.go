@@ -7,10 +7,13 @@ import (
 	"github.com/arigatomachine/cli/daemon/envelope"
 )
 
+// Orgs represents the `/orgs` registry endpoint, used for accessing
+// organizations stored in Arigato.
 type Orgs struct {
 	client *Client
 }
 
+// List returns all organizations that match the given name.
 func (o *Orgs) List(name string) ([]envelope.Unsigned, error) {
 	v := url.Values{}
 
