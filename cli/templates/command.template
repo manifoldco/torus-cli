@@ -1,9 +1,12 @@
-Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
+
+Usage:
+  <%= program.name %> <%= cmd.usage %> [-OPTIONS]
 
 <%
   print(cmd.description);
   if (cmd.options.length > 0) {
-    print('\n\nThe following options are supported by this command:\n\n');
+    print('\n\n------------------------------------');
+    print('\n\n* Options supported:\n\n');
   }
 
   var options = '';
@@ -18,7 +21,8 @@ Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
   }
 
   if (_.keys(program.groups[cmd.group]).length > 1 && cmd.group === cmd.slug) {
-    print('\n\nThe following sub-commands are supported:\n\n');
+    print('\n\n------------------------------------');
+    print('\n\n* Sub-commands supported:\n\n');
 
     var subcmds = '';
 
@@ -33,6 +37,6 @@ Usage: <%= program.name %> <%= cmd.usage %> [-OPTIONS]
     });
 
     print(subcmds+'\n');
-    print('Use '+program.name+' help [command] to view additional information');
+    print('To view specific sub-command details use: '+program.name+' help <command>:<sub-command>');
   }
 %>

@@ -1,8 +1,13 @@
-Usage: <%= program.name %> <command> [params] [-OPTIONS]
 
-To view additional details for a command type <%= program.name %> help <command>.
+Usage:
+  <%= program.name %> <command> [params] [-OPTIONS]
 
-The following commands are supported:
+------------------------------------
+
+To view specific command details use:
+  <%= program.name %> help <command>
+
+Commands supported:
 
 <%
   var commands = '';
