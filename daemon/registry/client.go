@@ -35,6 +35,7 @@ type Client struct {
 	Users       *Users
 	Credentials *Credentials
 	Orgs        *Orgs
+	ClaimTree   *ClaimTreeClient
 }
 
 // NewClient returns a new Client.
@@ -50,6 +51,7 @@ func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
 	c.Users = &Users{client: c}
 	c.Credentials = &Credentials{client: c}
 	c.Orgs = &Orgs{client: c}
+	c.ClaimTree = &ClaimTreeClient{client: c}
 
 	return c
 }

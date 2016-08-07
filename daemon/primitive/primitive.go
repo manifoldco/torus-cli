@@ -128,9 +128,9 @@ type Credential struct {
 	v1Schema
 	Name              string       `json:"name"`
 	OrgID             *identity.ID `json:"org_id"`
-	ProjectID         *identity.ID `json:"project_id"`
 	PathExp           string       `json:"pathexp"`
 	Previous          *identity.ID `json:"previous"`
+	ProjectID         *identity.ID `json:"project_id"`
 	Value             string       `json:"value"`
 	CredentialVersion int          `json:"version"`
 }
@@ -138,6 +138,49 @@ type Credential struct {
 // Type returns the enumerated byte representation of Credential
 func (c *Credential) Type() byte {
 	return byte(0xb)
+}
+
+// Keyring is a mechanism for sharing a shared secret between many different
+// users and machines at a position in the credential path.
+//
+// Credentials belong to Keyrings
+type Keyring struct {
+	v1Schema
+	Created        time.Time    `json:"created_at"`
+	OrgID          *identity.ID `json:"org_id"`
+	PathExp        string       `json:"pathexp"`
+	Previous       *identity.ID `json:"previous"`
+	ProjectID      *identity.ID `json:"project_id"`
+	KeyringVersion int          `json:"version"`
+}
+
+// Type returns the enumerated byte representation of Keyring
+func (k *Keyring) Type() byte {
+	return byte(0x09)
+}
+
+// KeyringMember is a record of sharing a master secret key with a user or
+// machine.
+//
+// KeyringMember belong to a Keyring
+type KeyringMember struct {
+	v1Schema
+	Created time.Time `json:"created_at"`
+	Key     *struct {
+		Algorithm string        `json:"alg"`
+		Nonce     *base64.Value `json:"nonce"`
+		Value     *base64.Value `json:"value"`
+	} `json:"key"`
+	KeyringID   *identity.ID `json:"keyring_id"`
+	OrgID       *identity.ID `json:"org_id"`
+	OwnerID     *identity.ID `json:"owner_id"`
+	ProjectID   *identity.ID `json:"project_id"`
+	PublicKeyID *identity.ID `json:"public_key_id"`
+}
+
+// Type returns the enumerated byte representation of KeyringMember
+func (km *KeyringMember) Type() byte {
+	return byte(0x0a)
 }
 
 // Org is a grouping of users that collaborate with each other
