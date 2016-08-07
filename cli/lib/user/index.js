@@ -95,7 +95,7 @@ user.questions = function () {
   ];
 
   // All non-dev environments require invite code
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NODE_ENV !== 'arigato') {
     questions.splice(1, 0, INVITE_CODE);
   }
 
