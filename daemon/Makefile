@@ -16,9 +16,14 @@ vet:
 	@go vet ${PKG_LIST}
 
 lint:
-	@for file in ${GO_FILES} ;  do \
-	    golint $$file ; \
-	    done
+	@LINT=$$(for file in ${GO_FILES} ;  do \
+		golint $$file ; \
+	done) ; \
+	if test -n "$$LINT"; then \
+		echo "go lint problems:" ; \
+		echo "$$LINT" ; \
+		exit 1 ; \
+	fi ;
 
 static: vet lint
 	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/config.version=${VERSION}" ${PKG}
