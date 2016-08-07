@@ -1,5 +1,6 @@
 'use strict';
 
+var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
 
 var cpath = require('common/cpath');
@@ -116,7 +117,35 @@ credentials.get = function (api, params) {
 
       return api.credentials.get({ path: path });
     })
-    .then(resolve)
+    .then(function (creds) {
+      // TODO: Move this logic into the daemon.
+      //
+      // The daemon will return to us all credentials in all keyrings; some of
+      // these may collide in the credential `name` space (since name ==
+      // process env variable).
+      //
+      // Therefore, we need to collapse based on path specificity!
+      var nameMap = {};
+      var name;
+      var cred;
+      for (var i = 0; i < creds.length; ++i) {
+        cred = creds[i];
+        name = cred.body.name;
+
+        if (!nameMap[name]) {
+          nameMap[name] = cred;
+          continue;
+        }
+
+        // Figure out which is the most specific path
+        if (cpath.compare(
+          nameMap[name].body.pathexp, cred.body.pathexp) === -1) {
+          nameMap[name] = cred;
+        }
+      }
+
+      resolve(_.values(nameMap));
+    })
     .catch(reject);
   });
 };
