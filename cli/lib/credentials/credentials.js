@@ -1,5 +1,6 @@
 'use strict';
 
+var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
 
 var cpath = require('common/cpath');
@@ -66,34 +67,15 @@ credentials.create = function (api, params, value) {
         var pathexp = (cpathObj) ?
           cpathObj.toString() : getPath(user, params);
 
-        var credsQs = { name: params.name, pathexp: pathexp };
-        return api.credentials.get(credsQs).then(function (credResult) {
-          var cred = credResult[0];
-          var previous = (cred) ? cred.id : null;
-          var version = (cred) ? cred.body.version + 1 : 1;
+        var data = {
+          name: params.name,
+          project_id: project.id,
+          org_id: org.id,
+          pathexp: pathexp,
+          value: value.toString()
+        };
 
-          // Prevent the credential from being unset if it's already unset.
-          var curCredValue;
-          if (cred && value.body.type === 'undefined') {
-            curCredValue = cValue.parse(cred.body.value);
-
-            if (curCredValue.body.type === 'undefined') {
-              return reject(new Error('You cannot unset a secret twice'));
-            }
-          }
-
-          var data = {
-            name: params.name,
-            project_id: project.id,
-            org_id: org.id,
-            pathexp: pathexp,
-            version: version,
-            previous: previous,
-            value: value.toString()
-          };
-
-          return api.credentials.create(data);
-        });
+        return api.credentials.create(data);
       });
     })
     .then(resolve)
@@ -135,7 +117,35 @@ credentials.get = function (api, params) {
 
       return api.credentials.get({ path: path });
     })
-    .then(resolve)
+    .then(function (creds) {
+      // TODO: Move this logic into the daemon.
+      //
+      // The daemon will return to us all credentials in all keyrings; some of
+      // these may collide in the credential `name` space (since name ==
+      // process env variable).
+      //
+      // Therefore, we need to collapse based on path specificity!
+      var nameMap = {};
+      var name;
+      var cred;
+      for (var i = 0; i < creds.length; ++i) {
+        cred = creds[i];
+        name = cred.body.name;
+
+        if (!nameMap[name]) {
+          nameMap[name] = cred;
+          continue;
+        }
+
+        // Figure out which is the most specific path
+        if (cpath.compare(
+          nameMap[name].body.pathexp, cred.body.pathexp) === -1) {
+          nameMap[name] = cred;
+        }
+      }
+
+      resolve(_.values(nameMap));
+    })
     .catch(reject);
   });
 };
