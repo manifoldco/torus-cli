@@ -52,6 +52,8 @@ harvest.create = function (ctx) {
       name: parts[6],
       path: '/' + parts.slice(0, 6).join('/')
     };
+  } else if (parts.length > 1) {
+    throw new Error('Invalid path: must be 7 segments');
   }
 
   ctx.target.flags({
