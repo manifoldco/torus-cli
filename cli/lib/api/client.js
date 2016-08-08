@@ -23,6 +23,8 @@ var HTTP_VERBS = [
  */
 function Client(opts) {
   opts = opts || {};
+
+  this.host = opts.registryUrl;
   this.proxyEndpoint = opts.socketUrl + '/proxy';
   this.v1Endpoint = opts.socketUrl + '/v1';
   this.version = {
@@ -115,7 +117,7 @@ Client.prototype._headers = function (opts) {
   var headers = {
     'User-Agent': 'Arigato CLI ' + this.version.cli,
     'Content-Type': 'application/json',
-    Host: 'arigato.tools'
+    Host: this.host
   };
 
   if (this.version.api) {

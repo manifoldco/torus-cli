@@ -69,14 +69,12 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 
 	cfg := &Config{
 		ArigatoRoot: arigatoRoot,
-		// XXX: the hostname should be configurable, defaulting to our prod
-		// service. see https://github.com/arigatomachine/cli/issues/431
-		API:        "https://arigato.tools",
-		SocketPath: path.Join(arigatoRoot, "daemon.socket"),
-		PidPath:    path.Join(arigatoRoot, "daemon.pid"),
-		DBPath:     path.Join(arigatoRoot, "daemon.db"),
-		Version:    version,
-		PublicKey:  publicKey,
+		API:         prefs.Core.RegistryURI,
+		SocketPath:  path.Join(arigatoRoot, "daemon.socket"),
+		PidPath:     path.Join(arigatoRoot, "daemon.pid"),
+		DBPath:      path.Join(arigatoRoot, "daemon.db"),
+		Version:     version,
+		PublicKey:   publicKey,
 	}
 
 	return cfg, nil

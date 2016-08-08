@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var path = require('path');
+var validate = require('./validate');
 
 // [default] in the .arigatorc
 var DEFAULT_SECTION = 'default';
@@ -14,7 +15,10 @@ var SECTIONS = {
   },
   core: {
     context: _.isBoolean,
-    public_key_file: _.isString
+    public_key_file: _.isString,
+    registry_uri: function (input) {
+      return !_.isString(validate.url(input));
+    }
   }
 };
 
