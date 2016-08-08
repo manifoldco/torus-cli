@@ -162,25 +162,30 @@ func (k *Keyring) Type() byte {
 // KeyringMember is a record of sharing a master secret key with a user or
 // machine.
 //
-// KeyringMember belong to a Keyring
+// KeyringMember belongs to a Keyring
 type KeyringMember struct {
 	v1Schema
-	Created time.Time `json:"created_at"`
-	Key     *struct {
-		Algorithm string        `json:"alg"`
-		Nonce     *base64.Value `json:"nonce"`
-		Value     *base64.Value `json:"value"`
-	} `json:"key"`
-	KeyringID   *identity.ID `json:"keyring_id"`
-	OrgID       *identity.ID `json:"org_id"`
-	OwnerID     *identity.ID `json:"owner_id"`
-	ProjectID   *identity.ID `json:"project_id"`
-	PublicKeyID *identity.ID `json:"public_key_id"`
+	Created         time.Time         `json:"created_at"`
+	EncryptingKeyID *identity.ID      `json:"encrypting_key_id"`
+	Key             *KeyringMemberKey `json:"key"`
+	KeyringID       *identity.ID      `json:"keyring_id"`
+	OrgID           *identity.ID      `json:"org_id"`
+	OwnerID         *identity.ID      `json:"owner_id"`
+	ProjectID       *identity.ID      `json:"project_id"`
+	PublicKeyID     *identity.ID      `json:"public_key_id"`
 }
 
 // Type returns the enumerated byte representation of KeyringMember
 func (km *KeyringMember) Type() byte {
 	return byte(0x0a)
+}
+
+// KeyringMemberKey is the keyring master encryption key, encrypted for the
+// owner of a KeyringMember
+type KeyringMemberKey struct {
+	Algorithm string        `json:"alg"`
+	Nonce     *base64.Value `json:"nonce"`
+	Value     *base64.Value `json:"value"`
 }
 
 // Org is a grouping of users that collaborate with each other

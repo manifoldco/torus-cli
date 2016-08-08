@@ -4,6 +4,7 @@ package crypto
 import (
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"strconv"
 
 	"github.com/dchest/blake2b"
@@ -96,6 +97,62 @@ func (e *Engine) Unseal(ct, nonce []byte) ([]byte, error) {
 	dk := deriveKey(mk, nonce)
 	ts := newTriplesec(dk)
 	return ts.Decrypt(ct)
+}
+
+// Box encrypts the plaintext pt bytes with Box, using the private key found in
+// privKP, first decrypted with the user's master key, and encrypted for the
+// public key pubKey.
+//
+// It returns the ciphertext, the nonce used for encrypting the plaintext,
+// and an optional error.
+func (e *Engine) Box(pt []byte, privKP *EncryptionKeyPair,
+	pubKey []byte) ([]byte, []byte, error) {
+
+	nonce := [24]byte{}
+	_, err := rand.Read(nonce[:])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privKey, err := e.Unseal(privKP.Private, privKP.PNonce)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privkb := [32]byte{}
+	copy(privkb[:], privKey)
+
+	pubkb := [32]byte{}
+	copy(pubkb[:], pubKey)
+
+	return box.Seal([]byte{}, pt, &nonce, &pubkb, &privkb), nonce[:], nil
+}
+
+// Unbox Decrypts and verifies ciphertext ct that was previously encrypted using
+// the provided nonce, and the inverse parts of the provided keypairs.
+func (e *Engine) Unbox(ct, nonce []byte, privKP *EncryptionKeyPair,
+	pubKey []byte) ([]byte, error) {
+
+	privKey, err := e.Unseal(privKP.Private, privKP.PNonce)
+	if err != nil {
+		return nil, err
+	}
+
+	nonceb := [24]byte{}
+	copy(nonceb[:], nonce)
+
+	privkb := [32]byte{}
+	copy(privkb[:], privKey)
+
+	pubkb := [32]byte{}
+	copy(pubkb[:], pubKey)
+
+	pt, success := box.Open([]byte{}, ct, &nonceb, &pubkb, &privkb)
+	if !success {
+		return nil, errors.New("Failed to decrypt ciphertext")
+	}
+
+	return pt, nil
 }
 
 // GenerateKeyPairs generates and ed25519 signing key pair, and a curve25519

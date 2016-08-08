@@ -13,6 +13,7 @@ const (
 	Triplesec  = "triplesec-v3"
 	EdDSA      = "eddsa"
 	Curve25519 = "curve25519"
+	EasyBox    = "easybox"
 )
 
 // scrypt parameter constants

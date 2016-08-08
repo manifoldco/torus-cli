@@ -30,7 +30,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 		keypairsGenerateRoute(client, s, db, engine))
 
 	mux.GetFunc("/credentials", credentialsGetRoute(client, s))
-	mux.PostFunc("/credentials", credentialsPostRoute(client))
+	mux.PostFunc("/credentials", credentialsPostRoute(client, s, db, engine))
 
 	mux.GetFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
