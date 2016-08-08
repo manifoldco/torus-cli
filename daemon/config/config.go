@@ -8,7 +8,8 @@ import (
 	"path"
 )
 
-var version = "development"
+var version = "alpha"
+var apiVersion = "0.1.0"
 
 const requiredPermissions = 0700
 
@@ -17,10 +18,11 @@ const requiredPermissions = 0700
 type Config struct {
 	ArigatoRoot string
 	API         string
+	APIVersion  string
+	Version     string
 	SocketPath  string
 	PidPath     string
 	DBPath      string
-	Version     string
 	PublicKey   *PublicKey
 }
 
@@ -70,10 +72,11 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 	cfg := &Config{
 		ArigatoRoot: arigatoRoot,
 		API:         prefs.Core.RegistryURI,
+		APIVersion:  apiVersion,
+		Version:     version,
 		SocketPath:  path.Join(arigatoRoot, "daemon.socket"),
 		PidPath:     path.Join(arigatoRoot, "daemon.pid"),
 		DBPath:      path.Join(arigatoRoot, "daemon.db"),
-		Version:     version,
 		PublicKey:   publicKey,
 	}
 

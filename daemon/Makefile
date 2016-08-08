@@ -1,8 +1,14 @@
 OUT := ag-daemon
 PKG := github.com/arigatomachine/cli/daemon
-VERSION := $(shell git describe --always --long --dirty)
+SHA := $(shell git describe --always --long --dirty)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
+VERSION := $(shell cat ../cli/package.json \
+  | grep version \
+  | head -1 \
+  | awk -F: '{ print $2 }' \
+  | sed 's/[",version:]//g' \
+  | tr -d '[[:space:]]')
 
 all: server
 

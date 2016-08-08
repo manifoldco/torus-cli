@@ -26,9 +26,11 @@ func (e *Error) Error() string {
 
 // Client exposes the registry REST API.
 type Client struct {
-	client *http.Client
-	prefix string
-	sess   session.Session
+	client     *http.Client
+	prefix     string
+	apiVersion string
+	version    string
+	sess       session.Session
 
 	KeyPairs       *KeyPairs
 	Tokens         *Tokens
@@ -40,11 +42,13 @@ type Client struct {
 }
 
 // NewClient returns a new Client.
-func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
+func NewClient(prefix string, apiVersion string, version string, sess session.Session, t *http.Transport) *Client {
 	c := &Client{
-		client: &http.Client{Transport: t},
-		prefix: prefix,
-		sess:   sess,
+		client:     &http.Client{Transport: t},
+		prefix:     prefix,
+		apiVersion: apiVersion,
+		version:    version,
+		sess:       sess,
 	}
 
 	c.KeyPairs = &KeyPairs{client: c}
@@ -94,7 +98,11 @@ func (c *Client) NewTokenRequest(token, method, path string, query *url.Values, 
 	if token != "" {
 		req.Header.Set("Authorization", "bearer "+token)
 	}
+
+	req.Header.Set("Host", c.prefix)
+	req.Header.Set("User-Agent", "Ag-Daemon/"+c.version)
 	req.Header.Set("Content-type", "application/json")
+	req.Header.Set("X-Registry-Version", c.apiVersion)
 
 	return req, nil
 }

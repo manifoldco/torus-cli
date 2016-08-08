@@ -19,7 +19,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	t *http.Transport) *bone.Mux {
 
 	engine := crypto.NewEngine(s, db)
-	client := registry.NewClient(c.API, s, t)
+	client := registry.NewClient(c.API, c.APIVersion, c.Version, s, t)
 	mux := bone.New()
 
 	mux.PostFunc("/login", loginRoute(client, s, db))
