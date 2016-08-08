@@ -10,7 +10,7 @@ var target = require('../middleware/target');
 
 var view = new Command(
   'view',
-  'view secrets for the current service and environment',
+  'View secrets for the current service and environment',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       viewCred.execute(ctx).then(function (creds) {
@@ -29,19 +29,19 @@ view.hook('pre', auth());
 view.hook('pre', target());
 
 flags.add(view, 'org', {
-  description: 'the org the secrets belongs to'
+  description: 'Org to which the secrets belongs'
 });
 flags.add(view, 'project', {
-  description: 'the project the secrets belongs to'
+  description: 'Project to which the secrets belongs'
 });
 flags.add(view, 'service', {
-  description: 'the service the secrets belong to'
+  description: 'Service to which the secret belongs'
 });
 flags.add(view, 'environment', {
-  description: 'the environment the secrets belong to'
+  description: 'Environment to which the secret belongs'
 });
 flags.add(view, 'instance', {
-  description: 'the instance of the service belonging to the current user'
+  description: 'Instance of the service belonging to the current user'
 });
 
 view.option('-v, --verbose', 'list the sources of the values');

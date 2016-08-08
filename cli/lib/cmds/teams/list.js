@@ -10,7 +10,7 @@ var target = require('../../middleware/target');
 
 var cmd = new Command(
   'teams',
-  'list all teams in an organization',
+  'List teams in an organization',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       list.execute(ctx).then(function (teams) {

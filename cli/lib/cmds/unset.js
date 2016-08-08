@@ -11,7 +11,7 @@ var target = require('../middleware/target');
 
 var unset = new Command(
   'unset <name>',
-  'unset the name for the given service and environment',
+  'Remove a secret from a service and environment',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       unsetCred.execute(ctx).then(function (cred) {
@@ -30,19 +30,19 @@ unset.hook('pre', auth());
 unset.hook('pre', target());
 
 flags.add(unset, 'org', {
-  description: 'the org the secret will belong to'
+  description: 'Organization from which the secret will be removed'
 });
 flags.add(unset, 'project', {
-  description: 'the project the secret will belong to'
+  description: 'Project from which the secret will be removed'
 });
 flags.add(unset, 'environment', {
-  description: 'the environment the secret will belong to'
+  description: 'Environment from which the secret will be removed'
 });
 flags.add(unset, 'service', {
-  description: 'the service the secret will belong to'
+  description: 'Service from which the secret will be removed'
 });
 flags.add(unset, 'instance', {
-  description: 'the instance of the service belonging to the current user'
+  description: 'Instance of the service belonging to the current user'
 });
 
 module.exports = unset;

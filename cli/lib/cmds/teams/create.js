@@ -10,7 +10,8 @@ var target = require('../../middleware/target');
 
 var cmd = new Command(
   'teams:create [name]',
-  'add a new team to an organization',
+  'Create and add a new team to an organization',
+  'api-ops --org knotty-buoy\n\n Creates a new team called \'api-ops\' and adds it to the org',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       create.execute(ctx).then(function () {
@@ -30,7 +31,7 @@ cmd.hook('pre', auth());
 cmd.hook('pre', target());
 
 flags.add(cmd, 'org', {
-  description: 'the organization this team will belong to'
+  description: 'Organization this team will belong to'
 });
 
 module.exports = cmd;

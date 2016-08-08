@@ -10,7 +10,7 @@ var target = require('../middleware/target');
 
 var cmd = new Command(
   'unlink',
-  'remove the unlink between this working directory and the arigato cloud',
+  'Remove the link between this project and Arigato',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       unlink.execute(ctx).then(function (result) {

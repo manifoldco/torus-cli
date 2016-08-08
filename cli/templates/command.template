@@ -1,12 +1,16 @@
 
+<% print(cmd.description); %>
+
 Usage:
   <%= program.name %> <%= cmd.usage %> [-OPTIONS]
-
 <%
-  print(cmd.description);
+  if (cmd.example.length > 0) {
+    print('\nExample:\n  '+program.name+' '+cmd.slug+' '+cmd.example+'\n');
+  }
+
   if (cmd.options.length > 0) {
-    print('\n\n------------------------------------');
-    print('\n\n* Options supported:\n\n');
+    print('\n------------------------------------');
+    print('\n\nOptions supported:\n\n');
   }
 
   var options = '';
@@ -16,13 +20,9 @@ Usage:
 
   print(options);
 
-  if (cmd.example) {
-    print('\n\nExample:\n\n'+cmd.example+'\n\n');
-  }
-
   if (_.keys(program.groups[cmd.group]).length > 1 && cmd.group === cmd.slug) {
-    print('\n\n------------------------------------');
-    print('\n\n* Sub-commands supported:\n\n');
+    print('\n------------------------------------');
+    print('\n\nSub-commands supported:\n\n');
 
     var subcmds = '';
 
@@ -33,10 +33,10 @@ Usage:
 
     keys.forEach(function(key) {
       var subcmd = program.groups[cmd.group][key];
-      subcmds += '  '+_.padEnd(subcmd.usage, 28)+' '+subcmd.description+'\n';
+      subcmds += '  '+_.padEnd(subcmd.usage, 30)+' '+subcmd.description+'\n';
     });
 
     print(subcmds+'\n');
-    print('To view specific sub-command details use: '+program.name+' help <command>:<sub-command>');
+    print('  To view specific sub-command details use: '+program.name+' help <command>:<sub-command>');
   }
 %>

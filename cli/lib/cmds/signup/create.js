@@ -9,8 +9,9 @@ var login = require('../../login');
 var verify = require('../../verify');
 
 var signup = new Command(
-  'signup [email] [code]',
-  'join the alpha',
+  'signup <email> <code>',
+  'Create a new Arigato account which, while in alpha, requires an invite code',
+  'jeff@example.com 1a2b3c4d5e\n\n Jeff signs up with an invite code he received',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       var usr;

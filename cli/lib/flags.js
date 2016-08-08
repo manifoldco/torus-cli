@@ -11,32 +11,32 @@ var flags = exports;
 var LIST = flags.LIST = {
   force: {
     usage: '-f, --force',
-    description: 'force override',
+    description: 'Force override',
     default: undefined
   },
   project: {
     usage: '-p, --project [name]',
-    description: 'specify the project',
+    description: 'Specify the project',
     default: undefined
   },
   org: {
     usage: '-o, --org [name]',
-    description: 'specify the organization',
+    description: 'Specify the organization',
     default: undefined
   },
   service: {
     usage: '-s, --service [name]',
-    description: 'specify the service',
+    description: 'Specify the service',
     default: undefined
   },
   environment: {
     usage: '-e, --environment [name]',
-    description: 'specify the environment',
+    description: 'Specify the environment',
     default: undefined
   },
   instance: {
     usage: '-i, --instance [name]',
-    description: 'specify the instance',
+    description: 'Specify the instance',
     default: '1'
   }
 };

@@ -11,7 +11,8 @@ var target = require('../middleware/target');
 
 var cmd = new Command(
   'status',
-  'shows your current arigato status based on your identity and CWD',
+  'Show the current Arigato status associated with your account and project',
+  '-s www -e development\n\n  Shows the status of the \'www\' service in a development environment',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       status.execute(ctx).then(function (tgt) {
@@ -29,11 +30,11 @@ cmd.hook('pre', auth());
 cmd.hook('pre', target());
 
 flags.add(cmd, 'service', {
-  description: 'the service to add to context'
+  description: 'Service to add to context'
 });
 
 flags.add(cmd, 'environment', {
-  description: 'the environment to add to context'
+  description: 'Environment to add to context'
 });
 
 module.exports = cmd;

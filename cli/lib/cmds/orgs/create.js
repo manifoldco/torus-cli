@@ -10,7 +10,8 @@ var target = require('../../middleware/target');
 
 var cmd = new Command(
   'orgs:create [name]',
-  'create an organization',
+  'Create an organization',
+  'knotty-buoy\n\n  Creates a new organization called \'knotty-buoy\'',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       orgs.create.execute(ctx).then(function () {

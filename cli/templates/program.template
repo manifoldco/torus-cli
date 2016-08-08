@@ -2,7 +2,7 @@
 Usage:
   <%= program.name %> <command> [params] [-OPTIONS]
 
-------------------------------------
+-------------------------------------
 
 To view specific command details use:
   <%= program.name %> help <command>

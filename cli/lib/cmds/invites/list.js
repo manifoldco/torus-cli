@@ -10,7 +10,7 @@ var invites = require('../../invites');
 
 var cmd = new Command(
   'invites',
-  'list all outstanding invitations for an organization',
+  'List outstanding invitations for an organization. These invites have yet to be approved',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       invites.list.execute(ctx).then(function (payload) {

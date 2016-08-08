@@ -9,7 +9,7 @@ var auth = require('../../middleware/auth');
 
 var cmd = new Command(
   'verify',
-  'verify your account\'s email address',
+  'Verify the email address for your account',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       verify.execute(ctx).then(function () {

@@ -8,7 +8,7 @@ var login = require('../../login');
 
 module.exports = new Command(
   'login',
-  'log in to your Arigato account',
+  'Log in to your Arigato account',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       login.execute(ctx).then(function () {

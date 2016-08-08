@@ -11,7 +11,8 @@ var target = require('../../middleware/target');
 
 var cmd = new Command(
   'services:create [name]',
-  'create a new service for your org',
+  'Create a service in a project in an organization',
+  'www --org knotty-buoy\n\n  Creates a new service called \'www\' in the org \'knotty-buoy\'',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       services.create.execute(ctx).then(function () {

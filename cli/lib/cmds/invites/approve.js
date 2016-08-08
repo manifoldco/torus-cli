@@ -10,7 +10,7 @@ var target = require('../../middleware/target');
 
 var cmd = new Command(
   'invites:approve <email>',
-  'approve an invitation that was sent to an email address to join the org',
+  'Approve an invitation previously sent to an email address to join an organization',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       invites.approve.execute(ctx).then(function (payload) {

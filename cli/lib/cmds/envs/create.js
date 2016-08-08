@@ -9,9 +9,13 @@ var envs = require('../../envs');
 var auth = require('../../middleware/auth');
 var target = require('../../middleware/target');
 
+var example = 'production --project landing-page\n\n  Creates a new environment ';
+example += 'called \'production\' in the project \'landing-page\'.';
+
 var cmd = new Command(
   'envs:create [name]',
-  'create an environment for a service',
+  'Create an environment for a service inside an organization or project',
+  example,
   function (ctx) {
     return new Promise(function (resolve, reject) {
       envs.create.execute(ctx).then(function () {
@@ -31,7 +35,7 @@ cmd.hook('pre', target());
 
 flags.add(cmd, 'org');
 flags.add(cmd, 'project', {
-  description: 'the project this environment will belong to'
+  description: 'Project this environment will belong to'
 });
 
 module.exports = cmd;

@@ -9,7 +9,7 @@ var target = require('../../middleware/target');
 
 var cmd = new Command(
   'orgs',
-  'list orgs',
+  'List organizations associated with your account',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       orgs.list.execute(ctx).then(function (payload) {

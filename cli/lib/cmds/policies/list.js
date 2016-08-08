@@ -10,7 +10,7 @@ var list = require('../../policies/list');
 
 var cmd = new Command(
   'policies',
-  'list policies associated with an organization',
+  'List policies associated with an organization',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       list.execute(ctx).then(function (payload) {

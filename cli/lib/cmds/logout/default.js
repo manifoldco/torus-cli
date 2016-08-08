@@ -12,7 +12,7 @@ function output(msg) {
 
 var cmd = new Command(
   'logout',
-  'logout of your Arigato account',
+  'Logout of your Arigato account',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       logout(ctx)
