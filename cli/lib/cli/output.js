@@ -27,3 +27,30 @@ output.create = function (fn) {
     if (_.isUndefined(opts.bottom) || opts.bottom === true) { console.log(''); }
   };
 };
+
+/**
+ * Handle output of error objects
+ *
+ * @param {object} err
+ */
+output.error = function (err) {
+  var prefix = 'Fatal error';
+  var type = err && err.type ? err.type : 'unknown';
+
+  if (type === 'validation') {
+    prefix = 'Validation error';
+  } else if (type === 'unauthorized') {
+    prefix = 'Authentication error';
+  } else if (type === 'usage') {
+    prefix = 'Invalid usage';
+  }
+
+  if (process.env.NODE_ENV === 'arigato' && err.stack) {
+    console.error(err.stack);
+  } else {
+    console.error(prefix + ':\n\t', err.message || err, '\n');
+    if (type === 'unknown' && err.stack) {
+      console.error(err.stack);
+    }
+  }
+};

@@ -123,15 +123,15 @@ describe('Program', function () {
       });
     });
 
-    it('hanldes help cmd with bad args', function () {
+    it('handles help cmd with bad args', function () {
       sandbox.stub(p, '_rootHelp', function () {
         return Promise.resolve();
       });
-      sandbox.stub(console, 'log');
+      sandbox.spy(console, 'log');
 
       return p.run(['x', 'y', 'help', 'g2']).then(function () {
         sinon.assert.calledOnce(console.log);
-        sinon.assert.calledWith(console.log, 'Unknown command: g2');
+        sinon.assert.calledWith(console.log, '\nUnknown command: g2');
         sinon.assert.calledOnce(p._rootHelp);
       });
     });
@@ -160,12 +160,12 @@ describe('Program', function () {
       sandbox.stub(p, '_rootHelp', function () {
         return Promise.resolve();
       });
-      sandbox.stub(console, 'log');
+      sandbox.spy(console, 'log');
 
       return p.run(['x', 'y', 'g2']).then(function () {
         sinon.assert.calledOnce(p._rootHelp);
         sinon.assert.calledOnce(console.log);
-        sinon.assert.calledWith(console.log, 'Unknown Command: g2');
+        sinon.assert.calledWith(console.log, '\nUnknown Command: g2');
       });
     });
 

@@ -67,7 +67,7 @@ Program.prototype.help = function (ctx) {
 
   var c = this.commands[ctx.slug];
   if (!c) {
-    console.log('Unknown command: ' + ctx.slug);
+    console.log('\nUnknown command: ' + ctx.slug);
     return this._rootHelp(ctx);
   }
 
@@ -135,7 +135,7 @@ Program.prototype.run = function (argv) {
 
   var cmd = this.commands[ctx.slug];
   if (!this.commands[ctx.slug]) {
-    console.log('Unknown Command: ' + ctx.slug);
+    console.log('\nUnknown Command: ' + ctx.slug);
     ctx.slug = ctx.group = null;
     return this.help(ctx);
   }
