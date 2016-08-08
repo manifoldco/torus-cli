@@ -2,31 +2,14 @@
 
 var validate = exports;
 
-var util = require('util');
-
 var _ = require('lodash');
 var validator = require('validator');
+var errors = require('common/errors');
 var rpath = require('common/rpath');
 
 var CRED_NAME = new RegExp(/^[a-z][a-z0-9_]{0,63}$/);
 var ACTION_SHORTHAND = new RegExp(/^(?:([crudl])(?!.*\1))+$/);
 var INVITE_CODE_REGEX = new RegExp(/^[0-9a-ht-zjkmnpqr]{10}$/);
-
-/**
- * TODO: Change js validation for json schema
- * https://github.com/arigatomachine/cli/issues/134
- */
-function ValidationError(message, code) {
-  Error.captureStackTrace(this, this.constructor);
-
-  this.name = this.constructor.name;
-  this.message = message || 'Validation Error';
-  this.code = code || 'client_validation_error';
-  this.type = 'validation_error';
-}
-util.inherits(ValidationError, Error);
-
-validate.ValidationError = ValidationError;
 
 /**
  * Given a map of names to validation functions it returns a function that
@@ -43,7 +26,8 @@ validate.build = function (ruleMap, requireAll) {
   return function (input) {
     var keyDiff = _.difference(Object.keys(ruleMap), Object.keys(input));
     if (keyDiff.length > 0 && requireAll) {
-      return [new ValidationError('Missing parameters: ' + keyDiff.join(', '))];
+      var msg = 'Missing parameters: ' + keyDiff.join(', ');
+      return [new errors.Validation(msg)];
     }
 
     var errs = _.map(ruleMap, function (rule, name) {
@@ -58,7 +42,7 @@ validate.build = function (ruleMap, requireAll) {
       var values = Array.isArray(input[name]) ? input[name] : [input[name]];
       var output = values.map(rule).map(function (err) {
         return (typeof err === 'string') ?
-          new ValidationError(name + ': ' + err) : null;
+          new errors.Validation(name + ': ' + err) : null;
       });
 
       return output;

@@ -4,10 +4,12 @@ var deny = exports;
 
 var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
+var rpath = require('common/rpath');
+var errors = require('common/errors');
+
 var Policy = require('./policy').Policy;
 var Statement = require('./policy').Statement;
 var output = require('../cli/output');
-var rpath = require('common/rpath');
 var harvest = require('./harvest');
 
 var EFFECT_DENY = Statement.EFFECTS.DENY;
@@ -48,7 +50,7 @@ deny.output.failure = output.create(function () {
 deny.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     if (ctx.params.length < 2) {
-      return reject(new Error('You must provide two parameters'));
+      return reject(new errors.Usage('You must provide two parameters'));
     }
 
     var params = harvest(ctx);

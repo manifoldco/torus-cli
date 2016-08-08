@@ -4,6 +4,7 @@
 
 function main () {
   var arigato = require('../lib/arigato');
+  var output = require('../lib/cli/output');
   process.title = 'ag';
 
   var opts = {
@@ -15,7 +16,7 @@ function main () {
     process.exit(exitCode);
   }, function (err) {
     if (err) {
-      console.error(err.stack ? err.stack : err);
+      output.error(err);
     }
 
     process.exit(1);
