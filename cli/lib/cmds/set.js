@@ -9,9 +9,13 @@ var setCred = require('../credentials/set');
 var auth = require('../middleware/auth');
 var target = require('../middleware/target');
 
+var example = 'port 3001 -o nick-admin -p landing-page -s www -e dev\n\n  ';
+example += 'Sets the secret \'port\' to 3001 in a service in an organization\'s project';
+
 var set = new Command(
   'set <name> <value>',
-  'set the name for the given service and environment',
+  'Set a secret for a service and environment',
+  example,
   function (ctx) {
     return new Promise(function (resolve, reject) {
       setCred.execute(ctx).then(function (cred) {
@@ -30,19 +34,19 @@ set.hook('pre', auth());
 set.hook('pre', target());
 
 flags.add(set, 'org', {
-  description: 'the org the secret will belong to'
+  description: 'Organization to which the secret will belong'
 });
 flags.add(set, 'project', {
-  description: 'the project the secret will belong to'
+  description: 'Project to which the secret will belong'
 });
 flags.add(set, 'environment', {
-  description: 'the environment the secret will belong to'
+  description: 'Environment to which the secret will belong'
 });
 flags.add(set, 'service', {
-  description: 'the service the secret will belong to'
+  description: 'Service to which the secret will belong'
 });
 flags.add(set, 'instance', {
-  description: 'the instance of the service belonging to the current user'
+  description: 'Instance of the service belonging to the current user'
 });
 
 module.exports = set;

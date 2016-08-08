@@ -10,7 +10,7 @@ var target = require('../../middleware/target');
 
 var cmd = new Command(
   'envs',
-  'list environments',
+  'List environments in an organization',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       envs.list.execute(ctx).then(function (payload) {
@@ -30,7 +30,7 @@ cmd.hook('pre', target());
 
 flags.add(cmd, 'org');
 flags.add(cmd, 'project', {
-  description: 'list environments for a particular project'
+  description: 'List environments for a project in an organization'
 });
 
 module.exports = cmd;

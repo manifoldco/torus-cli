@@ -11,7 +11,7 @@ var target = require('../middleware/target');
 
 var cmd = new Command(
   'link',
-  'setup a link between this working directory and the arigato cloud',
+  'Link your current directory to Arigato',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       link.execute(ctx).then(function (result) {
@@ -32,7 +32,7 @@ cmd.hook('pre', auth());
 cmd.hook('pre', target());
 
 flags.add(cmd, 'force', {
-  description: 'overwrite the currently linked org and project'
+  description: 'Overwrite the organization and project currently linked'
 });
 
 module.exports = cmd;

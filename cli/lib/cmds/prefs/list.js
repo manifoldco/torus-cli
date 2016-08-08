@@ -7,7 +7,7 @@ var list = require('../../prefs/list');
 
 var cmd = new Command(
   'prefs',
-  'show all preferences',
+  'Show your account preferences',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       list.execute(ctx).then(function (payload) {

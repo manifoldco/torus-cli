@@ -9,7 +9,7 @@ var Runnable = require('./runnable');
 var COMMAND_REGEX =
   /^[a-z]{2,16}(:[a-z]{2,16})?\s*(<[a-z]{2,16}> ?)*\s*(\[[a-z]{2,16}\] ?)*$/;
 
-function Command(usage, description, handler) {
+function Command(usage, description, example, handler) {
   Runnable.call(this);
 
   if (typeof usage !== 'string') {
@@ -17,6 +17,10 @@ function Command(usage, description, handler) {
   }
   if (!usage.match(COMMAND_REGEX)) {
     throw new Error('Usage does not match regex');
+  }
+  if (typeof example === 'function' || typeof example === 'object') {
+    handler = example;
+    example = '';
   }
 
   if (typeof handler !== 'function' &&
@@ -26,6 +30,7 @@ function Command(usage, description, handler) {
 
   this._handler = handler;
   this.usage = usage;
+  this.example = example || '';
   this.description = description || '';
   this.slug = usage.split(' ')[0];
 
@@ -40,12 +45,12 @@ function Command(usage, description, handler) {
 util.inherits(Command, Runnable);
 module.exports = Command;
 
-Command.prototype.option = function (usage, description, defaultValue) {
+Command.prototype.option = function (usage, description, example, defaultValue) {
   if (usage instanceof Option) {
     return this.options.push(usage);
   }
 
-  this.options.push(new Option(usage, description, defaultValue));
+  this.options.push(new Option(usage, description, example, defaultValue));
   return this;
 };
 

@@ -4,7 +4,7 @@
 
 function main () {
   var arigato = require('../lib/arigato');
-  process.title = 'Arigato CLI';
+  process.title = 'ag';
 
   var opts = {
     arigatoRoot: process.env.ARIGATO_ROOT,

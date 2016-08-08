@@ -6,7 +6,7 @@ var Command = require('../cli/command');
 
 var version = new Command(
   'version',
-  'displays versions of the cli and daemon',
+  'Display a list of versions of the CLI and daemon',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       ctx.api.versionApi.get().then(function (msg) {

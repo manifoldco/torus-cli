@@ -24,7 +24,7 @@ arigato.run = function (opts) {
         path.join(__dirname, '../templates/command.template'))
     };
 
-    var program = new Program('arigato', pkg.version, templates);
+    var program = new Program('ag', pkg.version, templates);
     program.hook('pre', config(opts.arigatoRoot));
     program.hook('pre', prefs());
     program.hook('pre', daemon.preHook());

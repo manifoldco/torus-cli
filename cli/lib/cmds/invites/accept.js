@@ -89,7 +89,8 @@ function becomeLoggedIn(ctx, params) {
 
 var cmd = new Command(
   'invites:accept <email> <code>',
-  'accept an invitation to join an organization',
+  'Accept an invitation to join an organization',
+  'jeff@example.com 1a2b3c4d5e\n\n  Jeff will join the organization he was invited to',
   function (ctx) {
     return invites.accept.validate(ctx).then(function (params) {
       // Check if we're logged in; if we are then we can just go ahead and

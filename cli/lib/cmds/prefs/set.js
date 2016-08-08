@@ -8,7 +8,8 @@ var set = require('../../prefs/set');
 
 var cmd = new Command(
   'prefs:set [key] [value]',
-  'set the preference key to the value. If value is omitted, then it sets it to true',
+  'Set the preference key to the value. If value is omitted, then it sets it to true',
+  'default.environment development\n\n  Sets the default environment to \'development\'',
   function (ctx) {
     return new Promise(function (resolve, reject) {
       set.execute(ctx).then(function (payload) {
