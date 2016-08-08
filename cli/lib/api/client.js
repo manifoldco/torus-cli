@@ -28,8 +28,8 @@ function Client(opts) {
   this.proxyEndpoint = opts.socketUrl + '/proxy';
   this.v1Endpoint = opts.socketUrl + '/v1';
   this.version = {
-    cli: CLI_VERSION,
-    api: opts.apiVersion || null
+    api: opts.apiVersion,
+    cli: CLI_VERSION
   };
   this._initialize();
 }
@@ -115,14 +115,9 @@ Client.prototype._req = function (verb, opts, isV1) {
  */
 Client.prototype._headers = function (opts) {
   var headers = {
-    'User-Agent': 'Arigato CLI ' + this.version.cli,
-    'Content-Type': 'application/json',
-    Host: this.host
+    Host: 'registry.arigato.sh' // Discarded by Daemon, but required in http 1.1 spec
   };
 
-  if (this.version.api) {
-    headers['x-arigato-version'] = this.version.api;
-  }
   return _.extend({}, opts.headers, headers);
 };
 
