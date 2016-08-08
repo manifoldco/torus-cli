@@ -108,6 +108,11 @@ validate.email = function (input) {
   return validator.isEmail(input) ? true : error;
 };
 
+validate.url = function (input) {
+  var error = 'Please enter a valid url';
+  return validator.isURL(input) ? true : error;
+};
+
 validate.passphrase = function (input) {
   var error = 'Passphrase must be at least 8 characters';
   return input.length < 8 ? error : true;
