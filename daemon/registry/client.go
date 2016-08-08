@@ -30,11 +30,13 @@ type Client struct {
 	prefix string
 	sess   session.Session
 
-	KeyPairs    *KeyPairs
-	Tokens      *Tokens
-	Users       *Users
-	Credentials *Credentials
-	Orgs        *Orgs
+	KeyPairs       *KeyPairs
+	Tokens         *Tokens
+	Users          *Users
+	Credentials    *Credentials
+	Orgs           *Orgs
+	ClaimTree      *ClaimTreeClient
+	CredentialTree *CredentialTreeClient
 }
 
 // NewClient returns a new Client.
@@ -50,6 +52,8 @@ func NewClient(prefix string, sess session.Session, t *http.Transport) *Client {
 	c.Users = &Users{client: c}
 	c.Credentials = &Credentials{client: c}
 	c.Orgs = &Orgs{client: c}
+	c.ClaimTree = &ClaimTreeClient{client: c}
+	c.CredentialTree = &CredentialTreeClient{client: c}
 
 	return c
 }

@@ -70,15 +70,14 @@ func (id *ID) Type() byte {
 }
 
 func (id *ID) String() string {
-	return lowerBase32.EncodeToString(id[:])
+	return strings.TrimRight(lowerBase32.EncodeToString(id[:]), "=")
 }
 
 // MarshalJSON implements the json.Marshaler interface for IDs.
 //
 // IDs are encoded in unpadded base32.
 func (id *ID) MarshalJSON() ([]byte, error) {
-	b32 := lowerBase32.EncodeToString(id[:])
-	return []byte("\"" + strings.TrimRight(b32, "=") + "\""), nil
+	return []byte("\"" + id.String() + "\""), nil
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface for IDs.

@@ -94,6 +94,10 @@ func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
 		body = &primitive.PrivateKey{}
 	case 0x08:
 		body = &primitive.Claim{}
+	case 0x09:
+		body = &primitive.Keyring{}
+	case 0x0a:
+		body = &primitive.KeyringMember{}
 	case 0x0b:
 		body = &primitive.Credential{}
 	case 0x0d:
