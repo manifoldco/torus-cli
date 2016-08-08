@@ -14,6 +14,7 @@ var SECTIONS = {
   },
   core: {
     context: _.isBoolean,
+    registry_uri: _.isString,
     public_key_file: _.isString
   }
 };

@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	publicKeyFilename = "public_key.json"
 	rcFilename        = ".arigatorc"
+	publicKeyFilename = "public_key.json"
+	registryURI       = "https://registry.arigato.sh"
 )
 
 type preferences struct {
@@ -21,6 +22,7 @@ type preferences struct {
 
 type core struct {
 	PublicKeyFile string `ini:"public_key_file"`
+	RegistryURI   string `ini:"registry_uri"`
 }
 
 func newPreferences() (*preferences, error) {
@@ -33,6 +35,7 @@ func newPreferences() (*preferences, error) {
 	prefs := &preferences{
 		Core: core{
 			PublicKeyFile: defaultKeyPath,
+			RegistryURI:   registryURI,
 		},
 	}
 
