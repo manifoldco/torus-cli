@@ -35,6 +35,8 @@ type Client struct {
 	KeyPairs       *KeyPairs
 	Tokens         *Tokens
 	Users          *Users
+	Teams          *TeamsClient
+	Memberships    *MembershipsClient
 	Credentials    *Credentials
 	Orgs           *Orgs
 	OrgInvite      *OrgInviteClient
@@ -57,6 +59,8 @@ func NewClient(prefix string, apiVersion string, version string, sess session.Se
 	c.KeyPairs = &KeyPairs{client: c}
 	c.Tokens = &Tokens{client: c}
 	c.Users = &Users{client: c}
+	c.Teams = &TeamsClient{client: c}
+	c.Memberships = &MembershipsClient{client: c}
 	c.Credentials = &Credentials{client: c}
 	c.Orgs = &Orgs{client: c}
 	c.OrgInvite = &OrgInviteClient{client: c}

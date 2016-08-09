@@ -102,6 +102,10 @@ func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
 		body = &primitive.Credential{}
 	case 0x0d:
 		body = &primitive.Org{}
+	case 0x0f:
+		body = &primitive.Team{}
+	case 0x0e:
+		body = &primitive.Membership{}
 	case 0x13:
 		body = &primitive.OrgInvite{}
 	default:
