@@ -24,7 +24,8 @@ function getUser(ctx) {
 }
 
 function signup(ctx, params) {
-  return userCreate.execute(ctx, params).then(function (results) {
+  var pList = [params.org, params.email, params.code];
+  return userCreate.execute(ctx, pList).then(function (results) {
     var userInput = {
       email: results.inputs.email,
       passphrase: results.inputs.passphrase

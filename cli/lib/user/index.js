@@ -108,6 +108,7 @@ user.questions = function () {
  */
 user.execute = function (ctx, params) {
   var acceptOrgInvite = params && params.length === 3;
+
   var orgIndex = acceptOrgInvite ? 0 : -1;
   var codeIndex = acceptOrgInvite ? 2 : 1;
   var emailIndex = acceptOrgInvite ? 1 : 0;
@@ -168,14 +169,14 @@ user._create = function (api, opts) {
   };
 
   var query = {};
-  if (userInput.code) {
-    query.code = userInput.code;
+  if (userInput.code || defaults.code) {
+    query.code = userInput.code || defaults.code;
   }
-  if (userInput.email) {
-    query.email = userInput.email;
+  if (defaults.email || userInput.email) {
+    query.email = defaults.email || userInput.email;
   }
-  if (params.org || defaults.org) {
-    query.org = params.org || defaults.org;
+  if (defaults.org) {
+    query.org = defaults.org;
   }
 
   // Encrypt the password, generate the master key
