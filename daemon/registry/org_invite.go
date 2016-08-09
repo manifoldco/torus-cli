@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"errors"
 	"log"
 
 	"github.com/arigatomachine/cli/daemon/envelope"
@@ -29,6 +30,29 @@ func (o *OrgInviteClient) Approve(inviteID *identity.ID) (*envelope.Unsigned, er
 	_, err = o.client.Do(req, &invite)
 	if err != nil {
 		log.Printf("Error performing POST /org-invites/:id/accept: %s", err)
+		return nil, err
+	}
+
+	return &invite, nil
+}
+
+// Get returns a specific Org Invite based on it's ID
+func (o *OrgInviteClient) Get(inviteID *identity.ID) (*envelope.Unsigned, error) {
+	if inviteID == nil {
+		return nil, errors.New("an inviteID must be provided")
+	}
+
+	path := "/org-invites/" + inviteID.String()
+	req, err := o.client.NewRequest("GET", path, nil, nil)
+	if err != nil {
+		log.Printf("Error building GET /org-invites/:id request: %s", err)
+		return nil, err
+	}
+
+	invite := envelope.Unsigned{}
+	_, err = o.client.Do(req, &invite)
+	if err != nil {
+		log.Printf("Error performing GET /org-invites/:id request: %s", err)
 		return nil, err
 	}
 
