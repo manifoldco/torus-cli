@@ -208,3 +208,71 @@ type Org struct {
 func (o *Org) Type() byte {
 	return byte(0xd)
 }
+
+// Org Invitations exist in four states: pending, associated,
+// accepted, and approved.
+const (
+	OrgInvitePendingState    = "pending"
+	OrgInviteAssociatedState = "associated"
+	OrgInviteAcceptedState   = "accepted"
+	OrgInviteApprovedState   = "approved"
+)
+
+// OrgInvite is an invitation for an individual to join an organization
+type OrgInvite struct {
+	v1Schema
+	OrgID      *identity.ID `json:"org_id"`
+	Email      string       `json:"email"`
+	InviterID  *identity.ID `json:"inviter_id"`
+	InviteeID  *identity.ID `json:"invitee_id"`
+	ApproverID *identity.ID `json:"approver_id"`
+	State      string       `json:"state"`
+	Code       *struct {
+		Alg   string        `json:"alg"`
+		Salt  *base64.Value `json:"salt"`
+		Value *base64.Value `json:"value"`
+	} `json:"code"`
+	PendingTeams []identity.ID `json:"pending_teams"`
+	Created      *time.Time    `json:"created_at"`
+	Accepted     *time.Time    `json:"accepted_at"`
+	Approved     *time.Time    `json:"approved_at"`
+}
+
+// Type returns the numerated byte representation of OrgInvite
+func (o *OrgInvite) Type() byte {
+	return byte(0x13)
+}
+
+// There are two types of teams: system and user. System teams are
+// managed by the Arigato registry.
+const (
+	SystemTeam = "system"
+	UserTeam   = "user"
+)
+
+// Team is an entity that represents a group of users
+type Team struct {
+	v1Schema
+	Name     string       `json:"name"`
+	OrgID    *identity.ID `json:"org_id"`
+	TeamType string       `json:"type"`
+}
+
+// Type returns the enumerated byte representation of Team
+func (t *Team) Type() byte {
+	return byte(0x0f)
+}
+
+// Membership is an entity that represents whether a user or
+// machine is a part of a team in an organization.
+type Membership struct {
+	v1Schema
+	OrgID   *identity.ID `json:"org_id"`
+	OwnerID *identity.ID `json:"owner_id"`
+	TeamID  *identity.ID `json:"team_id"`
+}
+
+// Type returns the enumerated byte representation of Membership
+func (m *Membership) Type() byte {
+	return byte(0x0e)
+}

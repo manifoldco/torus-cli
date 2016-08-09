@@ -15,6 +15,7 @@ import (
 const (
 	base32Alphabet = "0123456789abcdefghjkmnpqrtuvwxyz"
 	idVersion      = 0x01
+	byteLength     = 18
 )
 
 // Identifiable is the interface implemented by objects that can be given
@@ -64,6 +65,18 @@ func New(body Identifiable, sig interface{}) (ID, error) {
 	return id, nil
 }
 
+// DecodeFromString returns an ID that is stored in the given string.
+func DecodeFromString(value string) (ID, error) {
+	buf, err := decodeFromByte([]byte(value))
+	if err != nil {
+		return ID{}, err
+	}
+
+	id := ID{}
+	copy(id[:], buf)
+	return id, nil
+}
+
 // Type returns the binary encoded object type represented by this ID.
 func (id *ID) Type() byte {
 	return id[1]
@@ -90,6 +103,16 @@ func (id *ID) UnmarshalJSON(b []byte) error {
 }
 
 func (id *ID) fillID(raw []byte) error {
+	out, err := decodeFromByte(raw)
+	if err != nil {
+		return err
+	}
+
+	copy(id[:], out)
+	return nil
+}
+
+func decodeFromByte(raw []byte) ([]byte, error) {
 	pad := 8 - (len(raw) % 8)
 	nb := make([]byte, len(raw)+pad)
 	copy(nb, raw)
@@ -99,12 +122,11 @@ func (id *ID) fillID(raw []byte) error {
 
 	out, err := lowerBase32.DecodeString(string(nb))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(out) != 18 {
-		return errors.New("Incorrect length for id")
+		return nil, errors.New("Incorrect length for id")
 	}
 
-	copy(id[:], out)
-	return nil
+	return out, nil
 }
