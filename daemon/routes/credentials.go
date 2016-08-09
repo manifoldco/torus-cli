@@ -145,6 +145,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		newTree := false
 		// No matching CredentialTree/KeyRing for this credential.
 		// We'll make a new one now.
 		if len(trees) == 0 {
@@ -156,6 +157,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 				return
 			}
 			trees = []registry.CredentialTree{*tree}
+			newTree = true
 		}
 
 		tree := trees[0]
@@ -228,7 +230,12 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		_, err = client.Credentials.Create(signed)
+		if newTree {
+			tree.Credentials = []envelope.Signed{*signed}
+			_, err = client.CredentialTree.Post(&tree)
+		} else {
+			_, err = client.Credentials.Create(signed)
+		}
 		if err != nil {
 			log.Printf("error creating credential: %s", err)
 			encodeResponseErr(w, err)
@@ -332,11 +339,12 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 		members = append(members, *member)
 	}
 
-	return client.CredentialTree.Post(&registry.CredentialTree{
-		Keyring:     keyring,
-		Members:     members,
-		Credentials: []envelope.Unsigned{},
-	})
+	tree := registry.CredentialTree{
+		Keyring: keyring,
+		Members: members,
+	}
+
+	return &tree, nil
 }
 
 // fetchKeyPairs fetches the user's signing and encryption keypairs from the
