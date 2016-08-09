@@ -102,6 +102,8 @@ func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
 		body = &primitive.Credential{}
 	case 0x0d:
 		body = &primitive.Org{}
+	case 0x13:
+		body = &primitive.OrgInvite{}
 	default:
 		return nil, nil, fmt.Errorf("Unknown primitive type id: %d", t)
 	}

@@ -23,7 +23,7 @@ func (o *Orgs) List(name string) ([]envelope.Unsigned, error) {
 
 	req, err := o.client.NewRequest("GET", "/orgs", &v, nil)
 	if err != nil {
-		log.Printf("Error making api request: %s", err)
+		log.Printf("Error building GET /orgs api request: %s", err)
 		return nil, err
 	}
 

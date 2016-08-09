@@ -72,7 +72,7 @@ invites.approve = function (client, query, params) {
     url: '/org-invites/:id/approve',
     qs: query || {},
     params: params || {}
-  }).then(function (res) {
+  }, true).then(function (res) {
     return res.body;
   });
 };

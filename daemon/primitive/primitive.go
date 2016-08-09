@@ -208,3 +208,28 @@ type Org struct {
 func (o *Org) Type() byte {
 	return byte(0xd)
 }
+
+// OrgInvite is an invitation for an individual to join an organization
+type OrgInvite struct {
+	v1Schema
+	OrgID      *identity.ID `json:"org_id"`
+	Email      string       `json:"email"`
+	InviterID  *identity.ID `json:"inviter_id"`
+	InviteeID  *identity.ID `json:"invitee_id"`
+	ApproverID *identity.ID `json:"approver_id"`
+	State      string       `json:"state"`
+	Code       *struct {
+		Alg   string        `json:"alg"`
+		Salt  *base64.Value `json:"salt"`
+		Value *base64.Value `json:"value"`
+	} `json:"code"`
+	PendingTeams []identity.ID `json:"pending_teams"`
+	Created      *time.Time    `json:"created_at"`
+	Accepted     *time.Time    `json:"accepted_at"`
+	Approved     *time.Time    `json:"approved_at"`
+}
+
+// Type returns the numerated byte representation of OrgInvite
+func (o *OrgInvite) Type() byte {
+	return byte(0x13)
+}

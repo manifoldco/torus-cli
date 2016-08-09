@@ -37,6 +37,7 @@ type Client struct {
 	Users          *Users
 	Credentials    *Credentials
 	Orgs           *Orgs
+	OrgInvite      *OrgInviteClient
 	ClaimTree      *ClaimTreeClient
 	CredentialTree *CredentialTreeClient
 }
@@ -56,6 +57,7 @@ func NewClient(prefix string, apiVersion string, version string, sess session.Se
 	c.Users = &Users{client: c}
 	c.Credentials = &Credentials{client: c}
 	c.Orgs = &Orgs{client: c}
+	c.OrgInvite = &OrgInviteClient{client: c}
 	c.ClaimTree = &ClaimTreeClient{client: c}
 	c.CredentialTree = &CredentialTreeClient{client: c}
 

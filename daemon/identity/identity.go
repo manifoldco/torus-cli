@@ -15,6 +15,7 @@ import (
 const (
 	base32Alphabet = "0123456789abcdefghjkmnpqrtuvwxyz"
 	idVersion      = 0x01
+	byteLength     = 18
 )
 
 // Identifiable is the interface implemented by objects that can be given
@@ -61,6 +62,26 @@ func New(body Identifiable, sig interface{}) (ID, error) {
 
 	copy(id[2:], h.Sum(nil))
 
+	return id, nil
+}
+
+// DecodeFromString returns an ID that is stored in the given string.
+func DecodeFromString(value string) (ID, error) {
+	buf, err := lowerBase32.DecodeString(value)
+	if err != nil {
+		return ID{}, err
+	}
+
+	if len(buf) != byteLength {
+		return ID{}, errors.New("id not long enough")
+	}
+
+	if buf[0] != idVersion {
+		return ID{}, errors.New("Unknown version id")
+	}
+
+	id := ID{}
+	copy(id[:], buf)
 	return id, nil
 }
 
