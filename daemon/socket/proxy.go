@@ -70,6 +70,9 @@ func (p *AuthProxy) Listen() error {
 			if tok != "" {
 				r.Header["Authorization"] = []string{"Bearer " + tok}
 			}
+
+			r.Header["User-Agent"] = []string{"Ag-Daemon/" + p.c.Version}
+			r.Header["X-Registry-Version"] = []string{p.c.APIVersion}
 		},
 	}
 
