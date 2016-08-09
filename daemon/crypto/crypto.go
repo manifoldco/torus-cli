@@ -14,6 +14,7 @@ const (
 	EdDSA      = "eddsa"
 	Curve25519 = "curve25519"
 	EasyBox    = "easybox"
+	SecretBox  = "secretbox"
 )
 
 // scrypt parameter constants

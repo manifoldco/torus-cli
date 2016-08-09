@@ -126,18 +126,27 @@ func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID,
 // on users identity, operating environment, project, and organization
 type Credential struct {
 	v1Schema
-	Name              string       `json:"name"`
-	OrgID             *identity.ID `json:"org_id"`
-	PathExp           string       `json:"pathexp"`
-	Previous          *identity.ID `json:"previous"`
-	ProjectID         *identity.ID `json:"project_id"`
-	Value             string       `json:"value"`
-	CredentialVersion int          `json:"version"`
+	Credential        *CredentialValue `json:"credential"`
+	Name              string           `json:"name"`
+	Nonce             *base64.Value    `json:"nonce"`
+	OrgID             *identity.ID     `json:"org_id"`
+	PathExp           string           `json:"pathexp"`
+	Previous          *identity.ID     `json:"previous"`
+	ProjectID         *identity.ID     `json:"project_id"`
+	CredentialVersion int              `json:"version"`
 }
 
 // Type returns the enumerated byte representation of Credential
 func (c *Credential) Type() byte {
 	return byte(0xb)
+}
+
+// CredentialValue is the secretbox encrypted value of the containing
+// Credential.
+type CredentialValue struct {
+	Algorithm string        `json:"alg"`
+	Nonce     *base64.Value `json:"nonce"`
+	Value     *base64.Value `json:"value"`
 }
 
 // Keyring is a mechanism for sharing a shared secret between many different
