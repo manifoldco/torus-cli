@@ -2,7 +2,7 @@
   "name": "arigato",
   "version": "0.0.1",
   "description": "Argiato CLI and Daemon",
-  "bin": "cli/bin/arigato",
+  "bin": "./bin/arigato",
   "repository": "git@github.com:arigatomachine/cli.git",
   "scripts": {
     "test": "../scripts/test.sh",
