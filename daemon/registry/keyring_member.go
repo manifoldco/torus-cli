@@ -23,7 +23,7 @@ func (k *KeyringMemberClient) Post(members []envelope.Signed) ([]envelope.Signed
 	}
 
 	resp := []envelope.Signed{}
-	_, err = k.client.Do(req, resp)
+	_, err = k.client.Do(req, &resp)
 	if err != nil {
 		log.Printf("Error performing POST /keyring-members request: %s", err)
 		return nil, err
