@@ -16,8 +16,6 @@ describe('Daemon API', function () {
   var cfg;
   var sandbox;
 
-  this.timeout(10000);
-
   beforeEach(function () {
     cfg = new Config(__dirname);
     sandbox = sinon.sandbox.create();
@@ -112,10 +110,12 @@ describe('Daemon API', function () {
         pid: 231
       }));
       sandbox.stub(process, 'kill');
+      process.kill.onSecondCall().throws({ code: 'ESRCH' });
 
       return daemon.stop(cfg).then(function () {
-        sinon.assert.calledOnce(process.kill);
-        sinon.assert.calledWith(process.kill, 231, 'SIGTERM');
+        sinon.assert.calledTwice(process.kill);
+        process.kill.firstCall.calledWith(231, 'SIGTERM');
+        process.kill.secondCall.calledWith(0);
       });
     });
 
