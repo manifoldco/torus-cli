@@ -34,6 +34,7 @@ func main() {
 	defer daemon.Shutdown()
 
 	log.Printf("v%s of the Daemon is now listening on %s", cfg.Version, daemon.Addr())
+	log.Printf("Daemon connecting to %s", c.API)
 	err = daemon.Run()
 	if err != nil {
 		log.Printf("Error while running daemon: %s", err)
