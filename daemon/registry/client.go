@@ -39,6 +39,7 @@ type Client struct {
 	Orgs           *Orgs
 	OrgInvite      *OrgInviteClient
 	Keyring        *KeyringClient
+	KeyringMember  *KeyringMemberClient
 	ClaimTree      *ClaimTreeClient
 	CredentialTree *CredentialTreeClient
 }
@@ -61,6 +62,7 @@ func NewClient(prefix string, apiVersion string, version string, sess session.Se
 	c.OrgInvite = &OrgInviteClient{client: c}
 	c.ClaimTree = &ClaimTreeClient{client: c}
 	c.Keyring = &KeyringClient{client: c}
+	c.KeyringMember = &KeyringMemberClient{client: c}
 	c.CredentialTree = &CredentialTreeClient{client: c}
 
 	return c
