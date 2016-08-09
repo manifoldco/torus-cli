@@ -127,6 +127,7 @@ func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID,
 type Credential struct {
 	v1Schema
 	Credential        *CredentialValue `json:"credential"`
+	KeyringID         *identity.ID     `json:"keyring_id"`
 	Name              string           `json:"name"`
 	Nonce             *base64.Value    `json:"nonce"`
 	OrgID             *identity.ID     `json:"org_id"`

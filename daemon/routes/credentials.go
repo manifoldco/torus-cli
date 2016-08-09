@@ -15,7 +15,6 @@ import (
 
 	"github.com/arigatomachine/cli/daemon/base64"
 	"github.com/arigatomachine/cli/daemon/crypto"
-	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/identity"
 	"github.com/arigatomachine/cli/daemon/primitive"
@@ -41,7 +40,7 @@ type plainTextEnvelope struct {
 }
 
 func credentialsGetRoute(client *registry.Client,
-	s session.Session) http.HandlerFunc {
+	s session.Session, engine *crypto.Engine) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
@@ -56,9 +55,55 @@ func credentialsGetRoute(client *registry.Client,
 		// Loop over the trees and unpack the credentials; later on we will
 		// actually do real work and decrypt each of these credentials but for
 		// now we just need ot return a list of them!
-		creds := []envelope.Unsigned{}
+		creds := []plainTextEnvelope{}
 		for _, tree := range trees {
-			creds = append(creds, tree.Credentials...)
+			orgID := tree.Keyring.Body.(*primitive.Keyring).OrgID
+			_, _, kp, err := fetchKeyPairs(client, orgID)
+			if err != nil {
+				encodeResponseErr(w, err)
+				return
+			}
+
+			krm, err := findKeyringMember(s.ID(), &tree)
+			if err != nil {
+				log.Printf("Error finding keyring membership")
+				encodeResponseErr(w, err)
+				return
+			}
+
+			encryptingKey, err := findEncryptingKey(client, orgID,
+				krm.EncryptingKeyID)
+			if err != nil {
+				log.Printf("Error finding encrypting key: %s", err)
+				encodeResponseErr(w, err)
+				return
+			}
+
+			for _, cred := range tree.Credentials {
+				credBody := cred.Body.(*primitive.Credential)
+				pt, err := engine.UnboxCredential(*credBody.Credential.Value,
+					*krm.Key.Value, *krm.Key.Nonce, *credBody.Nonce,
+					*credBody.Credential.Nonce, &kp.Encryption,
+					*encryptingKey.Key.Value)
+				if err != nil {
+					log.Printf("Error decrypting credential: %s", err)
+					encodeResponseErr(w, err)
+					return
+				}
+
+				plainCred := plainTextEnvelope{
+					ID:      cred.ID,
+					Version: cred.Version,
+					Body: &plainTextCredential{
+						Name:      credBody.Name,
+						PathExp:   credBody.PathExp,
+						ProjectID: credBody.ProjectID,
+						OrgID:     credBody.OrgID,
+						Value:     string(pt),
+					},
+				}
+				creds = append(creds, plainCred)
+			}
 		}
 
 		enc := json.NewEncoder(w)
@@ -71,8 +116,8 @@ func credentialsGetRoute(client *registry.Client,
 	}
 }
 
-func credentialsPostRoute(client *registry.Client,
-	s session.Session, db *db.DB, engine *crypto.Engine) http.HandlerFunc {
+func credentialsPostRoute(client *registry.Client, s session.Session,
+	engine *crypto.Engine) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		dec := json.NewDecoder(r.Body)
@@ -120,6 +165,7 @@ func credentialsPostRoute(client *registry.Client,
 		credBody := primitive.Credential{
 			Name:      cred.Body.Name,
 			PathExp:   cred.Body.PathExp,
+			KeyringID: tree.Keyring.ID,
 			ProjectID: cred.Body.ProjectID,
 			OrgID:     cred.Body.OrgID,
 			Credential: &primitive.CredentialValue{
@@ -148,50 +194,19 @@ func credentialsPostRoute(client *registry.Client,
 			credBody.CredentialVersion = previousCredBody.CredentialVersion + 1
 		}
 
-		myID := s.ID()
-
 		// Find our keyring membership entry, so we can access the keyring
 		// master encryption key.
-		var krm *primitive.KeyringMember
-		for _, m := range tree.Members {
-			mBody := m.Body.(*primitive.KeyringMember)
-			if mBody.OwnerID == myID {
-				krm = mBody
-				break
-			}
-		}
-
-		if krm == nil {
-			err = fmt.Errorf("No keyring membership found")
+		krm, err := findKeyringMember(s.ID(), &tree)
+		if err != nil {
 			log.Printf("Error finding keyring membership")
 			encodeResponseErr(w, err)
 			return
 		}
 
-		// Lookup the key that encrypted the mek for us, so we can decrypt it.
-		claimTrees, err := client.ClaimTree.List(credBody.OrgID, nil)
+		encryptingKey, err := findEncryptingKey(client, credBody.OrgID,
+			krm.EncryptingKeyID)
 		if err != nil {
-			encodeResponseErr(w, err)
-			return
-		}
-
-		if len(claimTrees) != 1 {
-			err = fmt.Errorf("No claim tree found for org: %s", credBody.OrgID)
-			log.Printf("Error looking up claim tree: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		var encryptingKey *primitive.PublicKey
-		for _, segment := range claimTrees[0].PublicKeys {
-			if segment.Key.ID == krm.EncryptingKeyID {
-				encryptingKey = segment.Key.Body.(*primitive.PublicKey)
-				break
-			}
-		}
-		if encryptingKey == nil {
-			err = fmt.Errorf("Couldn't find encrypting key %s", krm.EncryptingKeyID)
-			log.Printf("Error finding keyring membership: %s", err)
+			log.Printf("Error finding encrypting key: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
@@ -376,4 +391,54 @@ func fetchKeyPairs(client *registry.Client, orgID *identity.ID) (*identity.ID,
 	}
 
 	return sigClaimed.PublicKey.ID, encClaimed.PublicKey.ID, &kp, nil
+}
+
+// findKeyringMember finds the keyring member with the given id
+func findKeyringMember(id *identity.ID,
+	tree *registry.CredentialTree) (*primitive.KeyringMember, error) {
+	var krm *primitive.KeyringMember
+	for _, m := range tree.Members {
+		mBody := m.Body.(*primitive.KeyringMember)
+		if *mBody.OwnerID == *id {
+			krm = mBody
+			break
+		}
+	}
+
+	if krm == nil {
+		err := fmt.Errorf("No keyring membership found")
+		return nil, err
+	}
+
+	return krm, nil
+}
+
+// findEncryptingKey queries the registry for public keys in the given org, to
+// find the matching one
+func findEncryptingKey(client *registry.Client, orgID *identity.ID,
+	encryptingKeyID *identity.ID) (*primitive.PublicKey, error) {
+
+	claimTrees, err := client.ClaimTree.List(orgID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(claimTrees) != 1 {
+		err = fmt.Errorf("No claim tree found for org: %s", orgID)
+		return nil, err
+	}
+
+	var encryptingKey *primitive.PublicKey
+	for _, segment := range claimTrees[0].PublicKeys {
+		if *segment.Key.ID == *encryptingKeyID {
+			encryptingKey = segment.Key.Body.(*primitive.PublicKey)
+			break
+		}
+	}
+	if encryptingKey == nil {
+		err = fmt.Errorf("Couldn't find encrypting key %s", encryptingKeyID)
+		return nil, err
+	}
+
+	return encryptingKey, nil
 }

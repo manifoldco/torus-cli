@@ -196,6 +196,31 @@ func (e *Engine) BoxCredential(pt, encMec, mecNonce []byte,
 	return cekNonce, nonce[:], ct, err
 }
 
+// UnboxCredential does the inverse of BoxCredential to retrieve the plaintext
+// version of a credential.
+func (e *Engine) UnboxCredential(ct, encMec, mecNonce, cekNonce, ctNonce []byte,
+	privKP *EncryptionKeyPair, pubKey []byte) ([]byte, error) {
+
+	mek, err := e.Unbox(encMec, mecNonce, privKP, pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	cek := deriveKey(mek, cekNonce, 32)
+	cekb := [32]byte{}
+	copy(cekb[:], cek)
+
+	ctNonceb := [24]byte{}
+	copy(ctNonceb[:], ctNonce)
+
+	pt, success := secretbox.Open([]byte{}, ct, &ctNonceb, &cekb)
+	if !success {
+		return nil, errors.New("Failed to decrypt ciphertext")
+	}
+
+	return pt, nil
+}
+
 // GenerateKeyPairs generates and ed25519 signing key pair, and a curve25519
 // encryption key pair for the user, encrypting the private keys in
 // triplesec-v3 with the user's master key.
