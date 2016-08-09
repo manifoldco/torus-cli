@@ -96,7 +96,7 @@ func (c *Client) NewTokenRequest(token, method, path string, query *url.Values, 
 	}
 
 	if token != "" {
-		req.Header.Set("Authorization", "bearer "+token)
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
 	req.Header.Set("Host", c.prefix)
