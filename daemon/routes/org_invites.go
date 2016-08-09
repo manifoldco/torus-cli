@@ -161,7 +161,6 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		log.Printf("I haas members: %d", len(members))
 		if len(members) != 0 {
 			_, err = client.KeyringMember.Post(members)
 			if err != nil {
