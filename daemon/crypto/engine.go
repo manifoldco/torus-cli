@@ -221,6 +221,17 @@ func (e *Engine) UnboxCredential(ct, encMec, mecNonce, cekNonce, ctNonce []byte,
 	return pt, nil
 }
 
+// CloneMembership decrypts the given KeyringMember object, and creates another
+// for the targeted user.
+func (e *Engine) CloneMembership(encMec, mecNonce []byte, privKP *EncryptionKeyPair, encPubKey, targetPubKey []byte) ([]byte, []byte, error) {
+	mek, err := e.Unbox(encMec, mecNonce, privKP, encPubKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return e.Box(mek, privKP, targetPubKey)
+}
+
 // GenerateKeyPairs generates and ed25519 signing key pair, and a curve25519
 // encryption key pair for the user, encrypting the private keys in
 // triplesec-v3 with the user's master key.

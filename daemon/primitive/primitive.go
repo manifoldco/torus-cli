@@ -209,6 +209,13 @@ func (o *Org) Type() byte {
 	return byte(0xd)
 }
 
+const (
+	OrgInvitePendingState    = "pending"
+	OrgInviteAssociatedState = "associated"
+	OrgInviteAcceptedState   = "accepted"
+	OrgInviteApprovedState   = "approved"
+)
+
 // OrgInvite is an invitation for an individual to join an organization
 type OrgInvite struct {
 	v1Schema
