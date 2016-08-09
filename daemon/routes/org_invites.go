@@ -43,12 +43,15 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 		inviteBody := invite.Body.(*primitive.OrgInvite)
 
 		enc := json.NewEncoder(w)
-		if inviteBody.State != primitive.OrgInviteApprovedState {
-			log.Printf("invitation not in approved state: %s", err)
-			enc.Encode(&errorMsg{
+		if inviteBody.State != primitive.OrgInviteAcceptedState {
+			log.Printf("invitation not in approved state: %s", inviteBody.State)
+			err = enc.Encode(&errorMsg{
 				Type:  badRequestError,
 				Error: "Invite must be accepted before it can be approved",
 			})
+			if err != nil {
+				encodeResponseErr(w, err)
+			}
 			return
 		}
 
@@ -60,6 +63,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		log.Printf("got some things %s", sigID.String())
 		claimTrees, err := client.ClaimTree.List(inviteBody.OrgID, nil)
 		if err != nil {
 			log.Printf("could not retrieve claim tree for invite approval: %s", err)
@@ -157,11 +161,13 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		_, err = client.KeyringMember.Post(members)
-		if err != nil {
-			log.Printf("error uploading memberships: %s", err)
-			encodeResponseErr(w, err)
-			return
+		if len(members) != 0 {
+			_, err = client.KeyringMember.Post(members)
+			if err != nil {
+				log.Printf("error uploading memberships: %s", err)
+				encodeResponseErr(w, err)
+				return
+			}
 		}
 
 		err = enc.Encode(invite)

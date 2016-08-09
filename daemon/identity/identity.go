@@ -67,17 +67,9 @@ func New(body Identifiable, sig interface{}) (ID, error) {
 
 // DecodeFromString returns an ID that is stored in the given string.
 func DecodeFromString(value string) (ID, error) {
-	buf, err := lowerBase32.DecodeString(value)
+	buf, err := decodeFromByte([]byte(value))
 	if err != nil {
 		return ID{}, err
-	}
-
-	if len(buf) != byteLength {
-		return ID{}, errors.New("id not long enough")
-	}
-
-	if buf[0] != idVersion {
-		return ID{}, errors.New("Unknown version id")
 	}
 
 	id := ID{}
@@ -111,6 +103,16 @@ func (id *ID) UnmarshalJSON(b []byte) error {
 }
 
 func (id *ID) fillID(raw []byte) error {
+	out, err := decodeFromByte(raw)
+	if err != nil {
+		return err
+	}
+
+	copy(id[:], out)
+	return nil
+}
+
+func decodeFromByte(raw []byte) ([]byte, error) {
 	pad := 8 - (len(raw) % 8)
 	nb := make([]byte, len(raw)+pad)
 	copy(nb, raw)
@@ -120,12 +122,11 @@ func (id *ID) fillID(raw []byte) error {
 
 	out, err := lowerBase32.DecodeString(string(nb))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(out) != 18 {
-		return errors.New("Incorrect length for id")
+		return nil, errors.New("Incorrect length for id")
 	}
 
-	copy(id[:], out)
-	return nil
+	return out, nil
 }
