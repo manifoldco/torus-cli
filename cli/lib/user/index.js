@@ -161,7 +161,6 @@ user.finalize = function (ctx) {
 user._create = function (api, opts) {
   var defaults = opts.defaults || {};
   var userInput = opts.userInput;
-  var params = opts.params;
   var object = {
     username: userInput.username,
     name: userInput.name,

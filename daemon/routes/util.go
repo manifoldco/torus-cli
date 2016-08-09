@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/arigatomachine/cli/daemon/base64"
@@ -8,6 +9,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/identity"
 	"github.com/arigatomachine/cli/daemon/primitive"
+	"github.com/arigatomachine/cli/daemon/registry"
 )
 
 // public key types
@@ -61,4 +63,70 @@ func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
 	}
 
 	return engine.SignedEnvelope(&body, sigID, sigKP)
+}
+
+func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
+	userID *identity.ID) (*envelope.Signed, error) {
+
+	// Loop over claimtree looking for the users encryption key
+	var encKey *envelope.Signed
+	for _, tree := range trees {
+		if *tree.Org.ID != *orgID {
+			continue
+		}
+
+		for _, segment := range tree.PublicKeys {
+			key := segment.Key
+			keyBody := key.Body.(*primitive.PublicKey)
+			if *keyBody.OwnerID != *userID {
+				continue
+			}
+
+			if keyBody.KeyType != encryptionKeyType {
+				continue
+			}
+
+			encKey = key
+		}
+	}
+
+	if encKey == nil {
+		err := fmt.Errorf("No encryption pubkey found for: %s", userID.String())
+		return nil, err
+	}
+
+	return encKey, nil
+}
+
+func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
+	ID *identity.ID) (*envelope.Signed, error) {
+
+	// Loop over claimtree looking for the users encryption key
+	var encKey *envelope.Signed
+	for _, tree := range trees {
+		if *tree.Org.ID != *orgID {
+			continue
+		}
+
+		for _, segment := range tree.PublicKeys {
+			key := segment.Key
+			keyBody := key.Body.(*primitive.PublicKey)
+			if *key.ID != *ID {
+				continue
+			}
+
+			if keyBody.KeyType != encryptionKeyType {
+				continue
+			}
+
+			encKey = key
+		}
+	}
+
+	if encKey == nil {
+		err := fmt.Errorf("No encryption pubkey found for: %s", ID.String())
+		return nil, err
+	}
+
+	return encKey, nil
 }

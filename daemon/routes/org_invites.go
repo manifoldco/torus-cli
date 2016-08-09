@@ -44,7 +44,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 
 		enc := json.NewEncoder(w)
 		if inviteBody.State != primitive.OrgInviteAcceptedState {
-			log.Printf("invitation not in approved state: %s", inviteBody.State)
+			log.Printf("invitation not in accepted state: %s", inviteBody.State)
 			err = enc.Encode(&errorMsg{
 				Type:  badRequestError,
 				Error: "Invite must be accepted before it can be approved",
@@ -63,7 +63,6 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		log.Printf("got some things %s", sigID.String())
 		claimTrees, err := client.ClaimTree.List(inviteBody.OrgID, nil)
 		if err != nil {
 			log.Printf("could not retrieve claim tree for invite approval: %s", err)
@@ -103,6 +102,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			krm, err := findKeyringSegmentMember(s.ID(), &segment)
 			if err != nil {
 				log.Printf("could not find keyring membership: %s", err)
+				w.WriteHeader(http.StatusInternalServerError)
 				enc.Encode(&errorMsg{
 					Type:  internalServerError,
 					Error: "could not find keyring membership",
@@ -110,10 +110,9 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 				return
 			}
 
-			encPubKey, err := findEncryptionPublicKey(claimTrees, inviteBody.OrgID, krm.EncryptingKeyID)
+			encPubKey, err := findEncryptionPublicKeyByID(claimTrees, inviteBody.OrgID, krm.EncryptingKeyID)
 			if err != nil {
-				log.Printf("could not find encypting public key for membership: %s",
-					krm.EncryptingKeyID.String())
+				log.Printf("could not find encypting public key for membership: %s", err)
 				encodeResponseErr(w, err)
 				return
 			}
@@ -121,7 +120,8 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			encPKBody := encPubKey.Body.(*primitive.PublicKey)
 			targetPKBody := targetPubKey.Body.(*primitive.PublicKey)
 
-			encMek, nonce, err := engine.CloneMembership(*krm.Key.Value, *krm.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
+			encMek, nonce, err := engine.CloneMembership(*krm.Key.Value,
+				*krm.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
 			if err != nil {
 				log.Printf("could not clone keyring membership: %s", err)
 				encodeResponseErr(w, err)
@@ -161,6 +161,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		log.Printf("I haas members: %d", len(members))
 		if len(members) != 0 {
 			_, err = client.KeyringMember.Post(members)
 			if err != nil {
@@ -197,37 +198,4 @@ func findKeyringSegmentMember(id *identity.ID,
 	}
 
 	return krm, nil
-}
-
-func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
-	userID *identity.ID) (*envelope.Signed, error) {
-
-	// Loop over claimtree looking for the users encryption key
-	var encKey *envelope.Signed
-	for _, tree := range trees {
-		if *tree.Org.ID != *orgID {
-			continue
-		}
-
-		for _, segment := range tree.PublicKeys {
-			key := segment.Key
-			kBody := key.Body.(*primitive.PublicKey)
-			if *kBody.OwnerID != *userID {
-				continue
-			}
-
-			if kBody.KeyType != encryptionKeyType {
-				continue
-			}
-
-			encKey = key
-		}
-	}
-
-	if encKey == nil {
-		err := fmt.Errorf("No encryption pubkey found for: %s", userID.String())
-		return nil, err
-	}
-
-	return encKey, nil
 }

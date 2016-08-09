@@ -14,14 +14,14 @@ type KeyringClient struct {
 	client *Client
 }
 
-// KeyringSegment represents a section of the CredentialTree only pertaining to
+// KeyringSection represents a section of the CredentialTree only pertaining to
 // a keyring and it's membership.
 type KeyringSection struct {
 	Keyring *envelope.Signed  `json:"keyring"`
 	Members []envelope.Signed `json:"members"`
 }
 
-// List retreives an array of KeyringSections from the registry.
+// List retrieves an array of KeyringSections from the registry.
 func (k *KeyringClient) List(orgID *identity.ID, ownerID *identity.ID) ([]KeyringSection, error) {
 	query := &url.Values{}
 

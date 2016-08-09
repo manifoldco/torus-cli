@@ -209,7 +209,7 @@ func (o *Org) Type() byte {
 	return byte(0xd)
 }
 
-// Org Invitations exist in four states: pending, associate,
+// Org Invitations exist in four states: pending, associated,
 // accepted, and approved.
 const (
 	OrgInvitePendingState    = "pending"
@@ -250,7 +250,7 @@ const (
 	UserTeam   = "user"
 )
 
-// Teams is an entity that represents a group of users
+// Team is an entity that represents a group of users
 type Team struct {
 	v1Schema
 	Name     string       `json:"name"`

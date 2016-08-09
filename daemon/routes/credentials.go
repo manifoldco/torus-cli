@@ -289,9 +289,21 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 		return nil, err
 	}
 
-	// get users in the members group of this org.
-	// use their public key to encrypt the mek with a random nonce.
-	// XXX: we need to filter this down
+	teams, err := client.Teams.List(credBody.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	team, err := findMembersTeam(teams)
+	if err != nil {
+		return nil, err
+	}
+
+	memberships, err := client.Memberships.List(credBody.OrgID, team.ID, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	claimTrees, err := client.ClaimTree.List(credBody.OrgID, nil)
 	if err != nil {
 		return nil, err
@@ -301,15 +313,20 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 		return nil, fmt.Errorf("No claim tree found for org: %s", credBody.OrgID)
 	}
 
+	// get users in the members group of this org.
+	// use their public key to encrypt the mek with a random nonce.
+	// XXX: we need to filter this down
 	members := []envelope.Signed{}
-	for _, segment := range claimTrees[0].PublicKeys {
-		// For user in members group, generate membership object
-		pubKey := segment.Key.Body.(*primitive.PublicKey)
+	for _, membership := range memberships {
+		mBody := membership.Body.(*primitive.Membership)
 
-		if pubKey.KeyType != encryptionKeyType {
-			continue
+		// For this user, find their public encryption key
+		encPubKey, err := findEncryptionPublicKey(claimTrees, credBody.OrgID, mBody.OwnerID)
+		if err != nil {
+			return nil, err
 		}
 
+		pubKey := encPubKey.Body.(*primitive.PublicKey)
 		encmek, nonce, err := engine.Box(mek, &kp.Encryption, []byte(*pubKey.Key.Value))
 		if err != nil {
 			return nil, err
@@ -322,7 +339,7 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 				ProjectID:       credBody.ProjectID,
 				KeyringID:       keyring.ID,
 				OwnerID:         pubKey.OwnerID,
-				PublicKeyID:     segment.Key.ID,
+				PublicKeyID:     encPubKey.ID,
 				EncryptingKeyID: encID,
 
 				Key: &primitive.KeyringMemberKey{
@@ -449,4 +466,23 @@ func findEncryptingKey(client *registry.Client, orgID *identity.ID,
 	}
 
 	return encryptingKey, nil
+}
+
+// findMembersTeam takes in a list of team objects and returns the members team.
+func findMembersTeam(teams []envelope.Unsigned) (*envelope.Unsigned, error) {
+	var team *envelope.Unsigned
+	for _, t := range teams {
+		tBody := t.Body.(*primitive.Team)
+
+		if tBody.Name == "member" && tBody.TeamType == primitive.SystemTeam {
+			team = &t
+			break
+		}
+	}
+
+	if team == nil {
+		return nil, fmt.Errorf("couldn't find members team")
+	}
+
+	return team, nil
 }
