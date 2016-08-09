@@ -15,15 +15,32 @@ import (
 
 	"github.com/arigatomachine/cli/daemon/base64"
 	"github.com/arigatomachine/cli/daemon/crypto"
-	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/envelope"
+	"github.com/arigatomachine/cli/daemon/identity"
 	"github.com/arigatomachine/cli/daemon/primitive"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
+// plainTextCredential is an unencrypted credential. This is what we expect to
+// send and recieve to/from the CLI.
+type plainTextCredential struct {
+	Name      string       `json:"name"`
+	OrgID     *identity.ID `json:"org_id"`
+	PathExp   string       `json:"pathexp"`
+	ProjectID *identity.ID `json:"project_id"`
+	Value     string       `json:"value"`
+}
+
+// plainEnvelope holds our plainTextCredential
+type plainTextEnvelope struct {
+	ID      *identity.ID         `json:"id"`
+	Version uint8                `json:"version"`
+	Body    *plainTextCredential `json:"body"`
+}
+
 func credentialsGetRoute(client *registry.Client,
-	s session.Session) http.HandlerFunc {
+	s session.Session, engine *crypto.Engine) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
@@ -38,9 +55,55 @@ func credentialsGetRoute(client *registry.Client,
 		// Loop over the trees and unpack the credentials; later on we will
 		// actually do real work and decrypt each of these credentials but for
 		// now we just need ot return a list of them!
-		creds := []envelope.Unsigned{}
+		creds := []plainTextEnvelope{}
 		for _, tree := range trees {
-			creds = append(creds, tree.Credentials...)
+			orgID := tree.Keyring.Body.(*primitive.Keyring).OrgID
+			_, _, kp, err := fetchKeyPairs(client, orgID)
+			if err != nil {
+				encodeResponseErr(w, err)
+				return
+			}
+
+			krm, err := findKeyringMember(s.ID(), &tree)
+			if err != nil {
+				log.Printf("Error finding keyring membership")
+				encodeResponseErr(w, err)
+				return
+			}
+
+			encryptingKey, err := findEncryptingKey(client, orgID,
+				krm.EncryptingKeyID)
+			if err != nil {
+				log.Printf("Error finding encrypting key: %s", err)
+				encodeResponseErr(w, err)
+				return
+			}
+
+			for _, cred := range tree.Credentials {
+				credBody := cred.Body.(*primitive.Credential)
+				pt, err := engine.UnboxCredential(*credBody.Credential.Value,
+					*krm.Key.Value, *krm.Key.Nonce, *credBody.Nonce,
+					*credBody.Credential.Nonce, &kp.Encryption,
+					*encryptingKey.Key.Value)
+				if err != nil {
+					log.Printf("Error decrypting credential: %s", err)
+					encodeResponseErr(w, err)
+					return
+				}
+
+				plainCred := plainTextEnvelope{
+					ID:      cred.ID,
+					Version: cred.Version,
+					Body: &plainTextCredential{
+						Name:      credBody.Name,
+						PathExp:   credBody.PathExp,
+						ProjectID: credBody.ProjectID,
+						OrgID:     credBody.OrgID,
+						Value:     string(pt),
+					},
+				}
+				creds = append(creds, plainCred)
+			}
 		}
 
 		enc := json.NewEncoder(w)
@@ -53,12 +116,12 @@ func credentialsGetRoute(client *registry.Client,
 	}
 }
 
-func credentialsPostRoute(client *registry.Client,
-	s session.Session, db *db.DB, engine *crypto.Engine) http.HandlerFunc {
+func credentialsPostRoute(client *registry.Client, s session.Session,
+	engine *crypto.Engine) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		dec := json.NewDecoder(r.Body)
-		cred := &envelope.Unsigned{}
+		cred := plainTextEnvelope{}
 
 		err := dec.Decode(&cred)
 		if err != nil {
@@ -67,31 +130,50 @@ func credentialsPostRoute(client *registry.Client,
 			return
 		}
 
-		credBody := cred.Body.(*primitive.Credential)
-
 		// Ensure we have an existing keyring for this credential's pathexp
-		trees, err := client.CredentialTree.List(credBody.Name, "", credBody.PathExp,
-			s.ID())
+		trees, err := client.CredentialTree.List(cred.Body.Name, "",
+			cred.Body.PathExp, s.ID())
 		if err != nil {
 			log.Printf("error retrieving credential trees: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
 
+		sigID, encID, kp, err := fetchKeyPairs(client, cred.Body.OrgID)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		newTree := false
 		// No matching CredentialTree/KeyRing for this credential.
 		// We'll make a new one now.
 		if len(trees) == 0 {
-			tree, err := createCredentialTree(credBody, client, s, db, engine)
+			tree, err := createCredentialTree(cred.Body, sigID, encID, kp,
+				client, engine)
 			if err != nil {
 				log.Printf("error creating credential tree: %s", err)
 				encodeResponseErr(w, err)
 				return
 			}
 			trees = []registry.CredentialTree{*tree}
+			newTree = true
 		}
 
 		tree := trees[0]
 		creds := tree.Credentials
+
+		// Construct an encrypted and signed version of the credential
+		credBody := primitive.Credential{
+			Name:      cred.Body.Name,
+			PathExp:   cred.Body.PathExp,
+			KeyringID: tree.Keyring.ID,
+			ProjectID: cred.Body.ProjectID,
+			OrgID:     cred.Body.OrgID,
+			Credential: &primitive.CredentialValue{
+				Algorithm: crypto.SecretBox,
+			},
+		}
 
 		if len(creds) == 0 {
 			log.Printf("no previous")
@@ -101,7 +183,9 @@ func credentialsPostRoute(client *registry.Client,
 			previousCred := creds[len(creds)-1]
 			previousCredBody := previousCred.Body.(*primitive.Credential)
 
-			if previousCredBody.Name != credBody.Name || previousCredBody.PathExp != credBody.PathExp {
+			if previousCredBody.Name != credBody.Name ||
+				previousCredBody.PathExp != credBody.PathExp {
+
 				err = fmt.Errorf("Non-matching credential returned in tree")
 				log.Printf("Error finding previous credential version: %s", err)
 				encodeResponseErr(w, err)
@@ -112,7 +196,46 @@ func credentialsPostRoute(client *registry.Client,
 			credBody.CredentialVersion = previousCredBody.CredentialVersion + 1
 		}
 
-		cred, err = client.Credentials.Create(cred)
+		// Find our keyring membership entry, so we can access the keyring
+		// master encryption key.
+		krm, err := findKeyringMember(s.ID(), &tree)
+		if err != nil {
+			log.Printf("Error finding keyring membership")
+			encodeResponseErr(w, err)
+			return
+		}
+
+		encryptingKey, err := findEncryptingKey(client, credBody.OrgID,
+			krm.EncryptingKeyID)
+		if err != nil {
+			log.Printf("Error finding encrypting key: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		// Derive a key for the credential using the keyring master key
+		// and use the derived key to encrypt the credential
+		cekNonce, ctNonce, ct, err := engine.BoxCredential(
+			[]byte(cred.Body.Value), *krm.Key.Value, *krm.Key.Nonce,
+			&kp.Encryption, *encryptingKey.Key.Value)
+
+		credBody.Nonce = base64.NewValue(cekNonce)
+
+		credBody.Credential.Nonce = base64.NewValue(ctNonce)
+		credBody.Credential.Value = base64.NewValue(ct)
+
+		signed, err := engine.SignedEnvelope(&credBody, sigID, &kp.Signature)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		if newTree {
+			tree.Credentials = []envelope.Signed{*signed}
+			_, err = client.CredentialTree.Post(&tree)
+		} else {
+			_, err = client.Credentials.Create(signed)
+		}
 		if err != nil {
 			log.Printf("error creating credential: %s", err)
 			encodeResponseErr(w, err)
@@ -131,48 +254,9 @@ func credentialsPostRoute(client *registry.Client,
 
 // createCredentialTree generates, signs, and posts a new CredentialTree
 // to the registry.
-func createCredentialTree(credBody *primitive.Credential,
-	client *registry.Client, s session.Session, db *db.DB,
+func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
+	encID *identity.ID, kp *crypto.KeyPairs, client *registry.Client,
 	engine *crypto.Engine) (*registry.CredentialTree, error) {
-
-	keyPairs, err := client.KeyPairs.List(credBody.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	var sigClaimed registry.ClaimedKeyPair
-	var encClaimed registry.ClaimedKeyPair
-	for _, keyPair := range keyPairs {
-		pubKey := keyPair.PublicKey.Body.(*primitive.PublicKey)
-		switch pubKey.KeyType {
-		case signingKeyType:
-			sigClaimed = keyPair
-		case encryptionKeyType:
-			encClaimed = keyPair
-		default:
-			return nil, fmt.Errorf("Unknown key type: %s", pubKey.KeyType)
-		}
-	}
-
-	if sigClaimed.PublicKey == nil || encClaimed.PublicKey == nil {
-		return nil, fmt.Errorf("Missing encryption or signing keypairs")
-	}
-
-	sigPub := sigClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
-	sigKP := crypto.SignatureKeyPair{
-		Public:  ed25519.PublicKey(*sigPub),
-		Private: *sigClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
-		PNonce:  *sigClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
-	}
-
-	encPub := *encClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
-	encPubB := [32]byte{}
-	copy(encPubB[:], encPub)
-	encKP := crypto.EncryptionKeyPair{
-		Public:  encPubB,
-		Private: *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
-		PNonce:  *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
-	}
 
 	parts := strings.Split(credBody.PathExp, "/")
 	if len(parts) != 7 { // first part is empty
@@ -193,7 +277,7 @@ func createCredentialTree(credBody *primitive.Credential,
 			Previous:       nil,
 			KeyringVersion: 1,
 		},
-		sigClaimed.PublicKey.ID, &sigKP)
+		sigID, &kp.Signature)
 	if err != nil {
 		return nil, err
 	}
@@ -226,13 +310,10 @@ func createCredentialTree(credBody *primitive.Credential,
 			continue
 		}
 
-		encmek, nonce, err := engine.Box(mek, &encKP, []byte(*pubKey.Key.Value))
+		encmek, nonce, err := engine.Box(mek, &kp.Encryption, []byte(*pubKey.Key.Value))
 		if err != nil {
 			return nil, err
 		}
-
-		noncev := base64.Value(nonce)
-		encmekv := base64.Value(encmek)
 
 		member, err := engine.SignedEnvelope(
 			&primitive.KeyringMember{
@@ -242,15 +323,15 @@ func createCredentialTree(credBody *primitive.Credential,
 				KeyringID:       keyring.ID,
 				OwnerID:         pubKey.OwnerID,
 				PublicKeyID:     segment.Key.ID,
-				EncryptingKeyID: encClaimed.PublicKey.ID,
+				EncryptingKeyID: encID,
 
 				Key: &primitive.KeyringMemberKey{
 					Algorithm: crypto.EasyBox,
-					Nonce:     &noncev,
-					Value:     &encmekv,
+					Nonce:     base64.NewValue(nonce),
+					Value:     base64.NewValue(encmek),
 				},
 			},
-			sigClaimed.PublicKey.ID, &sigKP)
+			sigID, &kp.Signature)
 		if err != nil {
 			return nil, err
 		}
@@ -258,9 +339,114 @@ func createCredentialTree(credBody *primitive.Credential,
 		members = append(members, *member)
 	}
 
-	return client.CredentialTree.Post(&registry.CredentialTree{
-		Keyring:     keyring,
-		Members:     members,
-		Credentials: []envelope.Unsigned{},
-	})
+	tree := registry.CredentialTree{
+		Keyring: keyring,
+		Members: members,
+	}
+
+	return &tree, nil
+}
+
+// fetchKeyPairs fetches the user's signing and encryption keypairs from the
+// registry for the given org id.
+func fetchKeyPairs(client *registry.Client, orgID *identity.ID) (*identity.ID,
+	*identity.ID, *crypto.KeyPairs, error) {
+
+	keyPairs, err := client.KeyPairs.List(orgID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	var sigClaimed registry.ClaimedKeyPair
+	var encClaimed registry.ClaimedKeyPair
+	for _, keyPair := range keyPairs {
+		pubKey := keyPair.PublicKey.Body.(*primitive.PublicKey)
+		switch pubKey.KeyType {
+		case signingKeyType:
+			sigClaimed = keyPair
+		case encryptionKeyType:
+			encClaimed = keyPair
+		default:
+			err = fmt.Errorf("Unknown key type: %s", pubKey.KeyType)
+			return nil, nil, nil, err
+		}
+	}
+
+	if sigClaimed.PublicKey == nil || encClaimed.PublicKey == nil {
+		err = fmt.Errorf("Missing encryption or signing keypairs")
+		return nil, nil, nil, err
+	}
+
+	sigPub := sigClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
+	sigKP := crypto.SignatureKeyPair{
+		Public:  ed25519.PublicKey(*sigPub),
+		Private: *sigClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
+		PNonce:  *sigClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
+	}
+
+	encPub := *encClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
+	encPubB := [32]byte{}
+	copy(encPubB[:], encPub)
+	encKP := crypto.EncryptionKeyPair{
+		Public:  encPubB,
+		Private: *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
+		PNonce:  *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
+	}
+
+	kp := crypto.KeyPairs{
+		Signature:  sigKP,
+		Encryption: encKP,
+	}
+
+	return sigClaimed.PublicKey.ID, encClaimed.PublicKey.ID, &kp, nil
+}
+
+// findKeyringMember finds the keyring member with the given id
+func findKeyringMember(id *identity.ID,
+	tree *registry.CredentialTree) (*primitive.KeyringMember, error) {
+	var krm *primitive.KeyringMember
+	for _, m := range tree.Members {
+		mBody := m.Body.(*primitive.KeyringMember)
+		if *mBody.OwnerID == *id {
+			krm = mBody
+			break
+		}
+	}
+
+	if krm == nil {
+		err := fmt.Errorf("No keyring membership found")
+		return nil, err
+	}
+
+	return krm, nil
+}
+
+// findEncryptingKey queries the registry for public keys in the given org, to
+// find the matching one
+func findEncryptingKey(client *registry.Client, orgID *identity.ID,
+	encryptingKeyID *identity.ID) (*primitive.PublicKey, error) {
+
+	claimTrees, err := client.ClaimTree.List(orgID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(claimTrees) != 1 {
+		err = fmt.Errorf("No claim tree found for org: %s", orgID)
+		return nil, err
+	}
+
+	var encryptingKey *primitive.PublicKey
+	for _, segment := range claimTrees[0].PublicKeys {
+		if *segment.Key.ID == *encryptingKeyID {
+			encryptingKey = segment.Key.Body.(*primitive.PublicKey)
+			break
+		}
+	}
+	if encryptingKey == nil {
+		err = fmt.Errorf("Couldn't find encrypting key %s", encryptingKeyID)
+		return nil, err
+	}
+
+	return encryptingKey, nil
 }

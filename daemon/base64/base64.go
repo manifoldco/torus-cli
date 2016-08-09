@@ -11,6 +11,14 @@ import (
 // Value is a base64url encoded json object,
 type Value []byte
 
+// NewValue returns a pointer to a Value, cast from the given byte slice.
+// This is a convenience function, handling the address creation that a direct
+// cast would not allow.
+func NewValue(b []byte) *Value {
+	v := Value(b)
+	return &v
+}
+
 // MarshalJSON returns the ba64url encoding of bv for JSON representation.
 func (bv *Value) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + base64.RawURLEncoding.EncodeToString(*bv) + "\""), nil

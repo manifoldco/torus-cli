@@ -13,14 +13,14 @@ type Credentials struct {
 }
 
 // Create creates the provided credential in the registry.
-func (c *Credentials) Create(credential *envelope.Unsigned) (*envelope.Unsigned, error) {
+func (c *Credentials) Create(credential *envelope.Signed) (*envelope.Signed, error) {
 	req, err := c.client.NewRequest("POST", "/credentials", nil, credential)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return nil, err
 	}
 
-	resp := &envelope.Unsigned{}
+	resp := &envelope.Signed{}
 	_, err = c.client.Do(req, resp)
 	if err != nil {
 		return nil, err

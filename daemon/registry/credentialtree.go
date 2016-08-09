@@ -19,9 +19,9 @@ type CredentialTreeClient struct {
 // CredentialTree represents a Keyring, it's members, and associated
 // Credentials.
 type CredentialTree struct {
-	Keyring     *envelope.Signed    `json:"keyring"`
-	Members     []envelope.Signed   `json:"members"`
-	Credentials []envelope.Unsigned `json:"credentials"`
+	Keyring     *envelope.Signed  `json:"keyring"`
+	Members     []envelope.Signed `json:"members"`
+	Credentials []envelope.Signed `json:"credentials"`
 }
 
 // Post creates a new CredentialTree on the registry.

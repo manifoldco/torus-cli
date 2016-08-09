@@ -27,7 +27,6 @@ func packagePublicKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
 
 	now := time.Now().UTC()
 
-	kv := base64.Value(public)
 	body := primitive.PublicKey{
 		OrgID:     orgID,
 		OwnerID:   ownerID,
@@ -35,7 +34,7 @@ func packagePublicKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
 		Algorithm: alg,
 
 		Key: primitive.PublicKeyValue{
-			Value: &kv,
+			Value: base64.NewValue(public),
 		},
 
 		Created: now,
@@ -49,17 +48,15 @@ func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
 	pnonce, private []byte, pubID, sigID *identity.ID,
 	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
-	kv := base64.Value(private)
-	pv := base64.Value(pnonce)
 	body := primitive.PrivateKey{
 		OrgID:       orgID,
 		OwnerID:     ownerID,
-		PNonce:      &pv,
+		PNonce:      base64.NewValue(pnonce),
 		PublicKeyID: pubID,
 
 		Key: primitive.PrivateKeyValue{
 			Algorithm: crypto.Triplesec,
-			Value:     &kv,
+			Value:     base64.NewValue(private),
 		},
 	}
 

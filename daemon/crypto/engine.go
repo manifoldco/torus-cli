@@ -11,6 +11,7 @@ import (
 	triplesec "github.com/keybase/go-triplesec"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"
+	"golang.org/x/crypto/nacl/secretbox"
 
 	"github.com/arigatomachine/cli/daemon/base64"
 	"github.com/arigatomachine/cli/daemon/db"
@@ -79,7 +80,7 @@ func (e *Engine) Seal(pt []byte) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	dk := deriveKey(mk, nonce)
+	dk := deriveKey(mk, nonce, blakeSize)
 	ts := newTriplesec(dk)
 	ct, err := ts.Encrypt(pt)
 
@@ -94,7 +95,7 @@ func (e *Engine) Unseal(ct, nonce []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	dk := deriveKey(mk, nonce)
+	dk := deriveKey(mk, nonce, blakeSize)
 	ts := newTriplesec(dk)
 	return ts.Decrypt(ct)
 }
@@ -148,6 +149,71 @@ func (e *Engine) Unbox(ct, nonce []byte, privKP *EncryptionKeyPair,
 	copy(pubkb[:], pubKey)
 
 	pt, success := box.Open([]byte{}, ct, &nonceb, &pubkb, &privkb)
+	if !success {
+		return nil, errors.New("Failed to decrypt ciphertext")
+	}
+
+	return pt, nil
+}
+
+// BoxCredential encrypts the credential value pt via symmetric secretbox
+// encryption.
+//
+// Doing so is a multistep process.
+// First we use the user's session data to unseal their private encryption key.
+// With their encryption key and the public encryption key provided, we can
+// decrypt the keyring master key (mek).
+// Using mek and a generated nonce, we derive the credential encryption key
+// (cek) via blake2b.
+// Finally, we use the cek and a generated nonce to encrypt the credential.
+//
+// BoxCredential returns the nonce generated to derive the credential
+// encryption key,  the nonce generated for encrypting the credential, and the
+// encrypted credential.
+func (e *Engine) BoxCredential(pt, encMec, mecNonce []byte,
+	privKP *EncryptionKeyPair, pubKey []byte) ([]byte, []byte, []byte, error) {
+
+	nonces := make([]byte, 48)
+	_, err := rand.Read(nonces)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	cekNonce := nonces[:24]
+	nonce := [24]byte{}
+	copy(nonce[:], nonces[24:])
+
+	mek, err := e.Unbox(encMec, mecNonce, privKP, pubKey)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	cek := deriveKey(mek, cekNonce, 32)
+	cekb := [32]byte{}
+	copy(cekb[:], cek)
+
+	ct := secretbox.Seal([]byte{}, pt, &nonce, &cekb)
+	return cekNonce, nonce[:], ct, err
+}
+
+// UnboxCredential does the inverse of BoxCredential to retrieve the plaintext
+// version of a credential.
+func (e *Engine) UnboxCredential(ct, encMec, mecNonce, cekNonce, ctNonce []byte,
+	privKP *EncryptionKeyPair, pubKey []byte) ([]byte, error) {
+
+	mek, err := e.Unbox(encMec, mecNonce, privKP, pubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	cek := deriveKey(mek, cekNonce, 32)
+	cekb := [32]byte{}
+	copy(cekb[:], cek)
+
+	ctNonceb := [24]byte{}
+	copy(ctNonceb[:], ctNonce)
+
+	pt, success := secretbox.Open([]byte{}, ct, &ctNonceb, &cekb)
 	if !success {
 		return nil, errors.New("Failed to decrypt ciphertext")
 	}
@@ -223,11 +289,10 @@ func (e *Engine) SignedEnvelope(body identity.Identifiable,
 		return nil, err
 	}
 
-	sv := base64.Value(s)
 	sig := primitive.Signature{
 		PublicKeyID: sigID,
 		Algorithm:   EdDSA,
-		Value:       &sv,
+		Value:       base64.NewValue(s),
 	}
 
 	id, err := identity.New(body, &sig)
@@ -268,14 +333,10 @@ func newTriplesec(k []byte) *triplesec.Cipher {
 	return ts
 }
 
-// deriveKey Derives a single use key from the user's master key via blake2b
+// deriveKey Derives a single use key from the given master key via blake2b
 // and a nonce.
-func deriveKey(mk, nonce []byte) []byte {
-	h, err := blake2b.New(&blake2b.Config{Size: blakeSize, Key: nonce[:]})
-	if err != nil {
-		panic(err)
-	}
-
+func deriveKey(mk, nonce []byte, size uint8) []byte {
+	h := blake2b.NewMAC(size, nonce) // NewMAC can panic if size is too big.
 	h.Sum(mk)
 	return h.Sum(nil)
 }
