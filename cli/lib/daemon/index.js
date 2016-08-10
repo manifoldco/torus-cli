@@ -54,7 +54,7 @@ daemon.start = function (cfg) {
       var opt = {
         stdio: ['ignore', 'ignore', 'ignore'],
         env: env,
-        cwd: cfg.arigatoRoot,
+        cwd: path.normalize(path.join(__dirname, '../..')),
         detached: true
       };
 

@@ -11,4 +11,6 @@ pushd $SRC > /dev/null
     docker run --name cli --rm \
         -v $SRC:/go/src/github.com/arigatomachine/cli -v $SRC/builds:/builds \
         arigato/cli:latest build
+
+    cp daemon/ca_bundle.pem cli/ca_bundle.pem
 popd > /dev/null
