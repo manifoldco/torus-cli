@@ -18,6 +18,7 @@ fi
 
 GIT_REPOSITORY="git@github.com:arigatomachine/cli.git"
 KEY_FILE="$SRC/keys/$ENVIRONMENT.json"
+CA_BUNDLE="$SRC/daemon/ca_bundle.pem"
 RELEASE_STAMP=`date -u +"%Y-%m-%dT%H-%M-%SZ"`
 BUILD_DIRECTORY=$HOME/build
 RELEASE_DIRECTORY="$BUILD_DIRECTORY/$RELEASE_STAMP"
@@ -66,6 +67,7 @@ echo ""
 echo "Copying Key File"
 echo ""
 cp $KEY_FILE cli/public_key.json
+cp $CA_BUNDLE cli/ca_bundle.pem
 
 echo ""
 echo "Creating Distributable ($RELEASE_STAMP.tar.gz) in $RELEASE_DIRECTORY"
