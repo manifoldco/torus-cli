@@ -17,7 +17,7 @@ daemon/cli and [registry](https://github.com/arigatomachine/registry).
    [registry](https://github.com/arigatomachine/registry#setup). Make sure
    you've run the migration and seed scripts!
 2. Once setup, build the development docker container for the CLI and Daemon
-   using `npm run build-container` inside the `$CLI_REPO/cli` folder.
+   using `$CLI_REPO/scripts/build-container.sh` inside the `$CLI_REPO` folder.
 3. Now, you can build the daemon using `npm run build` inside the
    `$CLI_REPO/cli` folder.
 4. Override the host name to communicate with your local registry using
@@ -48,6 +48,13 @@ we'll push more code into the Daemon and eventually rewrite the CLI into Go.
 The top level is responsible for packaging and releasing the cli and daemon.
 All component specific code and dependencies live in their respective folders.
 
+### Releasing
+
+The CLI and Daemon are packaged together using the
+`$CLI_REPO/scripts/release.sh` into the `cli` folder.
+
+The release script will deploy to the `ag` package on npm.
+
 ### Docker
 
 A docker container is provided for building and testing the daemon and cli
@@ -67,7 +74,7 @@ not cross-platform (compiling C library etc) are not supported.**
 
 **To build the container:**
 
-`npm run build-container` inside the CLI directory.
+`$CLI_HOME/scripts/build-container.sh` inside the CLI directory.
 
 The node version used inside the container will be the same version as your
 HOST. If you change your version of node you will need to re-build the
@@ -75,14 +82,14 @@ container.
 
 **To build the artifacts:**
 
-`npm run build` inside the CLI directory.
+`$CLI_HOME/scripts/build.sh` inside the CLI directory.
 
 The compiled binary will be placed inside `cli/bin` which `cli/bin/arigato`
 will look for when trying to start the daemon.
 
 **To run the tests (which also creates a local build):**
 
-`npm run test` inside the CLI directory.
+`$CLI_HOME/scripts/test.sh` inside the CLI directory.
 
 ### Local Module Development Work Around
 
@@ -112,7 +119,7 @@ bring in private dependencies.
 ### Troubleshooting TL;DR
 
 1. Are you up to date with master in both registry, and cli?
-2. Did you rebuild your daemon with `npm run build`?
+2. Did you rebuild your daemon with `$CLI_HOME/scripts/build.sh`?
 3. Did you kill your daemon process after rebuild?
 4. Does your `~/.arigatorc` point to the offline signing public key?
  - Under `[core]` set `public_key_file=$REGISTRY_REPO/keys/offline-pub.json` where `$REGISTRY_REPO` is the path to your repo on disk.

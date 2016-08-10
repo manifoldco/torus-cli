@@ -2,8 +2,8 @@
 cli/node_modules*
 .DS_Store
 npm-debug*
-daemon/ag-daemon
-cli/bin/ag-daemon
+daemon/ag-daemon*
+cli/bin/ag-daemon*
 travis/id_rsa*
 builds/*
 
