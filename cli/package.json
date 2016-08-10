@@ -14,7 +14,7 @@
     "Ian Livingstone <ian@arigato.sh>",
     "Jeff Andersen <jeff@arigato.sh>"
   ],
-  "logo": "https://raw.githubusercontent.com/arigatomachine/cli/logo.png",
+  "logo": "https://s3.amazonaws.com/marketing.arigato.sh/logo.png",
   "license": "MIT",
   "dependencies": {
     "backo": "1.1.0",
