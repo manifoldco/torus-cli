@@ -12,10 +12,6 @@ var Config = require('../config');
 
 var daemon = exports;
 
-// The daemon binary is placed in the cli's `bin` folder during the build
-// process.
-daemon.DAEMON_PATH = path.join(__dirname, '../../bin/ag-daemon');
-
 /**
  * Starts the daemon and returns a daemon instance. Rejects the promise with an
  * error if the daemon is already running
@@ -62,8 +58,19 @@ daemon.start = function (cfg) {
         detached: true
       };
 
+      if (['linux', 'darwin'].indexOf(process.platform) === -1) {
+        console.log('ag only supports linux and darwin i386');
+        throw new Error('Incompatible Platform: ' + process.platform);
+      }
+
+      var os = process.platform;
+      var arch = '386';
+
+      var daemonPath = path.join(
+        __dirname, '../../bin/ag-daemon-' + os + '-' + arch);
+
       // TODO: We should be logging the pid and other information
-      var child = childProcess.spawn(daemon.DAEMON_PATH, [], opt);
+      var child = childProcess.spawn(daemonPath, [], opt);
       child.unref();
 
       // XXX: Wait a second before trying to connect to the daemon

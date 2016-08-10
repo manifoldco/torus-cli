@@ -16,25 +16,47 @@ function usage {
   echo -e "\ttest\t\t\t\tBuild and then run all tests on the current build\n"
 }
 
-function build {
-  echo ""
-  echo "Target OS: $GOOS"
-  echo "Target Architecture: $GOARCH"
-  echo ""
+function build_binary {
+  os="$1"
+  arch="$2"
+
+  if [ "$os" != "darwin" -a "$os" != "linux" ]; then
+    echo "Unknown or unsupported operating system: $os"
+    exit 1
+  fi
+
+  if [ "$arch" != "386" ]; then
+    echo "Unknown or unsupported architecture: $arch"
+    exit 1
+  fi
 
   pushd "$DIR/../daemon" > /dev/null
-    echo "Building daemon binary"
+    echo "Building Daemon"
+    echo "Target OS: $os"
+    echo "Target Arch: $arch"
+
     glide install
-    GOOS=$GOOS GOARCH=$GOARCH make
+    GOOS=$os GOARCH=$arch make
   popd > /dev/null
 
-  # TODO: Bring npm install inside the container by copying npm token
-  # or ssh key for use
-  echo "Copying ag-daemon into $DIR/../cli/bin"
-  cp $DIR/../daemon/ag-daemon $DIR/../cli/bin/ag-daemon
-  chmod +x $DIR/../cli/bin/ag-daemon
+  bin="ag-daemon-$os-$arch"
+  cp $DIR/../daemon/ag-daemon $DIR/../cli/bin/$bin
+  chmod +x $DIR/../cli/bin/$bin
 
+  echo "Copied $bin to $DIR/../cli/bin/$bin"
+}
+
+function build {
+  echo "Building for development (darwin/386 only)"
+  build_binary darwin 386
   echo "Success, build complete!"
+}
+
+function build_release {
+  echo "Building for release (darwin/386 and linux/386)"
+  build_binary darwin 386
+  build_binary linux 386
+  echo "Success, build for release complete!"
 }
 
 function run_tests {
@@ -71,6 +93,10 @@ echo "node version `node -v`"
 case "$CMD" in
   "build")
     build
+    ;;
+
+  "release")
+    build_release
     ;;
 
   "test")

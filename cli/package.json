@@ -1,26 +1,30 @@
 {
-  "name": "arigato",
+  "name": "ag",
   "version": "0.0.1",
-  "description": "Argiato CLI and Daemon",
-  "bin": "./bin/arigato",
-  "repository": "git@github.com:arigatomachine/cli.git",
-  "scripts": {
-    "test": "../scripts/test.sh",
-    "build": "../scripts/build.sh",
-    "build-container": "../scripts/build-container.sh",
-    "postinstall": "./bin/arigato intro"
+  "description": "A utility for sharing and securing secrets across teams, services, and environments.",
+  "bin": {
+     "ag": "bin/ag",
+     "arigato": "bin/ag"
   },
-  "author": "Arigato.sh",
+  "scripts": {
+    "postinstall": "./bin/ag intro"
+  },
+  "os": [ "darwin", "linux", "!win32" ],
+  "cpu": [ "x64" ],
+  "engines": {
+    "node": ">=4.4.0"
+  },
+  "author": "Arigato Machine Inc.",
   "contributors": [
     "Ian Livingstone <ian@arigato.sh>",
     "Jeff Andersen <jeff@arigato.sh>"
   ],
   "logo": "https://s3.amazonaws.com/marketing.arigato.sh/logo.png",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "dependencies": {
     "backo": "1.1.0",
     "cli-table2": "0.2.0",
-    "common": "git+ssh://git@github.com/arigatomachine/common.git#v0.7.2",
+    "common": "https://github.com/arigatomachine/common/archive/v0.9.1.tar.gz",
     "es6-promise": "3.1.2",
     "event-regulator": "0.2.0",
     "glob": "7.0.3",
