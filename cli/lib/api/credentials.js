@@ -3,8 +3,6 @@
 var credentials = exports;
 credentials.isNewAPI = true;
 
-var utils = require('common/utils');
-
 credentials.get = function (client, query) {
   return client.get({
     url: '/credentials',
@@ -18,7 +16,6 @@ credentials.create = function (client, data) {
   return client.post({
     url: '/credentials',
     json: {
-      id: utils.id('credential'),
       version: 1,
       body: {
         name: data.name,
