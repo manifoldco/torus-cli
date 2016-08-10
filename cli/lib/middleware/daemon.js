@@ -25,6 +25,9 @@ module.exports.preHook = function () {
       if (ctx.cmd.group === 'prefs') {
         return resolve();
       }
+      if (ctx.cmd.group === 'intro') {
+        return resolve();
+      }
 
       return daemon.status(config)
         .then(function (status) {

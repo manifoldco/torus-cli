@@ -7,7 +7,8 @@
   "scripts": {
     "test": "../scripts/test.sh",
     "build": "../scripts/build.sh",
-    "build-container": "../scripts/build-container.sh"
+    "build-container": "../scripts/build-container.sh",
+    "postinstall": "./bin/arigato intro"
   },
   "author": "Arigato.sh",
   "contributors": [
