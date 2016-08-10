@@ -17,12 +17,12 @@ run.execute = function (ctx) {
     var params = harvest.get(ctx);
 
     return credentials.get(ctx.api, params).then(function (creds) {
-      return run.spawn(ctx.daemon, ctx.params, creds).then(resolve);
+      return run.spawn(ctx.params, creds).then(resolve);
     }).catch(reject);
   });
 };
 
-run.spawn = function (daemon, params, creds) {
+run.spawn = function (params, creds) {
   return new Promise(function (resolve, reject) {
     var env = _.clone(process.env);
     creds.forEach(function (cred) {
@@ -43,15 +43,6 @@ run.spawn = function (daemon, params, creds) {
     proc.stdout.pipe(process.stdout);
     proc.stderr.pipe(process.stderr);
 
-    function onClose(exitCode) {
-      daemon.disconnect().then(function () {
-        resolve(exitCode);
-      }).catch(function (err) {
-        console.error('Could not disconnect from daemon');
-        reject(err);
-      });
-    }
-
     function handleSignal(signal) {
       proc.kill(signal);
     }
@@ -63,7 +54,7 @@ run.spawn = function (daemon, params, creds) {
       [process, 'SIGTERM', handleSignal.bind(this, 'SIGTERM')],
 
       [proc, 'error', reject, true],
-      [proc, 'close', onClose, true]
+      [proc, 'close', resolve, true]
     ]);
   });
 };
