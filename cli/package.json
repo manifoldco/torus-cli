@@ -16,8 +16,13 @@
   },
   "author": "Arigato Machine Inc.",
   "contributors": [
+    "Jevon MacDonaold <jevon@arigato.sh>",
     "Ian Livingstone <ian@arigato.sh>",
-    "Jeff Andersen <jeff@arigato.sh>"
+    "Jeff Andersen <jeff@arigato.sh>",
+    "Matthew Creager <matt@arigato.sh>",
+    "Nick Tassone <nick@arigato.sh>",
+    "Peter Cho <peter@arigato.sh>",
+    "James Bowes <james@arigato.sh>"
   ],
   "logo": "https://s3.amazonaws.com/marketing.arigato.sh/logo.png",
   "license": "AGPL-3.0",
