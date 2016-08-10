@@ -6,7 +6,6 @@ import (
 	"path"
 
 	"github.com/go-ini/ini"
-	"github.com/kardianos/osext"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -28,13 +27,13 @@ type core struct {
 }
 
 func newPreferences() (*preferences, error) {
-	exeFolder, err := osext.ExecutableFolder()
+	cwd, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("Could not determine executable folder: %s", err)
+		return nil, fmt.Errorf("Could not determine cwd: %s", err)
 	}
 
-	defaultKeyPath := path.Join(exeFolder, publicKeyFilename)
-	defaultBundlePath := path.Join(exeFolder, caBundleFilename)
+	defaultKeyPath := path.Join(cwd, publicKeyFilename)
+	defaultBundlePath := path.Join(cwd, caBundleFilename)
 	prefs := &preferences{
 		Core: core{
 			PublicKeyFile: defaultKeyPath,

@@ -3,12 +3,7 @@ PKG := github.com/arigatomachine/cli/daemon
 SHA := $(shell git describe --always --long --dirty)
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
-VERSION := $(shell cat ../cli/package.json \
-  | grep version \
-  | head -1 \
-  | awk -F: '{ print $2 }' \
-  | sed 's/[",version:]//g' \
-  | tr -d '[[:space:]]')
+VERSION := $(shell node -p -e "require('../cli/package.json').version")
 
 all: server
 
