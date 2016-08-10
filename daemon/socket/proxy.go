@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/facebookgo/httpdown"
 	"github.com/go-zoo/bone"
@@ -42,21 +43,17 @@ func NewAuthProxy(c *config.Config, sess session.Session,
 		return nil, err
 	}
 
-	u, err := url.Parse(c.API)
-	if err != nil {
-		return nil, err
-	}
-
-	return &AuthProxy{u: u, l: l, c: c, sess: sess, db: db}, nil
+	return &AuthProxy{u: c.RegistryURI, l: l, c: c, sess: sess, db: db}, nil
 }
 
 // Listen starts the main loop of the AuthProxy. It returns on error, or when
 // the AuthProxy is closed.
 func (p *AuthProxy) Listen() error {
 	mux := bone.New()
-	// XXX: We must validate certs, and figure something out for local dev
-	// see https://github.com/arigatomachine/cli/issues/432
-	t := &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+	t := &http.Transport{TLSClientConfig: &tls.Config{
+		ServerName: strings.Split(p.c.RegistryURI.Host, ":")[0],
+		RootCAs:    p.c.CABundle,
+	}}
 
 	proxy := &httputil.ReverseProxy{
 		Transport: t,

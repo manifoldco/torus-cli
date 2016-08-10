@@ -13,6 +13,7 @@ import (
 const (
 	rcFilename        = ".arigatorc"
 	publicKeyFilename = "public_key.json"
+	caBundleFilename  = "ca_bundle.pem"
 	registryURI       = "https://registry.arigato.sh"
 )
 
@@ -22,6 +23,7 @@ type preferences struct {
 
 type core struct {
 	PublicKeyFile string `ini:"public_key_file"`
+	CABundleFile  string `ini:"ca_bundle_file"`
 	RegistryURI   string `ini:"registry_uri"`
 }
 
@@ -32,9 +34,11 @@ func newPreferences() (*preferences, error) {
 	}
 
 	defaultKeyPath := path.Join(exeFolder, publicKeyFilename)
+	defaultBundlePath := path.Join(exeFolder, caBundleFilename)
 	prefs := &preferences{
 		Core: core{
 			PublicKeyFile: defaultKeyPath,
+			CABundleFile:  defaultBundlePath,
 			RegistryURI:   registryURI,
 		},
 	}
