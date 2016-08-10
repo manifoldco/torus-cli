@@ -36,7 +36,7 @@ fi
 # Fetch the latest greatest and then figure out the pointer of the tag
 echo "Attempting to resolve $TARGET_REF to SHA"
 git fetch
-TARGET_SHA=`git rev-list -n 1 refs/heads/$TARGET_REF`
+TARGET_SHA=`git rev-list -n 1 $TARGET_REF`
 echo "Resoled $TARGET_REF to $TARGET_SHA"
 
 echo "Changing CWD to $BUILD_DIRECTORY"
