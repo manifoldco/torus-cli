@@ -13,17 +13,22 @@ import (
 )
 
 func main() {
-	cfg, err := config.NewConfig(os.Getenv("ARIGATO_ROOT"))
+	arigatoRoot, err := config.CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
 	if err != nil {
-		log.Fatalf("Failed to load config: %s", err)
+		log.Fatalf("Failed to initialize Arigato root dir: %s", err)
 	}
 
 	log.SetOutput(&lumberjack.Logger{
-		Filename:   path.Join(cfg.ArigatoRoot, "daemon.log"),
+		Filename:   path.Join(arigatoRoot, "daemon.log"),
 		MaxSize:    10, // megabytes
 		MaxBackups: 3,
 		MaxAge:     28, // days
 	})
+
+	cfg, err := config.NewConfig(arigatoRoot)
+	if err != nil {
+		log.Fatalf("Failed to load config: %s", err)
+	}
 
 	daemon, err := NewDaemon(cfg)
 	if err != nil {

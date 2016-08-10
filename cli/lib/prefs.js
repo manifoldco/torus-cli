@@ -16,6 +16,7 @@ var SECTIONS = {
   core: {
     context: _.isBoolean,
     public_key_file: _.isString,
+    ca_bundle_file: _.isString,
     registry_uri: function (input) {
       return !_.isString(validate.url(input));
     }

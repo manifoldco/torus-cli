@@ -3,7 +3,10 @@
 package config
 
 import (
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 )
@@ -16,49 +19,21 @@ const requiredPermissions = 0700
 // Config represents the static and user defined configuration data
 // for Arigato.
 type Config struct {
+	APIVersion string
+	Version    string
+
 	ArigatoRoot string
-	API         string
-	APIVersion  string
-	Version     string
 	SocketPath  string
 	PidPath     string
 	DBPath      string
+
+	RegistryURI *url.URL
+	CABundle    *x509.CertPool
 	PublicKey   *PublicKey
 }
 
 // NewConfig returns a new Config, with loaded user preferences.
 func NewConfig(arigatoRoot string) (*Config, error) {
-	if len(arigatoRoot) == 0 {
-		arigatoRoot = path.Join(os.Getenv("HOME"), ".arigato")
-	}
-
-	src, err := os.Stat(arigatoRoot)
-	if err != nil && !os.IsNotExist(err) {
-		return nil, err
-	}
-
-	if err == nil && !src.IsDir() {
-		return nil, fmt.Errorf("%s exists but is not a dir", arigatoRoot)
-	}
-
-	if os.IsNotExist(err) {
-		err = os.Mkdir(arigatoRoot, requiredPermissions)
-		if err != nil {
-			return nil, err
-		}
-
-		src, err = os.Stat(arigatoRoot)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	fMode := src.Mode()
-	if fMode.Perm() != requiredPermissions {
-		return nil, fmt.Errorf("%s has permissions %d requires %d",
-			arigatoRoot, fMode.Perm(), requiredPermissions)
-	}
-
 	prefs, err := newPreferences()
 	if err != nil {
 		return nil, err
@@ -69,16 +44,82 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 		return nil, err
 	}
 
+	caBundle, err := loadCABundle(prefs.Core.CABundleFile)
+	if err != nil {
+		return nil, err
+	}
+
+	registryURI, err := url.Parse(prefs.Core.RegistryURI)
+	if err != nil {
+		return nil, err
+	}
+
 	cfg := &Config{
+		APIVersion: apiVersion,
+		Version:    version,
+
 		ArigatoRoot: arigatoRoot,
-		API:         prefs.Core.RegistryURI,
-		APIVersion:  apiVersion,
-		Version:     version,
 		SocketPath:  path.Join(arigatoRoot, "daemon.socket"),
 		PidPath:     path.Join(arigatoRoot, "daemon.pid"),
 		DBPath:      path.Join(arigatoRoot, "daemon.db"),
+
+		RegistryURI: registryURI,
+		CABundle:    caBundle,
 		PublicKey:   publicKey,
 	}
 
 	return cfg, nil
+}
+
+// CreateArigatoRoot creates the root directory for the Arigato daemon.
+func CreateArigatoRoot(arigatoRoot string) (string, error) {
+	if len(arigatoRoot) == 0 {
+		arigatoRoot = path.Join(os.Getenv("HOME"), ".arigato")
+	}
+
+	src, err := os.Stat(arigatoRoot)
+	if err != nil && !os.IsNotExist(err) {
+		return "", err
+	}
+
+	if err == nil && !src.IsDir() {
+		return "", fmt.Errorf("%s exists but is not a dir", arigatoRoot)
+	}
+
+	if os.IsNotExist(err) {
+		err = os.Mkdir(arigatoRoot, requiredPermissions)
+		if err != nil {
+			return "", err
+		}
+
+		src, err = os.Stat(arigatoRoot)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	fMode := src.Mode()
+	if fMode.Perm() != requiredPermissions {
+		return "", fmt.Errorf("%s has permissions %d requires %d",
+			arigatoRoot, fMode.Perm(), requiredPermissions)
+	}
+
+	return arigatoRoot, nil
+}
+
+// Load CABundle creates a new CertPool from the given filename
+func loadCABundle(cafile string) (*x509.CertPool, error) {
+
+	pem, err := ioutil.ReadFile(cafile)
+	if err != nil {
+		return nil, err
+	}
+
+	c := x509.NewCertPool()
+	ok := c.AppendCertsFromPEM(pem)
+	if !ok {
+		return nil, fmt.Errorf("Unable to load CA bundle from %s", cafile)
+	}
+
+	return c, nil
 }
