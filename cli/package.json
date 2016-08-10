@@ -2,12 +2,13 @@
   "name": "arigato",
   "version": "0.0.1",
   "description": "Argiato CLI and Daemon",
-  "bin": "cli/bin/arigato",
+  "bin": "./bin/arigato",
   "repository": "git@github.com:arigatomachine/cli.git",
   "scripts": {
     "test": "../scripts/test.sh",
     "build": "../scripts/build.sh",
-    "build-container": "../scripts/build-container.sh"
+    "build-container": "../scripts/build-container.sh",
+    "postinstall": "./bin/arigato intro"
   },
   "author": "Arigato.sh",
   "contributors": [
