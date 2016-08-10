@@ -1,5 +1,5 @@
-hash: 432f13041d67d1ced6e79d47364c5c440ac6f1e8fbd539a02d5cc095ddebcf04
-updated: 2016-07-29T10:40:12.580934595-03:00
+hash: 9377e80cb431591ab00355fed47fa40b67a1a72b11c316786fa6500b1278a8aa
+updated: 2016-08-10T13:39:51.695004099-03:00
 imports:
 - name: github.com/boltdb/bolt
   version: 5cc10bbbc5c141029940133bb33c9e969512a698
@@ -15,8 +15,6 @@ imports:
   version: cf53f9204df4fbdd7ec4164b57fa6184ba168292
 - name: github.com/go-zoo/bone
   version: 0237f0c5455f175a6513e21afe050e128902dc7f
-- name: github.com/kardianos/osext
-  version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
 - name: github.com/keybase/go-triplesec
   version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
   subpackages:
@@ -34,13 +32,17 @@ imports:
   subpackages:
   - ed25519
   - nacl/box
+  - nacl/secretbox
   - scrypt
   - salsa20
   - twofish
   - ed25519/internal/edwards25519
   - curve25519
-  - nacl/secretbox
   - salsa20/salsa
-  - pbkdf2
   - poly1305
+  - pbkdf2
+- name: golang.org/x/sys
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  subpackages:
+  - unix
 devImports: []
