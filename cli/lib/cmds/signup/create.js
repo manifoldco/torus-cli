@@ -30,6 +30,7 @@ var signup = new Command(
         user.output.success();
 
         if (usr.body.state === 'active') {
+          login.output.success({ top: false });
           return Promise.resolve();
         }
 

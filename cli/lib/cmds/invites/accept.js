@@ -120,7 +120,7 @@ var cmd = new Command(
         return invites.accept.finalize(ctx, params);
       })
       .then(function () {
-        invites.accept.output.success();
+        invites.accept.output.success({ top: false });
 
         return true;
       });

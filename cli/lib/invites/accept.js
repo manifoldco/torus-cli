@@ -18,7 +18,7 @@ accept.output.success = output.create(function () {
   console.log('You have accepted the invitation.');
   console.log();
   console.log('You will be added to the org once the administrator ' +
-    ' has approved your invite.');
+    'has approved your invite.');
 });
 
 accept.output.failure = output.create(function () {

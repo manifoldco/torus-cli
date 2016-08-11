@@ -13,10 +13,11 @@ var validator = validate.build({
 var approve = exports;
 
 approve.output = {};
-approve.output.success = output.create(function () {
-  console.log('You have approved invitation.');
+approve.output.success = output.create(function (opts) {
+  var email = opts.invite.body.email;
+  console.log('You have approved ' + email + '\'s invitation.');
   console.log();
-  console.log('They are now a full member of the organization!');
+  console.log('They are now a member of the organization!');
 });
 
 approve.output.failure = output.create(function () {
