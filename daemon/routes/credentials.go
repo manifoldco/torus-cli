@@ -283,7 +283,7 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 	}
 
 	// XXX: sensitive value. protect with OS things.
-	mek := make([]byte, 256)
+	mek := make([]byte, 64)
 	_, err = rand.Read(mek)
 	if err != nil {
 		return nil, err
