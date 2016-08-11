@@ -43,7 +43,9 @@ orgCreate.execute = function (ctx) {
     }
 
     var createOrg = orgCreate._prompt(data).then(function (input) {
-      return ctx.api.orgs.create(input);
+      return ctx.api.orgs.create(input).then(function (org) {
+        return ctx.api.keypairs.generate({ org_id: org.id });
+      });
     });
 
     return createOrg.then(resolve).catch(reject);
