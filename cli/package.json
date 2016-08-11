@@ -6,9 +6,6 @@
      "ag": "bin/ag",
      "arigato": "bin/ag"
   },
-  "scripts": {
-    "postinstall": "./bin/ag intro"
-  },
   "os": [ "darwin", "linux", "!win32" ],
   "cpu": [ "x64" ],
   "engines": {
