@@ -136,7 +136,7 @@ credentials.get = function (api, params) {
 
         // If cred has been unset then ignore it.
         cv = cValue.parse(cred.body.value);
-        if (cv.type === 'undefined') {
+        if (cv.body.type === 'undefined') {
           continue;
         }
 
