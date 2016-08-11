@@ -38,6 +38,11 @@ module.exports.preHook = function () {
         .then(function (res) {
           if (config.version === res.version) return res;
 
+          console.log('The ag-daemon version is out of date.');
+          console.log();
+          console.log(
+            'The daemon is being restarted, you will need to login again');
+
           // If the daemon isn't running the same version, restart it
           return daemon.restart(config).then(function () {
             return ctx.api.versionApi.get();
