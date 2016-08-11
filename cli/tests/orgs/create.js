@@ -46,6 +46,8 @@ describe('Orgs Create', function () {
       name: ORG.body.name
     }));
     this.sandbox.stub(ctx.api.orgs, 'create').returns(Promise.resolve([ORG]));
+    this.sandbox.stub(ctx.api.keypairs, 'generate')
+    .returns(Promise.resolve());
   });
 
   afterEach(function () {
@@ -82,8 +84,9 @@ describe('Orgs Create', function () {
     });
 
     it('creates an org', function () {
-      return orgCreate.execute(ctx).then(function (result) {
-        assert.deepEqual(result, [ORG]);
+      return orgCreate.execute(ctx).then(function () {
+        sinon.assert.calledOnce(ctx.api.orgs.create);
+        sinon.assert.calledOnce(ctx.api.keypairs.generate);
       });
     });
 
