@@ -91,6 +91,7 @@ credentials.get = function (api, params) {
         'Org, project, service, environment, and instance must be provided');
     }
 
+    var path;
     return Promise.all([
       api.users.self(),
       api.orgs.get({ name: params.org })
@@ -106,7 +107,7 @@ credentials.get = function (api, params) {
         return reject(new Error('Could not find the org: ' + params.org));
       }
 
-      var path = '/' + [
+      path = '/' + [
         org.body.name,
         params.project,
         params.environment,
@@ -144,7 +145,10 @@ credentials.get = function (api, params) {
         }
       }
 
-      resolve(_.values(nameMap));
+      resolve({
+        credentials: _.values(nameMap),
+        path: path
+      });
     })
     .catch(reject);
   });

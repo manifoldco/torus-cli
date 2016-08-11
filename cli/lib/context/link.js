@@ -1,5 +1,6 @@
 'use strict';
 
+var _ = require('lodash');
 var Promise = require('es6-promise').Promise;
 
 var Store = require('./store');
@@ -15,6 +16,7 @@ link.output = {};
 var CREATE_ORG_VALUE = 'Create New Org';
 var CREATE_PROJECT_VALUE = 'Create New Project';
 
+/* eslint-disable consistent-return */
 link.output.success = function (ctx, target) {
   var programName = ctx.program.name;
 
@@ -29,8 +31,13 @@ link.output.success = function (ctx, target) {
   console.log('Org: ' + target.org);
   console.log('Project: ' + target.project + '\n');
 
-  return console.log('Use \'' + programName + ' status\' to display ' +
+  console.log('Use \'' + programName + ' status\' to display ' +
               'your current working context.\n');
+
+  if (target.service) {
+    console.log('A "' + target.service + '" service has been created for the new ' +
+                '"' + target.project + '" project!');
+  }
 };
 
 link.output.failure = function (ctx) {
@@ -42,6 +49,7 @@ link.output.failure = function (ctx) {
     console.log('\nFailed to link your current working directory.\n');
   }
 };
+/* eslint-enable consistent-return */
 
 link.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
@@ -69,7 +77,8 @@ link.execute = function (ctx) {
         path: ctx.target.path(),
         context: {
           org: objects.org.body.name,
-          project: objects.project.body.name
+          project: objects.project.body.name,
+          service: _.get(objects, 'service.body.name', null)
         }
       });
 
@@ -104,10 +113,27 @@ link._retrieveObjects = function (store, answers) {
       });
 
     return getProject.then(function (project) {
-      return {
-        org: org,
-        project: project
-      };
+      // If they selected a pre-existing project or used the ---bare flag then
+      // don't create a default service.
+      if (!answers.createService) {
+        return {
+          org: org,
+          project: project,
+          service: null
+        };
+      }
+
+      return store.create('services', {
+        name: 'default',
+        org_id: org.id,
+        project_id: project.id
+      }).then(function (service) {
+        return {
+          org: org,
+          project: project,
+          service: service
+        };
+      });
     });
   });
 };
@@ -219,6 +245,14 @@ link._questions = function (store) {
       name: 'projectName',
       message: 'New project name?',
       validate: validate.slug,
+      when: function (answers) {
+        return (answers.project === undefined);
+      }
+    },
+    {
+      type: 'confirm',
+      name: 'createService',
+      message: 'Create a "default" service for your new project?',
       when: function (answers) {
         return (answers.project === undefined);
       }

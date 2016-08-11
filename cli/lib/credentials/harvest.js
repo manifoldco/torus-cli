@@ -1,18 +1,20 @@
 'use strict';
 
-
 var harvest = module.exports;
+
+var _ = require('lodash');
+var errors = require('common/errors');
 
 var validate = require('../validate');
 var Target = require('../context/target');
 
 var createValidator = validate.build({
   project: validate.slug,
-  environment: validate.slug,
-  service: validate.slug,
+  environment: validate.orExpression,
+  service: validate.orExpression,
   org: validate.slug,
   name: validate.credName,
-  instance: validate.slug
+  instance: validate.orExpression
 });
 
 var getValidator = validate.build({
@@ -59,15 +61,20 @@ harvest.create = function (ctx) {
   ctx.target.flags({
     org: ctx.option('org').value,
     project: ctx.option('project').value,
-    service: ctx.option('service').value,
-    environment: ctx.option('environment').value
+    environment: ctx.option('environment').value,
+    service: ctx.option('service').value
+  });
+
+  var builtFlags = harvest._createFlags({
+    service: ctx.target.service,
+    environment: ctx.target.environment
   });
 
   var data = {
     org: ctx.target.org,
     project: ctx.target.project,
-    environment: ctx.target.environment,
-    service: ctx.target.service,
+    service: builtFlags.service,
+    environment: builtFlags.environment,
     instance: ctx.option('instance').value,
     name: name
   };
@@ -88,12 +95,52 @@ harvest.create = function (ctx) {
     throw new Error('You must provide a --environment flag');
   }
 
-  var errors = createValidator(data);
-  if (errors.length > 0) {
-    throw errors[0];
+  var errs = createValidator(data);
+  if (errs.length > 0) {
+    throw errs[0];
   }
 
   return data;
+};
+
+/**
+ * For creation only, we pull the service and environment flags and then create
+ * OR expressions if they've been specified more than once.
+ */
+harvest._createFlags = function (data) {
+  var keys = ['service', 'environment'];
+  var flags = {};
+  keys.forEach(function (key) {
+    var item = data[key];
+    if (!item) {
+      throw new errors.Validation('You must provide a --' + key + ' flag');
+    }
+
+    item = Array.isArray(item) ? item : [item];
+
+    // Validate the flags
+    item.forEach(function (v) {
+      var err = validate.slugOrWildcard(v);
+      if (_.isString(err)) {
+        throw new errors.Validation('invalid flag ' + key + ': ' + err);
+      }
+
+      if (item.length > 1 && v === '*') {
+        throw new errors.Validation(
+          'invalid flag ' + key + ': cannot contain * wild multiple invocations');
+      }
+    });
+
+    // Turn into an OR if more than one is provided
+    if (item.length === 1) {
+      flags[key] = item[0];
+      return;
+    }
+
+    flags[key] = '[' + item.join('|') + ']';
+  });
+
+  return flags;
 };
 
 /**
@@ -135,9 +182,9 @@ harvest.get = function (ctx) {
     throw new Error('You must provide a --environment flag');
   }
 
-  var errors = getValidator(data);
-  if (errors.length > 0) {
-    throw errors[0];
+  var errs = getValidator(data);
+  if (errs.length > 0) {
+    throw errs[0];
   }
 
   return data;

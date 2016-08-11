@@ -70,9 +70,8 @@ Target.prototype.defaults = function (defaults) {
   if (defaults.env || defaults.environment) {
     this._values.environment = defaults.env || defaults.environment;
   }
-  if (defaults.service) {
-    this._values.service = defaults.service;
-  }
+
+  this._values.service = defaults.service || 'default';
 };
 
 Target.prototype.flags = function (flags) {

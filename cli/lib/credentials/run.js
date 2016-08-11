@@ -16,8 +16,10 @@ run.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     var params = harvest.get(ctx);
 
-    return credentials.get(ctx.api, params).then(function (creds) {
-      return run.spawn(ctx.params, creds).then(resolve);
+    return credentials.get(ctx.api, params).then(function (results) {
+      var creds = results.credentials;
+
+      return run.spawn(ctx.daemon, ctx.params, creds).then(resolve);
     }).catch(reject);
   });
 };
