@@ -70,7 +70,7 @@ link.execute = function (ctx) {
     var store = new Store(ctx.api);
     return link._prompt(store).then(function (answers) {
       // Retrieve data objects for supplied values
-      return link._retrieveObjects(store, answers);
+      return link._retrieveObjects(ctx, store, answers);
     }).then(function (objects) {
       // Create target from inputs
       var target = new Target({
@@ -95,14 +95,21 @@ link.execute = function (ctx) {
  * Retrieve or create the org, project objects using the store
  * and answers we got from the user.
  *
+ * @param {Context} ctx
  * @param {Store} store
  * @param {Object} answers
  * @returns {Promise}
  */
-link._retrieveObjects = function (store, answers) {
+link._retrieveObjects = function (ctx, store, answers) {
   var getOrg = (answers.org) ?
     Promise.resolve(answers.org) : store.create('orgs', {
       name: answers.orgName
+    })
+    .then(function (org) {
+      return ctx.api.keypairs.generate({ org_id: org.id })
+      .then(function () {
+        return org;
+      });
     });
 
   return getOrg.then(function (org) {
