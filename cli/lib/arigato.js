@@ -11,6 +11,7 @@ var cmds = require('./cmds');
 var config = require('./middleware/config');
 var prefs = require('./middleware/prefs');
 var daemon = require('./middleware/daemon');
+var api = require('./middleware/api');
 
 var arigato = exports;
 
@@ -27,6 +28,7 @@ arigato.run = function (opts) {
     program.hook('pre', config(opts.arigatoRoot));
     program.hook('pre', prefs());
     program.hook('pre', daemon.preHook());
+    program.hook('pre', api());
 
     cmds.get().then(function (cmdList) {
       cmdList.forEach(program.command.bind(program));
