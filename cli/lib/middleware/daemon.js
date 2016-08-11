@@ -41,7 +41,7 @@ module.exports.preHook = function () {
           console.log('The ag-daemon version is out of date.');
           console.log();
           console.log(
-            'The daemon is being restarted, you will need to login again');
+            'The daemon is being restarted, you will need to login again\n');
 
           // If the daemon isn't running the same version, restart it
           return daemon.restart(config).then(function () {

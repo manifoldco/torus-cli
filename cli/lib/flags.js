@@ -34,6 +34,10 @@ var LIST = flags.LIST = {
     description: 'Specify the environment',
     default: undefined
   },
+  user: {
+    usage: '-u, --user [username]',
+    description: 'Specify the user'
+  },
   instance: {
     usage: '-i, --instance [name]',
     description: 'Specify the instance',

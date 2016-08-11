@@ -41,6 +41,9 @@ flags.add(unset, 'environment', {
 flags.add(unset, 'service', {
   description: 'Service from which the secret will be removed'
 });
+flags.add(unset, 'user', {
+  description: 'User who can access the secret within the environment'
+});
 flags.add(unset, 'instance', {
   description: 'Instance of the service belonging to the current user'
 });

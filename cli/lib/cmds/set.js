@@ -45,6 +45,9 @@ flags.add(set, 'environment', {
 flags.add(set, 'service', {
   description: 'Service to which the secret will belong'
 });
+flags.add(set, 'user', {
+  description: 'User within the environment which the secret will belong'
+});
 flags.add(set, 'instance', {
   description: 'Instance of the service belonging to the current user'
 });
