@@ -22,7 +22,8 @@ function Store(client) {
   this.state = {};
   this.types = [
     'orgs',
-    'projects'
+    'projects',
+    'services'
   ];
 
   this.client = client;

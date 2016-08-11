@@ -16,6 +16,8 @@ describe('Daemon API', function () {
   var cfg;
   var sandbox;
 
+  this.timeout(5000); // Come back and replace timeout with faketimers.
+
   beforeEach(function () {
     cfg = new Config(__dirname);
     sandbox = sinon.sandbox.create();

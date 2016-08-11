@@ -19,8 +19,13 @@ view.execute = function (ctx) {
   });
 };
 
-view.output.success = function (ctx, creds) {
+view.output.success = function (ctx, results) {
+  var creds = results.credentials;
   var isVerbose = ctx.option('verbose').value === true;
+
+  if (isVerbose) {
+    console.log('Execution Context: ' + results.path);
+  }
 
   creds.forEach(function (cred) {
     var value = cValue.parse(cred.body.value);

@@ -6,6 +6,7 @@ var _ = require('lodash');
 var validator = require('validator');
 var errors = require('common/errors');
 var rpath = require('common/rpath');
+var definitions = require('common/cpath/definitions');
 
 var CRED_NAME = new RegExp(/^[a-z][a-z0-9_]{0,63}$/);
 var ACTION_SHORTHAND = new RegExp(/^(?:([crudl])(?!.*\1))+$/);
@@ -84,7 +85,20 @@ validate.name = function (input) {
 validate.slug = function (input) {
   var error = 'Only alphanumeric, hyphens and underscores are allowed';
   return validator.matches(
-    input, /^[a-z0-9][a-z0-9\-_]{0,63}$/) ? true : error;
+    input, definitions.SLUG_REGEX) ? true : error;
+};
+
+validate.slugOrWildcard = function (input) {
+  var error = 'Only alphanumeric, hyphens, underscores, or wildcard(*) allowed';
+  return validator.matches(
+    input, definitions.SLUG_OR_WILDCARD_REGEX) ? true : error;
+};
+
+validate.orExpression = function (input) {
+  var error =
+    'A valid expression must be provided (e.g. abc-123, abc-*, [ab|c-*])';
+  return validator.matches(
+    input, definitions.SLUG_WILDCARD_OR_EXP_REGEX) ? true : error;
 };
 
 validate.email = function (input) {
