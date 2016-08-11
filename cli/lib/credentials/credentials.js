@@ -128,9 +128,16 @@ credentials.get = function (api, params) {
       var nameMap = {};
       var name;
       var cred;
+      var cv;
       for (var i = 0; i < creds.length; ++i) {
         cred = creds[i];
         name = cred.body.name;
+
+        // If cred has been unset then ignore it.
+        cv = cValue.parse(cred.body.value);
+        if (cv.type === 'undefined') {
+          continue;
+        }
 
         if (!nameMap[name]) {
           nameMap[name] = cred;
