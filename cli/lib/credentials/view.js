@@ -24,7 +24,7 @@ view.output.success = function (ctx, results) {
   var isVerbose = ctx.option('verbose').value === true;
 
   if (isVerbose) {
-    console.log('Execution Context: ' + results.path);
+    console.log('Execution Context: ' + results.path + '\n');
   }
 
   creds.forEach(function (cred) {
