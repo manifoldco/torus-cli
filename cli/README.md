@@ -1,15 +1,11 @@
-# Arigato
+# Ag
 
-Share and secure secrets across teams, services, and environments
+A secure, shared workspace for secrets
 
-Set a secret inside a project and let ag do the hard work of securely storing
-and sharing secrets with the team members and services who need them. You’ll
-eliminate painful developer onboarding and adding services to your app will be
-a breeze.
+Secure and manage config secrets across teams, environments and services.
+Just ag set and let Arigato do the hard work
 
-Never look at a password again.
-
-Sign up for our alpha at [https://arigato.sh](https://arigato.sh)!
+Sign up for the alpha: [https://arigato.sh](https://arigato.sh)!
 
 ### Disclaimer
 
