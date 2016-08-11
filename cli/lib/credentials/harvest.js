@@ -14,6 +14,7 @@ var createValidator = validate.build({
   service: validate.orExpression,
   org: validate.slug,
   name: validate.credName,
+  identity: validate.orExpression,
   instance: validate.orExpression
 });
 
@@ -76,6 +77,7 @@ harvest.create = function (ctx) {
     service: builtFlags.service,
     environment: builtFlags.environment,
     instance: ctx.option('instance').value,
+    identity: ctx.option('user').value || '*',
     name: name
   };
 

@@ -8,13 +8,13 @@ var cValue = require('./value');
 
 var credentials = exports;
 
-function getPath(user, params) {
+function getPath(params) {
   return '/' + [
     params.org, // default to the users org
     params.project,
     params.environment,
     params.service,
-    user.body.username,
+    params.identity,
     params.instance // default to instance id 1
   ].join('/');
 }
@@ -64,9 +64,7 @@ credentials.create = function (api, params, value) {
           return reject(new Error('Unknown project: ' + projectName));
         }
 
-        var pathexp = (cpathObj) ?
-          cpathObj.toString() : getPath(user, params);
-
+        var pathexp = (cpathObj) ? cpathObj.toString() : getPath(params);
         var data = {
           name: params.name,
           project_id: project.id,
