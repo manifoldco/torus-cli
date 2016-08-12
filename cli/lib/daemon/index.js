@@ -57,12 +57,12 @@ daemon.start = function (cfg) {
       };
 
       if (['linux', 'darwin'].indexOf(process.platform) === -1) {
-        console.log('ag only supports linux and darwin i386');
+        console.log('ag only supports linux and darwin amd64');
         throw new Error('Incompatible Platform: ' + process.platform);
       }
 
       var os = process.platform;
-      var arch = '386';
+      var arch = 'amd64';
 
       var daemonPath = path.join(
         __dirname, '../../bin/ag-daemon-' + os + '-' + arch);
