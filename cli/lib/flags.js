@@ -9,6 +9,11 @@ var Command = require('./cli/command');
 var flags = exports;
 
 var LIST = flags.LIST = {
+  all: {
+    usage: '-a, --all',
+    description: 'Perform command on all organizations',
+    default: false
+  },
   force: {
     usage: '-f, --force',
     description: 'Force override',
