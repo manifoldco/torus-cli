@@ -25,7 +25,7 @@ function build_binary {
     exit 1
   fi
 
-  if [ "$arch" != "386" ]; then
+  if [ "$arch" != "amd64" ]; then
     echo "Unknown or unsupported architecture: $arch"
     exit 1
   fi
@@ -47,15 +47,15 @@ function build_binary {
 }
 
 function build {
-  echo "Building for development (darwin/386 only)"
-  build_binary darwin 386
+  echo "Building for development (darwin/amd64 only)"
+  build_binary $GOOS $GOARCH
   echo "Success, build complete!"
 }
 
 function build_release {
-  echo "Building for release (darwin/386 and linux/386)"
-  build_binary darwin 386
-  build_binary linux 386
+  echo "Building for release (darwin/amd64 and linux/amd64)"
+  build_binary darwin amd64
+  build_binary linux amd64
   echo "Success, build for release complete!"
 }
 
