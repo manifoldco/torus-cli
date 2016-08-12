@@ -7,6 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CMD=$1
 GOOS=${GOOS:=darwin}
 GOARCH=${GOARCH:=amd64}
+GOVERSION=${GOVERSION:="go1.7rc6"}
 
 function usage {
   echo -e "CLI Docker Container"
@@ -27,6 +28,13 @@ function build_binary {
 
   if [ "$arch" != "amd64" ]; then
     echo "Unknown or unsupported architecture: $arch"
+    exit 1
+  fi
+
+  if ! go version | grep --quiet "$GOVERSION"; then
+    echo ""
+    echo "We require the daemon to be built with $GOVERSION"
+    echo ""
     exit 1
   fi
 
