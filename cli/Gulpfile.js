@@ -5,6 +5,7 @@ var gulpIf = require('gulp-if');
 var mocha = require('gulp-mocha');
 var eslint = require('gulp-eslint');
 var runSequence = require('run-sequence');
+var gulpNSP = require('gulp-nsp');
 
 var LINT_FILES = ['./**/*.js', '!node_modules'];
 
@@ -15,7 +16,7 @@ function isFixed(file) {
 gulp.task('default', ['lint', 'mocha']);
 
 gulp.task('test', function () {
-  runSequence('lint', 'mocha');
+  runSequence('nsp', 'lint', 'mocha');
 });
 
 gulp.task('lint', function () {
@@ -37,4 +38,11 @@ gulp.task('fmt', function () {
 gulp.task('mocha', function () {
   return gulp.src('./tests/**/*.js', { read: false })
     .pipe(mocha({ reporter: 'spec' }));
+});
+
+gulp.task('nsp', function (cb) {
+  gulpNSP({
+    stopOnError: false, // We'll triage these notifications manually
+    package: __dirname + '/package.json'
+  }, cb);
 });
