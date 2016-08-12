@@ -42,7 +42,7 @@
     "lockfile": "1.0.1",
     "lodash": "4.8.1",
     "minimist": "1.2.0",
-    "request": "2.72.0",
+    "request": "2.74.0",
     "uuid": "2.0.2",
     "validator": "5.2.0"
   },
