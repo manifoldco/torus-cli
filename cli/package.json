@@ -3,11 +3,17 @@
   "version": "0.1.1",
   "description": "A utility for sharing and securing secrets across teams, services, and environments.",
   "bin": {
-     "ag": "bin/ag",
-     "arigato": "bin/ag"
+    "ag": "bin/ag",
+    "arigato": "bin/ag"
   },
-  "os": [ "darwin", "linux", "!win32" ],
-  "cpu": [ "x64" ],
+  "os": [
+    "darwin",
+    "linux",
+    "!win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
   "engines": {
     "node": ">=4.4.0"
   },
@@ -25,6 +31,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "backo": "1.1.0",
+    "base64url": "1.0.6",
     "cli-table2": "0.2.0",
     "common": "https://github.com/arigatomachine/common/archive/v0.10.0.tar.gz",
     "es6-promise": "3.1.2",
@@ -35,10 +42,9 @@
     "lockfile": "1.0.1",
     "lodash": "4.8.1",
     "minimist": "1.2.0",
-    "request": "2.72.0",
+    "request": "2.74.0",
     "uuid": "2.0.2",
-    "validator": "5.2.0",
-    "base64url": "1.0.6"
+    "validator": "5.2.0"
   },
   "devDependencies": {
     "eslint": "2.10.2",
@@ -47,6 +53,7 @@
     "gulp": "3.9.0",
     "gulp-eslint": "2.0.0",
     "gulp-if": "2.0.1",
+    "gulp-nsp": "2.4.2",
     "gulp-mocha": "2.2.0",
     "mocha": "2.3.4",
     "run-sequence": "1.2.1",
