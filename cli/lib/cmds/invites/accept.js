@@ -55,12 +55,13 @@ function signup(ctx, params) {
 function attemptLogin(ctx, params) {
   return login.execute(ctx).then(function () {
     login.output.success();
-
-    return invites.accept.associate(ctx, params);
   }).catch(function (err) {
     login.output.failure();
 
     throw err;
+  })
+  .then(function () {
+    return invites.accept.associate(ctx, params);
   });
 }
 
