@@ -16,6 +16,8 @@ var daemon = exports;
  * Starts the daemon and returns a daemon instance. Rejects the promise with an
  * error if the daemon is already running
  *
+ * NOTE: Calling daemon.start before daemon.stop has resolved will result in unexecpted behaviour
+ *
  * @param cfg {Config}
  * @returns Promise
  */
@@ -92,15 +94,12 @@ daemon.stop = function (cfg) {
       return reject(new TypeError('cfg must be a Config object'));
     }
 
-    return daemon.status(cfg).then(function (status) {
+    return daemon.status(cfg).then(function (status) { // eslint-disable-line consistent-return
       if (!status.exists) {
         return reject(new Error('Daemon is not running'));
       }
 
-      // Send a SIGTERM and let the daemon shutdown gracefully.
-      //
-      // TODO: Add a grace period, if it's still alive after N seconds then
-      // send a SIGKILL.
+      // Send a SIGTERM and let the daemon shutdown gracefully
       try {
         process.kill(status.pid, 'SIGTERM');
       } catch (err) {
@@ -111,7 +110,23 @@ daemon.stop = function (cfg) {
         return reject(err);
       }
 
-      return resolve();
+      //  After a grace period if the process lives, send a SIGKILL
+      setTimeout(function () {
+        try {
+          process.kill(status.pid, 0);
+        } catch (err) {
+          if (err.code === 'ESRCH') return resolve();
+          return reject(err);
+        }
+
+        try {
+          process.kill(status.pid, 'SIGKILL');
+        } catch (err) {
+          if (err.code !== 'ESRCH') return reject(err);
+        }
+
+        return resolve();
+      }, 300);
     });
   });
 };
@@ -150,5 +165,11 @@ daemon.status = function (cfg) {
 
       return resolve({ exists: exists, pid: pid });
     });
+  });
+};
+
+daemon.restart = function (cfg) {
+  return daemon.stop(cfg).then(function () {
+    return daemon.start(cfg);
   });
 };
