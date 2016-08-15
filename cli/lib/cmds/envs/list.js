@@ -29,6 +29,7 @@ cmd.hook('pre', auth());
 cmd.hook('pre', target());
 
 flags.add(cmd, 'org');
+flags.add(cmd, 'all');
 flags.add(cmd, 'project', {
   description: 'List environments for a project in an organization'
 });
