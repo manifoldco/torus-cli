@@ -25,7 +25,8 @@ envsList.output.success = output.create(function (payload) {
     var projectEnvs = envsByProject[project.id] || [];
     var projectName = project.body.name;
 
-    var msg = ' ' + projectName + ' projects (' + projectEnvs.length + ')\n';
+    var num = projectEnvs.length;
+    var msg = ' ' + projectName + ' project  (' + num + ')\n';
 
     msg += ' ' + new Array(msg.length - 1).join('-') + '\n'; // underline
     msg += projectEnvs.map(function (env) {
@@ -57,27 +58,38 @@ var validator = validate.build({
 envsList.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     ctx.target.flags({
-      org: ctx.option('org').value
+      org: ctx.option('org').value,
+      project: ctx.option('all').value ? null : ctx.option('project').value
     });
 
-    var data = {
-      org: ctx.target.org,
-      project: ctx.option('project').value
+    var check = {
+      org: ctx.target.org
     };
 
-    if (!data.org) {
+    if (!ctx.target.org) {
       throw new Error('--org is required.');
     }
 
-    var errors = validator(data);
+    if (ctx.option('all').value) {
+      if (ctx.option('project').value) {
+        return reject(new Error('project flag cannot be used with --all'));
+      }
+    } else {
+      if (!ctx.target.project) {
+        return reject(new Error('--project is required.'));
+      }
+      check.project = ctx.target.project;
+    }
+
+    var errors = validator(check);
     if (errors.length > 0) {
       return reject(errors[0]);
     }
 
-    return ctx.api.orgs.get({ name: data.org }).then(function (orgs) {
+    return ctx.api.orgs.get({ name: ctx.target.org }).then(function (orgs) {
       var org = orgs[0];
       if (!_.isObject(org)) {
-        return reject(new Error('org not found: ' + data.org));
+        return reject(new Error('org not found: ' + ctx.target.org));
       }
 
       // XXX: This returns all envs and all projects for an org, over time,
@@ -90,13 +102,13 @@ envsList.execute = function (ctx) {
         var projects = results[0];
         var envs = results[1];
 
-        if (data.project) {
+        if (ctx.target.project) {
           projects = projects.filter(function (project) {
-            return (project.body.name === data.project);
+            return (project.body.name === ctx.target.project);
           });
 
           if (projects.length === 0) {
-            throw new Error('project not found: ' + data.project);
+            throw new Error('project not found: ' + ctx.target.project);
           }
 
           envs = envs.filter(function (env) {

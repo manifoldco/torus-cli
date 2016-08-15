@@ -75,7 +75,8 @@ describe('Envs List', function () {
     ctx.params = [];
     ctx.options = {
       org: { value: ORG.body.name },
-      project: { value: PROJECTS[0].body.name }
+      project: { value: PROJECTS[0].body.name },
+      all: { value: undefined }
     };
     ctx.target = new Target({
       path: process.cwd(),
@@ -164,8 +165,33 @@ describe('Envs List', function () {
       });
     });
 
-    it('returns all projects and envs if project is not provided', function () {
+    it('errors if project and all provided', function () {
+      ctx.options.project.value = 'yes';
+      ctx.options.all.value = true;
+
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
+        assert.ok(err);
+        var expected = 'project flag cannot be used with --all';
+        assert.strictEqual(err.message, expected);
+      });
+    });
+
+    it('errors if project not provided', function () {
       ctx.options.project.value = undefined;
+
+      return envsList.execute(ctx).then(function () {
+        assert.ok(false, 'should error');
+      }, function (err) {
+        assert.ok(err);
+        assert.strictEqual(err.message, '--project is required.');
+      });
+    });
+
+    it('returns all projects and envs if --all is provided', function () {
+      ctx.options.project.value = undefined;
+      ctx.options.all.value = true;
 
       return envsList.execute(ctx).then(function (results) {
         assert.deepEqual(results, {

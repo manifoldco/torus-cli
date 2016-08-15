@@ -53,32 +53,43 @@ var validator = validate.build({
 servicesList.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     ctx.target.flags({
-      org: ctx.option('org').value
+      org: ctx.option('org').value,
+      project: ctx.option('all').value ? null : ctx.option('project').value
     });
 
-    var data = {
-      org: ctx.target.org,
-      project: ctx.option('project').value
+    var check = {
+      org: ctx.target.org
     };
 
-    if (!data.org) {
+    if (!ctx.target.org) {
       return reject(new Error('--org is required.'));
     }
 
-    var errors = validator(data);
+    if (ctx.option('all').value) {
+      if (ctx.option('project').value) {
+        return reject(new Error('project flag cannot be used with --all'));
+      }
+    } else {
+      if (!ctx.target.project) {
+        return reject(new Error('--project is required.'));
+      }
+      check.project = ctx.target.project;
+    }
+
+    var errors = validator(check);
     if (errors.length > 0) {
       return reject(errors[0]);
     }
 
-    return ctx.api.orgs.get({ name: data.org }).then(function (res) {
+    return ctx.api.orgs.get({ name: ctx.target.org }).then(function (res) {
       var org = res[0];
       if (!_.isObject(org)) {
-        return reject(new Error('org not found: ' + data.org));
+        return reject(new Error('org not found: ' + ctx.target.org));
       }
 
       // XXX: This returns all services and all projects for an org, over time,
       // as the number of projects and services scale in an org this will fall
-      // over and get really slow.
+      // over and get really slow
       return Promise.all([
         ctx.api.projects.get({ org_id: org.id }),
         ctx.api.services.get({ org_id: org.id })
@@ -86,13 +97,13 @@ servicesList.execute = function (ctx) {
         var projects = results[0];
         var services = results[1];
 
-        if (data.project) {
+        if (ctx.target.project) {
           projects = projects.filter(function (project) {
-            return (project.body.name === data.project);
+            return (project.body.name === ctx.target.project);
           });
 
           if (projects.length === 0) {
-            return reject(new Error('project not found: ' + data.project));
+            return reject(new Error('project not found: ' + ctx.target.project));
           }
 
           services = services.filter(function (service) {

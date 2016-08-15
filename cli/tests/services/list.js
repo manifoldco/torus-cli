@@ -87,6 +87,9 @@ describe('Services List', function () {
       },
       project: {
         value: undefined
+      },
+      all: {
+        value: undefined
       }
     };
     ctx.target = new Target({
@@ -108,18 +111,20 @@ describe('Services List', function () {
   });
 
   describe('#execute', function () {
-    it('does not throw if the user has no services or projects', function () {
+    it('does not throw if the user has no services', function () {
+      ctx.options.project.value = 'api-1';
       ctx.api.services.get.returns(Promise.resolve([]));
-      ctx.api.projects.get.returns(Promise.resolve([]));
+      ctx.api.projects.get.returns(Promise.resolve([PROJECTS[0]]));
       return serviceList.execute(ctx).then(function (payload) {
         assert.deepEqual(payload, {
-          projects: [],
+          projects: [PROJECTS[0]],
           services: []
         });
       });
     });
 
     it('handles not found from api', function () {
+      ctx.options.project.value = 'api-3';
       var err = new Error('service not found');
       err.type = 'not_found';
 
@@ -132,11 +137,33 @@ describe('Services List', function () {
     });
 
     it('resolves with services and projects', function () {
+      ctx.options.project.value = 'api-1';
       return serviceList.execute(ctx).then(function (payload) {
         assert.deepEqual(payload, {
-          projects: PROJECTS,
-          services: SERVICES
+          projects: [PROJECTS[0]],
+          services: [SERVICES[0]]
         });
+      });
+    });
+
+    it('returns an error if no project given', function () {
+      return serviceList.execute(ctx).then(function () {
+        assert.ok(false, 'should not resolve');
+      }).catch(function (err) {
+        assert.ok(err instanceof Error);
+        assert.strictEqual(err.message, '--project is required.');
+      });
+    });
+
+    it('returns an error if project given with --all', function () {
+      ctx.options.project.value = 'api-1';
+      ctx.options.all.value = true;
+      return serviceList.execute(ctx).then(function () {
+        assert.ok(false, 'should not resolve');
+      }).catch(function (err) {
+        assert.ok(err instanceof Error);
+        var expected = 'project flag cannot be used with --all';
+        assert.strictEqual(err.message, expected);
       });
     });
 
@@ -152,7 +179,18 @@ describe('Services List', function () {
       });
     });
 
-    it('resolves with services and proejcts w/ name provided', function () {
+    it('resolves with all services and project w/ name provided', function () {
+      ctx.options.all.value = true;
+      ctx.options.project.value = undefined;
+      return serviceList.execute(ctx).then(function (payload) {
+        assert.deepEqual(payload, {
+          projects: PROJECTS,
+          services: SERVICES
+        });
+      });
+    });
+
+    it('resolves with services and project w/ name provided', function () {
       ctx.options.project.value = PROJECTS[0].body.name;
       return serviceList.execute(ctx).then(function (payload) {
         assert.deepEqual(payload, {
