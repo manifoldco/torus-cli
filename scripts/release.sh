@@ -10,9 +10,15 @@ SRC=$DIR/..
 TARGET_REF=$1
 ENVIRONMENT=$2
 
-USAGE_STR="Usage: bash release.sh <target-ref> <environment>"
+USAGE_STR="Usage: bash release.sh <target-ref> <environment>\n"
+USAGE_STR="$USAGE_STR\nenvironment must be 'staging' or 'production'"
 if [ -z "$TARGET_REF" -o -z "$ENVIRONMENT" ]; then
-    echo "Usage: bash release.sh <target-ref> <environment>"
+    echo "$USAGE_STR"
+    exit 1
+fi
+
+if [ "$ENVIRONMENT" != "staging" -a "$ENVIRONMENT" != "production" ]; then
+    echo "$USAGE_STR"
     exit 1
 fi
 
@@ -68,6 +74,12 @@ echo "Copying Key File"
 echo ""
 cp $KEY_FILE cli/public_key.json
 cp $CA_BUNDLE cli/ca_bundle.pem
+
+TAR_FILENAME="$TARGET_REF"
+if [ "$ENVIRONMENT" == "staging" ]; then
+  TAR_FILENAME="$TAR_FILENAME+staging"
+fi
+TAR_FILENAME="$TAR_FILENAME.tar.gz"
 
 echo ""
 echo "Creating Distributable ($RELEASE_STAMP.tar.gz) in $RELEASE_DIRECTORY"
