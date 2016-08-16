@@ -26,6 +26,10 @@ run.execute = function (ctx) {
 
 run.spawn = function (params, creds) {
   return new Promise(function (resolve, reject) {
+    if (params.length === 0) {
+      throw new Error('Missing command parameter');
+    }
+
     var env = _.clone(process.env);
     creds.forEach(function (cred) {
       var value = cValue.parse(cred.body.value);

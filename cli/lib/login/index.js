@@ -64,7 +64,6 @@ login.execute = function (ctx, inputs) {
  * @param {object} inputs - Optional user inputs
  */
 login.subcommand = function (ctx, inputs) {
-  ctx.params = [];
   return new Promise(function (resolve, reject) {
     login.execute(ctx, inputs).then(resolve).catch(function (err) {
       login.output.failure();
