@@ -53,7 +53,16 @@ All component specific code and dependencies live in their respective folders.
 The CLI and Daemon are packaged together using the
 `$CLI_REPO/scripts/release.sh` into the `cli` folder.
 
-The release script will deploy to the `ag` package on npm.
+**Example**
+
+The following command will build the v0.2.0 tag for production. You will be
+prompted to upload the release to s3 or npm.
+
+```
+./scripts/release.sh v0.2.0 production
+```
+
+**You must be a member of the CLIDevelopers group on AWS**
 
 ### Docker
 
