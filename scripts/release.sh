@@ -10,9 +10,15 @@ SRC=$DIR/..
 TARGET_REF=$1
 ENVIRONMENT=$2
 
-USAGE_STR="Usage: bash release.sh <target-ref> <environment>"
+USAGE_STR="Usage: bash release.sh <target-ref> <environment>\n"
+USAGE_STR="$USAGE_STR\nenvironment must be 'staging' or 'production'"
 if [ -z "$TARGET_REF" -o -z "$ENVIRONMENT" ]; then
-    echo "Usage: bash release.sh <target-ref> <environment>"
+    echo "$USAGE_STR"
+    exit 1
+fi
+
+if [ "$ENVIRONMENT" != "staging" -a "$ENVIRONMENT" != "production" ]; then
+    echo "$USAGE_STR"
     exit 1
 fi
 
@@ -22,6 +28,7 @@ CA_BUNDLE="$SRC/daemon/ca_bundle.pem"
 RELEASE_STAMP=`date -u +"%Y-%m-%dT%H-%M-%SZ"`
 BUILD_DIRECTORY=$HOME/build
 RELEASE_DIRECTORY="$BUILD_DIRECTORY/$RELEASE_STAMP"
+RELEASE_BUCKET="releases.arigato.sh"
 
 if [ ! -f "$KEY_FILE" ]; then
     echo "Cannot find offline public key file: $KEY_FILE"
@@ -31,6 +38,11 @@ fi
 if [ ! -d "$BUILD_DIRECTORY" ]; then
     echo "Build directory $BUILD_DIRECTORY does not exist; creating."
     mkdir -p $BUILD_DIRECTORY
+fi
+
+if ! aws iam get-user > /dev/null; then
+    echo "You must be logged into the aws cli to publish a release"
+    exit 1
 fi
 
 # Fetch the latest greatest and then figure out the pointer of the tag
@@ -69,20 +81,41 @@ echo ""
 cp $KEY_FILE cli/public_key.json
 cp $CA_BUNDLE cli/ca_bundle.pem
 
+TAR_FILENAME="$TARGET_REF"
+if [ "$ENVIRONMENT" == "staging" ]; then
+  TAR_FILENAME="$TAR_FILENAME+staging"
+fi
+TAR_FILENAME="$TAR_FILENAME.tar.gz"
+
 echo ""
 echo "Creating Distributable ($RELEASE_STAMP.tar.gz) in $RELEASE_DIRECTORY"
 echo ""
 tar czf "$RELEASE_STAMP.tar.gz" cli/
 
-read -p "Do you wish to publish to npm? [yn] " publish
-case $publish in
-    [Yy]* )
-        npm publish $RELEASE_STAMP.tar.gz
+read -p "Do you wish to publish the release to s3? [yn]" s3_publish
+case $s3_publish in
+    [Yy]*)
+        echo "Uploading $RELEASE_STAMP to https://s3.amazonaws.com/$RELEASE_BUCKET/$TAR_FILENAME"
+        aws s3api put-object --bucket $RELEASE_BUCKET --key "$TAR_FILENAME" \
+            --body "$RELEASE_STAMP.tar.gz"
         ;;
-    * )
-        echo "Not publishing"
+    *)
+        echo "Not publishing to s3; exiting.. cannot publish to other sources"
+        exit 1
         ;;
 esac
+
+if [ "$ENVIRONMENT" == "production" ]; then
+    read -p "Do you wish to publish to npm? [yn] " npm_publish
+    case $npm_publish in
+        [Yy]* )
+            npm publish $RELEASE_STAMP.tar.gz
+            ;;
+        * )
+            echo "Not publishing to npm"
+            ;;
+    esac
+fi
 
 echo ""
 echo "Done; package $RELEASE_DIRECTORY/$RELEASE_STAMP.tar.gz"
