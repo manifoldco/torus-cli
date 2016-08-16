@@ -40,6 +40,14 @@ run.spawn = function (params, creds) {
       env[cred.body.name.toUpperCase()] = value.body.value;
     });
 
+    // Remove AG_EMAIL and AG_PASSWORD; these should never be passed on to the
+    // child process
+    _.each(env, function (v, k) {
+      if (k.toLowerCase() === 'ag_email' || k.toLowerCase() === 'ag_password') {
+        delete env[k];
+      }
+    });
+
     var proc = childProcess.spawn(params[0], params.slice(1), {
       cwd: process.cwd(),
       detached: false,
