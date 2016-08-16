@@ -3,10 +3,10 @@ package config
 import (
 	"fmt"
 	"os"
+	"os/user"
 	"path"
 
 	"github.com/go-ini/ini"
-	"github.com/mitchellh/go-homedir"
 )
 
 const (
@@ -42,12 +42,12 @@ func newPreferences() (*preferences, error) {
 		},
 	}
 
-	homePath, err := homedir.Dir()
+	u, err := user.Current()
 	if err != nil {
 		return nil, err
 	}
 
-	filePath := path.Join(homePath, rcFilename)
+	filePath := path.Join(u.HomeDir, rcFilename)
 	_, err = os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return prefs, nil
