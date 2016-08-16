@@ -11,6 +11,16 @@ memberships.get = function (client, query) {
   });
 };
 
+memberships.delete = function (client, query, params) {
+  return client.delete({
+    url: '/memberships/:id',
+    qs: query || {},
+    params: params || {}
+  }).then(function (res) {
+    return res.body;
+  });
+};
+
 memberships.create = function (client, data) {
   return client.post({
     url: '/memberships',
