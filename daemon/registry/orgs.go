@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"log"
 	"net/url"
 
@@ -28,7 +29,7 @@ func (o *Orgs) List(name string) ([]envelope.Unsigned, error) {
 	}
 
 	orgs := []envelope.Unsigned{}
-	_, err = o.client.Do(req, &orgs)
+	_, err = o.client.Do(context.TODO(), req, &orgs)
 	if err != nil {
 		log.Printf("Error performing api request: %s", err)
 		return nil, err

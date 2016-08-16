@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"log"
 	"net/url"
 
@@ -37,7 +38,7 @@ func (m *MembershipsClient) List(orgID *identity.ID, teamID *identity.ID,
 	}
 
 	memberships := []envelope.Unsigned{}
-	_, err = m.client.Do(req, &memberships)
+	_, err = m.client.Do(context.TODO(), req, &memberships)
 	if err != nil {
 		log.Printf("could not perform GET /memberships: %s", err)
 		return nil, err

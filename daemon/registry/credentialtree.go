@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/url"
@@ -35,7 +36,7 @@ func (c *CredentialTreeClient) Post(t *CredentialTree) (*CredentialTree, error) 
 	}
 
 	resp := CredentialTree{}
-	_, err = c.client.Do(req, &resp)
+	_, err = c.client.Do(context.TODO(), req, &resp)
 	if err != nil {
 		log.Printf("Failed to create credential tree: %s", err)
 		return nil, err
@@ -73,7 +74,7 @@ func (c *CredentialTreeClient) List(name, path, pathexp string, ownerID *identit
 	}
 
 	resp := []CredentialTree{}
-	_, err = c.client.Do(req, &resp)
+	_, err = c.client.Do(context.TODO(), req, &resp)
 	if err != nil {
 		return nil, err
 	}

@@ -82,8 +82,7 @@ Client.prototype._req = function (verb, opts, isV1) {
       url: (isV1 ? self.v1Endpoint : self.proxyEndpoint) + opts.url,
       headers: self._headers(opts),
       time: true,
-      gzip: true,
-      timeout: 60000
+      gzip: true
     });
 
     request(opts, function (err, res, body) {

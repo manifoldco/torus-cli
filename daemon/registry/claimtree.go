@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"log"
 	"net/url"
 
@@ -51,7 +52,7 @@ func (c *ClaimTreeClient) List(orgID *identity.ID, ownerID *identity.ID) ([]Clai
 	}
 
 	resp := []ClaimTree{}
-	_, err = c.client.Do(req, &resp)
+	_, err = c.client.Do(context.TODO(), req, &resp)
 	if err != nil {
 		return nil, err
 	}

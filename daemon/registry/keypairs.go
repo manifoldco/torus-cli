@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"log"
 	"net/url"
 
@@ -43,7 +44,7 @@ func (k *KeyPairs) Post(pubKey, privKey, claim *envelope.Signed) (
 	}
 
 	resp := ClaimedKeyPair{}
-	_, err = k.client.Do(req, &resp)
+	_, err = k.client.Do(context.TODO(), req, &resp)
 	if err != nil {
 		log.Printf("Failed to create signing keypair: %s", err)
 		return nil, nil, nil, err
@@ -67,7 +68,7 @@ func (k *KeyPairs) List(orgID *identity.ID) ([]ClaimedKeyPair, error) {
 	}
 
 	resp := []ClaimedKeyPair{}
-	_, err = k.client.Do(req, &resp)
+	_, err = k.client.Do(context.TODO(), req, &resp)
 	if err != nil {
 		log.Printf("Failed to retrieve keypairs: %s", err)
 		return nil, err

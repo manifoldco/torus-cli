@@ -1,7 +1,9 @@
 package socket
 
 import (
+	"context"
 	"crypto/tls"
+	"encoding/json"
 	"log"
 	"net"
 	"net/http"
@@ -10,12 +12,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/facebookgo/httpdown"
 	"github.com/go-zoo/bone"
 
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/db"
+	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/routes"
 	"github.com/arigatomachine/cli/daemon/session"
 )
@@ -73,7 +77,7 @@ func (p *AuthProxy) Listen() error {
 		},
 	}
 
-	mux.Handle("/proxy/", proxy)
+	mux.HandleFunc("/proxy/", proxyCanceler(proxy))
 	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, t))
 
 	h := httpdown.HTTP{}
@@ -127,4 +131,79 @@ func makeSocket(socketPath string) (net.Listener, error) {
 	}
 
 	return l, nil
+}
+
+// proxyCanceler supports canceling proxied requests via a timeout, and
+// returning a custom error response.
+func proxyCanceler(proxy http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 6*time.Second)
+		defer cancelFunc()
+
+		cw := cancelingProxyResponseWriter{
+			redirect: false,
+			written:  false,
+			rw:       w,
+		}
+
+		r = r.WithContext(ctx)
+		done := make(chan bool)
+		go func() {
+			proxy.ServeHTTP(&cw, r)
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			return
+		case <-ctx.Done():
+			if ctx.Err() != context.DeadlineExceeded {
+				return
+			}
+
+			cw.redirect = true
+			if !cw.written {
+				w.WriteHeader(http.StatusRequestTimeout)
+
+				enc := json.NewEncoder(w)
+				err := enc.Encode(&registry.Error{
+					Type: "request_timeout",
+					Err:  []string{"Request timed out"},
+				})
+				if err != nil {
+					log.Printf("Error writing response timeout: %s", err)
+				}
+			}
+		}
+	}
+}
+
+// cancelingProxyResponseWriter Wraps a regular ResponseWriter to allow it to
+// be canceled, discarding anything written to it, providing it has not yet
+// been written to.
+type cancelingProxyResponseWriter struct {
+	redirect bool
+	written  bool
+	rw       http.ResponseWriter
+}
+
+func (c *cancelingProxyResponseWriter) Header() http.Header {
+	return c.rw.Header()
+}
+
+func (c *cancelingProxyResponseWriter) Write(b []byte) (int, error) {
+	if c.redirect && !c.written {
+		return len(b), nil
+	}
+	c.written = true
+	return c.rw.Write(b)
+}
+
+func (c *cancelingProxyResponseWriter) WriteHeader(s int) {
+	if c.redirect && !c.written {
+		return
+	}
+
+	c.written = true
+	c.rw.WriteHeader(s)
 }

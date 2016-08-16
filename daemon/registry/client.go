@@ -3,10 +3,12 @@ package registry
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/arigatomachine/cli/daemon/session"
 )
@@ -74,8 +76,8 @@ func NewClient(prefix string, apiVersion string, version string, sess session.Se
 
 // NewRequest constructs a new http.Request, with a body containing the json
 // representation of body, if provided.
-func (c *Client) NewRequest(method, path string, query *url.Values, body interface{}) (
-	*http.Request, error) {
+func (c *Client) NewRequest(method, path string, query *url.Values,
+	body interface{}) (*http.Request, error) {
 	return c.NewTokenRequest(c.sess.Token(), method, path, query, body)
 }
 
@@ -83,8 +85,8 @@ func (c *Client) NewRequest(method, path string, query *url.Values, body interfa
 // json representation of body, if provided.
 //
 // The request will be authorized with the provided token.
-func (c *Client) NewTokenRequest(token, method, path string, query *url.Values, body interface{}) (
-	*http.Request, error) {
+func (c *Client) NewTokenRequest(token, method, path string, query *url.Values,
+	body interface{}) (*http.Request, error) {
 
 	b := &bytes.Buffer{}
 	if body != nil {
@@ -122,9 +124,21 @@ func (c *Client) NewTokenRequest(token, method, path string, query *url.Values, 
 //
 // If the request errors with a JSON formatted response body, it will be
 // unmarshaled into the returned error.
-func (c *Client) Do(r *http.Request, v interface{}) (*http.Response, error) {
+func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error) {
+	ctx, cancelFunc := context.WithTimeout(ctx, 6*time.Second)
+	r = r.WithContext(ctx)
+	defer cancelFunc()
+
 	resp, err := c.client.Do(r)
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			err = &Error{
+				StatusCode: http.StatusRequestTimeout,
+				Type:       "request_timeout",
+				Err:        []string{"Request timed out"},
+			}
+		}
+
 		return nil, err
 	}
 

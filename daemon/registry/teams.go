@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net/url"
@@ -31,7 +32,7 @@ func (t *TeamsClient) List(orgID *identity.ID) ([]envelope.Unsigned, error) {
 	}
 
 	teams := []envelope.Unsigned{}
-	_, err = t.client.Do(req, &teams)
+	_, err = t.client.Do(context.TODO(), req, &teams)
 	if err != nil {
 		log.Printf("Error performing GET /teams request: %s", err)
 		return nil, err
