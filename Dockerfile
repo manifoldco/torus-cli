@@ -1,4 +1,4 @@
-FROM golang:1.7rc6-wheezy
+FROM golang:1.7-wheezy
 
 ARG NODEJS_VERSION=v4.4.7
 ENV NODEJS_VERSION=$NODEJS_VERSION
