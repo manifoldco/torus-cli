@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -24,7 +25,7 @@ func (u *Users) GetSelf(token string) (*envelope.Unsigned, error) {
 	}
 
 	self := envelope.Unsigned{}
-	_, err = u.client.Do(req, &self)
+	_, err = u.client.Do(context.TODO(), req, &self)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 		return nil, err

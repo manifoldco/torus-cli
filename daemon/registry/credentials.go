@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"log"
 
 	"github.com/arigatomachine/cli/daemon/envelope"
@@ -21,7 +22,7 @@ func (c *Credentials) Create(credential *envelope.Signed) (*envelope.Signed, err
 	}
 
 	resp := &envelope.Signed{}
-	_, err = c.client.Do(req, resp)
+	_, err = c.client.Do(context.TODO(), req, resp)
 	if err != nil {
 		return nil, err
 	}

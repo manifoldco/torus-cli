@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"log"
 
 	"github.com/arigatomachine/cli/daemon/envelope"
@@ -23,7 +24,7 @@ func (k *KeyringMemberClient) Post(members []envelope.Signed) ([]envelope.Signed
 	}
 
 	resp := []envelope.Signed{}
-	_, err = k.client.Do(req, &resp)
+	_, err = k.client.Do(context.TODO(), req, &resp)
 	if err != nil {
 		log.Printf("Error performing POST /keyring-members request: %s", err)
 		return nil, err

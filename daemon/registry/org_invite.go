@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"log"
 
@@ -27,7 +28,7 @@ func (o *OrgInviteClient) Approve(inviteID *identity.ID) (*envelope.Unsigned, er
 	}
 
 	invite := envelope.Unsigned{}
-	_, err = o.client.Do(req, &invite)
+	_, err = o.client.Do(context.TODO(), req, &invite)
 	if err != nil {
 		log.Printf("Error performing POST /org-invites/:id/accept: %s", err)
 		return nil, err
@@ -50,7 +51,7 @@ func (o *OrgInviteClient) Get(inviteID *identity.ID) (*envelope.Unsigned, error)
 	}
 
 	invite := envelope.Unsigned{}
-	_, err = o.client.Do(req, &invite)
+	_, err = o.client.Do(context.TODO(), req, &invite)
 	if err != nil {
 		log.Printf("Error performing GET /org-invites/:id request: %s", err)
 		return nil, err

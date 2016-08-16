@@ -1,6 +1,9 @@
 package registry
 
-import "log"
+import (
+	"context"
+	"log"
+)
 
 // token types that can be requested from the registry
 const (
@@ -52,7 +55,7 @@ func (t *Tokens) PostLogin(email string) (string, string, error) {
 		return salt.Salt, salt.Token, err
 	}
 
-	resp, err := t.client.Do(req, &salt)
+	resp, err := t.client.Do(context.TODO(), req, &salt)
 	if err != nil && resp != nil && resp.StatusCode != 201 {
 		log.Printf("Failed to get login token from server: %s", err)
 	} else if err != nil {
@@ -74,7 +77,7 @@ func (t *Tokens) PostAuth(token, hmac string) (string, error) {
 		return auth.Token, err
 	}
 
-	_, err = t.client.Do(req, &auth)
+	_, err = t.client.Do(context.TODO(), req, &auth)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 	}
@@ -91,7 +94,7 @@ func (t *Tokens) Delete(token string) error {
 		return err
 	}
 
-	_, err = t.client.Do(req, nil)
+	_, err = t.client.Do(context.TODO(), req, nil)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 	}

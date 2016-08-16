@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"context"
 	"log"
 	"net/url"
 
@@ -39,7 +40,7 @@ func (k *KeyringClient) List(orgID *identity.ID, ownerID *identity.ID) ([]Keyrin
 	}
 
 	resp := []KeyringSection{}
-	_, err = k.client.Do(req, &resp)
+	_, err = k.client.Do(context.TODO(), req, &resp)
 	if err != nil {
 		return nil, err
 	}
