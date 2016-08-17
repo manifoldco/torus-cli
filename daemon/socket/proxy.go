@@ -16,6 +16,7 @@ import (
 
 	"github.com/facebookgo/httpdown"
 	"github.com/go-zoo/bone"
+	"github.com/satori/go.uuid"
 
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/db"
@@ -81,7 +82,7 @@ func (p *AuthProxy) Listen() error {
 	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, t))
 
 	h := httpdown.HTTP{}
-	p.s = h.Serve(&http.Server{Handler: loggingHandler(mux)}, p.l)
+	p.s = h.Serve(&http.Server{Handler: requestIDHandler(loggingHandler(mux))}, p.l)
 
 	return p.s.Wait()
 }
@@ -102,6 +103,17 @@ func loggingHandler(next http.Handler) http.Handler {
 		p := r.URL.Path
 		next.ServeHTTP(w, r)
 		log.Printf("%s %s", r.Method, p)
+	})
+}
+
+func requestIDHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := r.Header.Get("X-Request-Id")
+		if id == "" {
+			id = uuid.NewV4().String()
+		}
+		r = r.WithContext(context.WithValue(r.Context(), "id", id))
+		next.ServeHTTP(w, r)
 	})
 }
 
