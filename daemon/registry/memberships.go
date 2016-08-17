@@ -17,8 +17,8 @@ type MembershipsClient struct {
 }
 
 // List returns all memberships for a given organization, team, or user/machine
-func (m *MembershipsClient) List(orgID *identity.ID, teamID *identity.ID,
-	ownerID *identity.ID) ([]envelope.Unsigned, error) {
+func (m *MembershipsClient) List(ctx context.Context, orgID *identity.ID,
+	teamID *identity.ID, ownerID *identity.ID) ([]envelope.Unsigned, error) {
 
 	query := &url.Values{}
 	if orgID != nil {
@@ -38,7 +38,7 @@ func (m *MembershipsClient) List(orgID *identity.ID, teamID *identity.ID,
 	}
 
 	memberships := []envelope.Unsigned{}
-	_, err = m.client.Do(context.TODO(), req, &memberships)
+	_, err = m.client.Do(ctx, req, &memberships)
 	if err != nil {
 		log.Printf("could not perform GET /memberships: %s", err)
 		return nil, err

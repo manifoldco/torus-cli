@@ -2,6 +2,7 @@
 package crypto
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -14,6 +15,7 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 
 	"github.com/arigatomachine/cli/daemon/base64"
+	"github.com/arigatomachine/cli/daemon/ctxutil"
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/identity"
@@ -68,8 +70,13 @@ func NewEngine(sess session.Session, db *db.DB) *Engine {
 
 // Seal encrypts the plaintext pt bytes with triplesec-v3 using a key derrived
 // via blake2b from the user's master key and a nonce (returned).
-func (e *Engine) Seal(pt []byte) ([]byte, []byte, error) {
-	mk, err := e.unsealMasterKey()
+func (e *Engine) Seal(ctx context.Context, pt []byte) ([]byte, []byte, error) {
+	mk, err := e.unsealMasterKey(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -80,8 +87,21 @@ func (e *Engine) Seal(pt []byte) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	dk := deriveKey(mk, nonce, blakeSize)
-	ts := newTriplesec(dk)
+	dk, err := deriveKey(ctx, mk, nonce, blakeSize)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ts, err := newTriplesec(ctx, dk)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	ct, err := ts.Encrypt(pt)
 
 	return ct, nonce, err
@@ -89,14 +109,27 @@ func (e *Engine) Seal(pt []byte) ([]byte, []byte, error) {
 
 // Unseal decrypts the ciphertext ct, encrypted with triplesec-v3, using the
 // a key derrived via blake2b from the user's master key and the provided nonce.
-func (e *Engine) Unseal(ct, nonce []byte) ([]byte, error) {
-	mk, err := e.unsealMasterKey()
+func (e *Engine) Unseal(ctx context.Context, ct, nonce []byte) ([]byte, error) {
+	mk, err := e.unsealMasterKey(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	dk := deriveKey(mk, nonce, blakeSize)
-	ts := newTriplesec(dk)
+	dk, err := deriveKey(ctx, mk, nonce, blakeSize)
+	if err != nil {
+		return nil, err
+	}
+
+	ts, err := newTriplesec(ctx, dk)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return ts.Decrypt(ct)
 }
 
@@ -106,16 +139,21 @@ func (e *Engine) Unseal(ct, nonce []byte) ([]byte, error) {
 //
 // It returns the ciphertext, the nonce used for encrypting the plaintext,
 // and an optional error.
-func (e *Engine) Box(pt []byte, privKP *EncryptionKeyPair,
+func (e *Engine) Box(ctx context.Context, pt []byte, privKP *EncryptionKeyPair,
 	pubKey []byte) ([]byte, []byte, error) {
 
-	nonce := [24]byte{}
-	_, err := rand.Read(nonce[:])
+	err := ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	privKey, err := e.Unseal(privKP.Private, privKP.PNonce)
+	nonce := [24]byte{}
+	_, err = rand.Read(nonce[:])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privKey, err := e.Unseal(ctx, privKP.Private, privKP.PNonce)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -126,15 +164,20 @@ func (e *Engine) Box(pt []byte, privKP *EncryptionKeyPair,
 	pubkb := [32]byte{}
 	copy(pubkb[:], pubKey)
 
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	return box.Seal([]byte{}, pt, &nonce, &pubkb, &privkb), nonce[:], nil
 }
 
 // Unbox Decrypts and verifies ciphertext ct that was previously encrypted using
 // the provided nonce, and the inverse parts of the provided keypairs.
-func (e *Engine) Unbox(ct, nonce []byte, privKP *EncryptionKeyPair,
-	pubKey []byte) ([]byte, error) {
+func (e *Engine) Unbox(ctx context.Context, ct, nonce []byte,
+	privKP *EncryptionKeyPair, pubKey []byte) ([]byte, error) {
 
-	privKey, err := e.Unseal(privKP.Private, privKP.PNonce)
+	privKey, err := e.Unseal(ctx, privKP.Private, privKP.PNonce)
 	if err != nil {
 		return nil, err
 	}
@@ -147,6 +190,11 @@ func (e *Engine) Unbox(ct, nonce []byte, privKP *EncryptionKeyPair,
 
 	pubkb := [32]byte{}
 	copy(pubkb[:], pubKey)
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	pt, success := box.Open([]byte{}, ct, &nonceb, &pubkb, &privkb)
 	if !success {
@@ -170,11 +218,16 @@ func (e *Engine) Unbox(ct, nonce []byte, privKP *EncryptionKeyPair,
 // BoxCredential returns the nonce generated to derive the credential
 // encryption key,  the nonce generated for encrypting the credential, and the
 // encrypted credential.
-func (e *Engine) BoxCredential(pt, encMec, mecNonce []byte,
+func (e *Engine) BoxCredential(ctx context.Context, pt, encMec, mecNonce []byte,
 	privKP *EncryptionKeyPair, pubKey []byte) ([]byte, []byte, []byte, error) {
 
+	err := ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	nonces := make([]byte, 48)
-	_, err := rand.Read(nonces)
+	_, err = rand.Read(nonces)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -183,14 +236,23 @@ func (e *Engine) BoxCredential(pt, encMec, mecNonce []byte,
 	nonce := [24]byte{}
 	copy(nonce[:], nonces[24:])
 
-	mek, err := e.Unbox(encMec, mecNonce, privKP, pubKey)
+	mek, err := e.Unbox(ctx, encMec, mecNonce, privKP, pubKey)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	cek := deriveKey(mek, cekNonce, 32)
+	cek, err := deriveKey(ctx, mek, cekNonce, 32)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	cekb := [32]byte{}
 	copy(cekb[:], cek)
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 
 	ct := secretbox.Seal([]byte{}, pt, &nonce, &cekb)
 	return cekNonce, nonce[:], ct, err
@@ -198,20 +260,29 @@ func (e *Engine) BoxCredential(pt, encMec, mecNonce []byte,
 
 // UnboxCredential does the inverse of BoxCredential to retrieve the plaintext
 // version of a credential.
-func (e *Engine) UnboxCredential(ct, encMec, mecNonce, cekNonce, ctNonce []byte,
-	privKP *EncryptionKeyPair, pubKey []byte) ([]byte, error) {
+func (e *Engine) UnboxCredential(ctx context.Context, ct, encMec, mecNonce,
+	cekNonce, ctNonce []byte, privKP *EncryptionKeyPair, pubKey []byte) ([]byte, error) {
 
-	mek, err := e.Unbox(encMec, mecNonce, privKP, pubKey)
+	mek, err := e.Unbox(ctx, encMec, mecNonce, privKP, pubKey)
 	if err != nil {
 		return nil, err
 	}
 
-	cek := deriveKey(mek, cekNonce, 32)
+	cek, err := deriveKey(ctx, mek, cekNonce, 32)
+	if err != nil {
+		return nil, err
+	}
+
 	cekb := [32]byte{}
 	copy(cekb[:], cek)
 
 	ctNonceb := [24]byte{}
 	copy(ctNonceb[:], ctNonce)
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	pt, success := secretbox.Open([]byte{}, ct, &ctNonceb, &cekb)
 	if !success {
@@ -223,27 +294,32 @@ func (e *Engine) UnboxCredential(ct, encMec, mecNonce, cekNonce, ctNonce []byte,
 
 // CloneMembership decrypts the given KeyringMember object, and creates another
 // for the targeted user.
-func (e *Engine) CloneMembership(encMec, mecNonce []byte, privKP *EncryptionKeyPair, encPubKey, targetPubKey []byte) ([]byte, []byte, error) {
-	mek, err := e.Unbox(encMec, mecNonce, privKP, encPubKey)
+func (e *Engine) CloneMembership(ctx context.Context, encMec, mecNonce []byte, privKP *EncryptionKeyPair, encPubKey, targetPubKey []byte) ([]byte, []byte, error) {
+	mek, err := e.Unbox(ctx, encMec, mecNonce, privKP, encPubKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return e.Box(mek, privKP, targetPubKey)
+	return e.Box(ctx, mek, privKP, targetPubKey)
 }
 
 // GenerateKeyPairs generates and ed25519 signing key pair, and a curve25519
 // encryption key pair for the user, encrypting the private keys in
 // triplesec-v3 with the user's master key.
-func (e *Engine) GenerateKeyPairs() (*KeyPairs, error) {
+func (e *Engine) GenerateKeyPairs(ctx context.Context) (*KeyPairs, error) {
 	kp := &KeyPairs{}
+
+	err := ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	pubSig, privSig, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	sealedSig, nonceSig, err := e.Seal(privSig)
+	sealedSig, nonceSig, err := e.Seal(ctx, privSig)
 	if err != nil {
 		return nil, err
 	}
@@ -252,12 +328,17 @@ func (e *Engine) GenerateKeyPairs() (*KeyPairs, error) {
 	kp.Signature.Public = pubSig
 	kp.Signature.PNonce = nonceSig
 
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	pubEnc, privEnc, err := box.GenerateKey(rand.Reader)
 	if err != nil {
 		return nil, err
 	}
 
-	sealedEnc, nonceEnc, err := e.Seal((*privEnc)[:])
+	sealedEnc, nonceEnc, err := e.Seal(ctx, (*privEnc)[:])
 	if err != nil {
 		return nil, err
 	}
@@ -270,8 +351,13 @@ func (e *Engine) GenerateKeyPairs() (*KeyPairs, error) {
 }
 
 // Sign signs b bytes using the provided Sealed ed25519 keypair.
-func (e *Engine) Sign(s SignatureKeyPair, b []byte) ([]byte, error) {
-	pk, err := e.Unseal(s.Private, s.PNonce)
+func (e *Engine) Sign(ctx context.Context, s SignatureKeyPair, b []byte) ([]byte, error) {
+	pk, err := e.Unseal(ctx, s.Private, s.PNonce)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -281,21 +367,30 @@ func (e *Engine) Sign(s SignatureKeyPair, b []byte) ([]byte, error) {
 
 // Verify verifies that sig is the correct signature for b given
 // SignatureKeyPair s.
-func (e *Engine) Verify(s SignatureKeyPair, b, sig []byte) bool {
-	return ed25519.Verify(s.Public, b, sig)
+func (e *Engine) Verify(ctx context.Context, s SignatureKeyPair, b, sig []byte) (bool, error) {
+	err := ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return ed25519.Verify(s.Public, b, sig), nil
 }
 
 // SignedEnvelope returns a new SignedEnvelope containing body
-func (e *Engine) SignedEnvelope(body identity.Identifiable,
-	sigID *identity.ID, sigKP *SignatureKeyPair) (*envelope.Signed,
-	error) {
+func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Identifiable,
+	sigID *identity.ID, sigKP *SignatureKeyPair) (*envelope.Signed, error) {
+
+	err := ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	b, err := json.Marshal(&body)
 	if err != nil {
 		return nil, err
 	}
 
-	s, err := e.Sign(*sigKP, append([]byte(strconv.Itoa(body.Version())), b...))
+	s, err := e.Sign(ctx, *sigKP, append([]byte(strconv.Itoa(body.Version())), b...))
 	if err != nil {
 		return nil, err
 	}
@@ -321,10 +416,19 @@ func (e *Engine) SignedEnvelope(body identity.Identifiable,
 
 // unsealMasterKey uses the scrypt stretched password to decrypt the master
 // password, which is encrypted with triplesec-v3
-func (e *Engine) unsealMasterKey() ([]byte, error) {
-	ts := newTriplesec([]byte(e.sess.Passphrase()))
+func (e *Engine) unsealMasterKey(ctx context.Context) ([]byte, error) {
+	ts, err := newTriplesec(ctx, []byte(e.sess.Passphrase()))
+	if err != nil {
+		return nil, err
+	}
+
 	self := envelope.Unsigned{}
-	err := e.db.Get(e.sess.ID(), &self)
+	err = e.db.Get(e.sess.ID(), &self)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -333,21 +437,29 @@ func (e *Engine) unsealMasterKey() ([]byte, error) {
 	return mk, err
 }
 
-func newTriplesec(k []byte) *triplesec.Cipher {
-	// err is only set when a salt is given. this won't happen, so
-	// let's just panic.
-	ts, err := triplesec.NewCipher(k, nil)
+func newTriplesec(ctx context.Context, k []byte) (*triplesec.Cipher, error) {
+	err := ctxutil.ErrIfDone(ctx)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return ts
+	ts, err := triplesec.NewCipher(k, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return ts, nil
 }
 
 // deriveKey Derives a single use key from the given master key via blake2b
 // and a nonce.
-func deriveKey(mk, nonce []byte, size uint8) []byte {
+func deriveKey(ctx context.Context, mk, nonce []byte, size uint8) ([]byte, error) {
+	err := ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	h := blake2b.NewMAC(size, nonce) // NewMAC can panic if size is too big.
 	h.Sum(mk)
-	return h.Sum(nil)
+	return h.Sum(nil), nil
 }

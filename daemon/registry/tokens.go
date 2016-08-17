@@ -42,7 +42,7 @@ type Tokens struct {
 
 // PostLogin requests a login token from the registry for the provided email
 // address.
-func (t *Tokens) PostLogin(email string) (string, string, error) {
+func (t *Tokens) PostLogin(ctx context.Context, email string) (string, string, error) {
 	salt := loginTokenResponse{}
 
 	req, err := t.client.NewRequest("POST", "/tokens", nil,
@@ -55,7 +55,7 @@ func (t *Tokens) PostLogin(email string) (string, string, error) {
 		return salt.Salt, salt.Token, err
 	}
 
-	resp, err := t.client.Do(context.TODO(), req, &salt)
+	resp, err := t.client.Do(ctx, req, &salt)
 	if err != nil && resp != nil && resp.StatusCode != 201 {
 		log.Printf("Failed to get login token from server: %s", err)
 	} else if err != nil {
@@ -67,7 +67,7 @@ func (t *Tokens) PostLogin(email string) (string, string, error) {
 
 // PostAuth requests an auth token from the registry for the provided login
 // token value, and it's HMAC.
-func (t *Tokens) PostAuth(token, hmac string) (string, error) {
+func (t *Tokens) PostAuth(ctx context.Context, token, hmac string) (string, error) {
 	auth := authTokenResponse{}
 
 	req, err := t.client.NewTokenRequest(token, "POST", "/tokens", nil,
@@ -77,7 +77,7 @@ func (t *Tokens) PostAuth(token, hmac string) (string, error) {
 		return auth.Token, err
 	}
 
-	_, err = t.client.Do(context.TODO(), req, &auth)
+	_, err = t.client.Do(ctx, req, &auth)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 	}
@@ -87,14 +87,14 @@ func (t *Tokens) PostAuth(token, hmac string) (string, error) {
 
 // Delete deletes the token with the provided value from the registry. This
 // effectively logs a user out.
-func (t *Tokens) Delete(token string) error {
+func (t *Tokens) Delete(ctx context.Context, token string) error {
 	req, err := t.client.NewTokenRequest(token, "DELETE", "/tokens/"+token, nil, nil)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return err
 	}
 
-	_, err = t.client.Do(context.TODO(), req, nil)
+	_, err = t.client.Do(ctx, req, nil)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 	}

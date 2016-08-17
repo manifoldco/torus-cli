@@ -15,7 +15,7 @@ type Orgs struct {
 }
 
 // List returns all organizations that match the given name.
-func (o *Orgs) List(name string) ([]envelope.Unsigned, error) {
+func (o *Orgs) List(ctx context.Context, name string) ([]envelope.Unsigned, error) {
 	v := url.Values{}
 
 	if name != "" {
@@ -29,7 +29,7 @@ func (o *Orgs) List(name string) ([]envelope.Unsigned, error) {
 	}
 
 	orgs := []envelope.Unsigned{}
-	_, err = o.client.Do(context.TODO(), req, &orgs)
+	_, err = o.client.Do(ctx, req, &orgs)
 	if err != nil {
 		log.Printf("Error performing api request: %s", err)
 		return nil, err

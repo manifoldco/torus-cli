@@ -17,7 +17,7 @@ type OrgInviteClient struct {
 
 // Approve sends an approval notification to the registry regarding a specific
 // invitation.
-func (o *OrgInviteClient) Approve(inviteID *identity.ID) (*envelope.Unsigned, error) {
+func (o *OrgInviteClient) Approve(ctx context.Context, inviteID *identity.ID) (*envelope.Unsigned, error) {
 
 	path := "/org-invites/" + inviteID.String() + "/approve"
 	req, err := o.client.NewRequest("POST", path, nil, nil)
@@ -28,7 +28,7 @@ func (o *OrgInviteClient) Approve(inviteID *identity.ID) (*envelope.Unsigned, er
 	}
 
 	invite := envelope.Unsigned{}
-	_, err = o.client.Do(context.TODO(), req, &invite)
+	_, err = o.client.Do(ctx, req, &invite)
 	if err != nil {
 		log.Printf("Error performing POST /org-invites/:id/accept: %s", err)
 		return nil, err
@@ -38,7 +38,7 @@ func (o *OrgInviteClient) Approve(inviteID *identity.ID) (*envelope.Unsigned, er
 }
 
 // Get returns a specific Org Invite based on it's ID
-func (o *OrgInviteClient) Get(inviteID *identity.ID) (*envelope.Unsigned, error) {
+func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*envelope.Unsigned, error) {
 	if inviteID == nil {
 		return nil, errors.New("an inviteID must be provided")
 	}
@@ -51,7 +51,7 @@ func (o *OrgInviteClient) Get(inviteID *identity.ID) (*envelope.Unsigned, error)
 	}
 
 	invite := envelope.Unsigned{}
-	_, err = o.client.Do(context.TODO(), req, &invite)
+	_, err = o.client.Do(ctx, req, &invite)
 	if err != nil {
 		log.Printf("Error performing GET /org-invites/:id request: %s", err)
 		return nil, err

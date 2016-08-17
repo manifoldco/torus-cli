@@ -4,6 +4,7 @@ var client = exports;
 
 var _ = require('lodash');
 var request = require('request');
+var uuid = require('uuid');
 var Promise = require('es6-promise').Promise;
 
 var CLI_VERSION = require('../../package.json').version;
@@ -114,7 +115,8 @@ Client.prototype._req = function (verb, opts, isV1) {
  */
 Client.prototype._headers = function (opts) {
   var headers = {
-    Host: 'registry.arigato.sh' // Discarded by Daemon, but required in http 1.1 spec
+    Host: 'registry.arigato.sh', // Discarded by Daemon, but required in http 1.1 spec
+    'X-Request-Id': uuid.v4()
   };
 
   return _.extend({}, opts.headers, headers);

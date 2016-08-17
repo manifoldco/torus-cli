@@ -15,7 +15,7 @@ type KeyringMemberClient struct {
 
 // Post sends a creation requests for a set of KeyringMember objects to the
 // registry.
-func (k *KeyringMemberClient) Post(members []envelope.Signed) ([]envelope.Signed, error) {
+func (k *KeyringMemberClient) Post(ctx context.Context, members []envelope.Signed) ([]envelope.Signed, error) {
 
 	req, err := k.client.NewRequest("POST", "/keyring-members", nil, members)
 	if err != nil {
@@ -24,7 +24,7 @@ func (k *KeyringMemberClient) Post(members []envelope.Signed) ([]envelope.Signed
 	}
 
 	resp := []envelope.Signed{}
-	_, err = k.client.Do(context.TODO(), req, &resp)
+	_, err = k.client.Do(ctx, req, &resp)
 	if err != nil {
 		log.Printf("Error performing POST /keyring-members request: %s", err)
 		return nil, err
