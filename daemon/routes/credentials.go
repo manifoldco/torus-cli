@@ -83,9 +83,9 @@ func credentialsGetRoute(client *registry.Client,
 
 			for _, cred := range tree.Credentials {
 				credBody := cred.Body.(*primitive.Credential)
-				pt, err := engine.UnboxCredential(*credBody.Credential.Value,
-					*krm.Key.Value, *krm.Key.Nonce, *credBody.Nonce,
-					*credBody.Credential.Nonce, &kp.Encryption,
+				pt, err := engine.UnboxCredential(ctx,
+					*credBody.Credential.Value, *krm.Key.Value, *krm.Key.Nonce,
+					*credBody.Nonce, *credBody.Credential.Nonce, &kp.Encryption,
 					*encryptingKey.Key.Value)
 				if err != nil {
 					log.Printf("Error decrypting credential: %s", err)
@@ -219,7 +219,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 		// Derive a key for the credential using the keyring master key
 		// and use the derived key to encrypt the credential
 		cekNonce, ctNonce, ct, err := engine.BoxCredential(
-			[]byte(cred.Body.Value), *krm.Key.Value, *krm.Key.Nonce,
+			ctx, []byte(cred.Body.Value), *krm.Key.Value, *krm.Key.Nonce,
 			&kp.Encryption, *encryptingKey.Key.Value)
 
 		credBody.Nonce = base64.NewValue(cekNonce)
@@ -227,7 +227,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 		credBody.Credential.Nonce = base64.NewValue(ctNonce)
 		credBody.Credential.Value = base64.NewValue(ct)
 
-		signed, err := engine.SignedEnvelope(&credBody, sigID, &kp.Signature)
+		signed, err := engine.SignedEnvelope(ctx, &credBody, sigID, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -269,7 +269,7 @@ func createCredentialTree(ctx context.Context, credBody *plainTextCredential,
 	pathExp := strings.Join(parts[:6], "/") + "/*"
 
 	keyring, err := engine.SignedEnvelope(
-		&primitive.Keyring{
+		ctx, &primitive.Keyring{
 			Created:   time.Now().UTC(),
 			OrgID:     credBody.OrgID,
 			PathExp:   pathExp,
@@ -330,13 +330,13 @@ func createCredentialTree(ctx context.Context, credBody *plainTextCredential,
 		}
 
 		pubKey := encPubKey.Body.(*primitive.PublicKey)
-		encmek, nonce, err := engine.Box(mek, &kp.Encryption, []byte(*pubKey.Key.Value))
+		encmek, nonce, err := engine.Box(ctx, mek, &kp.Encryption, []byte(*pubKey.Key.Value))
 		if err != nil {
 			return nil, err
 		}
 
 		member, err := engine.SignedEnvelope(
-			&primitive.KeyringMember{
+			ctx, &primitive.KeyringMember{
 				Created:         time.Now().UTC(),
 				OrgID:           credBody.OrgID,
 				ProjectID:       credBody.ProjectID,

@@ -43,7 +43,7 @@ func loginRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		hmac, err := crypto.DeriveLoginHMAC(creds.Passphrase, salt, loginToken)
+		hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase, salt, loginToken)
 		if err != nil {
 			log.Printf("Error generating login token hmac: %s", err)
 			encodeResponseErr(w, err)

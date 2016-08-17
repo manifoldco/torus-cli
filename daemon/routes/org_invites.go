@@ -121,7 +121,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			encPKBody := encPubKey.Body.(*primitive.PublicKey)
 			targetPKBody := targetPubKey.Body.(*primitive.PublicKey)
 
-			encMek, nonce, err := engine.CloneMembership(*krm.Key.Value,
+			encMek, nonce, err := engine.CloneMembership(ctx, *krm.Key.Value,
 				*krm.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
 			if err != nil {
 				log.Printf("could not clone keyring membership: %s", err)
@@ -130,7 +130,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			}
 
 			member, err := engine.SignedEnvelope(
-				&primitive.KeyringMember{
+				ctx, &primitive.KeyringMember{
 					Created:         time.Now().UTC(),
 					OrgID:           krm.OrgID,
 					ProjectID:       krm.ProjectID,

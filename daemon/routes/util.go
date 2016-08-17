@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -18,8 +19,8 @@ const (
 	signingKeyType    = "signing"
 )
 
-func packagePublicKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
-	keyType string, public []byte, sigID *identity.ID,
+func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
+	orgID *identity.ID, keyType string, public []byte, sigID *identity.ID,
 	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
 	alg := crypto.Curve25519
@@ -43,11 +44,11 @@ func packagePublicKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
 		Expires: now.Add(time.Hour * 8760), // one year
 	}
 
-	return engine.SignedEnvelope(&body, sigID, sigKP)
+	return engine.SignedEnvelope(ctx, &body, sigID, sigKP)
 }
 
-func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
-	pnonce, private []byte, pubID, sigID *identity.ID,
+func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
+	orgID *identity.ID, pnonce, private []byte, pubID, sigID *identity.ID,
 	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
 	body := primitive.PrivateKey{
@@ -62,7 +63,7 @@ func packagePrivateKey(engine *crypto.Engine, ownerID, orgID *identity.ID,
 		},
 	}
 
-	return engine.SignedEnvelope(&body, sigID, sigKP)
+	return engine.SignedEnvelope(ctx, &body, sigID, sigKP)
 }
 
 func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,

@@ -29,21 +29,21 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		kp, err := engine.GenerateKeyPairs()
+		kp, err := engine.GenerateKeyPairs(ctx)
 		if err != nil {
 			log.Printf("Error generating keypairs: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
 
-		pubsig, err := packagePublicKey(engine, s.ID(), genReq.OrgID,
+		pubsig, err := packagePublicKey(ctx, engine, s.ID(), genReq.OrgID,
 			signingKeyType, kp.Signature.Public, nil, &kp.Signature)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
-		privsig, err := packagePrivateKey(engine, s.ID(), genReq.OrgID,
+		privsig, err := packagePrivateKey(ctx, engine, s.ID(), genReq.OrgID,
 			kp.Signature.PNonce, kp.Signature.Private, pubsig.ID, pubsig.ID,
 			&kp.Signature)
 		if err != nil {
@@ -52,7 +52,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 		}
 
 		sigclaim, err := engine.SignedEnvelope(
-			primitive.NewClaim(genReq.OrgID, s.ID(), pubsig.ID, pubsig.ID,
+			ctx, primitive.NewClaim(genReq.OrgID, s.ID(), pubsig.ID, pubsig.ID,
 				primitive.SignatureClaimType),
 			pubsig.ID, &kp.Signature)
 		if err != nil {
@@ -79,7 +79,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		pubenc, err := packagePublicKey(engine, s.ID(), genReq.OrgID,
+		pubenc, err := packagePublicKey(ctx, engine, s.ID(), genReq.OrgID,
 			encryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
 			&kp.Signature)
 		if err != nil {
@@ -87,7 +87,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		privenc, err := packagePrivateKey(engine, s.ID(), genReq.OrgID,
+		privenc, err := packagePrivateKey(ctx, engine, s.ID(), genReq.OrgID,
 			kp.Encryption.PNonce, kp.Encryption.Private, pubenc.ID, pubsig.ID,
 			&kp.Signature)
 		if err != nil {
@@ -96,7 +96,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 		}
 
 		encclaim, err := engine.SignedEnvelope(
-			primitive.NewClaim(genReq.OrgID, s.ID(), pubenc.ID, pubenc.ID,
+			ctx, primitive.NewClaim(genReq.OrgID, s.ID(), pubenc.ID, pubenc.ID,
 				primitive.SignatureClaimType),
 			pubsig.ID, &kp.Signature)
 		if err != nil {

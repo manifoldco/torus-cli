@@ -1,10 +1,12 @@
 package crypto
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/base64"
 
+	"github.com/arigatomachine/cli/daemon/ctxutil"
 	"golang.org/x/crypto/scrypt"
 )
 
@@ -27,9 +29,14 @@ const (
 
 // DeriveLoginHMAC HMACs the provided token with a key derived from password
 // and the provided base64 encoded salt.
-func DeriveLoginHMAC(password, salt, token string) (string, error) {
+func DeriveLoginHMAC(ctx context.Context, password, salt, token string) (string, error) {
 	s := make([]byte, base64.RawURLEncoding.DecodedLen(len(salt)))
 	l, err := base64.RawURLEncoding.Decode(s, []byte(salt))
+	if err != nil {
+		return "", err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -41,6 +48,11 @@ func DeriveLoginHMAC(password, salt, token string) (string, error) {
 
 	pwh := make([]byte, base64.RawURLEncoding.EncodedLen(32))
 	base64.RawURLEncoding.Encode(pwh, k[keyLen-32:])
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return "", err
+	}
 
 	mac := hmac.New(sha512.New, pwh)
 	mac.Write([]byte(token))
