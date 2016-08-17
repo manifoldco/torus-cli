@@ -3,6 +3,7 @@ package routes
 // This file contains routes related to credentials/secrets
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -43,9 +44,10 @@ func credentialsGetRoute(client *registry.Client,
 	s session.Session, engine *crypto.Engine) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		q := r.URL.Query()
-		trees, err := client.CredentialTree.List(
-			q.Get("Name"), q.Get("path"), q.Get("pathexp"), s.ID())
+		trees, err := client.CredentialTree.List(ctx, q.Get("Name"),
+			q.Get("path"), q.Get("pathexp"), s.ID())
 		if err != nil {
 			log.Printf("error retrieving credential trees: %s", err)
 			encodeResponseErr(w, err)
@@ -58,7 +60,7 @@ func credentialsGetRoute(client *registry.Client,
 		creds := []plainTextEnvelope{}
 		for _, tree := range trees {
 			orgID := tree.Keyring.Body.(*primitive.Keyring).OrgID
-			_, _, kp, err := fetchKeyPairs(client, orgID)
+			_, _, kp, err := fetchKeyPairs(ctx, client, orgID)
 			if err != nil {
 				encodeResponseErr(w, err)
 				return
@@ -71,7 +73,7 @@ func credentialsGetRoute(client *registry.Client,
 				return
 			}
 
-			encryptingKey, err := findEncryptingKey(client, orgID,
+			encryptingKey, err := findEncryptingKey(ctx, client, orgID,
 				krm.EncryptingKeyID)
 			if err != nil {
 				log.Printf("Error finding encrypting key: %s", err)
@@ -120,6 +122,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 	engine *crypto.Engine) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		dec := json.NewDecoder(r.Body)
 		cred := plainTextEnvelope{}
 
@@ -131,7 +134,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 		}
 
 		// Ensure we have an existing keyring for this credential's pathexp
-		trees, err := client.CredentialTree.List(cred.Body.Name, "",
+		trees, err := client.CredentialTree.List(ctx, cred.Body.Name, "",
 			cred.Body.PathExp, s.ID())
 		if err != nil {
 			log.Printf("error retrieving credential trees: %s", err)
@@ -139,7 +142,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		sigID, encID, kp, err := fetchKeyPairs(client, cred.Body.OrgID)
+		sigID, encID, kp, err := fetchKeyPairs(ctx, client, cred.Body.OrgID)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -149,7 +152,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 		// No matching CredentialTree/KeyRing for this credential.
 		// We'll make a new one now.
 		if len(trees) == 0 {
-			tree, err := createCredentialTree(cred.Body, sigID, encID, kp,
+			tree, err := createCredentialTree(ctx, cred.Body, sigID, encID, kp,
 				client, engine)
 			if err != nil {
 				log.Printf("error creating credential tree: %s", err)
@@ -205,7 +208,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		encryptingKey, err := findEncryptingKey(client, credBody.OrgID,
+		encryptingKey, err := findEncryptingKey(ctx, client, credBody.OrgID,
 			krm.EncryptingKeyID)
 		if err != nil {
 			log.Printf("Error finding encrypting key: %s", err)
@@ -232,9 +235,9 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 
 		if newTree {
 			tree.Credentials = []envelope.Signed{*signed}
-			_, err = client.CredentialTree.Post(&tree)
+			_, err = client.CredentialTree.Post(ctx, &tree)
 		} else {
-			_, err = client.Credentials.Create(signed)
+			_, err = client.Credentials.Create(ctx, signed)
 		}
 		if err != nil {
 			log.Printf("error creating credential: %s", err)
@@ -254,9 +257,9 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 
 // createCredentialTree generates, signs, and posts a new CredentialTree
 // to the registry.
-func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
-	encID *identity.ID, kp *crypto.KeyPairs, client *registry.Client,
-	engine *crypto.Engine) (*registry.CredentialTree, error) {
+func createCredentialTree(ctx context.Context, credBody *plainTextCredential,
+	sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
+	client *registry.Client, engine *crypto.Engine) (*registry.CredentialTree, error) {
 
 	parts := strings.Split(credBody.PathExp, "/")
 	if len(parts) != 7 { // first part is empty
@@ -289,7 +292,7 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 		return nil, err
 	}
 
-	teams, err := client.Teams.List(credBody.OrgID)
+	teams, err := client.Teams.List(ctx, credBody.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -299,12 +302,12 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 		return nil, err
 	}
 
-	memberships, err := client.Memberships.List(credBody.OrgID, team.ID, nil)
+	memberships, err := client.Memberships.List(ctx, credBody.OrgID, team.ID, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	claimTrees, err := client.ClaimTree.List(credBody.OrgID, nil)
+	claimTrees, err := client.ClaimTree.List(ctx, credBody.OrgID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -366,10 +369,10 @@ func createCredentialTree(credBody *plainTextCredential, sigID *identity.ID,
 
 // fetchKeyPairs fetches the user's signing and encryption keypairs from the
 // registry for the given org id.
-func fetchKeyPairs(client *registry.Client, orgID *identity.ID) (*identity.ID,
-	*identity.ID, *crypto.KeyPairs, error) {
+func fetchKeyPairs(ctx context.Context, client *registry.Client,
+	orgID *identity.ID) (*identity.ID, *identity.ID, *crypto.KeyPairs, error) {
 
-	keyPairs, err := client.KeyPairs.List(orgID)
+	keyPairs, err := client.KeyPairs.List(ctx, orgID)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -440,10 +443,10 @@ func findKeyringMember(id *identity.ID,
 
 // findEncryptingKey queries the registry for public keys in the given org, to
 // find the matching one
-func findEncryptingKey(client *registry.Client, orgID *identity.ID,
+func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *identity.ID,
 	encryptingKeyID *identity.ID) (*primitive.PublicKey, error) {
 
-	claimTrees, err := client.ClaimTree.List(orgID, nil)
+	claimTrees, err := client.ClaimTree.List(ctx, orgID, nil)
 	if err != nil {
 		return nil, err
 	}

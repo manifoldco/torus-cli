@@ -25,6 +25,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 	db *db.DB, engine *crypto.Engine) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		inviteID, err := identity.DecodeFromString(bone.GetValue(r, "id"))
 		if err != nil {
 			log.Printf("Could not approve org invite; invalid id: %s", err)
@@ -33,7 +34,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 		}
 
 		// Get the invite!
-		invite, err := client.OrgInvite.Get(&inviteID)
+		invite, err := client.OrgInvite.Get(ctx, &inviteID)
 		if err != nil {
 			log.Printf("could not fetch org invitation: %s", err)
 			encodeResponseErr(w, err)
@@ -56,14 +57,14 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 		}
 
 		// Get this users keypairs
-		sigID, encID, kp, err := fetchKeyPairs(client, inviteBody.OrgID)
+		sigID, encID, kp, err := fetchKeyPairs(ctx, client, inviteBody.OrgID)
 		if err != nil {
 			log.Printf("could not fetch keypairs for org: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
 
-		claimTrees, err := client.ClaimTree.List(inviteBody.OrgID, nil)
+		claimTrees, err := client.ClaimTree.List(r.Context(), inviteBody.OrgID, nil)
 		if err != nil {
 			log.Printf("could not retrieve claim tree for invite approval: %s", err)
 			encodeResponseErr(w, err)
@@ -80,7 +81,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 		// Get all the keyrings and memberships for the current user. This way we
 		// can decrypt the MEK for each and then create a new KeyringMember for
 		// our wonderful new org member!
-		keyringSections, err := client.Keyring.List(inviteBody.OrgID, s.ID())
+		keyringSections, err := client.Keyring.List(ctx, inviteBody.OrgID, s.ID())
 		if err != nil {
 			log.Printf("could not retrieve keyring sections for user: %s", err)
 			encodeResponseErr(w, err)
@@ -154,7 +155,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			members = append(members, *member)
 		}
 
-		invite, err = client.OrgInvite.Approve(&inviteID)
+		invite, err = client.OrgInvite.Approve(ctx, &inviteID)
 		if err != nil {
 			log.Printf("could not approve org invite: %s", err)
 			encodeResponseErr(w, err)
@@ -162,7 +163,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 		}
 
 		if len(members) != 0 {
-			_, err = client.KeyringMember.Post(members)
+			_, err = client.KeyringMember.Post(ctx, members)
 			if err != nil {
 				log.Printf("error uploading memberships: %s", err)
 				encodeResponseErr(w, err)

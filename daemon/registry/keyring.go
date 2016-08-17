@@ -23,7 +23,9 @@ type KeyringSection struct {
 }
 
 // List retrieves an array of KeyringSections from the registry.
-func (k *KeyringClient) List(orgID *identity.ID, ownerID *identity.ID) ([]KeyringSection, error) {
+func (k *KeyringClient) List(ctx context.Context, orgID *identity.ID,
+	ownerID *identity.ID) ([]KeyringSection, error) {
+
 	query := &url.Values{}
 
 	if orgID != nil {
@@ -40,7 +42,7 @@ func (k *KeyringClient) List(orgID *identity.ID, ownerID *identity.ID) ([]Keyrin
 	}
 
 	resp := []KeyringSection{}
-	_, err = k.client.Do(context.TODO(), req, &resp)
+	_, err = k.client.Do(ctx, req, &resp)
 	if err != nil {
 		return nil, err
 	}

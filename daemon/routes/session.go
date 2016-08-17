@@ -17,6 +17,7 @@ func loginRoute(client *registry.Client, s session.Session,
 	db *db.DB) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		dec := json.NewDecoder(r.Body)
 
 		creds := login{}
@@ -36,7 +37,7 @@ func loginRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		salt, loginToken, err := client.Tokens.PostLogin(creds.Email)
+		salt, loginToken, err := client.Tokens.PostLogin(ctx, creds.Email)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -49,13 +50,13 @@ func loginRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		authToken, err := client.Tokens.PostAuth(loginToken, hmac)
+		authToken, err := client.Tokens.PostAuth(ctx, loginToken, hmac)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
-		self, err := client.Users.GetSelf(authToken)
+		self, err := client.Users.GetSelf(ctx, authToken)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -77,7 +78,7 @@ func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {
 			return
 		}
 
-		err := client.Tokens.Delete(tok)
+		err := client.Tokens.Delete(r.Context(), tok)
 		switch err := err.(type) {
 		case *registry.Error:
 			switch {

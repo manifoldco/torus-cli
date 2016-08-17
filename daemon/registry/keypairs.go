@@ -29,8 +29,8 @@ type KeyPairs struct {
 // claim on the public key.
 //
 // keys may be either signing or encryption keys.
-func (k *KeyPairs) Post(pubKey, privKey, claim *envelope.Signed) (
-	*envelope.Signed, *envelope.Signed, []envelope.Signed, error) {
+func (k *KeyPairs) Post(ctx context.Context, pubKey, privKey,
+	claim *envelope.Signed) (*envelope.Signed, *envelope.Signed, []envelope.Signed, error) {
 
 	req, err := k.client.NewRequest("POST", "/keypairs", nil,
 		ClaimedKeyPair{
@@ -44,7 +44,7 @@ func (k *KeyPairs) Post(pubKey, privKey, claim *envelope.Signed) (
 	}
 
 	resp := ClaimedKeyPair{}
-	_, err = k.client.Do(context.TODO(), req, &resp)
+	_, err = k.client.Do(ctx, req, &resp)
 	if err != nil {
 		log.Printf("Failed to create signing keypair: %s", err)
 		return nil, nil, nil, err
@@ -55,7 +55,7 @@ func (k *KeyPairs) Post(pubKey, privKey, claim *envelope.Signed) (
 
 // List returns all KeyPairs for the logged in user in the given, or all orgs
 // if orgID is nil.
-func (k *KeyPairs) List(orgID *identity.ID) ([]ClaimedKeyPair, error) {
+func (k *KeyPairs) List(ctx context.Context, orgID *identity.ID) ([]ClaimedKeyPair, error) {
 	query := &url.Values{}
 	if orgID != nil {
 		query.Set("org_id", orgID.String())
@@ -68,7 +68,7 @@ func (k *KeyPairs) List(orgID *identity.ID) ([]ClaimedKeyPair, error) {
 	}
 
 	resp := []ClaimedKeyPair{}
-	_, err = k.client.Do(context.TODO(), req, &resp)
+	_, err = k.client.Do(ctx, req, &resp)
 	if err != nil {
 		log.Printf("Failed to retrieve keypairs: %s", err)
 		return nil, err

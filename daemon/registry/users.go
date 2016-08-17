@@ -17,7 +17,7 @@ type Users struct {
 }
 
 // GetSelf returns the logged in user.
-func (u *Users) GetSelf(token string) (*envelope.Unsigned, error) {
+func (u *Users) GetSelf(ctx context.Context, token string) (*envelope.Unsigned, error) {
 	req, err := u.client.NewTokenRequest(token, "GET", "/users/self", nil, nil)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
@@ -25,7 +25,7 @@ func (u *Users) GetSelf(token string) (*envelope.Unsigned, error) {
 	}
 
 	self := envelope.Unsigned{}
-	_, err = u.client.Do(context.TODO(), req, &self)
+	_, err = u.client.Do(ctx, req, &self)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 		return nil, err

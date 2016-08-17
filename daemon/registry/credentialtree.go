@@ -28,7 +28,7 @@ type CredentialTree struct {
 // Post creates a new CredentialTree on the registry.
 //
 // The CredentialTree includes the keyring, it's members, and credentials.
-func (c *CredentialTreeClient) Post(t *CredentialTree) (*CredentialTree, error) {
+func (c *CredentialTreeClient) Post(ctx context.Context, t *CredentialTree) (*CredentialTree, error) {
 	req, err := c.client.NewRequest("POST", "/credentialtree", nil, t)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
@@ -36,7 +36,7 @@ func (c *CredentialTreeClient) Post(t *CredentialTree) (*CredentialTree, error) 
 	}
 
 	resp := CredentialTree{}
-	_, err = c.client.Do(context.TODO(), req, &resp)
+	_, err = c.client.Do(ctx, req, &resp)
 	if err != nil {
 		log.Printf("Failed to create credential tree: %s", err)
 		return nil, err
@@ -48,7 +48,9 @@ func (c *CredentialTreeClient) Post(t *CredentialTree) (*CredentialTree, error) 
 // List returns back all segments of the CredentialGraph (Keyring, Keyring
 // Members, and Credentials) that match the given name, path, or path
 // expression.
-func (c *CredentialTreeClient) List(name, path, pathexp string, ownerID *identity.ID) ([]CredentialTree, error) {
+func (c *CredentialTreeClient) List(ctx context.Context, name, path,
+	pathexp string, ownerID *identity.ID) ([]CredentialTree, error) {
+
 	query := url.Values{}
 
 	if path != "" && pathexp != "" {
@@ -74,7 +76,7 @@ func (c *CredentialTreeClient) List(name, path, pathexp string, ownerID *identit
 	}
 
 	resp := []CredentialTree{}
-	_, err = c.client.Do(context.TODO(), req, &resp)
+	_, err = c.client.Do(ctx, req, &resp)
 	if err != nil {
 		return nil, err
 	}

@@ -35,7 +35,9 @@ type PublicKeySegment struct {
 //
 // If an ownerID is provided then only public keys and claims related to that
 // user or machine will be returned.
-func (c *ClaimTreeClient) List(orgID *identity.ID, ownerID *identity.ID) ([]ClaimTree, error) {
+func (c *ClaimTreeClient) List(ctx context.Context, orgID *identity.ID,
+	ownerID *identity.ID) ([]ClaimTree, error) {
+
 	query := &url.Values{}
 	if orgID != nil {
 		query.Set("org_id", orgID.String())
@@ -52,7 +54,7 @@ func (c *ClaimTreeClient) List(orgID *identity.ID, ownerID *identity.ID) ([]Clai
 	}
 
 	resp := []ClaimTree{}
-	_, err = c.client.Do(context.TODO(), req, &resp)
+	_, err = c.client.Do(ctx, req, &resp)
 	if err != nil {
 		return nil, err
 	}

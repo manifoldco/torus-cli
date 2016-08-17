@@ -14,7 +14,7 @@ type Credentials struct {
 }
 
 // Create creates the provided credential in the registry.
-func (c *Credentials) Create(credential *envelope.Signed) (*envelope.Signed, error) {
+func (c *Credentials) Create(ctx context.Context, credential *envelope.Signed) (*envelope.Signed, error) {
 	req, err := c.client.NewRequest("POST", "/credentials", nil, credential)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
@@ -22,7 +22,7 @@ func (c *Credentials) Create(credential *envelope.Signed) (*envelope.Signed, err
 	}
 
 	resp := &envelope.Signed{}
-	_, err = c.client.Do(context.TODO(), req, resp)
+	_, err = c.client.Do(ctx, req, resp)
 	if err != nil {
 		return nil, err
 	}

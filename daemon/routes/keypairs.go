@@ -17,8 +17,9 @@ import (
 
 func keypairsGenerateRoute(client *registry.Client, s session.Session,
 	db *db.DB, engine *crypto.Engine) http.HandlerFunc {
-	return func(w http.ResponseWriter,
-		r *http.Request) {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 
 		dec := json.NewDecoder(r.Body)
 		genReq := keyPairGenerate{}
@@ -59,8 +60,8 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		pubsig, privsig, claims, err := client.KeyPairs.Post(pubsig, privsig,
-			sigclaim)
+		pubsig, privsig, claims, err := client.KeyPairs.Post(ctx, pubsig,
+			privsig, sigclaim)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -103,8 +104,8 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		pubenc, privenc, claims, err = client.KeyPairs.Post(pubenc, privenc,
-			encclaim)
+		pubenc, privenc, claims, err = client.KeyPairs.Post(ctx, pubenc,
+			privenc, encclaim)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
