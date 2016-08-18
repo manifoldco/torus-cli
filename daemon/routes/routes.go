@@ -33,10 +33,11 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.PostFunc("/keypairs/generate",
 		keypairsGenerateRoute(client, s, db, engine, o))
 
-	mux.GetFunc("/credentials", credentialsGetRoute(client, s, engine))
-	mux.PostFunc("/credentials", credentialsPostRoute(client, s, engine))
+	mux.GetFunc("/credentials", credentialsGetRoute(client, s, engine, o))
+	mux.PostFunc("/credentials", credentialsPostRoute(client, s, engine, o))
 
-	mux.PostFunc("/org-invites/:id/approve", orgInvitesApproveRoute(client, s, db, engine))
+	mux.PostFunc("/org-invites/:id/approve",
+		orgInvitesApproveRoute(client, s, db, engine, o))
 
 	mux.GetFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)

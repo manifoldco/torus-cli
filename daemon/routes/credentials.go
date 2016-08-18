@@ -18,6 +18,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/primitive"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
@@ -40,8 +41,8 @@ type plainTextEnvelope struct {
 	Body    *plainTextCredential `json:"body"`
 }
 
-func credentialsGetRoute(client *registry.Client,
-	s session.Session, engine *crypto.Engine) http.HandlerFunc {
+func credentialsGetRoute(client *registry.Client, s session.Session,
+	engine *crypto.Engine, o *observer.Observer) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -53,6 +54,15 @@ func credentialsGetRoute(client *registry.Client,
 			encodeResponseErr(w, err)
 			return
 		}
+
+		var steps uint = 1
+		for _, tree := range trees {
+			steps += uint(len(tree.Credentials))
+		}
+		var step uint = 1
+
+		o.Notify(ctx, observer.Progress, "Credentials retrieved", step, steps)
+		step++
 
 		// Loop over the trees and unpack the credentials; later on we will
 		// actually do real work and decrypt each of these credentials but for
@@ -105,6 +115,9 @@ func credentialsGetRoute(client *registry.Client,
 					},
 				}
 				creds = append(creds, plainCred)
+
+				o.Notify(ctx, observer.Progress, "Credential decrypted", step, steps)
+				step++
 			}
 		}
 
@@ -119,9 +132,12 @@ func credentialsGetRoute(client *registry.Client,
 }
 
 func credentialsPostRoute(client *registry.Client, s session.Session,
-	engine *crypto.Engine) http.HandlerFunc {
+	engine *crypto.Engine, o *observer.Observer) http.HandlerFunc {
+
+	var steps uint = 4
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		var step uint = 1
 		ctx := r.Context()
 		dec := json.NewDecoder(r.Body)
 		cred := plainTextEnvelope{}
@@ -142,11 +158,17 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		o.Notify(ctx, observer.Progress, "Credentials retrieved", step, steps)
+		step++
+
 		sigID, encID, kp, err := fetchKeyPairs(ctx, client, cred.Body.OrgID)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Keypairs retrieved", step, steps)
+		step++
 
 		newTree := false
 		// No matching CredentialTree/KeyRing for this credential.
@@ -216,6 +238,9 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		o.Notify(ctx, observer.Progress, "Encrypting key retrieved", step, steps)
+		step++
+
 		// Derive a key for the credential using the keyring master key
 		// and use the derived key to encrypt the credential
 		cekNonce, ctNonce, ct, err := engine.BoxCredential(
@@ -232,6 +257,9 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Credential encrypted", step, steps)
+		step++
 
 		if newTree {
 			tree.Credentials = []envelope.Signed{*signed}

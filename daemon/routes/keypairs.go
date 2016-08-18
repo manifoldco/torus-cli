@@ -10,15 +10,19 @@ import (
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/envelope"
+	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/primitive"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
 func keypairsGenerateRoute(client *registry.Client, s session.Session,
-	db *db.DB, engine *crypto.Engine) http.HandlerFunc {
+	db *db.DB, engine *crypto.Engine, o *observer.Observer) http.HandlerFunc {
+
+	var steps uint = 5
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		var step uint = 1
 		ctx := r.Context()
 
 		dec := json.NewDecoder(r.Body)
@@ -35,6 +39,9 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Keypairs generated", step, steps)
+		step++
 
 		pubsig, err := packagePublicKey(ctx, engine, s.ID(), genReq.OrgID,
 			signingKeyType, kp.Signature.Public, nil, &kp.Signature)
@@ -60,6 +67,9 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		o.Notify(ctx, observer.Progress, "Signing keys signed", step, steps)
+		step++
+
 		pubsig, privsig, claims, err := client.KeyPairs.Post(ctx, pubsig,
 			privsig, sigclaim)
 		if err != nil {
@@ -78,6 +88,9 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Signing keys uploaded", step, steps)
+		step++
 
 		pubenc, err := packagePublicKey(ctx, engine, s.ID(), genReq.OrgID,
 			encryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
@@ -104,6 +117,9 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		o.Notify(ctx, observer.Progress, "Encryption keys signed", step, steps)
+		step++
+
 		pubenc, privenc, claims, err = client.KeyPairs.Post(ctx, pubenc,
 			privenc, encclaim)
 		if err != nil {
@@ -122,6 +138,9 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Encryption keys uploaded", step, steps)
+		step++
 
 		w.WriteHeader(http.StatusNoContent)
 	}
