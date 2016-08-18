@@ -11,9 +11,6 @@ var resolver = require('../util/resolver');
 
 var map = exports;
 
-// XXX: This should be 0600 not 0700
-var MAP_PERM_STRING = '0700';
-var MAP_FILE_PERM = 448;
 var MAP_FILE_NAME = '.arigato.json';
 var MAP_DEFAULTS = {
   org: null,
@@ -114,12 +111,6 @@ map._readFile = function (mapPath) {
           'Context map file must be a file: ' + mapPath));
       }
 
-      var fileMode = '0' + (stat.mode & parseInt('777', 8)).toString(8);
-      if (fileMode !== MAP_PERM_STRING) {
-        return reject(new Error('Context map file permission error: ' +
-          mapPath + ' ' + fileMode + ' not ' + MAP_PERM_STRING));
-      }
-
       fs.readFile(mapPath, 'utf-8', function (err, contents) {
         if (err) {
           return reject(err);
@@ -150,10 +141,7 @@ map._readFile = function (mapPath) {
 map._writeFile = function (mapPath, targetMap) {
   return new Promise(function (resolve, reject) {
     var contents = JSON.stringify(targetMap, null, 2);
-    var opts = {
-      encoding: 'utf-8',
-      mode: MAP_FILE_PERM
-    };
+    var opts = { encoding: 'utf-8' };
 
     fs.writeFile(mapPath, contents, opts, function (err) {
       if (err) {
