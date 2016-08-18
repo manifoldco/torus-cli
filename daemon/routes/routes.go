@@ -9,6 +9,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
+	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
@@ -16,19 +17,21 @@ import (
 // NewRouteMux returns a *bone.Mux responsible for handling the cli to daemon
 // http api.
 func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
-	t *http.Transport) *bone.Mux {
+	t *http.Transport, o *observer.Observer) *bone.Mux {
 
 	engine := crypto.NewEngine(s, db)
 	client := registry.NewClient(c.RegistryURI.String(), c.APIVersion,
 		c.Version, s, t)
 	mux := bone.New()
 
+	mux.Get("/observe", o)
+
 	mux.PostFunc("/login", loginRoute(client, s, db))
 	mux.PostFunc("/logout", logoutRoute(client, s))
 	mux.GetFunc("/session", sessionRoute(s))
 
 	mux.PostFunc("/keypairs/generate",
-		keypairsGenerateRoute(client, s, db, engine))
+		keypairsGenerateRoute(client, s, db, engine, o))
 
 	mux.GetFunc("/credentials", credentialsGetRoute(client, s, engine))
 	mux.PostFunc("/credentials", credentialsPostRoute(client, s, engine))

@@ -20,6 +20,7 @@ import (
 
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/db"
+	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/routes"
 	"github.com/arigatomachine/cli/daemon/session"
@@ -36,6 +37,7 @@ type AuthProxy struct {
 	c    *config.Config
 	db   *db.DB
 	sess session.Session
+	o    *observer.Observer
 }
 
 // NewAuthProxy returns a new AuthProxy. It will return an error if creation
@@ -48,7 +50,14 @@ func NewAuthProxy(c *config.Config, sess session.Session,
 		return nil, err
 	}
 
-	return &AuthProxy{u: c.RegistryURI, l: l, c: c, sess: sess, db: db}, nil
+	return &AuthProxy{
+		u:    c.RegistryURI,
+		l:    l,
+		c:    c,
+		db:   db,
+		sess: sess,
+		o:    observer.New(),
+	}, nil
 }
 
 // Listen starts the main loop of the AuthProxy. It returns on error, or when
@@ -78,8 +87,10 @@ func (p *AuthProxy) Listen() error {
 		},
 	}
 
+	go p.o.Start()
+
 	mux.HandleFunc("/proxy/", proxyCanceler(proxy))
-	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, t))
+	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, t, p.o))
 
 	h := httpdown.HTTP{}
 	p.s = h.Serve(&http.Server{Handler: requestIDHandler(loggingHandler(mux))}, p.l)
@@ -90,6 +101,7 @@ func (p *AuthProxy) Listen() error {
 // Close gracefully closes the socket, ensuring all requests are finished
 // within the timeout.
 func (p *AuthProxy) Close() error {
+	p.o.Stop()
 	return p.s.Stop()
 }
 

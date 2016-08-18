@@ -11,7 +11,7 @@ server:
 	go build -i -v -o ${OUT} -ldflags="-X ${PKG}/config.version=${VERSION}" ${PKG}
 
 test:
-	@go test -short ${PKG_LIST}
+	@go test -short $$(glide nv)
 
 vet:
 	@go vet ${PKG_LIST}
