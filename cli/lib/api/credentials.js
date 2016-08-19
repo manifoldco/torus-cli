@@ -12,7 +12,7 @@ credentials.get = function (client, query) {
   });
 };
 
-credentials.create = function (client, data) {
+credentials.create = function (client, data, progress) {
   return client.post({
     url: '/credentials',
     json: {
@@ -27,7 +27,7 @@ credentials.create = function (client, data) {
         value: data.value
       }
     }
-  }, credentials.isNewAPI).then(function (res) {
+  }, credentials.isNewAPI, progress).then(function (res) {
     return res.body;
   });
 };

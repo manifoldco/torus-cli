@@ -114,7 +114,9 @@ var cmd = new Command(
         // Upload the keypair to the organization
         var opts = { org_id: invite.body.org_id };
 
-        return ctx.api.keypairs.generate(opts);
+        return ctx.api.keypairs.generate(opts, function (event) {
+          console.log(event.message);
+        });
       })
       .then(function () {
         // Accept that invite!

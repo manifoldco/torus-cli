@@ -11,7 +11,8 @@ module.exports.preHook = function () {
 
     ctx.api = api.build({
       registryUrl: _.get(ctx, 'ctx.prefs.values.core.registry_uri', config.registryUrl),
-      socketUrl: config.socketUrl
+      socketUrl: config.socketUrl,
+      socketPath: config.socketPath
     });
 
     return new Promise(function (resolve, reject) {
