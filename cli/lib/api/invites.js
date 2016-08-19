@@ -67,12 +67,12 @@ invites.accept = function (client, body) {
   });
 };
 
-invites.approve = function (client, query, params) {
+invites.approve = function (client, query, params, progress) {
   return client.post({
     url: '/org-invites/:id/approve',
     qs: query || {},
     params: params || {}
-  }, true).then(function (res) {
+  }, true, progress).then(function (res) {
     return res.body;
   });
 };

@@ -4,8 +4,10 @@ var client = exports;
 
 var _ = require('lodash');
 var request = require('request');
+var url = require('url');
 var uuid = require('uuid');
 var Promise = require('es6-promise').Promise;
+var EventSource = require('eventsource');
 
 var CLI_VERSION = require('../../package.json').version;
 
@@ -32,6 +34,10 @@ function Client(opts) {
     api: opts.apiVersion,
     cli: CLI_VERSION
   };
+
+  this.eventSourceUrl = url.parse('http://registry.arigato.sh/v1/observe');
+  this.eventSourceUrl.socketPath = opts.socketPath;
+
   this._initialize();
 }
 
@@ -65,9 +71,11 @@ Client.prototype._initialize = function () {
  * @param {string} verb
  * @param {object} opts
  */
-Client.prototype._req = function (verb, opts, isV1) {
+Client.prototype._req = function (verb, opts, isV1, progress) {
   var self = this;
-  return new Promise(function (resolve, reject) {
+  var reqId = uuid.v4();
+
+  var promise = new Promise(function (resolve, reject) {
     if (opts.url.indexOf(':') > -1) {
       if (!opts.params || Object.keys(opts.params).length === 0) {
         throw new Error('Request to ' + opts.url + ' requires params');
@@ -81,7 +89,7 @@ Client.prototype._req = function (verb, opts, isV1) {
     opts = _.extend({}, opts, {
       method: verb,
       url: (isV1 ? self.v1Endpoint : self.proxyEndpoint) + opts.url,
-      headers: self._headers(opts),
+      headers: self._headers(opts, reqId),
       time: true,
       gzip: true
     });
@@ -106,6 +114,32 @@ Client.prototype._req = function (verb, opts, isV1) {
       return resolve(res);
     });
   });
+
+  if (progress) {
+    var cb = function (event) {
+      var msg = JSON.parse(event.data);
+      if (msg.id === reqId) {
+        progress(msg);
+      }
+    };
+
+    var eventSource = new EventSource(this.eventSourceUrl);
+    eventSource.on('progress', cb);
+
+    promise = promise
+    .then(function (res) {
+      eventSource.removeListener('progress', cb);
+      eventSource.close();
+      return res;
+    })
+    .catch(function (err) {
+      eventSource.removeListener('progress', cb);
+      eventSource.close();
+      return err;
+    });
+  }
+
+  return promise;
 };
 
 /**
@@ -113,10 +147,10 @@ Client.prototype._req = function (verb, opts, isV1) {
  *
  * @param {object} opts
  */
-Client.prototype._headers = function (opts) {
+Client.prototype._headers = function (opts, reqId) {
   var headers = {
     Host: 'registry.arigato.sh', // Discarded by Daemon, but required in http 1.1 spec
-    'X-Request-Id': uuid.v4()
+    'X-Request-Id': reqId
   };
 
   return _.extend({}, opts.headers, headers);

@@ -54,7 +54,9 @@ generate._single = function (ctx) {
 
       console.log(
         'Generating signing and encryption keypairs for', data.org, '\n');
-      return ctx.api.keypairs.generate({ org_id: org.id })
+      return ctx.api.keypairs.generate({ org_id: org.id }, function (event) {
+        console.log(event.message);
+      })
       .then(function () {
         console.log('Keypair generation successful.\n');
       });

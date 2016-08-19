@@ -63,7 +63,10 @@ approve.execute = function (ctx) {
 
         var invite = invites[0];
 
-        return ctx.api.invites.approve({}, { id: invite.id }).then(function () {
+        return ctx.api.invites.approve({}, { id: invite.id }, function (event) {
+          console.log(event.message);
+        })
+        .then(function () {
           return resolve({
             org: org,
             invite: invite

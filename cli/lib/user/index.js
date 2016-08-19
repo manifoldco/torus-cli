@@ -148,7 +148,9 @@ user.execute = function (ctx, params) {
  */
 user.finalize = function (ctx) {
   return ctx.api.orgs.get().then(function (orgs) {
-    return ctx.api.keypairs.generate({ org_id: orgs[0].id });
+    return ctx.api.keypairs.generate({ org_id: orgs[0].id }, function (event) {
+      console.log(event.message);
+    });
   });
 };
 

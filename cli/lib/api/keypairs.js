@@ -12,11 +12,11 @@ keypairs.list = function (client, query) {
   });
 };
 
-keypairs.generate = function (client, body) {
+keypairs.generate = function (client, body, progress) {
   return client.post({
     url: '/keypairs/generate',
     json: body
-  }, keypairs.isNewAPI).then(function (res) {
+  }, keypairs.isNewAPI, progress).then(function (res) {
     return res.body;
   });
 };

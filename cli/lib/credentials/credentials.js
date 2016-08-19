@@ -73,7 +73,9 @@ credentials.create = function (api, params, value) {
           value: value.toString()
         };
 
-        return api.credentials.create(data);
+        return api.credentials.create(data, function (event) {
+          console.log(event.message);
+        });
       });
     })
     .then(resolve)

@@ -16,15 +16,19 @@ import (
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/primitive"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 
 func orgInvitesApproveRoute(client *registry.Client, s session.Session,
-	db *db.DB, engine *crypto.Engine) http.HandlerFunc {
+	db *db.DB, engine *crypto.Engine, o *observer.Observer) http.HandlerFunc {
+
+	var steps uint = 6
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		var step uint = 1
 		ctx := r.Context()
 		inviteID, err := identity.DecodeFromString(bone.GetValue(r, "id"))
 		if err != nil {
@@ -56,6 +60,9 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		o.Notify(ctx, observer.Progress, "Invite retrieved", step, steps)
+		step++
+
 		// Get this users keypairs
 		sigID, encID, kp, err := fetchKeyPairs(ctx, client, inviteBody.OrgID)
 		if err != nil {
@@ -63,6 +70,9 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Keypairs retrieved", step, steps)
+		step++
 
 		claimTrees, err := client.ClaimTree.List(r.Context(), inviteBody.OrgID, nil)
 		if err != nil {
@@ -77,6 +87,9 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 				"No claim tree found for org: %s", inviteBody.OrgID))
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Claims retrieved", step, steps)
+		step++
 
 		// Get all the keyrings and memberships for the current user. This way we
 		// can decrypt the MEK for each and then create a new KeyringMember for
@@ -97,6 +110,9 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Keyrings retrieved", step, steps)
+		step++
 
 		members := []envelope.Signed{}
 		for _, segment := range keyringSections {
@@ -155,12 +171,18 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			members = append(members, *member)
 		}
 
+		o.Notify(ctx, observer.Progress, "Keyring memberships created", step, steps)
+		step++
+
 		invite, err = client.OrgInvite.Approve(ctx, &inviteID)
 		if err != nil {
 			log.Printf("could not approve org invite: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
+
+		o.Notify(ctx, observer.Progress, "Invite approved", step, steps)
+		step++
 
 		if len(members) != 0 {
 			_, err = client.KeyringMember.Post(ctx, members)
