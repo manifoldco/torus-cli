@@ -23,7 +23,9 @@ describe('daemon middleware', function () {
       registryUrl: 'https://registry.url',
       socketUrl: 'https://socket.url'
     });
-    sandbox.stub(mockAPI.versionApi, 'get').returns(Promise.resolve({ version: '0.0.1' }));
+    sandbox.stub(mockAPI.versionApi, 'get').returns(Promise.resolve({
+      daemon: { version: '0.0.1' }
+    }));
     sandbox.stub(api, 'build').returns(mockAPI);
     ctx = new Context({});
     ctx.config = new Config(process.cwd());
@@ -72,9 +74,9 @@ describe('daemon middleware', function () {
 
   it('restarts daemon if the versions do not match', function () {
     mockAPI.versionApi.get
-      .returns(Promise.resolve({ version: '0' }))
+      .returns(Promise.resolve({ daemon: { version: '0' } }))
       .onSecondCall()
-      .returns(Promise.resolve({ version: '0.0.1' }));
+      .returns(Promise.resolve({ daemon: { version: '0.0.1' } }));
 
     sandbox.stub(daemon, 'status').returns(Promise.resolve({
       exists: true,
@@ -90,9 +92,9 @@ describe('daemon middleware', function () {
 
   it('errors if the versions do not match after a restart', function () {
     mockAPI.versionApi.get
-      .returns(Promise.resolve({ version: '0' }))
+      .returns(Promise.resolve({ daemon: { version: '0' } }))
       .onSecondCall()
-      .returns(Promise.resolve({ version: '0' }));
+      .returns(Promise.resolve({ daemon: { version: '0' } }));
 
     sandbox.stub(daemon, 'status').returns(Promise.resolve({
       exists: true,

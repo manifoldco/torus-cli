@@ -36,7 +36,7 @@ module.exports.preHook = function () {
           return ctx.api.versionApi.get();
         })
         .then(function (res) {
-          if (config.version === res.version) return res;
+          if (config.version === res.daemon.version) return res;
 
           console.log('The ag-daemon version is out of date.');
           console.log();
@@ -49,7 +49,7 @@ module.exports.preHook = function () {
           });
         })
         .then(function (res) {
-          if (config.version !== res.version) {
+          if (config.version !== res.daemon.version) {
             throw new Error('Wrong version of daemon running, check for zombie ag-daemon process');
           }
 
