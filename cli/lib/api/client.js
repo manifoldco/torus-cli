@@ -135,7 +135,7 @@ Client.prototype._req = function (verb, opts, isV1, progress) {
     .catch(function (err) {
       eventSource.removeListener('progress', cb);
       eventSource.close();
-      return err;
+      throw err;
     });
   }
 
