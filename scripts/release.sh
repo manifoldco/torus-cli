@@ -95,7 +95,7 @@ tar czf "$RELEASE_STAMP.tar.gz" cli/
 read -p "Do you wish to publish the release to s3? [yn]" s3_publish
 case $s3_publish in
     [Yy]*)
-        echo "Uploading $RELEASE_STAMP to https://s3.amazonaws.com/$RELEASE_BUCKET/$TAR_FILENAME"
+        echo "Uploading $RELEASE_STAMP to https://s3.amazonaws.com/$RELEASE_BUCKET/${TAR_FILENAME/+/%2B}"
         aws s3api put-object --bucket $RELEASE_BUCKET --key "$TAR_FILENAME" \
             --body "$RELEASE_STAMP.tar.gz"
         ;;
