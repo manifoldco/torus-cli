@@ -8,6 +8,9 @@ we follow for managing issues, developing product, and implementation is
 available in our shared [Google Docs
 Drive](https://drive.google.com/drive/u/0/folders/0Bx72T5vLCOgmeVlQbjVlUVVQRDg).
 
+When new functionality is added to the CLI interface, ensure the appropriate
+manual testing steps are added to the `./docs/qa.md` checklist.
+
 ## Setup
 
 There are several steps required to get up and running locally with the
@@ -27,6 +30,41 @@ daemon/cli and [registry](https://github.com/arigatomachine/registry).
    `bin/arigato prefs:set core.public_key_file $REGISTRY_REPO/keys/offline-pub.json`
 5. Now you should be able to begin interacting with the CLI and Daemon.
 
+
+## Releasing
+
+Releases are coordinated using a "release issue" which tracks the current RC
+and the state of all manual qa. Our desired state is for the role of "release
+manager" to pass between maintainers ensuring *everyone* is capable of
+releasing.
+
+**The Flow**:
+
+1. Create a release issue containing the targeted semver versions *and* current
+   RC status using the [release template](./docs/release-issue.md).
+2. Curate a changelist against the current "stable" version.
+3. Tag release candidates for the targeted components (registry, cli, etc) and
+   make them available.
+4. Execute manual qa checklist. If bugs are found, track bugs in the checklist
+   by linking to the bug issue. Repeat step 2-4 untl checklist passes.
+5. Tag production releases and deploy to hosted registry.
+
+**Releasing the CLI**
+
+The CLI and Daemon are packaged together using the
+`$CLI_REPO/scripts/release.sh` into the `cli` folder.
+
+Example:
+
+The following command will build the v0.2.0 tag for production. You will be
+prompted to upload the release to s3 or npm.
+
+```
+./scripts/release.sh v0.2.0 production
+```
+
+**You must be a member of the CLIDevelopers group on AWS**
+
 ## Codebase
 
 This repository contains the code for both the arigato daemon and cli. It's
@@ -43,28 +81,12 @@ ensuring a great user experience.
 Right now the CLI has all the business logic. Over time as we figure things out
 we'll push more code into the Daemon and eventually rewrite the CLI into Go.
 
-### Structure
+#### Structure
 
 The top level is responsible for packaging and releasing the cli and daemon.
 All component specific code and dependencies live in their respective folders.
 
-### Releasing
-
-The CLI and Daemon are packaged together using the
-`$CLI_REPO/scripts/release.sh` into the `cli` folder.
-
-**Example**
-
-The following command will build the v0.2.0 tag for production. You will be
-prompted to upload the release to s3 or npm.
-
-```
-./scripts/release.sh v0.2.0 production
-```
-
-**You must be a member of the CLIDevelopers group on AWS**
-
-### Docker
+#### Docker
 
 A docker container is provided for building and testing the daemon and cli
 together. Its used for both development and continuous integration.
@@ -100,7 +122,7 @@ will look for when trying to start the daemon.
 
 `$CLI_HOME/scripts/test.sh` inside the CLI directory.
 
-### Local Module Development Work Around
+#### Local Module Development Work Around
 
 The CLI currently relies on a shared node module
 ([common](https://github.com/arigatomachine/common)). At times its desirable to
@@ -116,7 +138,7 @@ still work.
 
 The container is still used for building the Go binary.
 
-### Travis
+#### Travis
 
 Travis builds and runs the docker container and uses a matrix of node versions
 for running tests which are defined in the `.travis.yml` file.
@@ -125,7 +147,7 @@ The ssh key used by travis (which is included encrypted in `id_rsa.enc`) has
 been assigned to the `arigato-automated` github account which allows us to
 bring in private dependencies.
 
-### Troubleshooting TL;DR
+#### Troubleshooting TL;DR
 
 1. Are you up to date with master in both registry, and cli?
 2. Did you rebuild your daemon with `$CLI_HOME/scripts/build.sh`?
