@@ -1,0 +1,28 @@
+hash: 182ed758c251b06f8be3601dafb598b6676ab19cc6a5cce916db07dc90754b18
+updated: 2016-08-22T15:16:59.694524961-03:00
+imports:
+- name: github.com/boltdb/bolt
+  version: 5cc10bbbc5c141029940133bb33c9e969512a698
+- name: github.com/dchest/blake2b
+  version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
+- name: github.com/facebookgo/httpdown
+  version: a3b1354551a26449fbe05f5d855937f6e7acbd71
+- name: github.com/go-ini/ini
+  version: cf53f9204df4fbdd7ec4164b57fa6184ba168292
+- name: github.com/go-zoo/bone
+  version: 0237f0c5455f175a6513e21afe050e128902dc7f
+- name: github.com/kardianos/osext
+  version: c2c54e542fb797ad986b31721e1baedf214ca413
+- name: github.com/keybase/go-triplesec
+  version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
+- name: github.com/natefinch/lumberjack
+  version: 514cbda263a734ae8caac038dadf05f8f3f9f738
+- name: github.com/nightlyone/lockfile
+  version: b30dcbfa86e3a1eaa4e6622de2ce57be2c138c10
+- name: github.com/satori/go.uuid
+  version: f9ab0dce87d815821e221626b772e3475a0d2749
+- name: github.com/urfave/cli
+  version: 168c95418e66e019fe17b8f4f5c45aa62ff80e23
+- name: golang.org/x/crypto
+  version: 10c26747e67d76ad4fafe6087c6f4073c3b22942
+devImports: []

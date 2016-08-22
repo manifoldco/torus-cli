@@ -7,6 +7,9 @@ cli/bin/ag-daemon*
 cli/ca_bundle.pem
 travis/id_rsa*
 builds/*
+vendor/*
+
+passthrough.go
 
 *.sw[mnop]
 *.orig
