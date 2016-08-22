@@ -38,6 +38,16 @@ and the state of all manual qa. Our desired state is for the role of "release
 manager" to pass between maintainers ensuring *everyone* is capable of
 releasing.
 
+A release manager is responsible for:
+
+- Creating the release issue
+- Coordinating the tagging of release candidates and deployment
+- Tracking and triaging bugs; while coordinating fixes for blockers
+- Curating the change log
+- Signing and pubishing the release.
+
+The release manager role rotates on a per-release basis.
+
 **The Flow**:
 
 1. Create a release issue containing the targeted semver versions *and* current
