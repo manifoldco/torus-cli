@@ -93,8 +93,6 @@ remove.execute = function (ctx) {
       }
 
       return ctx.api.memberships.delete({
-        org_id: payload.org.id
-      }, {
         id: payload.membership.id
       });
     })
