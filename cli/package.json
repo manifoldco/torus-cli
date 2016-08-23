@@ -33,7 +33,7 @@
     "backo": "1.1.0",
     "base64url": "1.0.6",
     "cli-table2": "0.2.0",
-    "common": "https://github.com/arigatomachine/common/archive/v0.10.0.tar.gz",
+    "common": "https://github.com/arigatomachine/common/archive/v0.11.0.tar.gz",
     "es6-promise": "3.1.2",
     "event-regulator": "0.2.0",
     "eventsource": "^0.2.1",
