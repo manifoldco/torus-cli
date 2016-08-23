@@ -58,19 +58,11 @@ daemon.start = function (cfg) {
         detached: true
       };
 
-      if (['linux', 'darwin'].indexOf(process.platform) === -1) {
-        console.log('ag only supports linux and darwin amd64');
-        throw new Error('Incompatible Platform: ' + process.platform);
-      }
-
-      var os = process.platform;
-      var arch = 'amd64';
-
-      var daemonPath = path.join(
-        __dirname, '../../bin/ag-daemon-' + os + '-' + arch);
+      var daemonPath = path.join(__dirname, '../../bin/ag');
 
       // TODO: We should be logging the pid and other information
-      var child = childProcess.spawn(daemonPath, [], opt);
+      var child = childProcess.spawn(daemonPath, ['daemon', 'start',
+        '--foreground', '--daemonize'], opt);
       child.unref();
 
       // XXX: Wait a second before trying to connect to the daemon

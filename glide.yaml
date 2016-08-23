@@ -1,4 +1,4 @@
-package: github.com/arigatomachine/cli/daemon
+package: github.com/arigatomachine/cli
 import:
 - package: github.com/satori/go.uuid
 - package: github.com/natefinch/lumberjack

@@ -2,7 +2,7 @@
 set -eE
 set -o pipefail
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 
 CMD=$1
 GOOS=${GOOS:=darwin}
@@ -33,13 +33,13 @@ function build_binary {
 
   if ! go version | grep --quiet "$GOVERSION"; then
     echo ""
-    echo "We require the daemon to be built with $GOVERSION"
+    echo "We require ag to be built with $GOVERSION"
     echo ""
     exit 1
   fi
 
-  pushd "$DIR/../daemon" > /dev/null
-    echo "Building Daemon"
+  pushd "$DIR" > /dev/null
+    echo "Building ag"
     echo "Target OS: $os"
     echo "Target Arch: $arch"
 
@@ -47,11 +47,11 @@ function build_binary {
     GOOS=$os GOARCH=$arch make
   popd > /dev/null
 
-  bin="ag-daemon-$os-$arch"
-  cp $DIR/../daemon/ag-daemon $DIR/../cli/bin/$bin
-  chmod +x $DIR/../cli/bin/$bin
+  bin="ag-$os-$arch"
+  cp $DIR/ag $DIR/cli/bin/$bin
+  chmod +x $DIR/cli/bin/$bin
 
-  echo "Copied $bin to $DIR/../cli/bin/$bin"
+  echo "Copied $bin to $DIR/cli/bin/$bin"
 }
 
 function build {
@@ -68,31 +68,21 @@ function build_release {
 }
 
 function run_tests {
-  echo "Running daemon tests"
-  pushd "$DIR/../daemon" >/dev/null
-    fmt
+  echo "Running golang tests"
+  pushd "$DIR" >/dev/null
+    make fmtcheck
     make vet
     make lint
     make test
   popd
-  echo "Daemon tests have passed"
+  echo "golang tests have passed"
 
   echo "Running cli tests"
-  pushd "$DIR/../cli" > /dev/null
+  pushd "$DIR/cli" > /dev/null
     gulp test
   popd
 
   echo "All tests have passed!"
-}
-
-function fmt {
-  fmt="$(find . ! \( -path './vendor' -prune \) -type f -name '*.go' -print0 | xargs -0 gofmt -l )"
-
-  if [ -n "$fmt" ]; then
-    echo "Unformatted go source code!"
-    echo "$fmt"
-    exit 1
-  fi
 }
 
 go version
