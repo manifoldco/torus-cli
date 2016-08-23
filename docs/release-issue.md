@@ -22,3 +22,4 @@ For each RC (release candidate), append a new comment with a fresh copy of the
 - [ ] Change Log prepared
 - [ ] QA Checklist Complete
 - [ ] All bugs fixed or triaged
+- [ ] Deployed and Released
