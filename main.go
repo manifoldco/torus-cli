@@ -9,12 +9,14 @@ import (
 
 	"github.com/kardianos/osext"
 	"github.com/urfave/cli"
+
+	"github.com/arigatomachine/cli/cmd"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Usage = "A secure, shared workspace for secrets"
-	app.Commands = passthroughs
+	app.Commands = append(cmd.Cmds, passthroughs...)
 	app.Run(os.Args)
 }
 
