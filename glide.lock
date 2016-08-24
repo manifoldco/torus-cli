@@ -1,0 +1,65 @@
+hash: 2e3b15749dcd2770bb546c054a232eab8992d058978e4316e0e17331c3cbd6e2
+updated: 2016-08-23T10:10:30.962110993-03:00
+imports:
+- name: github.com/boltdb/bolt
+  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
+- name: github.com/BurntSushi/toml
+  version: 99064174e013895bbd9b025c31100bd1d9b590ca
+- name: github.com/dchest/blake2b
+  version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
+- name: github.com/facebookgo/clock
+  version: 600d898af40aa09a7a93ecb9265d87b0504b6f03
+- name: github.com/facebookgo/httpdown
+  version: a3b1354551a26449fbe05f5d855937f6e7acbd71
+- name: github.com/facebookgo/stats
+  version: 1b76add642e42c6ffba7211ad7b3939ce654526e
+- name: github.com/go-ini/ini
+  version: a2610b3a793cfa7fdf0b07038068af5ddc12aba1
+- name: github.com/go-zoo/bone
+  version: 0237f0c5455f175a6513e21afe050e128902dc7f
+- name: github.com/gorilla/context
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+- name: github.com/gorilla/mux
+  version: cf79e51a62d8219d52060dfc1b4e810414ba2d15
+- name: github.com/julienschmidt/httprouter
+  version: d8ff598a019f2c7bad0980917a588193cf26666e
+- name: github.com/kardianos/osext
+  version: c2c54e542fb797ad986b31721e1baedf214ca413
+- name: github.com/keybase/go-triplesec
+  version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
+  subpackages:
+  - sha3
+- name: github.com/natefinch/lumberjack
+  version: 514cbda263a734ae8caac038dadf05f8f3f9f738
+- name: github.com/nightlyone/lockfile
+  version: 3d299f51e376213fcdcfd213a76afce6b290bf9d
+- name: github.com/satori/go.uuid
+  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+- name: github.com/urfave/cli
+  version: 207bb6185291cfced4895a7768cad642e08a68d8
+- name: golang.org/x/crypto
+  version: b35ccbc95a0eaae49fb65c5d627cb7149ed8d1ab
+  subpackages:
+  - acme/internal/acme
+  - blowfish
+  - ed25519/internal/edwards25519
+  - nacl/secretbox
+  - salsa20/salsa
+  - poly1305
+  - openpgp/armor
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
+  - pkcs12/internal/rc2
+- name: golang.org/x/net
+  version: 7394c112eae4dba7e96bfcfe738e6373d61772b4
+  subpackages:
+  - context
+  - context/ctxhttp
+- name: golang.org/x/sys
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  subpackages:
+  - unix
+- name: gopkg.in/yaml.v2
+  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
+devImports: []

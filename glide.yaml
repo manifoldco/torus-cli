@@ -1,4 +1,4 @@
-package: github.com/arigatomachine/cli/daemon
+package: github.com/arigatomachine/cli
 import:
 - package: github.com/satori/go.uuid
 - package: github.com/natefinch/lumberjack
@@ -11,3 +11,5 @@ import:
 - package: github.com/keybase/go-triplesec
 - package: github.com/dchest/blake2b
 - package: github.com/boltdb/bolt
+- package: github.com/urfave/cli
+- package: github.com/kardianos/osext

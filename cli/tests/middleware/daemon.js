@@ -106,7 +106,7 @@ describe('daemon middleware', function () {
     return middleware.preHook()(ctx).then(function () {
       sinon.assert.calledOnce(daemon.restart);
     }).catch(function (err) {
-      var errMsg = 'Wrong version of daemon running, check for zombie ag-daemon process';
+      var errMsg = 'Wrong version of daemon running, check for zombie ag daemon process';
       assert.strictEqual(err.message, errMsg);
     });
   });

@@ -39,7 +39,7 @@ module.exports.preHook = function () {
         .then(function (res) {
           if (config.version === res.daemon.version) return res;
 
-          console.log('The ag-daemon version is out of date.');
+          console.log('The ag daemon version is out of date.');
           console.log();
           console.log(
             'The daemon is being restarted, you will need to login again\n');
@@ -51,7 +51,7 @@ module.exports.preHook = function () {
         })
         .then(function (res) {
           if (config.version !== res.daemon.version) {
-            throw new Error('Wrong version of daemon running, check for zombie ag-daemon process');
+            throw new Error('Wrong version of daemon running, check for zombie ag daemon process');
           }
 
           return true;

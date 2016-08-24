@@ -2,11 +2,12 @@
 cli/node_modules*
 .DS_Store
 npm-debug*
-daemon/ag-daemon*
-cli/bin/ag-daemon*
 cli/ca_bundle.pem
 travis/id_rsa*
 builds/*
+vendor/*
+
+passthrough.go
 
 *.sw[mnop]
 *.orig

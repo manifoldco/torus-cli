@@ -1,4 +1,4 @@
-package main
+package daemon
 
 import (
 	"fmt"
@@ -23,8 +23,8 @@ type Daemon struct {
 	hasShutdown bool
 }
 
-// NewDaemon creates a new Daemon.
-func NewDaemon(cfg *config.Config) (*Daemon, error) {
+// New creates a new Daemon.
+func New(cfg *config.Config) (*Daemon, error) {
 
 	lock, err := lockfile.New(cfg.PidPath)
 	if err != nil {
