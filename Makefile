@@ -18,7 +18,7 @@ vet:
 
 fmtcheck:
 	@FMT=$$(for file in ${GO_FILES} ;  do \
-		gofmt -l $$file ; \
+		gofmt -l -s $$file ; \
 	done) ; \
 	if test -n "$$FMT"; then \
 		echo "gofmt problems:" ; \
