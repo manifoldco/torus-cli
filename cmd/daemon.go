@@ -23,12 +23,12 @@ func init() {
 		Name:  "daemon",
 		Usage: "Manage the session daemon",
 		Subcommands: []cli.Command{
-			cli.Command{
+			{
 				Name:   "status",
 				Usage:  "Display daemon status",
 				Action: TODO,
 			},
-			cli.Command{
+			{
 				Name:  "start",
 				Usage: "Start the session daemon",
 				Flags: []cli.Flag{
@@ -49,7 +49,7 @@ func init() {
 					return spawnDaemon()
 				},
 			},
-			cli.Command{
+			{
 				Name:   "stop",
 				Usage:  "Stop the session daemon",
 				Action: TODO,
