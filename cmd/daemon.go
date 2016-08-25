@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/kardianos/osext"
 	"github.com/natefinch/lumberjack"
@@ -58,7 +59,7 @@ func init() {
 			{
 				Name:   "stop",
 				Usage:  "Stop the session daemon",
-				Action: TODO,
+				Action: stopDaemon,
 			},
 		},
 	}
@@ -76,32 +77,14 @@ func daemonStatus(ctx *cli.Context) error {
 		return cli.NewExitError("Failed to load config: "+err.Error(), -1)
 	}
 
-	pidb, err := ioutil.ReadFile(cfg.PidPath)
+	proc, err := findDaemon(cfg)
 	if err != nil {
-		if os.IsNotExist(err) {
-			fmt.Println("Daemon is not running.")
-			return nil
-		}
-		return cli.NewExitError("Error reading daemon pid file: "+err.Error(), -1)
+		return err
 	}
 
-	pid, err := strconv.Atoi(strings.Trim(string(pidb), "\n"))
-	if err != nil {
-		return cli.NewExitError("pid file does not contain a valid pid", -1)
-	}
-
-	stalePid := cli.NewExitError("Daemon is not running, but pid file exists.", -1)
-	proc, err := os.FindProcess(pid)
-	if err != nil {
-		return stalePid
-	}
-
-	// On unix, findprocess does not error. So we have to check for the process.
-	if runtime.GOOS != "windows" {
-		err = proc.Signal(syscall.Signal(0))
-		if err != nil {
-			return stalePid
-		}
+	if proc == nil {
+		fmt.Println("Daemon is not running.")
+		return nil
 	}
 
 	client := api.NewClient(cfg)
@@ -110,7 +93,7 @@ func daemonStatus(ctx *cli.Context) error {
 		return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
 	}
 
-	fmt.Printf("Daemon is running. pid: %d version: v%s\n", pid, v.Version)
+	fmt.Printf("Daemon is running. pid: %d version: v%s\n", proc.Pid, v.Version)
 
 	return nil
 }
@@ -201,4 +184,87 @@ func shutdown(daemon *daemon.Daemon) {
 		log.Printf("Failed shutting down; caught panic: %v", r)
 		panic(r)
 	}
+}
+
+func stopDaemon(ctx *cli.Context) error {
+	arigatoRoot, err := config.CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
+	if err != nil {
+		return cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
+	}
+
+	cfg, err := config.NewConfig(arigatoRoot)
+	if err != nil {
+		return cli.NewExitError("Failed to load config: "+err.Error(), -1)
+	}
+
+	proc, err := findDaemon(cfg)
+	if err != nil {
+		return err
+	}
+
+	if proc == nil {
+		fmt.Println("Daemon is not running.")
+		return nil
+	}
+
+	err = proc.Signal(syscall.Signal(syscall.SIGTERM))
+
+	increment := 50 * time.Millisecond
+	for d := increment; d < 3*time.Second; d += increment {
+		time.Sleep(d)
+		if _, err := findProcess(proc.Pid); err != nil {
+			fmt.Println("Daemon stopped gracefully.")
+			return nil
+		}
+	}
+
+	err = proc.Kill()
+	if err != nil {
+		return cli.NewExitError("Could not stop daemon: "+err.Error(), -1)
+	}
+
+	fmt.Println("Daemon stopped forcefully.")
+	return nil
+}
+
+// findDaemon returns an os.Process for a running daemon, or nil if it is not
+// running. It returns an error if the configuration can't be loaded, or the
+// daemon pid file is corrupt/out of sync.
+func findDaemon(cfg *config.Config) (*os.Process, error) {
+	pidb, err := ioutil.ReadFile(cfg.PidPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, cli.NewExitError("Error reading daemon pid file: "+err.Error(), -1)
+	}
+
+	pid, err := strconv.Atoi(strings.Trim(string(pidb), "\n"))
+	if err != nil {
+		return nil, cli.NewExitError("pid file does not contain a valid pid", -1)
+	}
+
+	proc, err := findProcess(pid)
+	if err != nil {
+		return nil, cli.NewExitError("Daemon is not running, but pid file exists.", -1)
+	}
+
+	return proc, nil
+}
+
+func findProcess(pid int) (*os.Process, error) {
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return nil, err
+	}
+
+	// On unix, findprocess does not error. So we have to check for the process.
+	if runtime.GOOS != "windows" {
+		err = proc.Signal(syscall.Signal(0))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return proc, nil
 }
