@@ -1,18 +1,24 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path"
+	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 
 	"github.com/kardianos/osext"
 	"github.com/natefinch/lumberjack"
 	"github.com/urfave/cli"
+
+	"github.com/arigatomachine/cli/api"
 
 	"github.com/arigatomachine/cli/daemon"
 	"github.com/arigatomachine/cli/daemon/config"
@@ -26,7 +32,7 @@ func init() {
 			{
 				Name:   "status",
 				Usage:  "Display daemon status",
-				Action: TODO,
+				Action: daemonStatus,
 			},
 			{
 				Name:  "start",
@@ -57,6 +63,56 @@ func init() {
 		},
 	}
 	Cmds = append(Cmds, daemon)
+}
+
+func daemonStatus(ctx *cli.Context) error {
+	arigatoRoot, err := config.CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
+	if err != nil {
+		return cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
+	}
+
+	cfg, err := config.NewConfig(arigatoRoot)
+	if err != nil {
+		return cli.NewExitError("Failed to load config: "+err.Error(), -1)
+	}
+
+	pidb, err := ioutil.ReadFile(cfg.PidPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Println("Daemon is not running.")
+			return nil
+		}
+		return cli.NewExitError("Error reading daemon pid file: "+err.Error(), -1)
+	}
+
+	pid, err := strconv.Atoi(strings.Trim(string(pidb), "\n"))
+	if err != nil {
+		return cli.NewExitError("pid file does not contain a valid pid", -1)
+	}
+
+	stalePid := cli.NewExitError("Daemon is not running, but pid file exists.", -1)
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		return stalePid
+	}
+
+	// On unix, findprocess does not error. So we have to check for the process.
+	if runtime.GOOS != "windows" {
+		err = proc.Signal(syscall.Signal(0))
+		if err != nil {
+			return stalePid
+		}
+	}
+
+	client := api.NewClient(cfg)
+	v, err := client.Version.Get(context.Background())
+	if err != nil {
+		return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
+	}
+
+	fmt.Printf("Daemon is running. pid: %d version: v%s\n", pid, v.Version)
+
+	return nil
 }
 
 func spawnDaemon() error {

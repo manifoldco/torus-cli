@@ -18,10 +18,11 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/satori/go.uuid"
 
+	"github.com/arigatomachine/cli/apitypes"
+
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/observer"
-	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/routes"
 	"github.com/arigatomachine/cli/daemon/session"
 )
@@ -192,7 +193,7 @@ func proxyCanceler(proxy http.Handler) http.HandlerFunc {
 				w.WriteHeader(http.StatusRequestTimeout)
 
 				enc := json.NewEncoder(w)
-				err := enc.Encode(&registry.Error{
+				err := enc.Encode(&apitypes.Error{
 					Type: "request_timeout",
 					Err:  []string{"Request timed out"},
 				})

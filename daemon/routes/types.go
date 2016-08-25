@@ -18,10 +18,6 @@ type login struct {
 	Passphrase string `json:"passphrase"`
 }
 
-type version struct {
-	Version string `json:"version"`
-}
-
 type status struct {
 	Token      bool `json:"token"`
 	Passphrase bool `json:"passphrase"`
