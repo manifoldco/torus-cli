@@ -32,12 +32,14 @@ var LIST = flags.LIST = {
   service: {
     usage: '-s, --service [name]',
     description: 'Specify the service',
-    default: undefined
+    default: undefined,
+    allowFromEnv: true
   },
   environment: {
     usage: '-e, --environment [name]',
     description: 'Specify the environment',
-    default: undefined
+    default: undefined,
+    allowFromEnv: true
   },
   user: {
     usage: '-u, --user [username]',
@@ -49,6 +51,8 @@ var LIST = flags.LIST = {
     default: '1'
   }
 };
+
+var ENV_VAR_PREFIX = 'AG_';
 
 flags.add = function (cmd, name, overrides) {
   if (!(cmd instanceof Command)) {
@@ -70,9 +74,16 @@ flags.add = function (cmd, name, overrides) {
   overrides = overrides || {};
 
   var opt = LIST[name];
+
+  var defaultValue = overrides.default || opt.default;
+  var envVar = process.env[ENV_VAR_PREFIX + name.toUpperCase()];
+  if (opt.allowFromEnv === true) {
+    defaultValue = envVar;
+  }
+
   cmd.option.apply(cmd, [
     opt.usage,
     (overrides.description) ? overrides.description : opt.description,
-    (overrides.default) ? overrides.default : opt.default
+    defaultValue
   ]);
 };

@@ -12,6 +12,13 @@ var harvest = require('./harvest');
 
 var run = exports;
 
+var ENV_BLACKLIST = [
+  'ag_email',
+  'ag_password',
+  'ag_environment',
+  'ag_service'
+];
+
 run.execute = function (ctx) {
   return new Promise(function (resolve, reject) {
     var params = harvest.get(ctx);
@@ -40,10 +47,9 @@ run.spawn = function (params, creds) {
       env[cred.body.name.toUpperCase()] = value.body.value;
     });
 
-    // Remove AG_EMAIL and AG_PASSWORD; these should never be passed on to the
-    // child process
+    // Remove blacklisted environment variables, do not pass to child process
     _.each(env, function (v, k) {
-      if (k.toLowerCase() === 'ag_email' || k.toLowerCase() === 'ag_password') {
+      if (ENV_BLACKLIST.indexOf(k.toLowerCase()) > -1) {
         delete env[k];
       }
     });
