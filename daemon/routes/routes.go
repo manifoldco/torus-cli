@@ -65,8 +65,8 @@ func encodeResponseErr(w http.ResponseWriter, err error) {
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
 		enc.Encode(&errorMsg{
-			Type:  internalServerError,
-			Error: "Internal server error",
+			Type:  apitypes.InternalServerError,
+			Error: []string{"Internal server error"},
 		})
 	}
 }

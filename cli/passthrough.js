@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var cmds = require('./lib/cmds');
+var auth = require('./lib/middleware/auth');
 var fs = require('fs');
 var execSync = require('child_process').execSync;
 
@@ -62,6 +63,10 @@ function mungeCmd(mungedCmds, cmd) {
   var middlewares = [];
   if (!DAEMON_MIDDLEWARE_BLACKLIST[cmd.group]) {
     middlewares.push('cmd.EnsureDaemon');
+  }
+
+  if (_.find(cmd.preHooks, function (o) { return o.fn === auth(); })) {
+    middlewares.push('cmd.EnsureSession');
   }
 
   var argsUsage = cmd.usage.slice(cmd.slug.length + 1);

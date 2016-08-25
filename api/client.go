@@ -19,6 +19,7 @@ import (
 type Client struct {
 	client *http.Client
 
+	Session *SessionClient
 	Version *VersionClient
 }
 
@@ -34,6 +35,7 @@ func NewClient(cfg *config.Config) *Client {
 		},
 	}
 
+	c.Session = &SessionClient{client: c}
 	c.Version = &VersionClient{client: c}
 
 	return c

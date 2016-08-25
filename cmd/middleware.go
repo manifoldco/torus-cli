@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/urfave/cli"
@@ -88,4 +89,53 @@ func EnsureDaemon(ctx *cli.Context) error {
 	}
 
 	return EnsureDaemon(ctx)
+}
+
+// EnsureSession ensures that the user is logged in with the daemon and has a
+// valid session. If not, it will attempt to log the user in via environment
+// variables. If they do not exist, of the login fails, it will abort the
+// command.
+// XXX EnsureSession is only public while we need it for passthrough.go
+func EnsureSession(ctx *cli.Context) error {
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	_, err = client.Session.Get(context.Background())
+
+	hasSession := true
+	if err != nil {
+		if cerr, ok := err.(*apitypes.Error); ok {
+			if cerr.Type == apitypes.UnauthorizedError {
+				hasSession = false
+			}
+		}
+		if hasSession {
+			return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
+		}
+	}
+
+	if hasSession {
+		return nil
+	}
+
+	email, hasEmail := os.LookupEnv("AG_EMAIL")
+	password, hasPassword := os.LookupEnv("AG_PASSWORD")
+
+	if hasEmail && hasPassword {
+		fmt.Println("Attempting to login with email: " + email)
+
+		err := client.Session.Login(context.Background(), email, password)
+		if err != nil {
+			fmt.Println("Could not log in: " + err.Error())
+		} else {
+			return nil
+		}
+	}
+
+	msg := "You must be logged in to run '" + ctx.Command.FullName() + "'.\n" +
+		"Login using 'login' or create an account using 'signup'."
+	return cli.NewExitError(msg, -1)
 }
