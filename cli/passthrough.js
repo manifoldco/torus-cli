@@ -46,6 +46,10 @@ var REPLACEMENTS = {
   prefs: true
 };
 
+var DAEMON_MIDDLEWARE_BLACKLIST = {
+  prefs: true
+};
+
 function mungeCmd(mungedCmds, cmd) {
   var name = cmd.subpath;
   var lookup = cmd.slug;
@@ -55,6 +59,11 @@ function mungeCmd(mungedCmds, cmd) {
     lookup = lookup + ':list';
   }
 
+  var middlewares = [];
+  if (!DAEMON_MIDDLEWARE_BLACKLIST[cmd.group]) {
+    middlewares.push('cmd.EnsureDaemon');
+  }
+
   var argsUsage = cmd.usage.slice(cmd.slug.length + 1);
   var newcmd = {
     name: name,
@@ -62,7 +71,8 @@ function mungeCmd(mungedCmds, cmd) {
     argsUsage: argsUsage,
     subcmds: [],
     flags: cmd.options,
-    slug: cmd.slug
+    slug: cmd.slug,
+    middlewares: middlewares
   };
 
   if (cmd.group && name !== cmd.group) {
@@ -70,7 +80,8 @@ function mungeCmd(mungedCmds, cmd) {
       name: cmd.group,
       flags: [],
       skipExec: true,
-      subcmds: []
+      subcmds: [],
+      middlewares: []
     };
     group.subcmds.push(newcmd);
     mungedCmds[cmd.group] = group;
@@ -131,9 +142,19 @@ function dumpCmd(f, cmd, indent) {
   if (!cmd.skipExec) {
     var slugLen = 1 + cmd.slug.split(':').length;
 
-    f.write(pad + '    Action: func(ctx *cli.Context) error {\n' +
+    if (cmd.middlewares.length > 0) {
+      f.write(pad + '    Action: cmd.Chain(' + cmd.middlewares.join(', ') + ',\n');
+    } else {
+      f.write(pad + '    Action: \n');
+    }
+
+    f.write(pad + '        func(ctx *cli.Context) error {\n' +
             pad + '        return passthrough(ctx, ' + slugLen + ', "' + cmd.slug + '")\n' +
             pad + '    },\n');
+
+    if (cmd.middlewares.length > 0) {
+      f.write(pad + '    ),\n');
+    }
   }
 
   f.write(pad + '},\n');

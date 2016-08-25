@@ -53,13 +53,13 @@ func init() {
 					if ctx.Bool("foreground") {
 						return startDaemon(ctx)
 					}
-					return spawnDaemon()
+					return spawnDaemonCmd()
 				},
 			},
 			{
 				Name:   "stop",
 				Usage:  "Stop the session daemon",
-				Action: stopDaemon,
+				Action: stopDaemonCmd,
 			},
 		},
 	}
@@ -67,14 +67,9 @@ func init() {
 }
 
 func daemonStatus(ctx *cli.Context) error {
-	arigatoRoot, err := config.CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
+	cfg, err := loadConfig()
 	if err != nil {
-		return cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
-	}
-
-	cfg, err := config.NewConfig(arigatoRoot)
-	if err != nil {
-		return cli.NewExitError("Failed to load config: "+err.Error(), -1)
+		return err
 	}
 
 	proc, err := findDaemon(cfg)
@@ -95,6 +90,31 @@ func daemonStatus(ctx *cli.Context) error {
 
 	fmt.Printf("Daemon is running. pid: %d version: v%s\n", proc.Pid, v.Version)
 
+	return nil
+}
+
+func spawnDaemonCmd() error {
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	proc, err := findDaemon(cfg)
+	if err != nil {
+		return err
+	}
+
+	if proc != nil {
+		fmt.Println("Daemon is already running.")
+		return nil
+	}
+
+	err = spawnDaemon()
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Daemon started.")
 	return nil
 }
 
@@ -124,7 +144,6 @@ func spawnDaemon() error {
 		return cli.NewExitError("Unable to start daemon: "+err.Error(), -1)
 	}
 
-	fmt.Println("Daemon started.")
 	return nil
 }
 
@@ -186,15 +205,10 @@ func shutdown(daemon *daemon.Daemon) {
 	}
 }
 
-func stopDaemon(ctx *cli.Context) error {
-	arigatoRoot, err := config.CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
+func stopDaemonCmd(ctx *cli.Context) error {
+	cfg, err := loadConfig()
 	if err != nil {
-		return cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
-	}
-
-	cfg, err := config.NewConfig(arigatoRoot)
-	if err != nil {
-		return cli.NewExitError("Failed to load config: "+err.Error(), -1)
+		return err
 	}
 
 	proc, err := findDaemon(cfg)
@@ -207,24 +221,40 @@ func stopDaemon(ctx *cli.Context) error {
 		return nil
 	}
 
-	err = proc.Signal(syscall.Signal(syscall.SIGTERM))
+	graceful, err := stopDaemon(proc)
+	if err != nil {
+		return err
+	}
+
+	if graceful {
+		fmt.Println("Daemon stopped gracefully.")
+	} else {
+
+		fmt.Println("Daemon stopped forcefully.")
+	}
+
+	return nil
+}
+
+// stopDaemon stops the daemon process. It returns a bool indicating if the
+// shutdown was graceful.
+func stopDaemon(proc *os.Process) (bool, error) {
+	err := proc.Signal(syscall.Signal(syscall.SIGTERM))
 
 	increment := 50 * time.Millisecond
 	for d := increment; d < 3*time.Second; d += increment {
 		time.Sleep(d)
 		if _, err := findProcess(proc.Pid); err != nil {
-			fmt.Println("Daemon stopped gracefully.")
-			return nil
+			return true, nil
 		}
 	}
 
 	err = proc.Kill()
 	if err != nil {
-		return cli.NewExitError("Could not stop daemon: "+err.Error(), -1)
+		return false, cli.NewExitError("Could not stop daemon: "+err.Error(), -1)
 	}
 
-	fmt.Println("Daemon stopped forcefully.")
-	return nil
+	return false, nil
 }
 
 // findDaemon returns an os.Process for a running daemon, or nil if it is not
