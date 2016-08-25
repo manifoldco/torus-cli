@@ -1,5 +1,5 @@
-hash: 4d69102d4f9633af688616fed89877dff73552c8b1b29e34782e32beb30b0fd0
-updated: 2016-08-29T12:19:23.368253027-03:00
+hash: fbd6a283a4c91f40f8cb8f29d4062ec51c75259180ac10ea4eb54cda06a16766
+updated: 2016-08-29T12:59:34.26664107-03:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 593d64559f7600f29581a3ee42177f5dbded27a9
@@ -18,7 +18,7 @@ imports:
 - name: github.com/facebookgo/stats
   version: 1b76add642e42c6ffba7211ad7b3939ce654526e
 - name: github.com/go-ini/ini
-  version: a2610b3a793cfa7fdf0b07038068af5ddc12aba1
+  version: 3e15c6754352225de49767249c3680a2fa2201f5
 - name: github.com/go-zoo/bone
   version: 0237f0c5455f175a6513e21afe050e128902dc7f
 - name: github.com/gorilla/context
@@ -33,6 +33,10 @@ imports:
   version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
   subpackages:
   - sha3
+- name: github.com/kr/pty
+  version: ce7fa45920dc37a92de8377972e52bc55ffa8d57
+- name: github.com/kr/text
+  version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/natefinch/lumberjack
   version: 514cbda263a734ae8caac038dadf05f8f3f9f738
 - name: github.com/nbutton23/zxcvbn-go
@@ -72,6 +76,8 @@ imports:
   version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
   subpackages:
   - unix
+- name: gopkg.in/oleiade/reflections.v1
+  version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 devImports: []

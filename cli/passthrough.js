@@ -10,7 +10,6 @@ var CATEGORIES = {
   view: 'SECRETS',
   run: 'SECRETS',
 
-  prefs: 'ACCOUNT',
   signup: 'ACCOUNT',
   verify: 'ACCOUNT',
 
@@ -41,8 +40,7 @@ var REPLACEMENTS = {
   projects: true,
   services: true,
   teams: true,
-  policies: true,
-  prefs: true
+  policies: true
 };
 
 var DAEMON_MIDDLEWARE_BLACKLIST = {
