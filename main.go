@@ -16,7 +16,7 @@ import (
 func main() {
 	app := cli.NewApp()
 	app.Usage = "A secure, shared workspace for secrets"
-	app.Commands = append(cmd.Cmds, passthroughs...)
+	app.Commands = cmd.Cmds
 	app.Run(os.Args)
 }
 
