@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 var fs = require('fs');
+var path = require('path');
 
 if (['linux', 'darwin'].indexOf(process.platform) === -1) {
   console.log('ag only supports linux and darwin amd64');
@@ -9,5 +10,10 @@ if (['linux', 'darwin'].indexOf(process.platform) === -1) {
 var os = process.platform;
 var arch = 'amd64';
 
-fs.unlinkSync(__dirname + '/../bin/ag');
-fs.symlinkSync('ag-' + os + '-' + arch, __dirname + '/../bin/ag');
+var agPath = path.join(__dirname, '../bin/ag');
+
+if (fs.existsSync(agPath)) {
+  fs.unlinkSync(agPath);
+}
+
+fs.symlinkSync('ag-' + os + '-' + arch, agPath);
