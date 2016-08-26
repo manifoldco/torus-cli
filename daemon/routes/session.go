@@ -22,7 +22,7 @@ func loginRoute(client *registry.Client, s session.Session,
 		ctx := r.Context()
 		dec := json.NewDecoder(r.Body)
 
-		creds := login{}
+		creds := apitypes.Login{}
 		err := dec.Decode(&creds)
 		if err != nil {
 			encodeResponseErr(w, err)
@@ -33,8 +33,8 @@ func loginRoute(client *registry.Client, s session.Session,
 			w.WriteHeader(http.StatusBadRequest)
 			enc := json.NewEncoder(w)
 			enc.Encode(&errorMsg{
-				Type:  badRequestError,
-				Error: "email and passphrase required",
+				Type:  apitypes.BadRequestError,
+				Error: []string{"email and passphrase required"},
 			})
 			return
 		}
@@ -114,8 +114,8 @@ func sessionRoute(s session.Session) http.HandlerFunc {
 		if !(s.HasToken() && s.HasPassphrase()) {
 			w.WriteHeader(http.StatusNotFound)
 			err := enc.Encode(&errorMsg{
-				Type:  unauthorizedError,
-				Error: "Not logged in",
+				Type:  apitypes.UnauthorizedError,
+				Error: []string{"Not logged in"},
 			})
 			if err != nil {
 				encodeResponseErr(w, err)
@@ -123,7 +123,7 @@ func sessionRoute(s session.Session) http.HandlerFunc {
 			return
 		}
 
-		err := enc.Encode(&status{
+		err := enc.Encode(&apitypes.SessionStatus{
 			Token:      s.HasToken(),
 			Passphrase: s.HasPassphrase(),
 		})

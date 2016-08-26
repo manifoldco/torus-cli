@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-zoo/bone"
 
+	"github.com/arigatomachine/cli/apitypes"
+
 	"github.com/arigatomachine/cli/daemon/base64"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
@@ -51,8 +53,8 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 		if inviteBody.State != primitive.OrgInviteAcceptedState {
 			log.Printf("invitation not in accepted state: %s", inviteBody.State)
 			err = enc.Encode(&errorMsg{
-				Type:  badRequestError,
-				Error: "Invite must be accepted before it can be approved",
+				Type:  apitypes.BadRequestError,
+				Error: []string{"Invite must be accepted before it can be approved"},
 			})
 			if err != nil {
 				encodeResponseErr(w, err)
@@ -121,8 +123,8 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 				log.Printf("could not find keyring membership: %s", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				enc.Encode(&errorMsg{
-					Type:  internalServerError,
-					Error: "could not find keyring membership",
+					Type:  apitypes.InternalServerError,
+					Error: []string{"could not find keyring membership"},
 				})
 				return
 			}

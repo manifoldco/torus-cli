@@ -1,33 +1,16 @@
 package routes
 
-import "github.com/arigatomachine/cli/daemon/identity"
+import (
+	"github.com/arigatomachine/cli/apitypes"
 
-type errorType string
-
-const (
-	badRequestError   = "bad_request"
-	unauthorizedError = "unauthorized"
-	notFoundError     = "not_found"
-
-	internalServerError = "internal_server"
-	notImplementedError = "not_implemented"
+	"github.com/arigatomachine/cli/daemon/identity"
 )
-
-type login struct {
-	Email      string `json:"email"`
-	Passphrase string `json:"passphrase"`
-}
-
-type status struct {
-	Token      bool `json:"token"`
-	Passphrase bool `json:"passphrase"`
-}
 
 type keyPairGenerate struct {
 	OrgID *identity.ID `json:"org_id"`
 }
 
 type errorMsg struct {
-	Type  errorType `json:"type"`
-	Error string    `json:"error"`
+	Type  apitypes.ErrorType `json:"type"`
+	Error []string           `json:"error"`
 }

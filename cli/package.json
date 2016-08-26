@@ -33,7 +33,6 @@
   "logo": "https://s3.amazonaws.com/marketing.arigato.sh/logo.png",
   "license": "AGPL-3.0",
   "dependencies": {
-    "backo": "1.1.0",
     "base64url": "1.0.6",
     "cli-table2": "0.2.0",
     "common": "https://github.com/arigatomachine/common/archive/v0.11.0.tar.gz",
