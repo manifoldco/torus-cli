@@ -13,3 +13,5 @@ import:
 - package: github.com/boltdb/bolt
 - package: github.com/urfave/cli
 - package: github.com/kardianos/osext
+- package: github.com/chzyer/readline
+- package: github.com/asaskevich/govalidator
