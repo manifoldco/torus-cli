@@ -47,6 +47,7 @@ func credentialsGetRoute(client *registry.Client, s session.Session,
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		q := r.URL.Query()
+
 		trees, err := client.CredentialTree.List(ctx, q.Get("Name"),
 			q.Get("path"), q.Get("pathexp"), s.ID())
 		if err != nil {
@@ -59,10 +60,15 @@ func credentialsGetRoute(client *registry.Client, s session.Session,
 		for _, tree := range trees {
 			steps += uint(len(tree.Credentials))
 		}
-		var step uint = 1
 
-		o.Notify(ctx, observer.Progress, "Credentials retrieved", step, steps)
-		step++
+		n, err := o.Notifier(ctx, steps)
+		if err != nil {
+			log.Printf("error constructing Notifier: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		n.Notify(observer.Progress, "Credentials retrieved", true)
 
 		// Loop over the trees and unpack the credentials; later on we will
 		// actually do real work and decrypt each of these credentials but for
@@ -116,8 +122,7 @@ func credentialsGetRoute(client *registry.Client, s session.Session,
 				}
 				creds = append(creds, plainCred)
 
-				o.Notify(ctx, observer.Progress, "Credential decrypted", step, steps)
-				step++
+				n.Notify(observer.Progress, "Credential decrypted", true)
 			}
 		}
 
@@ -134,10 +139,7 @@ func credentialsGetRoute(client *registry.Client, s session.Session,
 func credentialsPostRoute(client *registry.Client, s session.Session,
 	engine *crypto.Engine, o *observer.Observer) http.HandlerFunc {
 
-	var steps uint = 4
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		var step uint = 1
 		ctx := r.Context()
 		dec := json.NewDecoder(r.Body)
 		cred := plainTextEnvelope{}
@@ -145,6 +147,13 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 		err := dec.Decode(&cred)
 		if err != nil {
 			log.Printf("error decoding credential: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		n, err := o.Notifier(ctx, 4)
+		if err != nil {
+			log.Printf("error constructing Notifier: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}
@@ -158,8 +167,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Credentials retrieved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Credentials retrieved", true)
 
 		sigID, encID, kp, err := fetchKeyPairs(ctx, client, cred.Body.OrgID)
 		if err != nil {
@@ -167,8 +175,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Keypairs retrieved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Keypairs retrieved", true)
 
 		newTree := false
 		// No matching CredentialTree/KeyRing for this credential.
@@ -238,8 +245,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Encrypting key retrieved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Encrypting key retrieved", true)
 
 		// Derive a key for the credential using the keyring master key
 		// and use the derived key to encrypt the credential
@@ -258,8 +264,7 @@ func credentialsPostRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Credential encrypted", step, steps)
-		step++
+		n.Notify(observer.Progress, "Credential encrypted", true)
 
 		if newTree {
 			tree.Credentials = []envelope.Signed{*signed}
