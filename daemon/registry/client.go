@@ -10,21 +10,10 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/arigatomachine/cli/apitypes"
+
 	"github.com/arigatomachine/cli/daemon/session"
 )
-
-// Error represents API errors from the registry service.
-type Error struct {
-	StatusCode int
-
-	Type string   `json:"type"`
-	Err  []string `json:"error"`
-}
-
-// Error implements the error interface for registry errors.
-func (e *Error) Error() string {
-	return e.Type
-}
 
 // Client exposes the registry REST API.
 type Client struct {
@@ -132,7 +121,7 @@ func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}) (*http.
 	resp, err := c.client.Do(r)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			err = &Error{
+			err = &apitypes.Error{
 				StatusCode: http.StatusRequestTimeout,
 				Type:       "request_timeout",
 				Err:        []string{"Request timed out"},
@@ -165,7 +154,7 @@ func checkResponseCode(r *http.Response) error {
 		return nil
 	}
 
-	rErr := &Error{StatusCode: r.StatusCode}
+	rErr := &apitypes.Error{StatusCode: r.StatusCode}
 	if r.ContentLength != 0 {
 		dec := json.NewDecoder(r.Body)
 		err := dec.Decode(rErr)

@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/arigatomachine/cli/apitypes"
+
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/registry"
@@ -80,7 +82,7 @@ func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {
 
 		err := client.Tokens.Delete(r.Context(), tok)
 		switch err := err.(type) {
-		case *registry.Error:
+		case *apitypes.Error:
 			switch {
 			case err.StatusCode >= 500:
 				// On a 5XX response, we don't know for sure that the server

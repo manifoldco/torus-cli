@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-zoo/bone"
 
+	"github.com/arigatomachine/cli/apitypes"
+
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
@@ -41,7 +43,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 
 	mux.GetFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
-		err := enc.Encode(&version{Version: c.Version})
+		err := enc.Encode(&apitypes.Version{Version: c.Version})
 		if err != nil {
 			encodeResponseErr(w, err)
 		}
@@ -56,7 +58,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 func encodeResponseErr(w http.ResponseWriter, err error) {
 	enc := json.NewEncoder(w)
 
-	rErr, ok := err.(*registry.Error)
+	rErr, ok := err.(*apitypes.Error)
 	if ok {
 		w.WriteHeader(rErr.StatusCode)
 		enc.Encode(rErr)
