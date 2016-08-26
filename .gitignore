@@ -1,5 +1,9 @@
+ag
 *.arigato.json
 cli/node_modules*
+cli/bin/ag
+cli/bin/ag-*
+!cli/bin/ag-node
 .DS_Store
 npm-debug*
 cli/ca_bundle.pem

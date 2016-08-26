@@ -18,7 +18,7 @@
     "node": ">=4.4.0"
   },
   "scripts": {
-    "install": "scripts/install.js"
+    "preinstall": "scripts/install.js"
   },
   "author": "Arigato Machine Inc.",
   "contributors": [

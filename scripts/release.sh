@@ -62,6 +62,13 @@ cd "$RELEASE_DIRECTORY"
 git checkout $TARGET_SHA
 
 echo ""
+echo "Installing NPM Modules"
+echo ""
+pushd cli > /dev/null
+    npm install
+popd > /dev/null
+
+echo ""
 echo "Building Docker Container"
 echo ""
 docker build -t arigato/cli:$TARGET_SHA .
@@ -80,6 +87,12 @@ echo "Copying Key File"
 echo ""
 cp $KEY_FILE cli/public_key.json
 cp $CA_BUNDLE cli/ca_bundle.pem
+
+# Remove the node modules; they'll get installed via npm on the way down.
+echo ""
+echo "Removing Node Modules"
+echo ""
+rm -rf cli/node_modules
 
 TAR_FILENAME="$TARGET_REF"
 if [ "$ENVIRONMENT" == "staging" ]; then
