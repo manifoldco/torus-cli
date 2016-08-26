@@ -73,7 +73,22 @@ prompted to upload the release to s3 or npm.
 ./scripts/release.sh v0.2.0 production
 ```
 
-**You must be a member of the CLIDevelopers group on AWS**
+You will need the following:
+
+- AWS SDK installed locally (e.g. `aws-cli/1.10.56 Python/2.7.10 Darwin/15.6.0 botocore/1.4.46`)
+- Correct AWS environment variables set (`aws iam get-user` is successful)
+- You belong to the CLIDevelopers group on AWS
+
+The steps for packaging the CLI:
+
+- Make sure you've pulled latest master
+- Update the package.json with the version (e.g. `0.5.0-preview`).
+- Commit the change and tag it (e.g. `v0.5.0-preview`)
+- Push master and the tag to github (`git push origin maser; git push origin
+  v0.5.0-preview`)
+- Run `$CLI_REPO/scripts/release.sh v0.5.0-preview [environment]` where
+  environment is the targeted stack this build of the CLI will be used against.
+- Only publish to NPM if the tag is a full release.
 
 ## Codebase
 
