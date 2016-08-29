@@ -11,7 +11,8 @@ import (
 	"path"
 )
 
-var version = "alpha"
+// Version is the compiled version of our binary. It is set via the Makefile.
+var Version = "alpha"
 var apiVersion = "0.1.0"
 
 const requiredPermissions = 0700
@@ -56,7 +57,7 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 
 	cfg := &Config{
 		APIVersion: apiVersion,
-		Version:    version,
+		Version:    Version,
 
 		ArigatoRoot: arigatoRoot,
 		SocketPath:  path.Join(arigatoRoot, "daemon.socket"),

@@ -8,7 +8,7 @@ VERSION := $(shell node -p -e "require('./cli/package.json').version")
 all: binary
 
 binary: generated
-	go build -i -v -o ${OUT} -ldflags="-X ${PKG}/daemon/config.version=${VERSION}" ${PKG}
+	go build -i -v -o ${OUT} -ldflags="-X ${PKG}/daemon/config.Version=${VERSION}" ${PKG}
 
 test: generated
 	@go test -short $$(glide nv)
@@ -37,7 +37,7 @@ lint:
 	fi ;
 
 static: vet fmtcheck lint generated
-	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/daemon/config.version=${VERSION}" ${PKG}
+	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/daemon/config.Version=${VERSION}" ${PKG}
 
 generated:
 	go generate

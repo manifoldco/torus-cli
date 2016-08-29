@@ -11,10 +11,12 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/cmd"
+	"github.com/arigatomachine/cli/daemon/config"
 )
 
 func main() {
 	app := cli.NewApp()
+	app.Version = config.Version
 	app.Usage = "A secure, shared workspace for secrets"
 	app.Commands = cmd.Cmds
 	app.Run(os.Args)
