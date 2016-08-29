@@ -41,7 +41,6 @@ allow.output.success = output.create(function (payload) {
 
   msg += '\n';
   msg += '\nNecessary permissions (read, list) have also been granted.';
-  msg += '\nUse \'ag access\' to view the complete policy.';
 
   console.log(msg);
 });
