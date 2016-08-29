@@ -76,7 +76,7 @@ keypairsList.output.success = output.create(function (ctx, payload) {
   if (!noMissingKeys) {
     console.log('\nYou are missing keys for an organization.\n');
     console.log(
-      'You can generate missing keys using \'ag keypairs:generate --all\'');
+      'You can generate missing keys using \'ag keypairs generate --all\'');
   }
 
   return Promise.resolve();
