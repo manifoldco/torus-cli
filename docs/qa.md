@@ -34,17 +34,17 @@ If you have `ag` installed, start fresh `npm uninstall -g ag`
 
 ### Teams
 
-- [ ]   `ag teams --org [username]` displays `owner` `admin` and `member` teams, and you are a member of each
-- [ ]   `ag teams:create [name] --org [org-name]` creates an org.
-- [ ]   `ag invites —org [org]` S
-- [ ]   `ag invites:send [email] —org [org-name]` generates an access code and sends it to the user
-- [ ]   `ag invites:accept —org [org] [email] [code]` prompts a user to sign-up or login
+- [ ]   `ag teams list --org [username]` displays `owner` `admin` and `member` teams, and you are a member of each
+- [ ]   `ag teams create [name] --org [org-name]` creates an org.
+- [ ]   `ag invites list —org [org]` S
+- [ ]   `ag invites send [email] —org [org-name]` generates an access code and sends it to the user
+- [ ]   `ag invites accept —org [org] [email] [code]` prompts a user to sign-up or login
 - [ ]  The user cannot manage resources in this org
-- [ ]   `ag invites —org [org]` lists the outstanding invite
-- [ ]   `ag invites:approve [email] —org [org]` approves the users invite
+- [ ]   `ag invites list —org [org]` lists the outstanding invite
+- [ ]   `ag invites approve [email] —org [org]` approves the users invite
 - [ ]  The user is now a member of the members team
-- [ ]   `ag teams:add [name] [username] —org [org-name]` adds the user to a team
-- [ ]   `ag teams:remove [name] [username] —org [org-name]` removes the user from a team
+- [ ]   `ag teams add [name] [username] —org [org-name]` adds the user to a team
+- [ ]   `ag teams remove [name] [username] —org [org-name]` removes the user from a team
 - [ ]  Users cannot remove themselves from system-teams
 
 ### Context
@@ -57,21 +57,21 @@ If you have `ag` installed, start fresh `npm uninstall -g ag`
 
 ### Access Controls
 
-- [ ]   `ag policies --org [org]` displays three `system-default` policies attched to the `owner` , `admin` , and `member` teams
+- [ ]   `ag policies list --org [org]` displays three `system-default` policies attched to the `owner` , `admin` , and `member` teams
 - [ ]   `ag allow crudl [path] [team]` generates a policy, displays an `allow` effect, appropriate actions, the correct resource. and attaches it `[team]`
 - [ ]  Members of `[team]` have appropriate access
 - [ ]   `ag deny crudl [path] [team]` generates a policy, with a `deny` effect, appropriate actions, the correct resource, and attaches it to `[team]`
 - [ ]  Members of `[team]` are denied access to the appropriate resource
-- [ ]   `ag policies —org [org]` displays the generated policies attached to the appripriate `[team]`
-- [ ]   `ag policies:detach [name] [team] —org [org]` detaches the policy from the team
+- [ ]   `ag policies list —org [org]` displays the generated policies attached to the appripriate `[team]`
+- [ ]   `ag policies detach [name] [team] —org [org]` detaches the policy from the team
 - [ ]  Members of `[team]` have appropriate access
 - [ ]  System polcies cannot be detached
 
 ### Critical Path
 
-- [ ]   `ag orgs:create [name]` prompts you to confirm the org name, and creates it
-- [ ]   `ag projects:create [name] —org [org]` prompts you to confirm the project name, and creates it
-- [ ]   `ag services:create [name] —project [project] —org [org]` creates a service.
+- [ ]   `ag orgs create [name]` prompts you to confirm the org name, and creates it
+- [ ]   `ag projects create [name] —org [org]` prompts you to confirm the project name, and creates it
+- [ ]   `ag services create [name] —project [project] —org [org]` creates a service.
 - [ ]   `ag set [key] [value] —service [service]` will set the variable
 - [ ]  You can not set variables in services that do not exist
 - [ ]   `ag set [path] [value]` will set the variable
