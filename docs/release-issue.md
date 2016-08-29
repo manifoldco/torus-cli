@@ -25,3 +25,4 @@ For each release, a [change log](./changelog.md) must be curated.
 - [ ] QA Checklist Complete
 - [ ] All bugs fixed or triaged
 - [ ] Deployed and Released
+- [ ] KB & WWW on latest
