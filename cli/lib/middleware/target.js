@@ -38,17 +38,16 @@ module.exports = function () {
         });
 
         // Look up user's default environment
-        if (ctx.loggedIn && !ctx.target.environment) {
+        if (!ctx.target.environment) {
           return ctx.api.users.self().then(function (user) {
-            if (!user) {
-              return reject(new Error('Could not find the user'));
+            if (user) {
+              ctx.target.flags({
+                environment: 'dev-' + user.body.username
+              });
             }
-
-            ctx.target.flags({
-              environment: 'dev-' + user.body.username
-            });
-
-            return resolve();
+            resolve();
+          }).catch(function () {
+            resolve();
           });
         }
 
