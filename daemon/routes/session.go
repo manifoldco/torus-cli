@@ -76,7 +76,7 @@ func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {
 		tok := s.Token()
 
 		if tok == "" {
-			w.WriteHeader(http.StatusNotFound)
+			encodeResponseErr(w, notFoundError)
 			return
 		}
 

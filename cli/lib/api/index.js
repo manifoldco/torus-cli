@@ -22,7 +22,6 @@ api.modules = {
   // non-proxied daemon apis
   versionApi: require('./versionApi'),
   login: require('./login'),
-  logout: require('./logout'),
   session: require('./session'),
   keypairs: require('./keypairs')
 };

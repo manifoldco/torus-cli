@@ -47,3 +47,18 @@ func (s *SessionClient) Login(ctx context.Context, email, passphrase string) err
 	return nil
 
 }
+
+// Logout logs the user out of their session
+func (s *SessionClient) Logout(ctx context.Context) error {
+	req, err := s.client.NewRequest("POST", "/logout", nil, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.client.Do(ctx, req, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
