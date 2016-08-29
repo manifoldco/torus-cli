@@ -52,12 +52,14 @@ The release manager role rotates on a per-release basis.
 
 1. Create a release issue containing the targeted semver versions *and* current
    RC status using the [release template](./docs/release-issue.md).
-2. Curate a changelist against the current "stable" version.
+2. Curate a changelist against the current "stable" version using the
+   [changelog template](./docs/changelog.md).
 3. Tag release candidates for the targeted components (registry, cli, etc) and
-   make them available.
+   make them available (deploy/distribute).
 4. Execute manual qa checklist. If bugs are found, track bugs in the checklist
    by linking to the bug issue. Repeat step 2-4 untl checklist passes.
-5. Tag production releases and deploy to hosted registry.
+5. Tag production releases and deploy to hosted registry. Build the CLI for
+   production and publish to npm with an appropriate tag.
 
 **Releasing the CLI**
 
