@@ -27,11 +27,16 @@ import (
 func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 	db *db.DB, engine *crypto.Engine, o *observer.Observer) http.HandlerFunc {
 
-	var steps uint = 6
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		var step uint = 1
 		ctx := r.Context()
+
+		n, err := o.Notifier(ctx, 6)
+		if err != nil {
+			log.Printf("Error creating Notififer: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
 		inviteID, err := identity.DecodeFromString(bone.GetValue(r, "id"))
 		if err != nil {
 			log.Printf("Could not approve org invite; invalid id: %s", err)
@@ -62,8 +67,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Invite retrieved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Invite retrieved", true)
 
 		// Get this users keypairs
 		sigID, encID, kp, err := fetchKeyPairs(ctx, client, inviteBody.OrgID)
@@ -73,8 +77,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Keypairs retrieved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Keypairs retrieved", true)
 
 		claimTrees, err := client.ClaimTree.List(r.Context(), inviteBody.OrgID, nil)
 		if err != nil {
@@ -90,8 +93,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Claims retrieved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Claims retrieved", true)
 
 		// Get all the keyrings and memberships for the current user. This way we
 		// can decrypt the MEK for each and then create a new KeyringMember for
@@ -113,8 +115,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Keyrings retrieved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Keyrings retrieved", true)
 
 		members := []envelope.Signed{}
 		for _, segment := range keyringSections {
@@ -173,8 +174,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			members = append(members, *member)
 		}
 
-		o.Notify(ctx, observer.Progress, "Keyring memberships created", step, steps)
-		step++
+		n.Notify(observer.Progress, "Keyring memberships created", true)
 
 		invite, err = client.OrgInvite.Approve(ctx, &inviteID)
 		if err != nil {
@@ -183,8 +183,7 @@ func orgInvitesApproveRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Invite approved", step, steps)
-		step++
+		n.Notify(observer.Progress, "Invite approved", true)
 
 		if len(members) != 0 {
 			_, err = client.KeyringMember.Post(ctx, members)

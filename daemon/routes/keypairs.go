@@ -19,8 +19,6 @@ import (
 func keypairsGenerateRoute(client *registry.Client, s session.Session,
 	db *db.DB, engine *crypto.Engine, o *observer.Observer) http.HandlerFunc {
 
-	var steps uint = 5
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		var step uint = 1
 		ctx := r.Context()
@@ -33,6 +31,13 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
+		n, err := o.Notifier(ctx, 5)
+		if err != nil {
+			log.Printf("Error creating Notifier: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
 		kp, err := engine.GenerateKeyPairs(ctx)
 		if err != nil {
 			log.Printf("Error generating keypairs: %s", err)
@@ -40,8 +45,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Keypairs generated", step, steps)
-		step++
+		n.Notify(observer.Progress, "Keypairs generated", true)
 
 		pubsig, err := packagePublicKey(ctx, engine, s.ID(), genReq.OrgID,
 			signingKeyType, kp.Signature.Public, nil, &kp.Signature)
@@ -67,8 +71,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Signing keys signed", step, steps)
-		step++
+		n.Notify(observer.Progress, "Signing keys signed", true)
 
 		pubsig, privsig, claims, err := client.KeyPairs.Post(ctx, pubsig,
 			privsig, sigclaim)
@@ -89,8 +92,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Signing keys uploaded", step, steps)
-		step++
+		n.Notify(observer.Progress, "Signing keys uploaded", true)
 
 		pubenc, err := packagePublicKey(ctx, engine, s.ID(), genReq.OrgID,
 			encryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
@@ -117,8 +119,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Encryption keys signed", step, steps)
-		step++
+		n.Notify(observer.Progress, "Encryption keys signed", true)
 
 		pubenc, privenc, claims, err = client.KeyPairs.Post(ctx, pubenc,
 			privenc, encclaim)
@@ -139,7 +140,7 @@ func keypairsGenerateRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		o.Notify(ctx, observer.Progress, "Encryption keys uploaded", step, steps)
+		n.Notify(observer.Progress, "Encryption keys uploaded", true)
 		step++
 
 		w.WriteHeader(http.StatusNoContent)
