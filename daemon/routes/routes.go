@@ -11,6 +11,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
+	"github.com/arigatomachine/cli/daemon/logic"
 	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
@@ -21,9 +22,11 @@ import (
 func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	t *http.Transport, o *observer.Observer) *bone.Mux {
 
-	engine := crypto.NewEngine(s, db)
+	cryptoEngine := crypto.NewEngine(s, db)
 	client := registry.NewClient(c.RegistryURI.String(), c.APIVersion,
 		c.Version, s, t)
+	lEngine := logic.NewEngine(c, s, db, cryptoEngine, client)
+
 	mux := bone.New()
 
 	mux.Get("/observe", o)
@@ -32,14 +35,13 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.PostFunc("/logout", logoutRoute(client, s))
 	mux.GetFunc("/session", sessionRoute(s))
 
-	mux.PostFunc("/keypairs/generate",
-		keypairsGenerateRoute(client, s, db, engine, o))
+	mux.PostFunc("/keypairs/generate", keypairsGenerateRoute(lEngine, o))
 
-	mux.GetFunc("/credentials", credentialsGetRoute(client, s, engine, o))
-	mux.PostFunc("/credentials", credentialsPostRoute(client, s, engine, o))
+	mux.GetFunc("/credentials", credentialsGetRoute(lEngine, o))
+	mux.PostFunc("/credentials", credentialsPostRoute(lEngine, o))
 
 	mux.PostFunc("/org-invites/:id/approve",
-		orgInvitesApproveRoute(client, s, db, engine, o))
+		orgInvitesApproveRoute(lEngine, o))
 
 	mux.GetFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
@@ -55,7 +57,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 // if encoding has errored, our struct is either bad, or our writer
 // is broken. Try writing an error back to the client, but ignore any
 // problems (ie the writer is broken).
-func encodeResponseErr(w http.ResponseWriter, err error) {
+func encodeResponseErr(w http.ResponseWriter, err interface{}) {
 	enc := json.NewEncoder(w)
 
 	rErr, ok := err.(*apitypes.Error)
