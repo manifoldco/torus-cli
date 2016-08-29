@@ -10,7 +10,6 @@ var CATEGORIES = {
   view: 'SECRETS',
   run: 'SECRETS',
 
-  login: 'ACCOUNT',
   logout: 'ACCOUNT',
   prefs: 'ACCOUNT',
   signup: 'ACCOUNT',

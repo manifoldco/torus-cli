@@ -1,10 +1,14 @@
-hash: 2e3b15749dcd2770bb546c054a232eab8992d058978e4316e0e17331c3cbd6e2
-updated: 2016-08-23T10:10:30.962110993-03:00
+hash: 4d69102d4f9633af688616fed89877dff73552c8b1b29e34782e32beb30b0fd0
+updated: 2016-08-29T12:19:23.368253027-03:00
 imports:
+- name: github.com/asaskevich/govalidator
+  version: 593d64559f7600f29581a3ee42177f5dbded27a9
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
+- name: github.com/chzyer/readline
+  version: 8159bd380cc4d5b344668c55e969b9d16165368d
 - name: github.com/dchest/blake2b
   version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/facebookgo/clock
@@ -31,6 +35,14 @@ imports:
   - sha3
 - name: github.com/natefinch/lumberjack
   version: 514cbda263a734ae8caac038dadf05f8f3f9f738
+- name: github.com/nbutton23/zxcvbn-go
+  version: a22cb81b2ecdde8b68e9ffb8824731cbf88e1de4
+  subpackages:
+  - matching
+  - scoring
+  - utils/math
+  - data
+  - match
 - name: github.com/nightlyone/lockfile
   version: 3d299f51e376213fcdcfd213a76afce6b290bf9d
 - name: github.com/satori/go.uuid
