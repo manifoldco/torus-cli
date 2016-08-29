@@ -7,6 +7,7 @@ import (
 	"path"
 
 	"github.com/go-ini/ini"
+	"github.com/kardianos/osext"
 )
 
 const (
@@ -27,13 +28,14 @@ type core struct {
 }
 
 func newPreferences() (*preferences, error) {
-	cwd, err := os.Getwd()
+	dir, err := osext.ExecutableFolder()
 	if err != nil {
-		return nil, fmt.Errorf("Could not determine cwd: %s", err)
+		return nil, fmt.Errorf("Could not determine executable location: %s", err)
 	}
 
-	defaultKeyPath := path.Join(cwd, publicKeyFilename)
-	defaultBundlePath := path.Join(cwd, caBundleFilename)
+	// certs and keys live in the root of the node package
+	defaultKeyPath := path.Join(dir, "..", publicKeyFilename)
+	defaultBundlePath := path.Join(dir, "..", caBundleFilename)
 	prefs := &preferences{
 		Core: core{
 			PublicKeyFile: defaultKeyPath,
