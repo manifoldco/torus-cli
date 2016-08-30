@@ -49,21 +49,24 @@ func listPref(ctx *cli.Context) error {
 	filepath, _ := prefs.RcPath()
 	fmt.Println("\n" + filepath + "\n")
 
-	if preferences.Core.Count() > 0 {
+	coreCount := preferences.CountFields("Core")
+	defaultsCount := preferences.CountFields("Defaults")
+
+	if coreCount > 0 {
 		fmt.Println("[core]")
 		fc := ini.Empty()
 		err = ini.ReflectFrom(fc, &preferences.Core)
 		fc.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
 	}
 
-	if preferences.Defaults.Count() > 0 {
+	if defaultsCount > 0 {
 		fmt.Println("[defaults]")
 		fd := ini.Empty()
 		err = ini.ReflectFrom(fd, &preferences.Defaults)
 		fd.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
 	}
 
-	if preferences.Defaults.Count() < 1 && preferences.Core.Count() < 1 {
+	if defaultsCount < 1 && coreCount < 1 {
 		fmt.Println("No preferences set. Use 'ag prefs set' to update.")
 		fmt.Println("")
 	}

@@ -26,40 +26,31 @@ type Preferences struct {
 	Defaults defaults `ini:"defaults"`
 }
 
+// CountFields returns the number of defined fields on sub-field struct
+func (prefs Preferences) CountFields(fieldName string) int {
+	value, err := reflections.GetField(prefs, fieldName)
+	count := 0
+	if err != nil {
+		return count
+	}
+	items, _ := reflections.Items(value)
+	for i := range items {
+		value, _ := reflections.GetField(value, i)
+		if value != nil && value != "" {
+			count++
+		}
+	}
+	return count
+}
+
 type core struct {
 	PublicKeyFile string `ini:"public_key_file,omitempty"`
 	CABundleFile  string `ini:"ca_bundle_file,omitempty"`
 	RegistryURI   string `ini:"registry_uri,omitempty"`
 }
 
-func (c core) Count() int {
-	var items map[string]interface{}
-	items, _ = reflections.Items(c)
-	count := 0
-	for i := range items {
-		value, _ := reflections.GetField(c, i)
-		if value != nil && value != "" {
-			count++
-		}
-	}
-	return count
-}
-
 type defaults struct {
 	Environment string `ini:"environment,omitempty"`
-}
-
-func (d defaults) Count() int {
-	var items map[string]interface{}
-	items, _ = reflections.Items(d)
-	count := 0
-	for i := range items {
-		value, _ := reflections.GetField(d, i)
-		if value != nil && value != "" {
-			count++
-		}
-	}
-	return count
 }
 
 // SetValue for ini key on preferences struct
