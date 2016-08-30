@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/urfave/cli"
+	"gopkg.in/oleiade/reflections.v1"
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/prefs"
 )
 
 // Chain allows easy sequential calling of BeforeFuncs and AfterFuncs.
@@ -138,4 +141,53 @@ func EnsureSession(ctx *cli.Context) error {
 	msg := "You must be logged in to run '" + ctx.Command.FullName() + "'.\n" +
 		"Login using 'login' or create an account using 'signup'."
 	return cli.NewExitError(msg, -1)
+}
+
+// LoadPrefDefaults loads default argument values from the .arigatorc
+// preferences file defaults section, inserting them into any unset flag values
+// XXX LoadPrefDefaults is only public while we need it for passthrough.go
+func LoadPrefDefaults(ctx *cli.Context) error {
+	p, err := prefs.NewPreferences(true)
+	if err != nil {
+		return err
+	}
+
+	return loadPrefDefaults(ctx, p)
+}
+
+// split out to ease testing
+func loadPrefDefaults(ctx *cli.Context, p *prefs.Preferences) error {
+	// The user has disabled reading arguments from the defaults
+	if !p.Core.Context {
+		return nil
+	}
+
+	// ini field names match the argument names
+	tags, err := reflections.Tags(p.Defaults, "ini")
+	if err != nil {
+		return err
+	}
+
+	flags := make(map[string]bool)
+	for _, flagName := range ctx.FlagNames() {
+		// This value is already set via arguments or env vars. skip it.
+		if ctx.IsSet(flagName) {
+			continue
+		}
+
+		flags[flagName] = true
+	}
+
+	for fieldName, tag := range tags {
+		name := strings.SplitN(tag, ",", 2)[0] // remove omitempty if its there
+		if _, ok := flags[name]; ok {
+			field, err := reflections.GetField(p.Defaults, fieldName)
+			if err != nil {
+				return err
+			}
+			ctx.Set(name, field.(string))
+		}
+	}
+
+	return nil
 }
