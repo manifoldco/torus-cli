@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"path"
+
+	"github.com/arigatomachine/cli/prefs"
 )
 
 // Version is the compiled version of our binary. It is set via the Makefile.
@@ -30,27 +32,27 @@ type Config struct {
 
 	RegistryURI *url.URL
 	CABundle    *x509.CertPool
-	PublicKey   *PublicKey
+	PublicKey   *prefs.PublicKey
 }
 
 // NewConfig returns a new Config, with loaded user preferences.
 func NewConfig(arigatoRoot string) (*Config, error) {
-	prefs, err := newPreferences()
+	preferences, err := prefs.NewPreferences(true)
 	if err != nil {
 		return nil, err
 	}
 
-	publicKey, err := loadPublicKey(prefs)
+	publicKey, err := prefs.LoadPublicKey(preferences)
 	if err != nil {
 		return nil, err
 	}
 
-	caBundle, err := loadCABundle(prefs.Core.CABundleFile)
+	caBundle, err := loadCABundle(preferences.Core.CABundleFile)
 	if err != nil {
 		return nil, err
 	}
 
-	registryURI, err := url.Parse(prefs.Core.RegistryURI)
+	registryURI, err := url.Parse(preferences.Core.RegistryURI)
 	if err != nil {
 		return nil, err
 	}

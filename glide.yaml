@@ -15,3 +15,5 @@ import:
 - package: github.com/kardianos/osext
 - package: github.com/chzyer/readline
 - package: github.com/asaskevich/govalidator
+- package: github.com/kr/text
+- package: gopkg.in/oleiade/reflections.v1
