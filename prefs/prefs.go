@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-ini/ini"
+	"github.com/kardianos/osext"
 	"github.com/urfave/cli"
 	"gopkg.in/oleiade/reflections.v1"
 )
@@ -106,13 +107,15 @@ func RcPath() (string, error) {
 
 // NewPreferences returns a new instance of preferences struct
 func NewPreferences(useDefaults bool) (*Preferences, error) {
-	cwd, err := os.Getwd()
+	dir, err := osext.ExecutableFolder()
 	if err != nil {
-		return nil, fmt.Errorf("Could not determine cwd: %s", err)
+		return nil, fmt.Errorf("Could not determine executable location: %s", err)
 	}
 
-	defaultKeyPath := path.Join(cwd, publicKeyFilename)
-	defaultBundlePath := path.Join(cwd, caBundleFilename)
+	// certs and keys live in the root of the node package
+	defaultKeyPath := path.Join(dir, "..", publicKeyFilename)
+	defaultBundlePath := path.Join(dir, "..", caBundleFilename)
+
 	prefs := &Preferences{}
 	if useDefaults == true {
 		prefs = &Preferences{
