@@ -96,18 +96,32 @@ function dumpFlag(f, flag, indent) {
 
   var name = flag.long.slice(2) + ', ' + flag.short.slice(1);
 
-  if (flag.bool) {
-    f.write(pad + 'cli.BoolFlag{\n');
+  if (flag.long === '--org') {
+    f.write(pad + 'cmd.StdOrgFlag,\n');
+  } else if (flag.long === '--project') {
+    f.write(pad + 'cmd.StdProjectFlag,\n');
+  } else if (flag.long === '--environment') {
+    f.write(pad + 'cmd.StdEnvFlag,\n');
+  } else if (flag.long === '--service') {
+    f.write(pad + 'cmd.StdServiceFlag,\n');
+  } else if (flag.long === '--user') {
+    f.write(pad + 'cmd.StdUserFlag,\n');
+  } else if (flag.long === '--instance') {
+    f.write(pad + 'cmd.StdInstanceFlag,\n');
   } else {
-    f.write(pad + 'cli.StringFlag{\n');
-    if (flag.defaultValue) {
-      f.write(pad + '    Value: "' + flag.defaultValue + '",\n');
+    if (flag.bool) {
+      f.write(pad + 'cli.BoolFlag{\n');
+    } else {
+      f.write(pad + 'cli.StringFlag{\n');
+      if (flag.defaultValue) {
+        f.write(pad + '    Value: "' + flag.defaultValue + '",\n');
+      }
     }
-  }
 
-  f.write(pad + '    Name: "' + name + '",\n');
-  f.write(pad + '    Usage: "' + flag.description + '",\n');
-  f.write(pad + '},\n');
+    f.write(pad + '    Name: "' + name + '",\n');
+    f.write(pad + '    Usage: "' + flag.description + '",\n');
+    f.write(pad + '},\n');
+  }
 }
 
 function dumpCmd(f, cmd, indent) {
