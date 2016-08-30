@@ -3,20 +3,19 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path"
 	"runtime"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/kardianos/osext"
 	"github.com/natefinch/lumberjack"
+	"github.com/nightlyone/lockfile"
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
@@ -258,25 +257,23 @@ func stopDaemon(proc *os.Process) (bool, error) {
 }
 
 // findDaemon returns an os.Process for a running daemon, or nil if it is not
-// running. It returns an error if the configuration can't be loaded, or the
-// daemon pid file is corrupt/out of sync.
+// running. It returns an error if the pid file location is invalid in the
+// config, or there was an error reading the pid file.
 func findDaemon(cfg *config.Config) (*os.Process, error) {
-	pidb, err := ioutil.ReadFile(cfg.PidPath)
+	lock, err := lockfile.New(cfg.PidPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		return nil, err
+	}
+
+	proc, err := lock.GetOwner()
+	if err != nil {
+		// happy path cases. the pid doesn't exist, or it contains garbage,
+		// or the previous owner is gone.
+		if os.IsNotExist(err) || err == lockfile.ErrInvalidPid || err == lockfile.ErrDeadOwner {
 			return nil, nil
 		}
-		return nil, cli.NewExitError("Error reading daemon pid file: "+err.Error(), -1)
-	}
 
-	pid, err := strconv.Atoi(strings.Trim(string(pidb), "\n"))
-	if err != nil {
-		return nil, cli.NewExitError("pid file does not contain a valid pid", -1)
-	}
-
-	proc, err := findProcess(pid)
-	if err != nil {
-		return nil, cli.NewExitError("Daemon is not running, but pid file exists.", -1)
+		return nil, err
 	}
 
 	return proc, nil

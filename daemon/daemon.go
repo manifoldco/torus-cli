@@ -2,7 +2,6 @@ package daemon
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/nightlyone/lockfile"
 
@@ -25,18 +24,9 @@ type Daemon struct {
 
 // New creates a new Daemon.
 func New(cfg *config.Config) (*Daemon, error) {
-
 	lock, err := lockfile.New(cfg.PidPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create lockfile object: %s", err)
-	}
-
-	// Checks if there is a file; if there is an error and its not a
-	// `isnotexists` error then return it back to the callee
-	_, err = lock.GetOwner()
-	if err != nil && !os.IsNotExist(err) &&
-		err != lockfile.ErrInvalidPid && err != lockfile.ErrDeadOwner {
-		return nil, err
 	}
 
 	err = lock.TryLock()
