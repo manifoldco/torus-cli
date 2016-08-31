@@ -1,7 +1,7 @@
 package logic
 
 import (
-	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/identity"
 )
 
 // PlaintextCredentialEnvelope is an unencrypted credential object

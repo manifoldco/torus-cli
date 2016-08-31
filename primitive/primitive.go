@@ -5,8 +5,8 @@ package primitive
 import (
 	"time"
 
-	"github.com/arigatomachine/cli/daemon/base64"
-	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/base64"
+	"github.com/arigatomachine/cli/identity"
 )
 
 // v1Schema embeds in other structs to indicate their schema version is 1.

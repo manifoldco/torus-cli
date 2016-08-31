@@ -19,8 +19,8 @@ import (
 	"github.com/satori/go.uuid"
 
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/config"
 
-	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/routes"

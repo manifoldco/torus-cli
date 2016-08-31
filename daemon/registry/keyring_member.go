@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/arigatomachine/cli/daemon/envelope"
+	"github.com/arigatomachine/cli/envelope"
 )
 
 // KeyringMemberClient represents the `/keyring-members` registry end point for

@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/arigatomachine/cli/daemon/envelope"
+	"github.com/arigatomachine/cli/envelope"
 )
 
 // Credentials represents the `/credentials` registry endpoint, used for

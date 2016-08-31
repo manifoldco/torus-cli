@@ -12,8 +12,8 @@ import (
 
 	"github.com/boltdb/bolt"
 
-	"github.com/arigatomachine/cli/daemon/envelope"
-	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/envelope"
+	"github.com/arigatomachine/cli/identity"
 )
 
 var schemaVersion = []byte{0x01}

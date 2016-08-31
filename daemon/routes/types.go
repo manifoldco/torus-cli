@@ -4,8 +4,7 @@ import (
 	"net/http"
 
 	"github.com/arigatomachine/cli/apitypes"
-
-	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/identity"
 )
 
 type keyPairGenerate struct {
