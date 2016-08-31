@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/arigatomachine/cli/daemon/base64"
-
 	"github.com/urfave/cli"
+
+	"github.com/arigatomachine/cli/base64"
 )
 
 const requiredPermissions = 0700
