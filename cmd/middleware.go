@@ -12,6 +12,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/dirprefs"
 	"github.com/arigatomachine/cli/prefs"
 )
 
@@ -143,6 +144,22 @@ func EnsureSession(ctx *cli.Context) error {
 	return cli.NewExitError(msg, -1)
 }
 
+// LoadDirPrefs loads argument values from the .arigato.json file
+// XXX LoadDirPrefs is only public while we need it for passthrough.go
+func LoadDirPrefs(ctx *cli.Context) error {
+	p, err := prefs.NewPreferences(true)
+	if err != nil {
+		return err
+	}
+
+	d, err := dirprefs.Load()
+	if err != nil {
+		return err
+	}
+
+	return reflectArgs(ctx, p, d, "json")
+}
+
 // LoadPrefDefaults loads default argument values from the .arigatorc
 // preferences file defaults section, inserting them into any unset flag values
 // XXX LoadPrefDefaults is only public while we need it for passthrough.go
@@ -152,18 +169,19 @@ func LoadPrefDefaults(ctx *cli.Context) error {
 		return err
 	}
 
-	return loadPrefDefaults(ctx, p)
+	return reflectArgs(ctx, p, p.Defaults, "ini")
 }
 
-// split out to ease testing
-func loadPrefDefaults(ctx *cli.Context, p *prefs.Preferences) error {
-	// The user has disabled reading arguments from the defaults
+func reflectArgs(ctx *cli.Context, p *prefs.Preferences, i interface{},
+	tagName string) error {
+
+	// The user has disabled reading arguments from prefs and .arigato.json
 	if !p.Core.Context {
 		return nil
 	}
 
-	// ini field names match the argument names
-	tags, err := reflections.Tags(p.Defaults, "ini")
+	// tagged field names match the argument names
+	tags, err := reflections.Tags(i, tagName)
 	if err != nil {
 		return err
 	}
@@ -171,7 +189,7 @@ func loadPrefDefaults(ctx *cli.Context, p *prefs.Preferences) error {
 	flags := make(map[string]bool)
 	for _, flagName := range ctx.FlagNames() {
 		// This value is already set via arguments or env vars. skip it.
-		if ctx.IsSet(flagName) {
+		if ctx.String(flagName) != "" {
 			continue
 		}
 
@@ -181,7 +199,7 @@ func loadPrefDefaults(ctx *cli.Context, p *prefs.Preferences) error {
 	for fieldName, tag := range tags {
 		name := strings.SplitN(tag, ",", 2)[0] // remove omitempty if its there
 		if _, ok := flags[name]; ok {
-			field, err := reflections.GetField(p.Defaults, fieldName)
+			field, err := reflections.GetField(i, fieldName)
 			if err != nil {
 				return err
 			}

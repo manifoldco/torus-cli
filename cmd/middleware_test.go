@@ -65,7 +65,7 @@ func TestChain(t *testing.T) {
 	})
 }
 
-func TestLoadPrefDefaults(t *testing.T) {
+func TestReflectArgs(t *testing.T) {
 	cmd := cli.Command{
 		Flags: []cli.Flag{cli.StringFlag{Name: "org"}},
 	}
@@ -92,7 +92,7 @@ func TestLoadPrefDefaults(t *testing.T) {
 		flagset.String("org", "", "")
 		ctx := cli.NewContext(nil, flagset, nil)
 		ctx.Command = cmd
-		err := loadPrefDefaults(ctx, p)
+		err := reflectArgs(ctx, p, p.Defaults, "ini")
 		if err != nil {
 			t.Error("loadPrefDefaults errored: " + err.Error())
 		}
@@ -109,7 +109,7 @@ func TestLoadPrefDefaults(t *testing.T) {
 		ctx.Command = cmd
 		ctx.Set("org", "good value")
 
-		err := loadPrefDefaults(ctx, p)
+		err := reflectArgs(ctx, p, p.Defaults, "ini")
 		if err != nil {
 			t.Error("loadPrefDefaults errored: " + err.Error())
 		}
@@ -125,7 +125,7 @@ func TestLoadPrefDefaults(t *testing.T) {
 		ctx := cli.NewContext(nil, flagset, nil)
 		ctx.Command = cmd
 
-		err := loadPrefDefaults(ctx, p)
+		err := reflectArgs(ctx, p, p.Defaults, "ini")
 		if err != nil {
 			t.Error("loadPrefDefaults errored: " + err.Error())
 		}
