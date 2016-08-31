@@ -18,6 +18,10 @@ import (
 type Client struct {
 	client *http.Client
 
+	Orgs    *OrgsClient
+	Users   *UsersClient
+	Teams   *TeamsClient
+	Invites *InvitesClient
 	Session *SessionClient
 	Version *VersionClient
 }
@@ -34,6 +38,10 @@ func NewClient(cfg *config.Config) *Client {
 		},
 	}
 
+	c.Orgs = &OrgsClient{client: c}
+	c.Users = &UsersClient{client: c}
+	c.Teams = &TeamsClient{client: c}
+	c.Invites = &InvitesClient{client: c}
 	c.Session = &SessionClient{client: c}
 	c.Version = &VersionClient{client: c}
 
@@ -43,7 +51,7 @@ func NewClient(cfg *config.Config) *Client {
 // NewRequest constructs a new http.Request, with a body containing the json
 // representation of body, if provided.
 func (c *Client) NewRequest(method, path string, query *url.Values,
-	body interface{}) (*http.Request, error) {
+	body interface{}, proxied bool) (*http.Request, error) {
 
 	b := &bytes.Buffer{}
 	if body != nil {
@@ -58,7 +66,12 @@ func (c *Client) NewRequest(method, path string, query *url.Values,
 		query = &url.Values{}
 	}
 
-	fullPath := "http://localhost/v1" + path + "?" + query.Encode()
+	version := "v1"
+	if proxied {
+		version = "proxy"
+	}
+
+	fullPath := "http://localhost/" + version + path + "?" + query.Encode()
 	req, err := http.NewRequest(method, fullPath, b)
 	if err != nil {
 		return nil, err

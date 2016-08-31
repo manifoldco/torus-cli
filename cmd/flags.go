@@ -50,6 +50,34 @@ func InstanceFlag(usage string) cli.Flag {
 	return newPlaceholder("instance, i", "INSTANCE", usage, "1")
 }
 
+// placeHolderStringSliceFlag is a StringSliceFlag that has been extended to use a
+// specific placedholder value in the usage, without parsing it out of the
+// usage string.
+type placeHolderStringSliceFlag struct {
+	cli.StringSliceFlag
+	Placeholder string
+}
+
+func (psf placeHolderStringSliceFlag) String() string {
+	flags := prefixedNames(psf.Name, psf.Placeholder)
+	def := ""
+	if psf.Value != nil && len([]string(*psf.Value)) > 0 {
+		def = fmt.Sprintf(" (default: %s)", psf.Value)
+	}
+	return fmt.Sprintf("%s\t%s%s", flags, psf.Usage, def)
+}
+
+func newSlicePlaceholder(name, placeholder, usage string, value cli.StringSlice) placeHolderStringSliceFlag {
+	return placeHolderStringSliceFlag{
+		StringSliceFlag: cli.StringSliceFlag{
+			Name:  name,
+			Usage: usage,
+			Value: &value,
+		},
+		Placeholder: placeholder,
+	}
+}
+
 // placeHolderStringFlag is a StringFlag that has been extended to use a
 // specific placedholder value in the usage, without parsing it out of the
 // usage string.
