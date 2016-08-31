@@ -15,12 +15,12 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 
 	"github.com/arigatomachine/cli/base64"
+	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 
 	"github.com/arigatomachine/cli/daemon/ctxutil"
 	"github.com/arigatomachine/cli/daemon/db"
-	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/session"
 )
 

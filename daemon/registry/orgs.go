@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/arigatomachine/cli/daemon/envelope"
+	"github.com/arigatomachine/cli/envelope"
 )
 
 // Orgs represents the `/orgs` registry endpoint, used for accessing

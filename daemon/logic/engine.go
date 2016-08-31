@@ -11,13 +11,13 @@ import (
 
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/base64"
+	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 
 	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
-	"github.com/arigatomachine/cli/daemon/envelope"
 	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"

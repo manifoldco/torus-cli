@@ -6,9 +6,8 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
-
-	"github.com/arigatomachine/cli/daemon/envelope"
 )
 
 // CredentialTreeClient represents the `/credentialtree` registry endpoint,
