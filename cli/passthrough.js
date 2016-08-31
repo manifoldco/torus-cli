@@ -167,6 +167,7 @@ function dumpCmd(f, cmd, indent) {
   if (usePrefOptions) {
     cmd.middlewares.push('cmd.LoadDirPrefs');
     cmd.middlewares.push('cmd.LoadPrefDefaults');
+    cmd.middlewares.push('cmd.SetUserEnv');
   }
 
   if (!cmd.skipExec) {

@@ -209,3 +209,40 @@ func reflectArgs(ctx *cli.Context, p *prefs.Preferences, i interface{},
 
 	return nil
 }
+
+// SetUserEnv populates the env argument, if present and unset,
+// with dev-USERNAME
+// XXX SetUserEnv is only public while we need it for passthrough.go
+func SetUserEnv(ctx *cli.Context) error {
+	argName := "environment"
+	// Check for env flag, just in case this middleware is misused
+	hasEnvFlag := false
+	for _, name := range ctx.FlagNames() {
+		if name == argName {
+			hasEnvFlag = true
+			break
+		}
+	}
+	if !hasEnvFlag {
+		return nil
+	}
+
+	env := ctx.String(argName)
+	if env != "" {
+		return nil
+	}
+
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	u, err := client.Users.Self(context.Background())
+	if err != nil {
+		return err
+	}
+
+	ctx.Set(argName, "dev-"+u.Body.Username)
+	return nil
+}
