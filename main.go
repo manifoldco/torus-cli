@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 	"syscall"
 
 	"github.com/kardianos/osext"
@@ -29,7 +30,27 @@ func passthrough(ctx *cli.Context, prefixLen int, slug string) error {
 	}
 
 	node := path.Join(dir, "ag-node")
-	cmd := exec.Command(node, append([]string{slug}, os.Args[prefixLen:]...)...)
+	args := []string{slug}
+
+	for _, f := range ctx.Command.Flags {
+		name := strings.SplitN(f.GetName(), ", ", 2)[0]
+		switch f.(type) {
+		case cli.BoolFlag:
+			v := ctx.Bool(name)
+			if v {
+				args = append(args, "--"+name)
+			}
+		default:
+			v := ctx.String(name)
+			if v != "" {
+				args = append(args, "--"+name+"="+v)
+			}
+		}
+	}
+
+	args = append(args, ctx.Args()...)
+
+	cmd := exec.Command(node, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
