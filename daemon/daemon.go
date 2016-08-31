@@ -5,7 +5,8 @@ import (
 
 	"github.com/nightlyone/lockfile"
 
-	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/config"
+
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/session"
 	"github.com/arigatomachine/cli/daemon/socket"

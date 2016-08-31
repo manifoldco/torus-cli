@@ -7,8 +7,8 @@ import (
 	"github.com/go-zoo/bone"
 
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/config"
 
-	"github.com/arigatomachine/cli/daemon/config"
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
 	"github.com/arigatomachine/cli/daemon/logic"

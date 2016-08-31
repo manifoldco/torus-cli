@@ -11,8 +11,7 @@ import (
 	"net/url"
 
 	"github.com/arigatomachine/cli/apitypes"
-
-	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/config"
 )
 
 // Client exposes the daemon API.

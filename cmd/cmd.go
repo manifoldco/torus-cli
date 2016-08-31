@@ -6,7 +6,7 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/config"
 )
 
 // Cmds is the list of all cli commands

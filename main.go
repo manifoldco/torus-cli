@@ -11,7 +11,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/cmd"
-	"github.com/arigatomachine/cli/daemon/config"
+	"github.com/arigatomachine/cli/config"
 )
 
 func main() {
