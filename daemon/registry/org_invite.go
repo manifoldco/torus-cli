@@ -5,8 +5,9 @@ import (
 	"errors"
 	"log"
 
+	"github.com/arigatomachine/cli/identity"
+
 	"github.com/arigatomachine/cli/daemon/envelope"
-	"github.com/arigatomachine/cli/daemon/identity"
 )
 
 // OrgInviteClient represents the `/org-invites` registry endpoint, used for

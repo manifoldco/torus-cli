@@ -9,7 +9,8 @@ import (
 
 	"github.com/go-zoo/bone"
 
-	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/identity"
+
 	"github.com/arigatomachine/cli/daemon/logic"
 	"github.com/arigatomachine/cli/daemon/observer"
 )

@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/identity"
+
 	"github.com/arigatomachine/cli/daemon/primitive"
 )
 

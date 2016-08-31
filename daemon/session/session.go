@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/arigatomachine/cli/daemon/identity"
+	"github.com/arigatomachine/cli/identity"
 )
 
 type memorySession struct {

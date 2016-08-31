@@ -6,8 +6,9 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/arigatomachine/cli/identity"
+
 	"github.com/arigatomachine/cli/daemon/envelope"
-	"github.com/arigatomachine/cli/daemon/identity"
 )
 
 // TeamsClient represents the `/teams` registry endpoint, used for

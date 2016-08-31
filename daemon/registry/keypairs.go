@@ -5,8 +5,9 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/arigatomachine/cli/identity"
+
 	"github.com/arigatomachine/cli/daemon/envelope"
-	"github.com/arigatomachine/cli/daemon/identity"
 )
 
 // ClaimedKeyPair contains a public/private keypair, and all the Claims made

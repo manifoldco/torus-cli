@@ -5,8 +5,9 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/arigatomachine/cli/identity"
+
 	"github.com/arigatomachine/cli/daemon/envelope"
-	"github.com/arigatomachine/cli/daemon/identity"
 )
 
 // ClaimTreeClient represents the `/claimtree` registry endpoint, used for
