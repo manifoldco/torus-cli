@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/arigatomachine/cli/primitive"
+
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/envelope"
-	"github.com/arigatomachine/cli/daemon/primitive"
 )
 
 // Users represents the  registry `/users` endpoints.

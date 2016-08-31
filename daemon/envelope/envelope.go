@@ -7,8 +7,7 @@ import (
 	"fmt"
 
 	"github.com/arigatomachine/cli/identity"
-
-	"github.com/arigatomachine/cli/daemon/primitive"
+	"github.com/arigatomachine/cli/primitive"
 )
 
 // Envelope is the interface implemented by objects that encapsulate 'true'
