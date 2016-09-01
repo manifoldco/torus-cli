@@ -25,6 +25,8 @@ var (
 type Prompt struct {
 	Label string // Label is the value displayed on the command line prompt
 
+	Default string // Default is the initial value to populate in the prompt
+
 	// Validate is optional. If set, this function is used to validate the input
 	// after each character entry.
 	Validate ValidateFunc
@@ -65,65 +67,77 @@ func (p *Prompt) Run() (string, error) {
 	c.HistoryLimit = -1
 	c.UniqueEditLine = true
 
-	rl, err := readline.NewEx(c)
-	if err != nil {
-		return "", err
-	}
-
 	firstListen := true
 	wroteErr := false
 	caughtup := true
 	var out string
 
-	if p.Validate != nil {
-		c.SetListener(func(line []rune, pos int, key rune) ([]rune, int, bool) {
-			if firstListen {
-				firstListen = false
-				return nil, 0, false
-			}
-
-			if !caughtup && out != "" {
-				if string(line) == out {
-					caughtup = true
-				}
-				return nil, 0, false
-			}
-
-			err := p.Validate(string(line))
-			if err != nil {
-				if _, ok := err.(*ValidationError); ok {
-					state = bad
-				} else {
-					rl.Close()
-					return nil, 0, false
-				}
-			} else {
-				state = good
-			}
-
-			rl.SetPrompt(bold(state) + " " + bold(prompt))
-			rl.Refresh()
-			wroteErr = false
-
-			return nil, 0, false
-		})
+	if p.Default != "" {
+		caughtup = false
+		out = p.Default
+		c.Stdin = io.MultiReader(bytes.NewBuffer([]byte(out)), os.Stdin)
 	}
+
+	rl, err := readline.NewEx(c)
+	if err != nil {
+		return "", err
+	}
+
+	validFn := func(x string) error {
+		return nil
+	}
+
+	if p.Validate != nil {
+		validFn = p.Validate
+	}
+
+	c.SetListener(func(line []rune, pos int, key rune) ([]rune, int, bool) {
+		if firstListen {
+			firstListen = false
+			return nil, 0, false
+		}
+
+		if !caughtup && out != "" {
+			if string(line) == out {
+				caughtup = true
+			}
+			if wroteErr {
+				return nil, 0, false
+			}
+		}
+
+		err := validFn(string(line))
+		if err != nil {
+			if _, ok := err.(*ValidationError); ok {
+				state = bad
+			} else {
+				rl.Close()
+				return nil, 0, false
+			}
+		} else {
+			state = good
+		}
+
+		rl.SetPrompt(bold(state) + " " + bold(prompt))
+		rl.Refresh()
+		wroteErr = false
+
+		return nil, 0, false
+	})
 
 	for {
 		out, err = rl.Readline()
 
 		var msg string
 		valid := true
-		if p.Validate != nil {
-			oerr := p.Validate(out)
-			if oerr != nil {
-				if verr, ok := oerr.(*ValidationError); ok {
-					msg = verr.msg
-					valid = false
-					state = bad
-				} else {
-					return "", oerr
-				}
+		oerr := validFn(out)
+		if oerr != nil {
+			if verr, ok := oerr.(*ValidationError); ok {
+				msg = verr.msg
+				valid = false
+				state = bad
+			} else {
+				return "", oerr
 			}
 		}
 
