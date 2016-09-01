@@ -30,13 +30,13 @@ func (m *MembershipsClient) List(ctx context.Context, org, user *identity.ID) ([
 	v.Set("org_id", org.String())
 	v.Set("owner_id", user.String())
 
-	req, err := m.client.NewRequest("GET", "/memberships", v, nil, true)
+	req, _, err := m.client.NewRequest("GET", "/memberships", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	envs := []envelope.Unsigned{}
-	_, err = m.client.Do(ctx, req, &envs)
+	_, err = m.client.Do(ctx, req, &envs, nil, nil)
 	if err != nil {
 		return nil, err
 	}

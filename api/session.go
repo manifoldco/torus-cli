@@ -14,13 +14,13 @@ type SessionClient struct {
 
 // Get returns the status of the user's session.
 func (s *SessionClient) Get(ctx context.Context) (*apitypes.SessionStatus, error) {
-	req, err := s.client.NewRequest("GET", "/session", nil, nil, false)
+	req, _, err := s.client.NewRequest("GET", "/session", nil, nil, false)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := &apitypes.SessionStatus{}
-	_, err = s.client.Do(ctx, req, resp)
+	_, err = s.client.Do(ctx, req, resp, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -34,12 +34,12 @@ func (s *SessionClient) Login(ctx context.Context, email, passphrase string) err
 		Email:      email,
 		Passphrase: passphrase,
 	}
-	req, err := s.client.NewRequest("POST", "/login", nil, &login, false)
+	req, _, err := s.client.NewRequest("POST", "/login", nil, &login, false)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.client.Do(ctx, req, nil)
+	_, err = s.client.Do(ctx, req, nil, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -50,12 +50,12 @@ func (s *SessionClient) Login(ctx context.Context, email, passphrase string) err
 
 // Logout logs the user out of their session
 func (s *SessionClient) Logout(ctx context.Context) error {
-	req, err := s.client.NewRequest("POST", "/logout", nil, nil, false)
+	req, _, err := s.client.NewRequest("POST", "/logout", nil, nil, false)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.client.Do(ctx, req, nil)
+	_, err = s.client.Do(ctx, req, nil, nil, nil)
 	if err != nil {
 		return err
 	}

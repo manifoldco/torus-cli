@@ -17,3 +17,4 @@ import:
 - package: github.com/asaskevich/govalidator
 - package: github.com/kr/text
 - package: gopkg.in/oleiade/reflections.v1
+- package: github.com/donovanhide/eventsource

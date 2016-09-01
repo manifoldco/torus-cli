@@ -23,13 +23,13 @@ type UserResult struct {
 
 // Self retrieves the currently logged in user
 func (o *UsersClient) Self(ctx context.Context) (*UserResult, error) {
-	req, err := o.client.NewRequest("GET", "/users/self", nil, nil, true)
+	req, _, err := o.client.NewRequest("GET", "/users/self", nil, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	result := envelope.Unsigned{}
-	_, err = o.client.Do(ctx, req, &result)
+	_, err = o.client.Do(ctx, req, &result, nil, nil)
 	if err != nil {
 		return nil, err
 	}
