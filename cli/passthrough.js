@@ -92,22 +92,29 @@ function mungeCmd(mungedCmds, cmd) {
 }
 
 function dumpFlag(f, flag, indent) {
+  var usePrefOptions = false;
   var pad = _.repeat(' ', indent);
 
   var name = flag.long.slice(2) + ', ' + flag.short.slice(1);
 
   if (flag.long === '--org') {
     f.write(pad + 'cmd.StdOrgFlag,\n');
+    usePrefOptions = true;
   } else if (flag.long === '--project') {
     f.write(pad + 'cmd.StdProjectFlag,\n');
+    usePrefOptions = true;
   } else if (flag.long === '--environment') {
     f.write(pad + 'cmd.StdEnvFlag,\n');
+    usePrefOptions = true;
   } else if (flag.long === '--service') {
     f.write(pad + 'cmd.StdServiceFlag,\n');
+    usePrefOptions = true;
   } else if (flag.long === '--user') {
     f.write(pad + 'cmd.StdUserFlag,\n');
+    usePrefOptions = true;
   } else if (flag.long === '--instance') {
     f.write(pad + 'cmd.StdInstanceFlag,\n');
+    usePrefOptions = true;
   } else {
     if (flag.bool) {
       f.write(pad + 'cli.BoolFlag{\n');
@@ -122,6 +129,8 @@ function dumpFlag(f, flag, indent) {
     f.write(pad + '    Usage: "' + flag.description + '",\n');
     f.write(pad + '},\n');
   }
+
+  return usePrefOptions;
 }
 
 function dumpCmd(f, cmd, indent) {
@@ -146,12 +155,19 @@ function dumpCmd(f, cmd, indent) {
     f.write(pad + '    },\n');
   }
 
+  var usePrefOptions = false;
   if (cmd.flags.length > 0) {
     f.write(pad + '    Flags: []cli.Flag{\n');
     cmd.flags.forEach(function (flag) {
-      dumpFlag(f, flag, indent + 8);
+      usePrefOptions |= dumpFlag(f, flag, indent + 8);
     });
     f.write(pad + '    },\n');
+  }
+
+  if (usePrefOptions) {
+    cmd.middlewares.push('cmd.LoadDirPrefs');
+    cmd.middlewares.push('cmd.LoadPrefDefaults');
+    cmd.middlewares.push('cmd.SetUserEnv');
   }
 
   if (!cmd.skipExec) {

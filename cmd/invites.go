@@ -25,7 +25,10 @@ func init() {
 					OrgFlag("org to invite user to"),
 					newSlicePlaceholder("team, o", "TEAM", "team to add user to", nil),
 				},
-				Action: Chain(EnsureDaemon, EnsureSession, sendInvite),
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs,
+					LoadPrefDefaults, SetUserEnv, sendInvite,
+				),
 			},
 		},
 	}

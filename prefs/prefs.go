@@ -23,8 +23,8 @@ const (
 
 // Preferences represents the configuration as user has in their arigatorc file
 type Preferences struct {
-	Core     core     `ini:"core"`
-	Defaults defaults `ini:"defaults"`
+	Core     Core     `ini:"core"`
+	Defaults Defaults `ini:"defaults"`
 }
 
 // CountFields returns the number of defined fields on sub-field struct
@@ -44,14 +44,20 @@ func (prefs Preferences) CountFields(fieldName string) int {
 	return count
 }
 
-type core struct {
+// Core contains core option values
+type Core struct {
 	PublicKeyFile string `ini:"public_key_file,omitempty"`
 	CABundleFile  string `ini:"ca_bundle_file,omitempty"`
 	RegistryURI   string `ini:"registry_uri,omitempty"`
+	Context       bool   `ini:"context,omitempty"`
 }
 
-type defaults struct {
-	Environment string `ini:"environment,omitempty"`
+// Defaults contains default values for use in command argument flags
+type Defaults struct {
+	Organization string `ini:"org,omitempty"`
+	Project      string `ini:"project,omitempty"`
+	Environment  string `ini:"environment,omitempty"`
+	Service      string `ini:"service,omitempty"`
 }
 
 // SetValue for ini key on preferences struct
@@ -119,10 +125,11 @@ func NewPreferences(useDefaults bool) (*Preferences, error) {
 	prefs := &Preferences{}
 	if useDefaults == true {
 		prefs = &Preferences{
-			Core: core{
+			Core: Core{
 				PublicKeyFile: defaultKeyPath,
 				CABundleFile:  defaultBundlePath,
 				RegistryURI:   registryURI,
+				Context:       true,
 			},
 		}
 	}
