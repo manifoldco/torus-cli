@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
+	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/promptui"
 )
 
@@ -54,7 +55,7 @@ func login(ctx *cli.Context) error {
 		return err
 	}
 
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}

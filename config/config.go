@@ -10,6 +10,8 @@ import (
 	"os"
 	"path"
 
+	"github.com/urfave/cli"
+
 	"github.com/arigatomachine/cli/prefs"
 )
 
@@ -125,4 +127,19 @@ func loadCABundle(cafile string) (*x509.CertPool, error) {
 	}
 
 	return c, nil
+}
+
+// LoadConfig loads the config, standardizing cli errors on failure.
+func LoadConfig() (*Config, error) {
+	arigatoRoot, err := CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
+	if err != nil {
+		return nil, cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
+	}
+
+	cfg, err := NewConfig(arigatoRoot)
+	if err != nil {
+		return nil, cli.NewExitError("Failed to load config: "+err.Error(), -1)
+	}
+
+	return cfg, nil
 }

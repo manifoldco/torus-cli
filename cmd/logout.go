@@ -8,6 +8,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/config"
 )
 
 func init() {
@@ -21,7 +22,7 @@ func init() {
 }
 
 func logoutCmd(ctx *cli.Context) error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
