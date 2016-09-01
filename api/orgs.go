@@ -38,11 +38,40 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, er
 		return nil, err
 	}
 
-	org := OrgResult{}
-	org.ID = orgs[0].ID
-	org.Version = orgs[0].Version
+	return convertOrg(&orgs[0])
+}
 
-	orgBody, ok := orgs[0].Body.(*primitive.Org)
+// List returns all organizations that the signed-in user has access to
+func (o *OrgsClient) List(ctx context.Context) ([]OrgResult, error) {
+	req, err := o.client.NewRequest("GET", "/orgs", nil, nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	orgs := []envelope.Unsigned{}
+	_, err = o.client.Do(ctx, req, &orgs)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]OrgResult, len(orgs))
+	for i, env := range orgs {
+		org, err := convertOrg(&env)
+		if err != nil {
+			return nil, err
+		}
+		res[i] = *org
+	}
+
+	return res, nil
+}
+
+func convertOrg(env *envelope.Unsigned) (*OrgResult, error) {
+	org := OrgResult{}
+	org.ID = env.ID
+	org.Version = env.Version
+
+	orgBody, ok := env.Body.(*primitive.Org)
 	if !ok {
 		return nil, errors.New("invalid org body")
 	}
