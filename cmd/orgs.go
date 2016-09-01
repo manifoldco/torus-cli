@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
+	"github.com/arigatomachine/cli/config"
 )
 
 func init() {
@@ -27,7 +28,7 @@ func init() {
 }
 
 func orgsListCmd(ctx *cli.Context) error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}

@@ -18,12 +18,13 @@ import (
 type Client struct {
 	client *http.Client
 
-	Orgs    *OrgsClient
-	Users   *UsersClient
-	Teams   *TeamsClient
-	Invites *InvitesClient
-	Session *SessionClient
-	Version *VersionClient
+	Orgs     *OrgsClient
+	Users    *UsersClient
+	Profiles *ProfilesClient
+	Teams    *TeamsClient
+	Invites  *InvitesClient
+	Session  *SessionClient
+	Version  *VersionClient
 }
 
 // NewClient returns a new Client.
@@ -40,6 +41,7 @@ func NewClient(cfg *config.Config) *Client {
 
 	c.Orgs = &OrgsClient{client: c}
 	c.Users = &UsersClient{client: c}
+	c.Profiles = &ProfilesClient{client: c}
 	c.Teams = &TeamsClient{client: c}
 	c.Invites = &InvitesClient{client: c}
 	c.Session = &SessionClient{client: c}

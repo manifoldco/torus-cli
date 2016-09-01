@@ -66,7 +66,7 @@ func init() {
 }
 
 func daemonStatus(ctx *cli.Context) error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func daemonStatus(ctx *cli.Context) error {
 }
 
 func spawnDaemonCmd() error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func shutdown(daemon *daemon.Daemon) {
 }
 
 func stopDaemonCmd(ctx *cli.Context) error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}

@@ -37,6 +37,9 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, er
 	if err != nil {
 		return nil, err
 	}
+	if len(orgs) < 1 {
+		return nil, nil
+	}
 
 	return convertOrg(&orgs[0])
 }

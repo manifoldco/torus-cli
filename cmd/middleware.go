@@ -12,6 +12,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/dirprefs"
 	"github.com/arigatomachine/cli/prefs"
 )
@@ -39,7 +40,7 @@ func Chain(funcs ...func(*cli.Context) error) func(*cli.Context) error {
 // version.
 // XXX EnsureDaemon is only public while we need it for passthrough.go
 func EnsureDaemon(ctx *cli.Context) error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func EnsureDaemon(ctx *cli.Context) error {
 // command.
 // XXX EnsureSession is only public while we need it for passthrough.go
 func EnsureSession(ctx *cli.Context) error {
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
@@ -232,7 +233,7 @@ func SetUserEnv(ctx *cli.Context) error {
 		return nil
 	}
 
-	cfg, err := loadConfig()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}

@@ -50,6 +50,15 @@ type Login struct {
 	Passphrase string `json:"passphrase"`
 }
 
+// Profile contains the fields in the response for the profiles endpoint
+type Profile struct {
+	ID   string `json:"id"`
+	Body *struct {
+		Name     string `json:"name"`
+		Username string `json:"username"`
+	} `json:"body"`
+}
+
 // OrgInvite contains information for sending an Org invite
 type OrgInvite struct {
 	ID      string               `json:"id"`
