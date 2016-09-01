@@ -5,15 +5,16 @@ import (
 	"testing"
 )
 
-func outputTest(mask rune, input, displayed, output string) func(t *testing.T) {
+func outputTest(mask rune, input, displayed, output, def string) func(t *testing.T) {
 	return func(t *testing.T) {
 		in := bytes.Buffer{}
 		out := bytes.Buffer{}
 		p := Prompt{
-			Label:  "test",
-			Mask:   mask,
-			stdin:  &in,
-			stdout: &out,
+			Label:   "test",
+			Default: def,
+			Mask:    mask,
+			stdin:   &in,
+			stdout:  &out,
 		}
 
 		in.Write([]byte(input + "\n"))
@@ -36,6 +37,7 @@ func outputTest(mask rune, input, displayed, output string) func(t *testing.T) {
 }
 
 func TestPrompt(t *testing.T) {
-	t.Run("can read input", outputTest(0x0, "hi", "hi", "hi"))
-	t.Run("displays masked values", outputTest('*', "hi", "**", "hi"))
+	t.Run("can read input", outputTest(0x0, "hi", "hi", "hi", ""))
+	t.Run("displays masked values", outputTest('*', "hi", "**", "hi", ""))
+	t.Run("can use a default", outputTest(0x0, "", "hi", "hi", "hi"))
 }
