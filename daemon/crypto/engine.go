@@ -402,7 +402,7 @@ func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Identifiable,
 		Value:       base64.NewValue(s),
 	}
 
-	id, err := identity.New(body, &sig)
+	id, err := identity.Immutable(body, &sig)
 	if err != nil {
 		return nil, err
 	}

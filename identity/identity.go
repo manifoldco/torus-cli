@@ -3,6 +3,7 @@
 package identity
 
 import (
+	"crypto/rand"
 	"encoding/base32"
 	"encoding/json"
 	"errors"
@@ -35,10 +36,20 @@ var lowerBase32 = base32.NewEncoding(base32Alphabet)
 // immutable objects, or a random value for mutable objects.
 type ID [18]byte
 
-// New returns a new signed ID for an immutable object.
+// Mutable returns a new ID for a mutable object.
+func Mutable(body Identifiable) (ID, error) {
+	id := ID{idVersion, body.Type()}
+	_, err := rand.Read(id[2:])
+	if err != nil {
+		return ID{}, err
+	}
+	return id, nil
+}
+
+// Immutable returns a new signed ID for an immutable object.
 //
 // sig should be a registry.Signature type
-func New(body Identifiable, sig interface{}) (ID, error) {
+func Immutable(body Identifiable, sig interface{}) (ID, error) {
 	h, err := blake2b.New(&blake2b.Config{Size: 16})
 	if err != nil {
 		return ID{}, err

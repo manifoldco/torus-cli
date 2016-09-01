@@ -1,7 +1,11 @@
 // Package apitypes defines types shared between the daemon and its api client.
 package apitypes
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/arigatomachine/cli/primitive"
+)
 
 // ErrorType represents the string error types that the daemon and registry can
 // return.
@@ -44,4 +48,11 @@ type SessionStatus struct {
 type Login struct {
 	Email      string `json:"email"`
 	Passphrase string `json:"passphrase"`
+}
+
+// OrgInvite contains information for sending an Org invite
+type OrgInvite struct {
+	ID      string               `json:"id"`
+	Version int                  `json:"version"`
+	Body    *primitive.OrgInvite `json:"body"`
 }

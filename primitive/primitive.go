@@ -17,9 +17,18 @@ func (v *v1Schema) Version() int {
 	return 1
 }
 
-// User holds the details of a user, including their encrypted master key.
+// User is the body of a user object
 type User struct {
 	v1Schema
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	State    string `json:"state"`
+	Password *struct {
+		Salt  string        `json:"salt"`
+		Value *base64.Value `json:"value"`
+		Alg   string        `json:"alg"`
+	}
 	Master *struct {
 		Alg   string        `json:"alg"`
 		Value *base64.Value `json:"value"`

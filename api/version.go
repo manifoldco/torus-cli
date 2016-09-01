@@ -14,7 +14,7 @@ type VersionClient struct {
 
 // Get returns the daemon's release version.
 func (v *VersionClient) Get(ctx context.Context) (*apitypes.Version, error) {
-	req, err := v.client.NewRequest("GET", "/version", nil, nil)
+	req, err := v.client.NewRequest("GET", "/version", nil, nil, false)
 	if err != nil {
 		return nil, err
 	}
