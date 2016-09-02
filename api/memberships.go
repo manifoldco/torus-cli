@@ -25,10 +25,15 @@ type MembershipResult struct {
 
 // List returns all team membership associations for the given user id within
 // the given org id.
-func (m *MembershipsClient) List(ctx context.Context, org, user *identity.ID) ([]MembershipResult, error) {
+func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.ID) ([]MembershipResult, error) {
 	v := &url.Values{}
 	v.Set("org_id", org.String())
-	v.Set("owner_id", user.String())
+	if user != nil {
+		v.Set("owner_id", user.String())
+	}
+	if team != nil {
+		v.Set("team_id", team.String())
+	}
 
 	req, _, err := m.client.NewRequest("GET", "/memberships", v, nil, true)
 	if err != nil {
