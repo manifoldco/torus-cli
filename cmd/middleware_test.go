@@ -134,5 +134,51 @@ func TestReflectArgs(t *testing.T) {
 			t.Error("loadPrefDefaults did not set argument")
 		}
 	})
+}
 
+func TestCheckRequiredFlags(t *testing.T) {
+	app := cli.App{
+		Name: "test",
+	}
+	cmd := cli.Command{
+		Flags: []cli.Flag{
+			OrgFlag("an org", true),
+			ProjectFlag("a project", false),
+		},
+	}
+
+	t.Run("Unset non-required flags are ignored", func(t *testing.T) {
+		flagset := flag.NewFlagSet("", flag.ContinueOnError)
+		flagset.String("org", "my org", "")
+		ctx := cli.NewContext(&app, flagset, nil)
+		ctx.Command = cmd
+
+		err := checkRequiredFlags(ctx)
+		if err != nil {
+			t.Error("unset non-required flag caused an error")
+		}
+	})
+
+	t.Run("Unset required flags cause an error", func(t *testing.T) {
+		flagset := flag.NewFlagSet("", flag.ContinueOnError)
+		ctx := cli.NewContext(&app, flagset, nil)
+		ctx.Command = cmd
+
+		err := checkRequiredFlags(ctx)
+		if err == nil {
+			t.Error("unset required flag did not error")
+		}
+	})
+
+	t.Run("Set required flags do not cause an error", func(t *testing.T) {
+		flagset := flag.NewFlagSet("", flag.ContinueOnError)
+		flagset.String("org", "my org", "")
+		ctx := cli.NewContext(&app, flagset, nil)
+		ctx.Command = cmd
+
+		err := checkRequiredFlags(ctx)
+		if err != nil {
+			t.Error("set required flag caused an error")
+		}
+	})
 }

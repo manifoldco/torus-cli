@@ -28,8 +28,8 @@ func init() {
 					StdOrgFlag,
 				},
 				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs,
-					LoadPrefDefaults, SetUserEnv, teamsListCmd,
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					SetUserEnv, checkRequiredFlags, teamsListCmd,
 				),
 			},
 		},
@@ -39,9 +39,6 @@ func init() {
 
 func teamsListCmd(ctx *cli.Context) error {
 	orgName := ctx.String("org")
-	if orgName == "" {
-		return cli.NewExitError("--org is required", -1)
-	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -72,6 +69,10 @@ func teamsListCmd(ctx *cli.Context) error {
 		org, oErr = client.Orgs.GetByName(c, orgName)
 		getMemberships.Done()
 
+		if org == nil {
+			oErr = cli.NewExitError("Org not found", -1)
+		}
+
 		if oErr == nil {
 			teams, oErr = client.Teams.GetByOrg(c, org.ID)
 		}
@@ -94,7 +95,11 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	display.Wait()
 	if oErr != nil || sErr != nil {
-		return cli.NewExitError("Error fetching orgs list", -1)
+		return cli.NewMultiError(
+			oErr,
+			sErr,
+			cli.NewExitError("Error fetching teams list", -1),
+		)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)

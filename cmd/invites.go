@@ -17,12 +17,12 @@ func init() {
 				Usage:     "Send an invitation to join an organization to an email address",
 				ArgsUsage: "<email>",
 				Flags: []cli.Flag{
-					OrgFlag("org to invite user to"),
+					OrgFlag("org to invite user to", true),
 					newSlicePlaceholder("team, t", "TEAM", "team to add user to", nil),
 				},
 				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs,
-					LoadPrefDefaults, SetUserEnv, invites.Send,
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					SetUserEnv, checkRequiredFlags, invites.Send,
 				),
 			},
 			{
@@ -30,15 +30,15 @@ func init() {
 				Usage:     "List outstanding invitations for an organization. These invites have yet to be approved.",
 				ArgsUsage: "",
 				Flags: []cli.Flag{
-					OrgFlag("org to list invites for"),
+					OrgFlag("org to list invites for", true),
 					cli.BoolFlag{
 						Name:  "approved",
 						Usage: "Show only approved invites",
 					},
 				},
 				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs,
-					LoadPrefDefaults, SetUserEnv, invites.List,
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					SetUserEnv, checkRequiredFlags, invites.List,
 				),
 			},
 		},

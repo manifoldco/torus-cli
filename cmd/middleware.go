@@ -247,3 +247,29 @@ func SetUserEnv(ctx *cli.Context) error {
 	ctx.Set(argName, "dev-"+u.Body.Username)
 	return nil
 }
+
+// CheckRequiredFlags ensures that any required flags have been set either on
+// the command line, or through envvars/prefs files.
+func checkRequiredFlags(ctx *cli.Context) error {
+	missing := []string{}
+	for _, f := range ctx.Command.Flags {
+		if psf, ok := f.(placeHolderStringFlag); ok {
+			name := strings.SplitN(psf.GetName(), ",", 2)[0]
+			if psf.Required && ctx.String(name) == "" {
+				prefix := "-"
+				if len(name) > 1 {
+					prefix = "--"
+				}
+				missing = append(missing, prefix+name)
+			}
+		}
+	}
+
+	if len(missing) > 0 {
+		msg := "Missing flags: " + strings.Join(missing, ", ") + "\n"
+		msg += usageString(ctx)
+		return cli.NewExitError(msg, -1)
+	}
+
+	return nil
+}

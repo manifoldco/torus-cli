@@ -24,16 +24,16 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("org to show services for"),
-					ProjectFlag("project to shows services for"),
+					OrgFlag("org to show services for", true),
+					ProjectFlag("project to shows services for", false),
 					cli.BoolFlag{
 						Name:  "all",
 						Usage: "Perform command on all projects",
 					},
 				},
 				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs,
-					LoadPrefDefaults, SetUserEnv, listServices,
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					SetUserEnv, checkRequiredFlags, listServices,
 				),
 			},
 		},
@@ -44,11 +44,6 @@ func init() {
 const serviceListFailed = "Could not list services, please try again."
 
 func listServices(ctx *cli.Context) error {
-	if !ctx.IsSet("org") || len(ctx.String("org")) < 1 {
-		text := "Missing --org flag\n\n"
-		text += usageString(ctx)
-		return cli.NewExitError(text, -1)
-	}
 	if !ctx.Bool("all") {
 		if len(ctx.String("project")) < 1 {
 			text := "Missing --project flag\n\n"
