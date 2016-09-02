@@ -18,31 +18,20 @@ const orgInviteFailed = "Could not send invitation to org, please try again."
 func Send(ctx *cli.Context) error {
 	usage := usageString(ctx)
 
-	if !ctx.IsSet("org") {
-		text := "Missing --org flag\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
-	}
-
 	args := ctx.Args()
-	if len(args) < 1 {
+	if len(args) < 1 || args[0] == "" {
 		text := "Missing email\n\n"
 		text += usage
 		return cli.NewExitError(text, -1)
 	}
+
+	email := args[0]
 
 	var teamNames []string
 	if ctx.IsSet("team") {
 		teamNames = ctx.StringSlice("team")
 	} else {
 		teamNames = append(teamNames, "member")
-	}
-
-	email := ctx.Args()[0]
-	if email == "" {
-		text := "Missing email\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
 	}
 
 	cfg, err := config.LoadConfig()

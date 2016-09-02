@@ -12,42 +12,42 @@ import (
 
 // Standard flags for path expression parts.
 var (
-	StdOrgFlag      = OrgFlag("Use this organization.")
-	StdProjectFlag  = ProjectFlag("Use this project.")
-	StdEnvFlag      = EnvFlag("Use this environment.")
-	StdServiceFlag  = ServiceFlag("Use this service.")
-	StdUserFlag     = UserFlag("Use this user.")
-	StdInstanceFlag = InstanceFlag("Use this instance.")
+	StdOrgFlag      = OrgFlag("Use this organization.", true)
+	StdProjectFlag  = ProjectFlag("Use this project.", true)
+	StdEnvFlag      = EnvFlag("Use this environment.", true)
+	StdServiceFlag  = ServiceFlag("Use this service.", true)
+	StdUserFlag     = UserFlag("Use this user.", true)
+	StdInstanceFlag = InstanceFlag("Use this instance.", true)
 )
 
 // OrgFlag creates a new --org cli.Flag with custom usage string.
-func OrgFlag(usage string) cli.Flag {
-	return newPlaceholder("org, o", "ORG", usage, "", "AG_ORG")
+func OrgFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("org, o", "ORG", usage, "", "AG_ORG", required)
 }
 
 // ProjectFlag creates a new --project cli.Flag with custom usage string.
-func ProjectFlag(usage string) cli.Flag {
-	return newPlaceholder("project, p", "PROJECT", usage, "", "AG_PROJECT")
+func ProjectFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("project, p", "PROJECT", usage, "", "AG_PROJECT", required)
 }
 
 // EnvFlag creates a new --environment cli.Flag with custom usage string.
-func EnvFlag(usage string) cli.Flag {
-	return newPlaceholder("environment, e", "ENV", usage, "", "AG_ENVIRONMENT")
+func EnvFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("environment, e", "ENV", usage, "", "AG_ENVIRONMENT", required)
 }
 
 // ServiceFlag creates a new --service cli.Flag with custom usage string.
-func ServiceFlag(usage string) cli.Flag {
-	return newPlaceholder("service, s", "SERVICE", usage, "", "AG_SERVICE")
+func ServiceFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("service, s", "SERVICE", usage, "", "AG_SERVICE", required)
 }
 
 // UserFlag creates a new --user cli.Flag with custom usage string.
-func UserFlag(usage string) cli.Flag {
-	return newPlaceholder("user, u", "USER", usage, "", "AG_USER")
+func UserFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("user, u", "USER", usage, "", "AG_USER", required)
 }
 
 // InstanceFlag creates a new --instance cli.Flag with custom usage string.
-func InstanceFlag(usage string) cli.Flag {
-	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "AG_INSTANCE")
+func InstanceFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "AG_INSTANCE", required)
 }
 
 // placeHolderStringSliceFlag is a StringSliceFlag that has been extended to use a
@@ -84,6 +84,7 @@ func newSlicePlaceholder(name, placeholder, usage string, value cli.StringSlice)
 type placeHolderStringFlag struct {
 	cli.StringFlag
 	Placeholder string
+	Required    bool
 }
 
 func (psf placeHolderStringFlag) String() string {
@@ -95,7 +96,9 @@ func (psf placeHolderStringFlag) String() string {
 	return fmt.Sprintf("%s\t%s%s", flags, psf.Usage, def)
 }
 
-func newPlaceholder(name, placeholder, usage, value, envvar string) placeHolderStringFlag {
+func newPlaceholder(name, placeholder, usage, value, envvar string,
+	required bool) placeHolderStringFlag {
+
 	return placeHolderStringFlag{
 		StringFlag: cli.StringFlag{
 			Name:   name,
@@ -104,6 +107,7 @@ func newPlaceholder(name, placeholder, usage, value, envvar string) placeHolderS
 			EnvVar: envvar,
 		},
 		Placeholder: placeholder,
+		Required:    required,
 	}
 }
 

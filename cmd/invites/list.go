@@ -16,12 +16,6 @@ import (
 
 // List executes logic required to show invites for an org
 func List(ctx *cli.Context) error {
-	if !ctx.IsSet("org") {
-		text := "Missing --org flag\n\n"
-		text += usageString(ctx)
-		return cli.NewExitError(text, -1)
-	}
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
