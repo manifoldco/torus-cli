@@ -14,6 +14,8 @@ const (
 	reset attribute = iota
 	fgBold
 	fgFaint
+	fgItalic
+	fgUnderline
 )
 
 const (
@@ -27,7 +29,12 @@ const (
 	fgWhite
 )
 
-var resetCode = fmt.Sprintf("%s%dm", esc, reset)
+var (
+	resetCode  = fmt.Sprintf("%s%dm", esc, reset)
+	hideCursor = esc + "?25l"
+	showCursor = esc + "?25h"
+	clearLine  = esc + "2K"
+)
 
 func upLine(n uint) string {
 	return movementCode(n, 'A')
@@ -35,10 +42,6 @@ func upLine(n uint) string {
 
 func downLine(n uint) string {
 	return movementCode(n, 'B')
-}
-
-func clearLine() string {
-	return esc + "K"
 }
 
 func movementCode(n uint, code rune) string {

@@ -8,7 +8,7 @@ imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/chzyer/readline
-  version: 8159bd380cc4d5b344668c55e969b9d16165368d
+  version: bc5c91eb5bc99e662b22bfaa6b84ddc56b70eccc
 - name: github.com/dchest/blake2b
   version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/donovanhide/eventsource
