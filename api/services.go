@@ -35,13 +35,13 @@ func (o *ServicesClient) List(ctx context.Context, orgID, projectID *identity.ID
 		v.Set("name", *name)
 	}
 
-	req, err := o.client.NewRequest("GET", "/services", v, nil, true)
+	req, _, err := o.client.NewRequest("GET", "/services", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	services := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &services)
+	_, err = o.client.Do(ctx, req, &services, nil, nil)
 	if err != nil {
 		return nil, err
 	}

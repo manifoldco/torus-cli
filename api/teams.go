@@ -27,13 +27,13 @@ func (o *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]TeamR
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 
-	req, err := o.client.NewRequest("GET", "/teams", v, nil, true)
+	req, _, err := o.client.NewRequest("GET", "/teams", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	teams := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &teams)
+	_, err = o.client.Do(ctx, req, &teams, nil, nil)
 	if err != nil {
 		return nil, err
 	}

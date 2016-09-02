@@ -25,15 +25,18 @@ type OrgResult struct {
 // GetByName retrieves an org by its named
 func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, error) {
 	v := &url.Values{}
+	if name == "" {
+		return nil, errors.New("invalid org name")
+	}
 	v.Set("name", name)
 
-	req, err := o.client.NewRequest("GET", "/orgs", v, nil, true)
+	req, _, err := o.client.NewRequest("GET", "/orgs", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	orgs := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &orgs)
+	_, err = o.client.Do(ctx, req, &orgs, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +49,13 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, er
 
 // List returns all organizations that the signed-in user has access to
 func (o *OrgsClient) List(ctx context.Context) ([]OrgResult, error) {
-	req, err := o.client.NewRequest("GET", "/orgs", nil, nil, true)
+	req, _, err := o.client.NewRequest("GET", "/orgs", nil, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	orgs := []envelope.Unsigned{}
-	_, err = o.client.Do(ctx, req, &orgs)
+	_, err = o.client.Do(ctx, req, &orgs, nil, nil)
 	if err != nil {
 		return nil, err
 	}

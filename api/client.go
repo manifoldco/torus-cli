@@ -10,6 +10,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/donovanhide/eventsource"
+	"github.com/satori/go.uuid"
+
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
 )
@@ -56,17 +59,20 @@ func NewClient(cfg *config.Config) *Client {
 	return c
 }
 
+const version = "v1"
+
 // NewRequest constructs a new http.Request, with a body containing the json
 // representation of body, if provided.
 func (c *Client) NewRequest(method, path string, query *url.Values,
-	body interface{}, proxied bool) (*http.Request, error) {
+	body interface{}, proxied bool) (*http.Request, string, error) {
+	requestID := uuid.NewV4().String()
 
 	b := &bytes.Buffer{}
 	if body != nil {
 		enc := json.NewEncoder(b)
 		err := enc.Encode(body)
 		if err != nil {
-			return nil, err
+			return nil, requestID, err
 		}
 	}
 
@@ -82,13 +88,14 @@ func (c *Client) NewRequest(method, path string, query *url.Values,
 	fullPath := "http://localhost/" + version + path + "?" + query.Encode()
 	req, err := http.NewRequest(method, fullPath, b)
 	if err != nil {
-		return nil, err
+		return nil, requestID, err
 	}
 
 	req.Header.Set("Host", "localhost")
+	req.Header.Set("X-Request-ID", requestID)
 	req.Header.Set("Content-type", "application/json")
 
-	return req, nil
+	return req, requestID, nil
 }
 
 // Do executes an http.Request, populating v with the JSON response
@@ -96,8 +103,48 @@ func (c *Client) NewRequest(method, path string, query *url.Values,
 //
 // If the request errors with a JSON formatted response body, it will be
 // unmarshaled into the returned error.
-func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error) {
+func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}, reqID *string, progress *ProgressFunc) (*http.Response, error) {
+	done := make(chan bool)
+	if progress != nil {
+		version := "v1"
+		req, err := http.NewRequest("GET", "http://localhost/"+version+"/observe", nil)
+		if err != nil {
+			return nil, err
+		}
+		stream, err := eventsource.SubscribeWith("", c.client, req)
+		if err != nil {
+			return nil, err
+		}
+
+		output := *progress
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				case ev := <-stream.Events:
+					data := ev.Data()
+					raw := []byte(data)
+
+					event := Event{}
+					event.MessageType = "message"
+					err = json.Unmarshal(raw, &event)
+					if err != nil {
+						output(nil, err)
+						return
+					}
+					if event.ID == *reqID {
+						output(&event, nil)
+					}
+				case err := <-stream.Errors:
+					output(nil, err)
+				}
+			}
+		}()
+	}
+
 	resp, err := c.client.Do(r)
+	close(done)
 	if err != nil {
 		return nil, err
 	}

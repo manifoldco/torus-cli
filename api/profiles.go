@@ -20,13 +20,13 @@ func (o *ProfilesClient) ListByID(ctx context.Context, userIDs []identity.ID) ([
 		v.Add("id", id.String())
 	}
 
-	req, err := o.client.NewRequest("GET", "/profiles", v, nil, true)
+	req, _, err := o.client.NewRequest("GET", "/profiles", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	results := []apitypes.Profile{}
-	_, err = o.client.Do(ctx, req, &results)
+	_, err = o.client.Do(ctx, req, &results, nil, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -41,6 +41,18 @@ func init() {
 					SetUserEnv, checkRequiredFlags, invites.List,
 				),
 			},
+			{
+				Name:      "approve",
+				Usage:     "Approve an invitation previously sent to an email address to join an organization",
+				ArgsUsage: "",
+				Flags: []cli.Flag{
+					OrgFlag("org to approve invite for", true),
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs,
+					LoadPrefDefaults, SetUserEnv, invites.Approve,
+				),
+			},
 		},
 	}
 	Cmds = append(Cmds, invites)

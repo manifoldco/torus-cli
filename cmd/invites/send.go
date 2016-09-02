@@ -24,11 +24,10 @@ func Send(ctx *cli.Context) error {
 		text += usage
 		return cli.NewExitError(text, -1)
 	}
-
 	email := args[0]
 
 	var teamNames []string
-	if ctx.IsSet("team") {
+	if len(ctx.StringSlice("team")) > 0 {
 		teamNames = ctx.StringSlice("team")
 	} else {
 		teamNames = append(teamNames, "member")

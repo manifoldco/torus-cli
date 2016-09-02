@@ -33,13 +33,13 @@ func (i *InvitesClient) List(ctx context.Context, orgID *identity.ID, states []s
 		v.Add("state", state)
 	}
 
-	req, err := i.client.NewRequest("GET", "/org-invites", v, nil, true)
+	req, _, err := i.client.NewRequest("GET", "/org-invites", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	var invites []envelope.Unsigned
-	_, err = i.client.Do(ctx, req, &invites)
+	_, err = i.client.Do(ctx, req, &invites, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +88,27 @@ func (i *InvitesClient) Send(ctx context.Context, email string, orgID, inviterID
 	invite.Version = 1
 	invite.Body = &inviteBody
 
-	req, err := i.client.NewRequest("POST", "/org-invites", nil, &invite, true)
+	req, _, err := i.client.NewRequest("POST", "/org-invites", nil, &invite, true)
 	if err != nil {
 		return err
 	}
 
-	_, err = i.client.Do(ctx, req, nil)
+	_, err = i.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Approve executes the approve invite request
+func (i *InvitesClient) Approve(ctx context.Context, inviteID identity.ID, output *ProgressFunc) error {
+	req, reqID, err := i.client.NewRequest("POST", "/org-invites/"+inviteID.String()+"/approve", nil, nil, false)
+	if err != nil {
+		return err
+	}
+
+	_, err = i.client.Do(ctx, req, nil, &reqID, output)
 	if err != nil {
 		return err
 	}
