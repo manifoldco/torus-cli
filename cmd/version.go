@@ -17,18 +17,17 @@ func init() {
 		Name:     "version",
 		Usage:    "Display versions of utility components",
 		Category: "SYSTEM",
-		Subcommands: []cli.Command{
-			{
-				Name:  "list",
-				Usage: "List version of CLI, Daemon and Registry",
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, listVersionsCmd,
-				),
-			},
-		},
+		Action:   VersionLookup,
 	}
 	Cmds = append(Cmds, version)
+}
+
+// VersionLookup ensures the environment is ready and then executes version cmd
+func VersionLookup(ctx *cli.Context) error {
+	return Chain(
+		EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+		SetUserEnv, checkRequiredFlags, listVersionsCmd,
+	)(ctx)
 }
 
 func listVersionsCmd(ctx *cli.Context) error {
@@ -42,13 +41,11 @@ func listVersionsCmd(ctx *cli.Context) error {
 
 	daemonVersion, registryVersion, err := client.Version.Get(c)
 
-	fmt.Println("")
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 	fmt.Fprintf(w, "%s\t%s\n", "CLI", cfg.Version)
 	fmt.Fprintf(w, "%s\t%s\n", "Daemon", daemonVersion.Version)
 	fmt.Fprintf(w, "%s\t%s\n", "Registry", registryVersion.Version)
 	w.Flush()
-	fmt.Println("")
 
 	return nil
 }

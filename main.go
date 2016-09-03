@@ -16,6 +16,10 @@ import (
 )
 
 func main() {
+	cli.VersionPrinter = func(ctx *cli.Context) {
+		cmd.VersionLookup(ctx)
+	}
+
 	app := cli.NewApp()
 	app.Version = config.Version
 	app.Usage = "A secure, shared workspace for secrets"
