@@ -11,6 +11,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/identity"
 )
 
 func init() {
@@ -71,6 +72,41 @@ func listKeypairs(ctx *cli.Context) error {
 	}
 	w.Flush()
 	fmt.Println("")
+
+	return nil
+}
+
+func generateKeypairsForOrg(ctx *cli.Context, c context.Context, client *api.Client, targetOrg *api.OrgResult, lookupOrg bool) error {
+	var err error
+	var progress api.ProgressFunc = func(evt *api.Event, err error) {
+		if evt != nil {
+			fmt.Println(evt.Message)
+		}
+	}
+
+	msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
+	outputErr := cli.NewExitError(msg, -1)
+	if targetOrg == nil && lookupOrg == false {
+		return outputErr
+	}
+
+	// Lookup org if not supplied
+	var orgID *identity.ID
+	if targetOrg == nil && lookupOrg == true {
+		orgs, err := client.Orgs.List(c)
+		if err != nil || len(orgs) < 1 {
+			return outputErr
+		}
+		org := orgs[0]
+		orgID = org.ID
+	} else {
+		orgID = targetOrg.ID
+	}
+
+	err = client.Keypairs.Generate(c, orgID, &progress)
+	if err != nil {
+		return outputErr
+	}
 
 	return nil
 }

@@ -69,8 +69,7 @@ const version = "v1"
 
 // NewRequest constructs a new http.Request, with a body containing the json
 // representation of body, if provided.
-func (c *Client) NewRequest(method, path string, query *url.Values,
-	body interface{}, proxied bool) (*http.Request, string, error) {
+func (c *Client) NewRequest(method, path string, query *url.Values, body interface{}, proxied bool) (*http.Request, string, error) {
 	requestID := uuid.NewV4().String()
 
 	b := &bytes.Buffer{}
