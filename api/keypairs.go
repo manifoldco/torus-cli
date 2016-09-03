@@ -29,20 +29,39 @@ type KeypairResult struct {
 	}
 }
 
+type keypairsGenerateRequest struct {
+	OrgID *identity.ID `json:"org_id"`
+}
+
+// Generate generates new keypairs for the user in the given org.
+func (k *KeypairsClient) Generate(ctx context.Context, orgID *identity.ID,
+	output *ProgressFunc) error {
+
+	kpgr := keypairsGenerateRequest{OrgID: orgID}
+
+	req, reqID, err := k.client.NewRequest("POST", "/keypairs/generate", nil, &kpgr, false)
+	if err != nil {
+		return err
+	}
+
+	_, err = k.client.Do(ctx, req, nil, &reqID, output)
+	return err
+}
+
 // List retrieves relevant keypairs by orgID
-func (o *KeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]KeypairResult, error) {
+func (k *KeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]KeypairResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := o.client.NewRequest("GET", "/keypairs", v, nil, true)
+	req, _, err := k.client.NewRequest("GET", "/keypairs", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	var keypairs []KeypairResult
-	_, err = o.client.Do(ctx, req, &keypairs, nil, nil)
+	_, err = k.client.Do(ctx, req, &keypairs, nil, nil)
 	if err != nil {
 		return nil, err
 	}
