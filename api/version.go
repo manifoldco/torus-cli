@@ -13,28 +13,22 @@ type VersionClient struct {
 }
 
 // Get returns the daemon's release version.
-func (v *VersionClient) Get(ctx context.Context) (*apitypes.Version, *apitypes.Version, error) {
-	req, _, err := v.client.NewRequest("GET", "/version", nil, nil, true)
+func (v *VersionClient) Get(ctx context.Context) (*apitypes.Version, error) {
+	return v.fetchVersion(ctx, false)
+}
+
+// GetRegistry returns the registry's release version.
+func (v *VersionClient) GetRegistry(ctx context.Context) (*apitypes.Version, error) {
+	return v.fetchVersion(ctx, true)
+}
+
+func (v *VersionClient) fetchVersion(ctx context.Context, proxied bool) (*apitypes.Version, error) {
+	req, _, err := v.client.NewRequest("GET", "/version", nil, nil, proxied)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	registryVersion := &apitypes.Version{}
-	_, err = v.client.Do(ctx, req, registryVersion, nil, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	req, _, err = v.client.NewRequest("GET", "/version", nil, nil, false)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	daemonVersion := &apitypes.Version{}
-	_, err = v.client.Do(ctx, req, daemonVersion, nil, nil)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return daemonVersion, registryVersion, nil
+	version := &apitypes.Version{}
+	_, err = v.client.Do(ctx, req, version, nil, nil)
+	return version, err
 }

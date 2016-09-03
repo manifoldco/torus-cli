@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
 )
 
@@ -39,7 +41,23 @@ func listVersionsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	daemonVersion, registryVersion, err := client.Version.Get(c)
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	var daemonVersion *apitypes.Version
+	var dErr error
+
+	go func() {
+		daemonVersion, dErr = client.Version.Get(c)
+		wg.Done()
+	}()
+
+	registryVersion, rErr := client.Version.GetRegistry(c)
+	wg.Wait()
+
+	if dErr != nil || rErr != nil {
+		return cli.NewMultiError(dErr, rErr)
+	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 	fmt.Fprintf(w, "%s\t%s\n", "CLI", cfg.Version)
