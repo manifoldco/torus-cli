@@ -20,7 +20,6 @@ api.modules = {
   profiles: require('./profiles'),
 
   // non-proxied daemon apis
-  versionApi: require('./versionApi'),
   login: require('./login'),
   session: require('./session'),
   keypairs: require('./keypairs')
