@@ -17,10 +17,6 @@ var CATEGORIES = {
   deny: 'ACCESS CONTROL',
   policies: 'ACCESS CONTROL',
 
-  link: 'CONTEXT',
-  unlink: 'CONTEXT',
-  status: 'CONTEXT',
-
   orgs: 'ORGANIZATIONS',
   invites: 'ORGANIZATIONS',
   keypairs: 'ORGANIZATIONS',

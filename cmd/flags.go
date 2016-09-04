@@ -15,7 +15,7 @@ var (
 	StdOrgFlag      = OrgFlag("Use this organization.", true)
 	StdProjectFlag  = ProjectFlag("Use this project.", true)
 	StdEnvFlag      = EnvFlag("Use this environment.", true)
-	StdServiceFlag  = ServiceFlag("Use this service.", true)
+	StdServiceFlag  = ServiceFlag("Use this service.", "", true)
 	StdUserFlag     = UserFlag("Use this user.", true)
 	StdInstanceFlag = InstanceFlag("Use this instance.", true)
 )
@@ -36,8 +36,8 @@ func EnvFlag(usage string, required bool) cli.Flag {
 }
 
 // ServiceFlag creates a new --service cli.Flag with custom usage string.
-func ServiceFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("service, s", "SERVICE", usage, "", "AG_SERVICE", required)
+func ServiceFlag(usage, value string, required bool) cli.Flag {
+	return newPlaceholder("service, s", "SERVICE", usage, value, "AG_SERVICE", required)
 }
 
 // UserFlag creates a new --user cli.Flag with custom usage string.
