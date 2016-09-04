@@ -264,6 +264,44 @@ func (t *Project) Type() byte {
 	return byte(0x04)
 }
 
+// Policy is an entity that represents a group of statements for acl
+type Policy struct {
+	v1Schema
+	PolicyType string       `json:"type"`
+	Previous   *identity.ID `json:"previous"`
+	OrgID      *identity.ID `json:"org_id"`
+	Policy     *struct {
+		Name        string            `json:"name"`
+		Description string            `json:"description"`
+		Statements  []PolicyStatement `json:"statements"`
+	} `json:"policy"`
+}
+
+// Type returns the enumerated byte representation of Policy
+func (t *Policy) Type() byte {
+	return byte(0x11)
+}
+
+// PolicyStatement is an acl statement on a policy object
+type PolicyStatement struct {
+	Effect   string   `json:"effect"`
+	Action   []string `json:"action"` // XXX: This could potentially be a string and not []string
+	Resource string   `json:"resource"`
+}
+
+// PolicyAttachment is an entity that represents the link between policies and teams
+type PolicyAttachment struct {
+	v1Schema
+	OwnerID  *identity.ID `json:"owner_id"`
+	PolicyID *identity.ID `json:"policy_id"`
+	OrgID    *identity.ID `json:"org_id"`
+}
+
+// Type returns the enumerated byte representation of PolicyAttchment
+func (t *PolicyAttachment) Type() byte {
+	return byte(0x12)
+}
+
 // Service is an entity that represents a group of processes
 type Service struct {
 	v1Schema
