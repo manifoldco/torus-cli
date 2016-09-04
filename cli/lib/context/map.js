@@ -5,7 +5,6 @@ var _ = require('lodash');
 var path = require('path');
 var Promise = require('es6-promise').Promise;
 
-var Target = require('./target');
 var resolver = require('../util/resolver');
 
 var map = exports;
@@ -19,28 +18,6 @@ var MAP_DEFAULTS = {
 // Return map path for cwd
 map.path = function () {
   return path.join(process.cwd(), MAP_FILE_NAME);
-};
-
-/**
- * Unlinks a given target. Holds a lock on the context map file so no one else
- * can write.
- *
- * @param {Target} target
- */
-map.unlink = function (target) {
-  if (!(target instanceof Target)) {
-    throw new TypeError('Must provide a Target object');
-  }
-
-  return new Promise(function (resolve, reject) {
-    if (!target.exists()) {
-      throw new Error('Target path is not linked at ' + target.path());
-    }
-
-    return map._rmFile(target.path())
-      .then(resolve)
-      .catch(reject);
-  });
 };
 
 /**
@@ -112,32 +89,6 @@ map._readFile = function (mapPath) {
 
         return resolve(_.defaults(data, MAP_DEFAULTS));
       });
-    });
-  });
-};
-
-map._writeFile = function (mapPath, targetMap) {
-  return new Promise(function (resolve, reject) {
-    var contents = JSON.stringify(targetMap, null, 2);
-    var opts = { encoding: 'utf-8' };
-
-    fs.writeFile(mapPath, contents, opts, function (err) {
-      if (err) {
-        return reject(err);
-      }
-
-      resolve();
-    });
-  });
-};
-
-map._rmFile = function (mapPath) {
-  return new Promise(function (resolve, reject) {
-    fs.unlink(mapPath, function (err) {
-      if (err) {
-        return reject(err);
-      }
-      resolve();
     });
   });
 };
