@@ -153,7 +153,7 @@ func LoadDirPrefs(ctx *cli.Context) error {
 		return err
 	}
 
-	d, err := dirprefs.Load()
+	d, err := dirprefs.Load(true)
 	if err != nil {
 		return err
 	}

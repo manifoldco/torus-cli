@@ -2,23 +2,11 @@ package promptui
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"os"
 	"strings"
 
 	"github.com/chzyer/readline"
-)
-
-var (
-	bold  = styler(fgBold)
-	faint = styler(fgFaint)
-	red   = styler(fgBold, fgRed)
-
-	initial = styler(fgBlue)("?")
-	good    = styler(fgGreen)("✔")
-	warn    = styler(fgYellow)("⚠")
-	bad     = styler(fgRed)("✗")
 )
 
 // Prompt represents a single line text field input.
@@ -60,7 +48,7 @@ func (p *Prompt) Run() (string, error) {
 		c.MaskRune = p.Mask
 	}
 
-	state := initial
+	state := iconInitial
 	prompt := p.Label + ": "
 
 	c.Prompt = bold(state) + " " + bold(prompt)
@@ -92,6 +80,10 @@ func (p *Prompt) Run() (string, error) {
 	}
 
 	c.SetListener(func(line []rune, pos int, key rune) ([]rune, int, bool) {
+		if key == readline.CharEnter {
+			return nil, 0, false
+		}
+
 		if firstListen {
 			firstListen = false
 			return nil, 0, false
@@ -109,13 +101,13 @@ func (p *Prompt) Run() (string, error) {
 		err := validFn(string(line))
 		if err != nil {
 			if _, ok := err.(*ValidationError); ok {
-				state = bad
+				state = iconBad
 			} else {
 				rl.Close()
 				return nil, 0, false
 			}
 		} else {
-			state = good
+			state = iconGood
 		}
 
 		rl.SetPrompt(bold(state) + " " + bold(prompt))
@@ -135,23 +127,23 @@ func (p *Prompt) Run() (string, error) {
 			if verr, ok := oerr.(*ValidationError); ok {
 				msg = verr.msg
 				valid = false
-				state = bad
+				state = iconBad
 			} else {
 				return "", oerr
 			}
 		}
 
 		if valid {
-			state = good
+			state = iconGood
 			break
 		}
 
 		if err != nil {
 			switch err {
 			case readline.ErrInterrupt:
-				err = errors.New("^C")
+				err = ErrInterrupt
 			case io.EOF:
-				err = errors.New("^D")
+				err = ErrEOF
 			}
 
 			break
@@ -169,12 +161,12 @@ func (p *Prompt) Run() (string, error) {
 	}
 
 	if wroteErr {
-		rl.Write([]byte(downLine(1) + clearLine() + upLine(1) + "\r"))
+		rl.Write([]byte(downLine(1) + clearLine + upLine(1) + "\r"))
 	}
 
 	if err != nil {
 		if err.Error() == "Interrupt" {
-			err = errors.New("^C")
+			err = ErrInterrupt
 		}
 		rl.Write([]byte("\n"))
 		return "", err

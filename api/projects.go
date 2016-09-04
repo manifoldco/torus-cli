@@ -22,8 +22,31 @@ type ProjectResult struct {
 	Body    *primitive.Project `json:"body"`
 }
 
+type projectCreateRequest struct {
+	Body struct {
+		OrgID *identity.ID `json:"org_id"`
+		Name  string       `json:"name"`
+	} `json:"body"`
+}
+
+// Create creates a new project with the given name within the given org
+func (p *ProjectsClient) Create(ctx context.Context, org *identity.ID, name string) (*ProjectResult, error) {
+	project := projectCreateRequest{}
+	project.Body.OrgID = org
+	project.Body.Name = name
+
+	req, _, err := p.client.NewRequest("POST", "/projects", nil, &project, true)
+	if err != nil {
+		return nil, err
+	}
+
+	res := ProjectResult{}
+	_, err = p.client.Do(ctx, req, &res, nil, nil)
+	return &res, err
+}
+
 // List retrieves relevant projects by name and/or orgID
-func (o *ProjectsClient) List(ctx context.Context, orgID *identity.ID, name *string) ([]ProjectResult, error) {
+func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID, name *string) ([]ProjectResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
@@ -32,13 +55,13 @@ func (o *ProjectsClient) List(ctx context.Context, orgID *identity.ID, name *str
 		v.Set("name", *name)
 	}
 
-	req, _, err := o.client.NewRequest("GET", "/projects", v, nil, true)
+	req, _, err := p.client.NewRequest("GET", "/projects", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	projects := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &projects, nil, nil)
+	_, err = p.client.Do(ctx, req, &projects, nil, nil)
 	if err != nil {
 		return nil, err
 	}

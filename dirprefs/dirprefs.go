@@ -11,6 +11,7 @@ import (
 type DirPreferences struct {
 	Organization string `json:"org,omitempty"`
 	Project      string `json:"project,omitempty"`
+	Path         string `json:"-"`
 }
 
 // Load loads DirPreferences. It starts in the current working directory,
@@ -20,7 +21,7 @@ type DirPreferences struct {
 // It returns an empty DirPreferences is no '.arigato.json' files are found.
 // It returns an error if a malformed file is found, or if any errors occur
 // during file system access.
-func Load() (*DirPreferences, error) {
+func Load(recurse bool) (*DirPreferences, error) {
 	path, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -32,7 +33,7 @@ func Load() (*DirPreferences, error) {
 	for {
 		f, err = os.Open(filepath.Join(path, ".arigato.json"))
 		if err != nil {
-			if len(path) == 1 && path == string(os.PathSeparator) {
+			if len(path) == 1 && path == string(os.PathSeparator) || !recurse {
 				return prefs, nil
 			}
 
@@ -43,11 +44,28 @@ func Load() (*DirPreferences, error) {
 		break
 	}
 
+	defer f.Close()
+
 	dec := json.NewDecoder(f)
 	err = dec.Decode(prefs)
 	if err != nil {
 		return nil, err
 	}
 
+	prefs.Path = f.Name()
 	return prefs, nil
+}
+
+// Save writes the DirPreferences values to the file in the struct's Path
+// field
+func (d *DirPreferences) Save() error {
+	f, err := os.Create(d.Path)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	enc := json.NewEncoder(f)
+	return enc.Encode(d)
 }

@@ -37,48 +37,6 @@ describe('targetMap', function () {
     sandbox.restore();
   });
 
-  describe('#link', function () {
-    it('throws error if target not provided', function () {
-      assert.throws(function () {
-        map.link({});
-      }, /Must provide a Target object/);
-    });
-
-    it('throws error if target not provided', function () {
-      assert.throws(function () {
-        map.link(cfg, {});
-      }, /Must provide a Target object/);
-    });
-
-    it('throws if cannot lock file', function () {
-      lock.acquire.onCall(0).returns(Promise.reject(new Error('hi')));
-
-      return map.link(target).then(function () {
-        assert.ok(false, 'should error');
-      }, function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'hi');
-      });
-    });
-
-    it('errors if writeFile fails', function () {
-      map._writeFile.onCall(0).returns(Promise.reject(new Error('woo')));
-
-      return map.link(target).then(function () {
-        assert.ok(false, 'should error');
-      }, function (err) {
-        assert.ok(err);
-        assert.strictEqual(err.message, 'woo');
-      });
-    });
-
-    it('writes the file', function () {
-      return map.link(target).then(function () {
-        sinon.assert.calledOnce(map._writeFile);
-      });
-    });
-  });
-
   describe('#unlink', function () {
     it('throws error if config not provided', function () {
       assert.throws(function () {

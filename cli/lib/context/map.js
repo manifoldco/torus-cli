@@ -5,7 +5,6 @@ var _ = require('lodash');
 var path = require('path');
 var Promise = require('es6-promise').Promise;
 
-var lock = require('../util/lock');
 var Target = require('./target');
 var resolver = require('../util/resolver');
 
@@ -16,31 +15,10 @@ var MAP_DEFAULTS = {
   org: null,
   project: null
 };
-var MAP_KEYS = _.keys(MAP_DEFAULTS);
 
 // Return map path for cwd
 map.path = function () {
   return path.join(process.cwd(), MAP_FILE_NAME);
-};
-
-/**
- * Links a given directory to a target. Holds a lock on the context map file so
- * no one else can write.
- *
- * @param {Target} target
- */
-map.link = function (target) {
-  if (!(target instanceof Target)) {
-    throw new TypeError('Must provide a Target object');
-  }
-
-  return new Promise(function (resolve, reject) {
-    var targetPath = target.path();
-    lock.wrap(targetPath, function () {
-      return map._writeFile(targetPath, _.pick(target.context(), MAP_KEYS))
-        .then(resolve);
-    }).catch(reject);
-  });
 };
 
 /**

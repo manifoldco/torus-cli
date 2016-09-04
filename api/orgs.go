@@ -22,6 +22,27 @@ type OrgResult struct {
 	Body    *primitive.Org `json:"body"`
 }
 
+type orgCreateRequest struct {
+	Body struct {
+		Name string `json:"name"`
+	} `json:"body"`
+}
+
+// Create creates a new org with the given name. It returns the newly-created org.
+func (o *OrgsClient) Create(ctx context.Context, name string) (*OrgResult, error) {
+	org := orgCreateRequest{}
+	org.Body.Name = name
+
+	req, _, err := o.client.NewRequest("POST", "/orgs", nil, &org, true)
+	if err != nil {
+		return nil, err
+	}
+
+	res := OrgResult{}
+	_, err = o.client.Do(ctx, req, &res, nil, nil)
+	return &res, err
+}
+
 // GetByName retrieves an org by its named
 func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, error) {
 	v := &url.Values{}
