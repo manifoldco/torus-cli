@@ -92,6 +92,8 @@ func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
 		body = &primitive.Service{}
 	case 0x04:
 		body = &primitive.Project{}
+	case 0x05:
+		body = &primitive.Environment{}
 	case 0x06:
 		body = &primitive.PublicKey{}
 	case 0x07:

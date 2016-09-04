@@ -277,6 +277,19 @@ func (t *Service) Type() byte {
 	return byte(0x03)
 }
 
+// Environment is an entity that represents a group of processes
+type Environment struct {
+	v1Schema
+	Name      string       `json:"name"`
+	OrgID     *identity.ID `json:"org_id"`
+	ProjectID *identity.ID `json:"project_id"`
+}
+
+// Type returns the enumerated byte representation of Environment
+func (t *Environment) Type() byte {
+	return byte(0x05)
+}
+
 // There are two types of teams: system and user. System teams are
 // managed by the Arigato registry.
 const (

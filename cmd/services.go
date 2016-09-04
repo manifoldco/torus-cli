@@ -46,7 +46,7 @@ const serviceListFailed = "Could not list services, please try again."
 func listServices(ctx *cli.Context) error {
 	if !ctx.Bool("all") {
 		if len(ctx.String("project")) < 1 {
-			text := "Missing --project flag\n\n"
+			text := "Missing flags: --project\n\n"
 			text += usageString(ctx)
 			return cli.NewExitError(text, -1)
 		}
