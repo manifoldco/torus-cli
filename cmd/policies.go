@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"text/tabwriter"
@@ -93,8 +94,9 @@ func listPolicies(ctx *cli.Context) error {
 	}
 
 	teamsByID := make(map[identity.ID]api.TeamResult)
-	policiesByID := make(map[identity.ID]api.PoliciesResult)
+	policiesByName := make(map[string]api.PoliciesResult)
 	attachedTeamsByPolicyID := make(map[identity.ID][]string)
+	var sortedNames []string
 
 	go func() {
 		getAttachments.Wait()
@@ -102,8 +104,10 @@ func listPolicies(ctx *cli.Context) error {
 			teamsByID[*t.ID] = t
 		}
 		for _, p := range policies {
-			policiesByID[*p.ID] = p
+			policiesByName[p.Body.Policy.Name] = p
+			sortedNames = append(sortedNames, p.Body.Policy.Name)
 		}
+		sort.Strings(sortedNames)
 		for _, a := range attachments {
 			ID := *a.Body.PolicyID
 			attachedTeamsByPolicyID[ID] = append(attachedTeamsByPolicyID[ID], teamsByID[*a.Body.OwnerID].Body.Name)
@@ -116,8 +120,10 @@ func listPolicies(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 	fmt.Fprintln(w, "POLICY NAME\tTYPE\tATTACHED TO")
 	fmt.Fprintln(w, " \t \t ")
-	for policyID, policy := range policiesByID {
+	for _, name := range sortedNames {
 		teamNames := ""
+		policy := policiesByName[name]
+		policyID := *policy.ID
 		if len(attachedTeamsByPolicyID[policyID]) > 0 {
 			teamNames = strings.Join(attachedTeamsByPolicyID[policyID], ", ")
 		}
