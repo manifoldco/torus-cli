@@ -69,3 +69,8 @@ func (d *DirPreferences) Save() error {
 	enc := json.NewEncoder(f)
 	return enc.Encode(d)
 }
+
+// Remove removes the backing file for this DirPreferences
+func (d *DirPreferences) Remove() error {
+	return os.Remove(d.Path)
+}
