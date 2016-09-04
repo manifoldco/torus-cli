@@ -65,3 +65,10 @@ type OrgInvite struct {
 	Version int                  `json:"version"`
 	Body    *primitive.OrgInvite `json:"body"`
 }
+
+// Environment contains information fo rcreating a new Env object
+type Environment struct {
+	ID      string                 `json:"id"`
+	Version int                    `json:"version"`
+	Body    *primitive.Environment `json:"body"`
+}

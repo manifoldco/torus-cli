@@ -29,3 +29,13 @@ func (v *ValidationError) Error() string {
 func NewValidationError(msg string) *ValidationError {
 	return &ValidationError{msg: msg}
 }
+
+// SuccessfulValue returns a value as if it were entered via prompt, valid
+func SuccessfulValue(label, value string) string {
+	return iconGood + " " + label + ": " + faint(value)
+}
+
+// FailedValue returns a value as if it were entered via prompt, invalid
+func FailedValue(label, value string) string {
+	return iconBad + " " + label + ": " + faint(value)
+}
