@@ -3,11 +3,14 @@ package routes
 // This file contains routes related to the user's session
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/identity"
+	"github.com/arigatomachine/cli/primitive"
 
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
@@ -39,36 +42,40 @@ func loginRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		salt, loginToken, err := client.Tokens.PostLogin(ctx, creds.Email)
+		err = attemptLogin(client, s, db, ctx, creds)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
-
-		hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase, salt, loginToken)
-		if err != nil {
-			log.Printf("Error generating login token hmac: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		authToken, err := client.Tokens.PostAuth(ctx, loginToken, hmac)
-		if err != nil {
-			encodeResponseErr(w, err)
-			return
-		}
-
-		self, err := client.Users.GetSelf(ctx, authToken)
-		if err != nil {
-			encodeResponseErr(w, err)
-			return
-		}
-
-		db.Set(self)
-		s.Set(self.ID, creds.Passphrase, authToken)
 
 		w.WriteHeader(http.StatusNoContent)
 	}
+}
+
+func attemptLogin(client *registry.Client, s session.Session, db *db.DB, ctx context.Context, creds apitypes.Login) error {
+	salt, loginToken, err := client.Tokens.PostLogin(ctx, creds.Email)
+	if err != nil {
+		return err
+	}
+
+	hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase, salt, loginToken)
+	if err != nil {
+		return err
+	}
+
+	authToken, err := client.Tokens.PostAuth(ctx, loginToken, hmac)
+	if err != nil {
+		return err
+	}
+
+	self, err := client.Users.GetSelf(ctx, authToken)
+	if err != nil {
+		return err
+	}
+
+	db.Set(self)
+	s.Set(self.ID, creds.Passphrase, authToken)
+	return nil
 }
 
 func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {
@@ -130,6 +137,61 @@ func sessionRoute(s session.Session) http.HandlerFunc {
 
 		if err != nil {
 			encodeResponseErr(w, err)
+		}
+	}
+}
+
+func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		dec := json.NewDecoder(r.Body)
+
+		signup := apitypes.Signup{}
+		err := dec.Decode(&signup)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		passwordObj, masterObj, err := crypto.EncryptPasswordObject(ctx, signup.Passphrase)
+		if err != nil {
+			log.Printf("Error generating password object: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		userBody := primitive.User{
+			Username: signup.Username,
+			Name:     signup.Name,
+			Email:    signup.Email,
+			Password: &passwordObj,
+			Master:   &masterObj,
+		}
+
+		ID, err := identity.Mutable(&userBody)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		userObj := registry.User{
+			ID:      ID.String(),
+			Version: 1,
+			Body:    &userBody,
+		}
+
+		user, err := client.Users.Create(ctx, userObj)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		w.WriteHeader(201)
+		enc := json.NewEncoder(w)
+		err = enc.Encode(user)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
 		}
 	}
 }

@@ -13,7 +13,9 @@ import (
 	"github.com/arigatomachine/cli/promptui"
 )
 
-const slugPattern = "^[a-z][a-z0-9\\-_]{0,63}$"
+const slugPattern = "^[a-z][a-z0-9\\-\\_]{0,63}$"
+const namePattern = "^[a-zA-Z\\s,\\.'\\-pL]{1,64}$"
+const inviteCodePattern = "^[0-9a-ht-zjkmnpqr]{10}$"
 
 func validateSlug(slugType string) promptui.ValidateFunc {
 	msg := slugType + " names can only use a-z, 0-9, hyphens and underscores"
@@ -153,16 +155,9 @@ func SelectCreateOrgAndProject(client *api.Client, c context.Context, ctx *cli.C
 			return nil, nil, newResource, cli.NewExitError("Could not create org: "+err.Error(), -1)
 		}
 
-		var progress api.ProgressFunc = func(evt *api.Event, err error) {
-			if evt != nil {
-				fmt.Println(evt.Message)
-			}
-		}
-
-		err = client.Keypairs.Generate(c, org.ID, &progress)
+		err = generateKeypairsForOrg(ctx, c, client, org, false)
 		if err != nil {
-			msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
-			return nil, nil, newResource, cli.NewExitError(msg, -1)
+			return nil, nil, newResource, err
 		}
 
 		newResource = true
@@ -183,4 +178,117 @@ func SelectCreateOrgAndProject(client *api.Client, c context.Context, ctx *cli.C
 	}
 
 	return org, project, newResource, nil
+}
+
+// PasswordPrompt prompts the user to input a password value
+func PasswordPrompt(shouldConfirm bool) (string, error) {
+	prompt := promptui.Prompt{
+		Label: "Password",
+		Mask:  '●',
+		Validate: func(input string) error {
+			length := len(input)
+			if length >= 8 {
+				return nil
+			}
+			if length > 0 {
+				return promptui.NewValidationError("Passwords must be at least 8 characters")
+			}
+
+			return promptui.NewValidationError("Please enter your password")
+		},
+	}
+
+	password, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+	if !shouldConfirm {
+		return password, err
+	}
+
+	prompt = promptui.Prompt{
+		Label: "Confirm Password",
+		Mask:  '●',
+		Validate: func(input string) error {
+			if len(input) > 0 {
+				if input != password {
+					return promptui.NewValidationError("Passwords do not match")
+				}
+				return nil
+			}
+
+			return promptui.NewValidationError("Please confirm your password")
+		},
+	}
+
+	_, err = prompt.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return password, nil
+}
+
+// EmailPrompt prompts the user to input an email
+func EmailPrompt(defaultValue string) (string, error) {
+	prompt := promptui.Prompt{
+		Label: "Email",
+		Validate: func(input string) error {
+			if govalidator.IsEmail(input) {
+				return nil
+			}
+			return promptui.NewValidationError("Please enter a valid email address")
+		},
+	}
+	if defaultValue != "" {
+		prompt.Default = defaultValue
+	}
+
+	return prompt.Run()
+}
+
+// UsernamePrompt prompts the user to input a person's name
+func UsernamePrompt() (string, error) {
+	prompt := promptui.Prompt{
+		Label: "Username",
+		Validate: func(input string) error {
+			if govalidator.StringMatches(input, slugPattern) {
+				return nil
+			}
+			return promptui.NewValidationError("Please enter a valid username")
+		},
+	}
+
+	return prompt.Run()
+}
+
+// FullNamePrompt prompts the user to input a person's name
+func FullNamePrompt() (string, error) {
+	prompt := promptui.Prompt{
+		Label: "Name",
+		Validate: func(input string) error {
+			if govalidator.StringMatches(input, namePattern) {
+				return nil
+			}
+			return promptui.NewValidationError("Please enter a valid name")
+		},
+	}
+
+	return prompt.Run()
+}
+
+// InviteCodePrompt prompts the user to input an invite code
+func InviteCodePrompt(defaultValue string) (string, error) {
+	prompt := promptui.Prompt{
+		Label:   "Invite Code",
+		Default: defaultValue,
+		Validate: func(input string) error {
+			if govalidator.StringMatches(input, inviteCodePattern) {
+				return nil
+			}
+			return promptui.NewValidationError("Please enter a valid invite code")
+		},
+	}
+
+	return prompt.Run()
 }

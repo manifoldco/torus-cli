@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
-	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -23,34 +21,12 @@ func init() {
 }
 
 func login(ctx *cli.Context) error {
-	prompt := promptui.Prompt{
-		Label: "Email",
-		Validate: func(input string) error {
-			if govalidator.IsEmail(input) {
-				return nil
-			}
-			return promptui.NewValidationError("Please enter a valid email address")
-		},
-	}
-
-	email, err := prompt.Run()
+	email, err := EmailPrompt("")
 	if err != nil {
 		return err
 	}
 
-	prompt = promptui.Prompt{
-		Label: "Password",
-		Mask:  '●',
-		Validate: func(input string) error {
-			if len(input) > 0 {
-				return nil
-			}
-
-			return promptui.NewValidationError("Please enter your password")
-		},
-	}
-
-	password, err := prompt.Run()
+	password, err := PasswordPrompt(false)
 	if err != nil {
 		return err
 	}
@@ -62,7 +38,17 @@ func login(ctx *cli.Context) error {
 
 	client := api.NewClient(cfg)
 
-	err = client.Session.Login(context.Background(), email, password)
+	c := context.Background()
+	err = performLogin(c, client, email, password)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func performLogin(c context.Context, client *api.Client, email, password string) error {
+	err := client.Session.Login(context.Background(), email, password)
 	if err != nil {
 		return cli.NewExitError("Login failed. Please try again.", -1)
 	}

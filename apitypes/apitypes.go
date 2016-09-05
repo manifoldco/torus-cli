@@ -59,6 +59,15 @@ type Profile struct {
 	} `json:"body"`
 }
 
+// Signup contains information required for registering an account
+type Signup struct {
+	Name       string
+	Username   string
+	Email      string
+	Passphrase string
+	InviteCode string
+}
+
 // OrgInvite contains information for sending an Org invite
 type OrgInvite struct {
 	ID      string               `json:"id"`

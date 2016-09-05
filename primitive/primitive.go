@@ -20,19 +20,25 @@ func (v *v1Schema) Version() int {
 // User is the body of a user object
 type User struct {
 	v1Schema
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	State    string `json:"state"`
-	Password *struct {
-		Salt  string        `json:"salt"`
-		Value *base64.Value `json:"value"`
-		Alg   string        `json:"alg"`
-	}
-	Master *struct {
-		Alg   string        `json:"alg"`
-		Value *base64.Value `json:"value"`
-	} `json:"master"`
+	Username string        `json:"username"`
+	Name     string        `json:"name"`
+	Email    string        `json:"email"`
+	State    string        `json:"state"`
+	Password *UserPassword `json:"password"`
+	Master   *UserMaster   `json:"master"`
+}
+
+// UserMaster is the body.master object for a user
+type UserMaster struct {
+	Value *base64.Value `json:"value"`
+	Alg   string        `json:"alg"`
+}
+
+// UserPassword is the body.password object for a user
+type UserPassword struct {
+	Salt  string        `json:"salt"`
+	Value *base64.Value `json:"value"`
+	Alg   string        `json:"alg"`
 }
 
 // Type returns the enumerated byte representation of User.

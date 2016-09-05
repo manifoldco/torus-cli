@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"text/tabwriter"
 
 	"github.com/urfave/cli"
@@ -15,8 +14,6 @@ import (
 	"github.com/arigatomachine/cli/dirprefs"
 	"github.com/arigatomachine/cli/prefs"
 )
-
-var slug = regexp.MustCompile("^[a-z0-9][a-z0-9\\-\\_]{0,63}$")
 
 func init() {
 	link := cli.Command{

@@ -41,6 +41,30 @@ func (u *Users) GetSelf(ctx context.Context, token string) (*envelope.Unsigned, 
 	return &self, nil
 }
 
+// Create attempts to register a new user
+func (u *Users) Create(ctx context.Context, userObj User) (*envelope.Unsigned, error) {
+	req, err := u.client.NewRequest("POST", "/users", nil, userObj)
+	if err != nil {
+		log.Printf("Error making api request: %s", err)
+		return nil, err
+	}
+
+	user := envelope.Unsigned{}
+	_, err = u.client.Do(ctx, req, &user)
+	if err != nil {
+		log.Printf("Error making api request: %s", err)
+		return nil, err
+	}
+
+	err = validateSelf(&user)
+	if err != nil {
+		log.Printf("Invalid user object: %s", err)
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func validateSelf(s *envelope.Unsigned) error {
 	if s.Version != 1 {
 		return errors.New("version must be 1")
@@ -65,4 +89,11 @@ func validateSelf(s *envelope.Unsigned) error {
 	}
 
 	return nil
+}
+
+// User contains fields for signup
+type User struct {
+	ID      string          `json:"id"`
+	Version int             `json:"version"`
+	Body    *primitive.User `json:"body"`
 }

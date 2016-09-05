@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
@@ -22,14 +23,40 @@ type UserResult struct {
 }
 
 // Self retrieves the currently logged in user
-func (o *UsersClient) Self(ctx context.Context) (*UserResult, error) {
-	req, _, err := o.client.NewRequest("GET", "/users/self", nil, nil, true)
+func (u *UsersClient) Self(ctx context.Context) (*UserResult, error) {
+	req, _, err := u.client.NewRequest("GET", "/users/self", nil, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	result := envelope.Unsigned{}
-	_, err = o.client.Do(ctx, req, &result, nil, nil)
+	_, err = u.client.Do(ctx, req, &result, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	user := UserResult{}
+	user.ID = result.ID
+	user.Version = result.Version
+
+	userBody, ok := result.Body.(*primitive.User)
+	if !ok {
+		return nil, errors.New("invalid user body")
+	}
+	user.Body = userBody
+
+	return &user, nil
+}
+
+// Signup will have the daemon create a new user request
+func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, output *ProgressFunc) (*UserResult, error) {
+	req, _, err := u.client.NewRequest("POST", "/signup", nil, &signup, false)
+	if err != nil {
+		return nil, err
+	}
+
+	result := envelope.Unsigned{}
+	_, err = u.client.Do(ctx, req, &result, nil, output)
 	if err != nil {
 		return nil, err
 	}
