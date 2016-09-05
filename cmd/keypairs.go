@@ -31,6 +31,21 @@ func init() {
 					SetUserEnv, checkRequiredFlags, listKeypairs,
 				),
 			},
+			{
+				Name:  "generate",
+				Usage: "Generate keyparis for an organization",
+				Flags: []cli.Flag{
+					OrgFlag("org to show keypairs for", true),
+					cli.BoolFlag{
+						Name:  "all",
+						Usage: "Perform command for all orgs without valid keypairs",
+					},
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					SetUserEnv, checkRequiredFlags, generateKeypairs,
+				),
+			},
 		},
 	}
 	Cmds = append(Cmds, keypairs)
@@ -73,6 +88,99 @@ func listKeypairs(ctx *cli.Context) error {
 	w.Flush()
 	fmt.Println("")
 
+	return nil
+}
+
+func generateKeypairs(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	orgNames := make(map[*identity.ID]string)
+	subjectOrgs := make(map[*identity.ID]*api.OrgResult)
+	regenOrgs := make(map[*identity.ID]string)
+
+	if ctx.Bool("all") == true {
+		// If all flag is supplied, we will get all their orgs
+		var orgs []api.OrgResult
+		orgs, oErr := client.Orgs.List(c)
+		if oErr != nil {
+			return cli.NewExitError("Could not retrieve orgs, please try again", -1)
+		}
+		for _, org := range orgs {
+			subjectOrgs[org.ID] = &org
+			orgNames[org.ID] = org.Body.Name
+		}
+	} else {
+		// Verify the org they've specified exists
+		var org *api.OrgResult
+		org, oErr := client.Orgs.GetByName(c, ctx.String("org"))
+		if oErr != nil {
+			return cli.NewExitError("Org not found", -1)
+		}
+		subjectOrgs[org.ID] = org
+		orgNames[org.ID] = org.Body.Name
+	}
+
+	// Iterate over target orgs and identify which keys exist
+	var pErr error
+	hasKey := make(map[string]map[string]bool, len(subjectOrgs))
+	for orgID := range subjectOrgs {
+		keypairs, err := client.Keypairs.List(c, orgID)
+		if err != nil {
+			pErr = err
+			break
+		}
+		for _, kp := range keypairs {
+			oID := kp.PublicKey.Body.OrgID.String()
+			if hasKey[oID] == nil {
+				hasKey[oID] = make(map[string]bool)
+			}
+			keyType := kp.PublicKey.Body.KeyType
+			hasKey[oID][keyType] = true
+		}
+	}
+
+	if pErr != nil {
+		return cli.NewExitError("Error fetching required context", -1)
+	}
+
+	// Regenerate for orgs which do not have both keys present
+	for orgID := range subjectOrgs {
+		if !hasKey[orgID.String()]["encryption"] || !hasKey[orgID.String()]["signing"] {
+			regenOrgs[orgID] = orgNames[orgID]
+		}
+	}
+
+	var rErr error
+	var progress api.ProgressFunc = func(evt *api.Event, err error) {
+		if evt != nil {
+			fmt.Println("  " + evt.Message)
+		}
+	}
+
+	for orgID, name := range regenOrgs {
+		fmt.Println("Generating signing and encryption keypairs for org: " + name)
+		err := client.Keypairs.Generate(c, orgID, &progress)
+		if err != nil && rErr == nil {
+			rErr = err
+			break
+		}
+	}
+
+	if rErr != nil {
+		return cli.NewExitError("Error while regenerating keypairs", -1)
+	}
+
+	if len(regenOrgs) > 0 {
+		fmt.Println("Keypair generation successful.")
+	} else {
+		fmt.Println("No keypairs missing.")
+	}
 	return nil
 }
 
