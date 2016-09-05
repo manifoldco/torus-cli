@@ -30,6 +30,7 @@ type Client struct {
 	Keypairs     *KeypairsClient
 	Session      *SessionClient
 	Services     *ServicesClient
+	Policies     *PoliciesClient
 	Environments *EnvironmentsClient
 	Projects     *ProjectsClient
 	Version      *VersionClient
@@ -58,6 +59,7 @@ func NewClient(cfg *config.Config) *Client {
 	c.Projects = &ProjectsClient{client: c}
 	c.Services = &ServicesClient{client: c}
 	c.Environments = &EnvironmentsClient{client: c}
+	c.Policies = &PoliciesClient{client: c}
 	c.Version = &VersionClient{client: c}
 
 	return c
