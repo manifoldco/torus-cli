@@ -24,6 +24,11 @@ func Send(ctx *cli.Context) error {
 		text += usage
 		return cli.NewExitError(text, -1)
 	}
+	if len(args) > 1 {
+		text := "Too many arguments\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
 	email := args[0]
 
 	var teamNames []string
