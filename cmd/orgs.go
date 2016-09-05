@@ -18,6 +18,12 @@ func init() {
 		Category: "ORGANIZATIONS",
 		Subcommands: []cli.Command{
 			{
+				Name:      "create",
+				Usage:     "Create a new organization",
+				ArgsUsage: "<name>",
+				Action:    Chain(EnsureDaemon, orgsCreate),
+			},
+			{
 				Name:   "list",
 				Usage:  "List organizations associated with your account",
 				Action: Chain(EnsureDaemon, EnsureSession, orgsListCmd),
@@ -25,6 +31,52 @@ func init() {
 		},
 	}
 	Cmds = append(Cmds, orgs)
+}
+
+const orgCreateFailed = "Org creation failed, please try again."
+
+func orgsCreate(ctx *cli.Context) error {
+	args := ctx.Args()
+	usage := usageString(ctx)
+	if len(args) > 1 {
+		text := "Too many arguments\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+	if len(args) < 1 {
+		text := "Missing name\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+
+	c := context.Background()
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return cli.NewExitError(orgCreateFailed, -1)
+	}
+
+	client := api.NewClient(cfg)
+
+	org, err := client.Orgs.Create(c, args[0])
+	if err != nil {
+		return cli.NewExitError(orgCreateFailed, -1)
+	}
+
+	var progress api.ProgressFunc = func(evt *api.Event, err error) {
+		if evt != nil {
+			fmt.Println(evt.Message)
+		}
+	}
+
+	err = client.Keypairs.Generate(c, org.ID, &progress)
+	if err != nil {
+		msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
+		return cli.NewExitError(msg, -1)
+	}
+
+	fmt.Println("\nOrg " + org.Body.Name + " created.")
+	return nil
 }
 
 func orgsListCmd(ctx *cli.Context) error {
