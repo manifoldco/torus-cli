@@ -29,6 +29,13 @@ func validateSlug(slugType string) promptui.ValidateFunc {
 	}
 }
 
+func validateInviteCode(input string) error {
+	if govalidator.StringMatches(input, inviteCodePattern) {
+		return nil
+	}
+	return promptui.NewValidationError("Please enter a valid invite code")
+}
+
 // NamePrompt prompts the user to input a person's name
 func NamePrompt(override *string, defaultValue string) (string, error) {
 	label := "Name"
@@ -282,14 +289,25 @@ func FullNamePrompt() (string, error) {
 // InviteCodePrompt prompts the user to input an invite code
 func InviteCodePrompt(defaultValue string) (string, error) {
 	prompt := promptui.Prompt{
-		Label:   "Invite Code",
-		Default: defaultValue,
-		Validate: func(input string) error {
-			if govalidator.StringMatches(input, inviteCodePattern) {
-				return nil
-			}
-			return promptui.NewValidationError("Please enter a valid invite code")
-		},
+		Label:    "Invite Code",
+		Default:  defaultValue,
+		Validate: validateInviteCode,
+	}
+
+	return prompt.Run()
+}
+
+// SelectAcceptAction prompts the user to select an org from a list, or enter a new name
+func SelectAcceptAction() (int, string, error) {
+	names := []string{
+		"Login",
+		"Signup",
+	}
+
+	// Get the user's org selection
+	prompt := promptui.Select{
+		Label: "Do you want to login or create an account?",
+		Items: names,
 	}
 
 	return prompt.Run()

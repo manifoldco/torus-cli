@@ -1,4 +1,4 @@
-package invites
+package cmd
 
 import (
 	"context"
@@ -14,8 +14,7 @@ import (
 
 const orgInviteFailed = "Could not send invitation to org, please try again."
 
-// Send executes logic required to send an org invite
-func Send(ctx *cli.Context) error {
+func invitesSend(ctx *cli.Context) error {
 	usage := usageString(ctx)
 
 	args := ctx.Args()

@@ -1,10 +1,6 @@
 package cmd
 
-import (
-	"github.com/urfave/cli"
-
-	"github.com/arigatomachine/cli/cmd/invites"
-)
+import "github.com/urfave/cli"
 
 func init() {
 	invites := cli.Command{
@@ -22,7 +18,7 @@ func init() {
 				},
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, invites.Send,
+					SetUserEnv, checkRequiredFlags, invitesSend,
 				),
 			},
 			{
@@ -38,7 +34,7 @@ func init() {
 				},
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, invites.List,
+					SetUserEnv, checkRequiredFlags, invitesList,
 				),
 			},
 			{
@@ -50,7 +46,19 @@ func init() {
 				},
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs,
-					LoadPrefDefaults, SetUserEnv, invites.Approve,
+					LoadPrefDefaults, SetUserEnv, checkRequiredFlags, invitesApprove,
+				),
+			},
+			{
+				Name:      "accept",
+				Usage:     "Accept an invitation to join an organization",
+				ArgsUsage: "<email> <code>",
+				Flags: []cli.Flag{
+					OrgFlag("org to approve invite for", true),
+				},
+				Action: Chain(
+					EnsureDaemon, LoadDirPrefs,
+					LoadPrefDefaults, SetUserEnv, checkRequiredFlags, invitesAccept,
 				),
 			},
 		},

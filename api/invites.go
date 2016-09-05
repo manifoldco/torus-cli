@@ -45,20 +45,27 @@ func (i *InvitesClient) List(ctx context.Context, orgID *identity.ID, states []s
 	}
 
 	invitesResults := make([]InviteResult, len(invites))
-	for i, t := range invites {
-		invites := InviteResult{}
-		invites.ID = t.ID
-		invites.Version = t.Version
-
-		invitesBody, ok := t.Body.(*primitive.OrgInvite)
-		if !ok {
-			return nil, errors.New("invalid org invite body")
+	for i, inv := range invites {
+		invite, err := convertInviteResults(inv)
+		if err != nil {
+			return nil, err
 		}
-		invites.Body = invitesBody
-		invitesResults[i] = invites
+		invitesResults[i] = *invite
 	}
-
 	return invitesResults, nil
+}
+
+func convertInviteResults(i envelope.Unsigned) (*InviteResult, error) {
+	invite := InviteResult{}
+	invite.ID = i.ID
+	invite.Version = i.Version
+
+	inviteBody, ok := i.Body.(*primitive.OrgInvite)
+	if !ok {
+		return nil, errors.New("invalid org invite body")
+	}
+	invite.Body = inviteBody
+	return &invite, nil
 }
 
 // Send creates a new org invitation
@@ -99,6 +106,58 @@ func (i *InvitesClient) Send(ctx context.Context, email string, orgID, inviterID
 	}
 
 	return nil
+}
+
+// Accept executes the accept invite request
+func (i *InvitesClient) Accept(ctx context.Context, org, email, code string) error {
+	data := apitypes.InviteAccept{
+		Org:   org,
+		Email: email,
+		Code:  code,
+	}
+
+	req, reqID, err := i.client.NewRequest("POST", "/org-invites/accept", nil, data, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = i.client.Do(ctx, req, nil, &reqID, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Associate executes the associate invite request
+func (i *InvitesClient) Associate(ctx context.Context, org, email, code string) (*InviteResult, error) {
+	// Same payload as accept, re-use type
+	data := apitypes.InviteAccept{
+		Org:   org,
+		Email: email,
+		Code:  code,
+	}
+
+	req, reqID, err := i.client.NewRequest("POST", "/org-invites/associate", nil, data, true)
+	if err != nil {
+		return nil, err
+	}
+
+	var invites envelope.Unsigned
+	_, err = i.client.Do(ctx, req, &invites, &reqID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := convertInviteResults(invites)
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, errors.New("invalid org invite response")
+	}
+
+	return result, nil
 }
 
 // Approve executes the approve invite request

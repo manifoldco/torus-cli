@@ -1,4 +1,4 @@
-package invites
+package cmd
 
 import (
 	"context"
@@ -12,8 +12,7 @@ import (
 
 const approveInviteFailed = "Could not approve invitation to org, please try again."
 
-// Approve executes logic required to approve an org invite
-func Approve(ctx *cli.Context) error {
+func invitesApprove(ctx *cli.Context) error {
 	usage := usageString(ctx)
 
 	args := ctx.Args()
