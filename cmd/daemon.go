@@ -26,8 +26,9 @@ import (
 
 func init() {
 	daemon := cli.Command{
-		Name:  "daemon",
-		Usage: "Manage the session daemon",
+		Name:     "daemon",
+		Usage:    "Manage the session daemon",
+		Category: "SYSTEM",
 		Subcommands: []cli.Command{
 			{
 				Name:   "status",
