@@ -12,6 +12,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/identity"
+	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -20,6 +21,18 @@ func init() {
 		Usage:    "View and manipulate environments within an organization",
 		Category: "ORGANIZATIONS",
 		Subcommands: []cli.Command{
+			{
+				Name:  "create",
+				Usage: "Create an environment for a service inside an organization or project",
+				Flags: []cli.Flag{
+					OrgFlag("org to create environment for", false),
+					ProjectFlag("project to create environment for", false),
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					checkRequiredFlags, createEnv,
+				),
+			},
 			{
 				Name:  "list",
 				Usage: "List environments for an organization",
@@ -39,6 +52,65 @@ func init() {
 		},
 	}
 	Cmds = append(Cmds, envs)
+}
+
+const envCreateFailed = "Could not create env, please try again."
+
+func createEnv(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return cli.NewExitError(envCreateFailed, -1)
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, project, createdNew, err := SelectCreateOrgAndProject(client, c, ctx, ctx.String("org"), ctx.String("project"))
+	if err != nil {
+		fmt.Println("")
+		if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
+			return err
+		}
+		if strings.Contains(err.Error(), "not found") {
+			return err
+		}
+		return cli.NewExitError(envCreateFailed, -1)
+	}
+	if createdNew {
+		fmt.Println("")
+	}
+
+	args := ctx.Args()
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	}
+
+	label := "Environment name"
+	if name == "" {
+		name, err = NamePrompt(&label, "")
+		if err != nil {
+			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
+				return err
+			}
+			fmt.Println("")
+			return cli.NewExitError(envCreateFailed, -1)
+		}
+	} else {
+		fmt.Println(promptui.SuccessfulValue(label, name))
+	}
+
+	fmt.Println("")
+	err = client.Environments.Create(c, org.ID, project.ID, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "resource exists") {
+			return cli.NewExitError("Environment already exists", -1)
+		}
+		return cli.NewExitError(envCreateFailed, -1)
+	}
+
+	fmt.Println("Environment " + name + " created.")
+	return nil
 }
 
 const envListFailed = "Could not list envs, please try again."

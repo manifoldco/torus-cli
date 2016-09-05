@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
@@ -22,8 +23,44 @@ type EnvironmentResult struct {
 	Body    *primitive.Environment `json:"body"`
 }
 
+// Create generates a new env object for an org/project ID
+func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *identity.ID, name string) error {
+	if orgID == nil || projectID == nil {
+		return errors.New("invalid org or project")
+	}
+
+	envBody := primitive.Environment{
+		Name:      name,
+		OrgID:     orgID,
+		ProjectID: projectID,
+	}
+
+	ID, err := identity.Mutable(&envBody)
+	if err != nil {
+		return err
+	}
+
+	env := apitypes.Environment{
+		ID:      ID.String(),
+		Version: 1,
+		Body:    &envBody,
+	}
+
+	req, _, err := e.client.NewRequest("POST", "/envs", nil, env, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = e.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // List retrieves relevant envs by name and/or orgID and/or projectID
-func (o *EnvironmentsClient) List(ctx context.Context, orgID, projectID *identity.ID, name *string) ([]EnvironmentResult, error) {
+func (e *EnvironmentsClient) List(ctx context.Context, orgID, projectID *identity.ID, name *string) ([]EnvironmentResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
@@ -35,13 +72,13 @@ func (o *EnvironmentsClient) List(ctx context.Context, orgID, projectID *identit
 		v.Set("name", *name)
 	}
 
-	req, _, err := o.client.NewRequest("GET", "/envs", v, nil, true)
+	req, _, err := e.client.NewRequest("GET", "/envs", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	envs := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &envs, nil, nil)
+	_, err = e.client.Do(ctx, req, &envs, nil, nil)
 	if err != nil {
 		return nil, err
 	}
