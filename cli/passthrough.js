@@ -7,6 +7,8 @@ var execSync = require('child_process').execSync;
 var CATEGORIES = {
   set: 'SECRETS',
   unset: 'SECRETS',
+  view: 'SECRETS',
+  run: 'SECRETS',
 
   signup: 'ACCOUNT',
   verify: 'ACCOUNT',
