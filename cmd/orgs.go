@@ -9,6 +9,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -43,10 +44,26 @@ func orgsCreate(ctx *cli.Context) error {
 		text += usage
 		return cli.NewExitError(text, -1)
 	}
-	if len(args) < 1 {
-		text := "Missing name\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+
+	var name string
+	var err error
+
+	if len(args) == 1 {
+		name = args[0]
+	}
+
+	label := "Org name"
+	if name == "" {
+		name, err = NamePrompt(&label, "")
+		if err != nil {
+			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
+				return err
+			}
+			fmt.Println("")
+			return cli.NewExitError(orgCreateFailed, -1)
+		}
+	} else {
+		fmt.Println(promptui.SuccessfulValue(label, name))
 	}
 
 	c := context.Background()
@@ -58,7 +75,7 @@ func orgsCreate(ctx *cli.Context) error {
 
 	client := api.NewClient(cfg)
 
-	_, err = createOrgByName(ctx, c, client, args[0])
+	_, err = createOrgByName(ctx, c, client, name)
 	if err != nil {
 		return err
 	}
