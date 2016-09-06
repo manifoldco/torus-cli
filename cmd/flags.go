@@ -56,25 +56,36 @@ func InstanceFlag(usage string, required bool) cli.Flag {
 type placeHolderStringSliceFlag struct {
 	cli.StringSliceFlag
 	Placeholder string
+	Required    bool
 }
 
 func (psf placeHolderStringSliceFlag) String() string {
 	flags := prefixedNames(psf.Name, psf.Placeholder)
 	def := ""
-	if psf.Value != nil && len([]string(*psf.Value)) > 0 {
-		def = fmt.Sprintf(" (default: %s)", psf.Value)
+	if psf.Value != nil && len(*psf.Value) > 0 {
+		def = fmt.Sprintf(" (default: %s)", strings.Join(*psf.Value, ", "))
 	}
-	return fmt.Sprintf("%s\t%s%s", flags, psf.Usage, def)
+
+	multi := " Can be specified multiple times."
+	if psf.Usage[len(psf.Usage)-1] != '.' {
+		multi = "." + multi
+	}
+
+	return fmt.Sprintf("%s\t%s%s%s", flags, psf.Usage, multi, def)
 }
 
-func newSlicePlaceholder(name, placeholder, usage string, value cli.StringSlice) placeHolderStringSliceFlag {
+func newSlicePlaceholder(name, placeholder, usage string, value cli.StringSlice,
+	envvar string, required bool) placeHolderStringSliceFlag {
+
 	return placeHolderStringSliceFlag{
 		StringSliceFlag: cli.StringSliceFlag{
-			Name:  name,
-			Usage: usage,
-			Value: &value,
+			Name:   name,
+			Usage:  usage,
+			Value:  &value,
+			EnvVar: envvar,
 		},
 		Placeholder: placeholder,
+		Required:    required,
 	}
 }
 
