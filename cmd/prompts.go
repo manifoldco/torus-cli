@@ -10,7 +10,6 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
-	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/promptui"
 )
 
@@ -89,7 +88,7 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 // It returns the id of the selected org (if created a new org was not chosed),
 // the name of the selected org, and a boolean indicating if a new org should
 // be created.
-func SelectCreateOrg(client *api.Client, c context.Context, name string) (*identity.ID, string, bool, error) {
+func SelectCreateOrg(client *api.Client, c context.Context, name string) (*api.OrgResult, string, bool, error) {
 	// Get the list of orgs the user has access to
 	orgs, err := client.Orgs.List(c)
 	if err != nil {
@@ -123,7 +122,7 @@ func SelectCreateOrg(client *api.Client, c context.Context, name string) (*ident
 		return nil, name, true, nil
 	}
 
-	return orgs[idx].ID, name, false, nil
+	return &orgs[idx], name, false, nil
 }
 
 // SelectCreateOrgAndProject prompts for org and project and creates them if necessary
@@ -134,10 +133,14 @@ func SelectCreateOrgAndProject(client *api.Client, c context.Context, ctx *cli.C
 	var pIdx int
 	var pFound bool
 
-	orgID, oName, newOrg, err := SelectCreateOrg(client, c, oName)
+	org, oName, newOrg, err := SelectCreateOrg(client, c, oName)
 	if err != nil {
 		return nil, nil, newResource, err
 	}
+	if org == nil && !newOrg {
+		return nil, nil, newResource, cli.NewExitError("Org not found", -1)
+	}
+	orgID := org.ID
 
 	var projects []api.ProjectResult
 

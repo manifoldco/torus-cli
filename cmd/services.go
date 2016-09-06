@@ -12,6 +12,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/identity"
+	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -25,7 +26,7 @@ func init() {
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
 					OrgFlag("org to show services for", true),
-					ProjectFlag("project to shows services for", false),
+					ProjectFlag("project to show services for", false),
 					cli.BoolFlag{
 						Name:  "all",
 						Usage: "Perform command on all projects",
@@ -34,6 +35,19 @@ func init() {
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
 					SetUserEnv, checkRequiredFlags, listServices,
+				),
+			},
+			{
+				Name:      "create",
+				Usage:     "Create a service in an organization",
+				ArgsUsage: "[name]",
+				Flags: []cli.Flag{
+					OrgFlag("Create the project in this org", false),
+					ProjectFlag("project to create services for", false),
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					createServiceCmd,
 				),
 			},
 		},
@@ -131,5 +145,69 @@ func listServices(ctx *cli.Context) error {
 		fmt.Println("")
 	}
 
+	return nil
+}
+
+const serviceCreateFailed = "Could not create service. Please try again."
+
+func createServiceCmd(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return cli.NewExitError(serviceCreateFailed, -1)
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, project, createdNew, err := SelectCreateOrgAndProject(client, c, ctx, ctx.String("org"), ctx.String("project"))
+	if err != nil {
+		if err != promptui.ErrEOF && err != promptui.ErrInterrupt {
+			fmt.Println("")
+		}
+		return err
+	}
+	if org == nil {
+		fmt.Println("")
+		return cli.NewExitError("Org not found", -1)
+	}
+	if project == nil {
+		fmt.Println("")
+		return cli.NewExitError("Project not found", -1)
+	}
+	if createdNew {
+		fmt.Println("")
+	}
+
+	args := ctx.Args()
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	}
+
+	label := "Service name"
+	if name == "" {
+		name, err = NamePrompt(&label, "")
+		if err != nil {
+			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
+				return err
+			}
+			fmt.Println("")
+			return cli.NewExitError(serviceCreateFailed, -1)
+		}
+	} else {
+		fmt.Println(promptui.SuccessfulValue(label, name))
+	}
+
+	fmt.Println("")
+	err = client.Services.Create(c, org.ID, project.ID, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "resource exists") {
+			return cli.NewExitError("Service already exists", -1)
+		}
+		fmt.Printf("%v\n", err)
+		return cli.NewExitError(serviceCreateFailed, -1)
+	}
+
+	fmt.Printf("Service %s created.\n", name)
 	return nil
 }

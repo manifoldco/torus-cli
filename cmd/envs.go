@@ -54,7 +54,7 @@ func init() {
 	Cmds = append(Cmds, envs)
 }
 
-const envCreateFailed = "Could not create env, please try again."
+const envCreateFailed = "Could not create envronment, please try again."
 
 func createEnv(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()

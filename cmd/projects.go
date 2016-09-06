@@ -11,6 +11,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/promptui"
 )
 
@@ -99,7 +100,15 @@ func createProjectCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	orgID, orgName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
+	org, orgName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
+
+	var orgID *identity.ID
+	if !newOrg {
+		if org == nil {
+			return cli.NewExitError("Org not found", -1)
+		}
+		orgID = org.ID
+	}
 
 	args := ctx.Args()
 	name := ""
@@ -135,7 +144,7 @@ func createProjectCmd(ctx *cli.Context) error {
 			return err
 		}
 
-		fmt.Printf("Org %s created.\n", orgName)
+		fmt.Printf("Org %s created.\n\n", orgName)
 	}
 
 	_, err = client.Projects.Create(c, orgID, name)

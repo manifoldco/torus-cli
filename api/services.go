@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
@@ -23,7 +24,7 @@ type ServiceResult struct {
 }
 
 // List retrieves relevant services by name and/or orgID and/or projectID
-func (o *ServicesClient) List(ctx context.Context, orgID, projectID *identity.ID, name *string) ([]ServiceResult, error) {
+func (s *ServicesClient) List(ctx context.Context, orgID, projectID *identity.ID, name *string) ([]ServiceResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
@@ -35,13 +36,13 @@ func (o *ServicesClient) List(ctx context.Context, orgID, projectID *identity.ID
 		v.Set("name", *name)
 	}
 
-	req, _, err := o.client.NewRequest("GET", "/services", v, nil, true)
+	req, _, err := s.client.NewRequest("GET", "/services", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	services := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &services, nil, nil)
+	_, err = s.client.Do(ctx, req, &services, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,4 +62,40 @@ func (o *ServicesClient) List(ctx context.Context, orgID, projectID *identity.ID
 	}
 
 	return serviceResults, nil
+}
+
+// Create performs a request to create a new service object
+func (s *ServicesClient) Create(ctx context.Context, orgID, projectID *identity.ID, name string) error {
+	if orgID == nil || projectID == nil {
+		return errors.New("invalid org or project")
+	}
+
+	serviceBody := primitive.Service{
+		Name:      name,
+		OrgID:     orgID,
+		ProjectID: projectID,
+	}
+
+	ID, err := identity.Mutable(&serviceBody)
+	if err != nil {
+		return err
+	}
+
+	service := apitypes.Service{
+		ID:      &ID,
+		Version: 1,
+		Body:    &serviceBody,
+	}
+
+	req, _, err := s.client.NewRequest("POST", "/services", nil, service, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
