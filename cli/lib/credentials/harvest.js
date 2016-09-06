@@ -18,14 +18,6 @@ var createValidator = validate.build({
   instance: validate.orExpression
 });
 
-var getValidator = validate.build({
-  org: validate.slug,
-  project: validate.slug,
-  environment: validate.slug,
-  service: validate.slug,
-  instance: validate.slug
-});
-
 /**
  * Harvests parameters from ctx and constructs an object
  * for usage with credentials.create.
@@ -143,51 +135,4 @@ harvest._createFlags = function (data) {
   });
 
   return flags;
-};
-
-/**
- * Harvests parameters from ctx and constructs an object for usage with
- * credentials.get.
- *
- * @param {Context} ctx
- * @return {Promise}
- */
-harvest.get = function (ctx) {
-  ctx.target.flags({
-    org: ctx.option('org').value,
-    project: ctx.option('project').value,
-    service: ctx.option('service').value,
-    environment: ctx.option('environment').value
-  });
-
-  var data = {
-    org: ctx.target.org,
-    project: ctx.target.project,
-    environment: ctx.target.environment,
-    service: ctx.target.service,
-    instance: ctx.option('instance').value.toString()
-  };
-
-  if (!data.org) {
-    throw new Error('You must provide a --org flag');
-  }
-
-  if (!data.project) {
-    throw new Error('You must provide a --project flag');
-  }
-
-  if (!data.service) {
-    throw new Error('You must provide a --service flag');
-  }
-
-  if (!data.environment) {
-    throw new Error('You must provide a --environment flag');
-  }
-
-  var errs = getValidator(data);
-  if (errs.length > 0) {
-    throw errs[0];
-  }
-
-  return data;
 };

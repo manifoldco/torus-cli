@@ -10,6 +10,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
 )
 
@@ -31,7 +32,7 @@ func init() {
 		},
 		Action: Chain(
 			EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-			SetUserEnv, viewCmd,
+			SetUserEnv, checkRequiredFlags, viewCmd,
 		),
 	}
 
@@ -39,9 +40,38 @@ func init() {
 }
 
 func viewCmd(ctx *cli.Context) error {
-	cfg, err := config.LoadConfig()
+	secrets, path, err := getSecrets(ctx)
 	if err != nil {
 		return err
+	}
+
+	verbose := ctx.Bool("verbose")
+	if verbose {
+		fmt.Printf("Credential path: %s\n\n", path)
+	}
+	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
+	for _, secret := range secrets {
+		value := secret.Body.Value
+		if value.IsUnset() {
+			continue
+		}
+		key := strings.ToUpper(secret.Body.Name)
+		if verbose {
+			spath := secret.Body.PathExp + "/" + secret.Body.Name
+			fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)
+		} else {
+			fmt.Fprintf(w, "%s=%s\n", key, value.String())
+
+		}
+	}
+	w.Flush()
+	return nil
+}
+
+func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return nil, "", err
 	}
 
 	client := api.NewClient(cfg)
@@ -49,7 +79,7 @@ func viewCmd(ctx *cli.Context) error {
 
 	self, err := client.Users.Self(c)
 	if err != nil {
-		return cli.NewExitError("Error fetching user details: "+err.Error(), -1)
+		return nil, "", cli.NewExitError("Error fetching user details: "+err.Error(), -1)
 	}
 
 	parts := []string{
@@ -61,28 +91,8 @@ func viewCmd(ctx *cli.Context) error {
 
 	secrets, err := client.Credentials.Get(c, path)
 	if err != nil {
-		return cli.NewExitError("Error fetching secrets: "+err.Error(), -1)
+		return nil, "", cli.NewExitError("Error fetching secrets: "+err.Error(), -1)
 	}
 
-	verbose := ctx.Bool("verbose")
-	if verbose {
-		fmt.Printf("Credential path: %s\n\n", path)
-	}
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
-	for _, secret := range secrets {
-		key := strings.ToUpper(secret.Body.Name)
-		value := secret.Body.Value
-		if value.IsUnset() {
-			continue
-		}
-		if verbose {
-			spath := secret.Body.PathExp + "/" + secret.Body.Name
-			fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)
-		} else {
-			fmt.Fprintf(w, "%s=%s\n", key, value.String())
-
-		}
-	}
-	w.Flush()
-	return nil
+	return secrets, path, nil
 }
