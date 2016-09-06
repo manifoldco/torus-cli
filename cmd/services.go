@@ -156,50 +156,80 @@ func createServiceCmd(ctx *cli.Context) error {
 		return cli.NewExitError(serviceCreateFailed, -1)
 	}
 
+	args := ctx.Args()
+	serviceName := ""
+	if len(args) > 0 {
+		serviceName = args[0]
+	}
+
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, project, createdNew, err := SelectCreateOrgAndProject(client, c, ctx, ctx.String("org"), ctx.String("project"))
+	// Ask the user which org they want to use
+	org, oName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
 	if err != nil {
-		if err != promptui.ErrEOF && err != promptui.ErrInterrupt {
-			fmt.Println("")
-		}
-		return err
+		return handleSelectError(err, "Org selection failed")
 	}
-	if org == nil {
+	if org == nil && !newOrg {
 		fmt.Println("")
 		return cli.NewExitError("Org not found", -1)
 	}
-	if project == nil {
+	if newOrg && oName == "" {
+		fmt.Println("")
+		return cli.NewExitError("Invalid org name", -1)
+	}
+
+	var orgID *identity.ID
+	if org != nil {
+		orgID = org.ID
+	}
+
+	// Ask the user which project they want to use
+	project, pName, newProject, err := SelectCreateProject(client, c, orgID, ctx.String("project"))
+	if err != nil {
+		return handleSelectError(err, "Project selection failed")
+	}
+	if project == nil && !newProject {
 		fmt.Println("")
 		return cli.NewExitError("Project not found", -1)
 	}
-	if createdNew {
+	if newProject && pName == "" {
 		fmt.Println("")
-	}
-
-	args := ctx.Args()
-	name := ""
-	if len(args) > 0 {
-		name = args[0]
+		return cli.NewExitError("Invalid project name", -1)
 	}
 
 	label := "Service name"
-	if name == "" {
-		name, err = NamePrompt(&label, "")
+	if serviceName == "" {
+		serviceName, err = NamePrompt(&label, "")
 		if err != nil {
-			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
-				return err
-			}
-			fmt.Println("")
-			return cli.NewExitError(serviceCreateFailed, -1)
+			return handleSelectError(err, serviceCreateFailed)
 		}
 	} else {
-		fmt.Println(promptui.SuccessfulValue(label, name))
+		fmt.Println(promptui.SuccessfulValue(label, serviceName))
 	}
 
+	// Create the org now if needed
+	if org == nil && newProject {
+		org, err = createOrgByName(ctx, c, client, oName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
+		orgID = org.ID
+	}
+
+	// Create the project now if needed
+	if project == nil && newProject {
+		project, err = createProjectByName(c, client, orgID, pName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
+	}
+
+	// Create our new service
 	fmt.Println("")
-	err = client.Services.Create(c, org.ID, project.ID, name)
+	err = client.Services.Create(c, org.ID, project.ID, serviceName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return cli.NewExitError("Service already exists", -1)
@@ -208,6 +238,6 @@ func createServiceCmd(ctx *cli.Context) error {
 		return cli.NewExitError(serviceCreateFailed, -1)
 	}
 
-	fmt.Printf("Service %s created.\n", name)
+	fmt.Printf("Service %s created.\n", serviceName)
 	return nil
 }

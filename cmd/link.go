@@ -12,6 +12,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/dirprefs"
+	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/prefs"
 )
 
@@ -55,12 +56,54 @@ func linkCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, project, createdNew, err := SelectCreateOrgAndProject(client, c, ctx, "", "")
+	// Ask the user which org they want to use
+	org, oName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
 	if err != nil {
-		return err
+		return handleSelectError(err, "Org selection failed")
 	}
-	if createdNew == true {
+	if org == nil && !newOrg {
 		fmt.Println("")
+		return cli.NewExitError("Org not found", -1)
+	}
+	if newOrg && oName == "" {
+		fmt.Println("")
+		return cli.NewExitError("Invalid org name", -1)
+	}
+
+	var orgID *identity.ID
+	if org != nil {
+		orgID = org.ID
+	}
+
+	// Ask the user which project they want to use
+	project, pName, newProject, err := SelectCreateProject(client, c, orgID, ctx.String("project"))
+	if err != nil {
+		return handleSelectError(err, "Project selection failed")
+	}
+	if project == nil && !newProject {
+		return cli.NewExitError("Project not found", -1)
+	}
+	if newProject && pName == "" {
+		return cli.NewExitError("Invalid project name", -1)
+	}
+
+	// Create the org now if needed
+	if org == nil && newProject {
+		org, err = createOrgByName(ctx, c, client, oName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
+		orgID = org.ID
+	}
+
+	// Create the project now if needed
+	if project == nil && newProject {
+		project, err = createProjectByName(c, client, orgID, pName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
 	}
 
 	// write out the link
@@ -69,8 +112,8 @@ func linkCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	oName := org.Body.Name
-	pName := project.Body.Name
+	oName = org.Body.Name
+	pName = project.Body.Name
 
 	dPrefs.Organization = oName
 	dPrefs.Project = pName
@@ -82,7 +125,7 @@ func linkCmd(ctx *cli.Context) error {
 	}
 
 	// Display the output
-	fmt.Println("This directory its subdirectories have been linked to:")
+	fmt.Println("\nThis directory its subdirectories have been linked to:")
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	fmt.Fprintf(w, "Org:\t%s\n", oName)
 	fmt.Fprintf(w, "Project:\t%s\n", pName)

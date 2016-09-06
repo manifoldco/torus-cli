@@ -49,7 +49,7 @@ func init() {
 	Cmds = append(Cmds, projects)
 }
 
-const projectListFailed = "Coult not list projects, please try again."
+const projectListFailed = "Could not list projects, please try again."
 
 func listProjects(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
@@ -130,8 +130,6 @@ func createProjectCmd(ctx *cli.Context) error {
 		fmt.Println(promptui.SuccessfulValue(label, name))
 	}
 
-	fmt.Println("")
-
 	if newOrg {
 		org, err := client.Orgs.Create(c, orgName)
 		orgID = org.ID
@@ -147,14 +145,26 @@ func createProjectCmd(ctx *cli.Context) error {
 		fmt.Printf("Org %s created.\n\n", orgName)
 	}
 
-	_, err = client.Projects.Create(c, orgID, name)
+	_, err = createProjectByName(c, client, orgID, name)
 	if err != nil {
-		if strings.Contains(err.Error(), "resource exists") {
-			return cli.NewExitError("Project already exists", -1)
-		}
-		return cli.NewExitError(projectCreateFailed, -1)
+		return err
 	}
 
-	fmt.Printf("Project %s created.\n", name)
 	return nil
+}
+
+func createProjectByName(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.ProjectResult, error) {
+	project, err := client.Projects.Create(c, orgID, name)
+	if orgID == nil {
+		return nil, cli.NewExitError("Unknown org", -1)
+	}
+	if err != nil {
+		if strings.Contains(err.Error(), "resource exists") {
+			return nil, cli.NewExitError("Project already exists", -1)
+		}
+		fmt.Println(err)
+		return nil, cli.NewExitError(projectCreateFailed, -1)
+	}
+	fmt.Printf("Project %s created.\n", name)
+	return project, nil
 }

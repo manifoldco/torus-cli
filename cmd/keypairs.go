@@ -211,6 +211,7 @@ func generateKeypairsForOrg(ctx *cli.Context, c context.Context, client *api.Cli
 		orgID = targetOrg.ID
 	}
 
+	fmt.Println("")
 	err = client.Keypairs.Generate(c, orgID, &progress)
 	if err != nil {
 		return outputErr
