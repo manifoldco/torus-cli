@@ -56,14 +56,7 @@ func invitesApprove(ctx *cli.Context) error {
 		return cli.NewExitError("Invite not found", -1)
 	}
 
-	var output api.ProgressFunc
-	output = func(event *api.Event, err error) {
-		if event != nil {
-			fmt.Println(event.Message)
-		}
-	}
-
-	err = client.Invites.Approve(context.Background(), *targetInvite, &output)
+	err = client.Invites.Approve(context.Background(), *targetInvite, &progress)
 	if err != nil {
 		return err
 	}

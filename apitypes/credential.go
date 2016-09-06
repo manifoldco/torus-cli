@@ -11,6 +11,13 @@ import (
 
 var errMistmatchedType = errors.New("Mismatched type and value in credential")
 
+const (
+	unsetCV = iota
+	stringCV
+	intCV
+	floatCV
+)
+
 // CredentialEnvelope is an unencrypted credential object with a
 // deserialized body
 type CredentialEnvelope struct {
@@ -30,19 +37,20 @@ type Credential struct {
 
 // CredentialValue is the raw value of a credential.
 type CredentialValue struct {
-	unset bool
-	value string
+	cvtype int
+	value  string
+	raw    interface{}
 }
 
 // IsUnset returns if this credential has been unset (deleted)
 func (c *CredentialValue) IsUnset() bool {
-	return c.unset
+	return c.cvtype == unsetCV
 }
 
 // String returns the string representation of this credential. It panics
 // if the credential was deleted.
 func (c *CredentialValue) String() string {
-	if c.unset {
+	if c.cvtype == unsetCV {
 		panic("CredentialValue has been unset")
 	}
 
@@ -57,10 +65,42 @@ type credentialImpl struct {
 	} `json:"body"`
 }
 
+// MarshalJSON implements the json.Marshaler interface.
+func (c *CredentialValue) MarshalJSON() ([]byte, error) {
+	impl := credentialImpl{Version: 1}
+
+	switch c.cvtype {
+	case stringCV:
+		impl.Body.Type = "string"
+	case intCV:
+		impl.Body.Type = "number"
+	case floatCV:
+		impl.Body.Type = "number"
+	case unsetCV:
+		impl.Body.Type = "undefined"
+	}
+
+	if c.cvtype != unsetCV {
+		v, err := json.Marshal(c.raw)
+		if err != nil {
+			return nil, err
+		}
+
+		impl.Body.Value = v
+	} else {
+		impl.Body.Value = []byte(`""`)
+	}
+
+	b, err := json.Marshal(&impl)
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(strconv.Quote(string(b))), nil
+}
+
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (c *CredentialValue) UnmarshalJSON(b []byte) error {
-	c.unset = false
-
 	impl := credentialImpl{}
 
 	s, err := strconv.Unquote(string(b))
@@ -75,20 +115,31 @@ func (c *CredentialValue) UnmarshalJSON(b []byte) error {
 
 	switch impl.Body.Type {
 	case "undefined":
-		c.unset = true
+		c.cvtype = unsetCV
 	case "string":
+		c.cvtype = stringCV
 		var v string
 		err := json.Unmarshal(impl.Body.Value, &v)
 		if err != nil {
 			return errMistmatchedType
 		}
 
+		c.raw = v
 		c.value = v
 	case "number":
+		c.cvtype = stringCV
 		var v json.Number
 		err := json.Unmarshal(impl.Body.Value, &v)
 		if err != nil {
 			return errMistmatchedType
+		}
+
+		if i, err := v.Int64(); err == nil {
+			c.cvtype = intCV
+			c.raw = i
+		} else if f, err := v.Float64(); err == nil {
+			c.cvtype = floatCV
+			c.raw = f
 		}
 
 		c.value = v.String()
@@ -96,4 +147,36 @@ func (c *CredentialValue) UnmarshalJSON(b []byte) error {
 		return errors.New("Decoding type " + impl.Body.Type + " is not supported")
 	}
 	return nil
+}
+
+// NewUnsetCredentialValue creates a CredentialValue with an unset value.
+func NewUnsetCredentialValue() *CredentialValue {
+	return &CredentialValue{cvtype: unsetCV}
+}
+
+// NewStringCredentialValue creates a CredentialValue with a string value.
+func NewStringCredentialValue(s string) *CredentialValue {
+	return &CredentialValue{
+		cvtype: stringCV,
+		value:  s,
+		raw:    s,
+	}
+}
+
+// NewIntCredentialValue creates a CredentialValue with an int value.
+func NewIntCredentialValue(i int) *CredentialValue {
+	return &CredentialValue{
+		cvtype: intCV,
+		value:  strconv.Itoa(i),
+		raw:    i,
+	}
+}
+
+// NewFloatCredentialValue creates a CredentialValue with a float value.
+func NewFloatCredentialValue(f float64) *CredentialValue {
+	return &CredentialValue{
+		cvtype: floatCV,
+		value:  strconv.FormatFloat(f, 'g', -1, 64),
+		raw:    f,
+	}
 }
