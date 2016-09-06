@@ -19,7 +19,6 @@ var CATEGORIES = {
   invites: 'ORGANIZATIONS',
   keypairs: 'ORGANIZATIONS',
   envs: 'ORGANIZATIONS',
-  projects: 'ORGANIZATIONS',
   services: 'ORGANIZATIONS',
   teams: 'ORGANIZATIONS'
 };
@@ -31,7 +30,6 @@ var REPLACEMENTS = {
   invites: true,
   keypairs: true,
   envs: true,
-  projects: true,
   services: true,
   teams: true,
   policies: true
