@@ -8,8 +8,6 @@ import (
 	"github.com/arigatomachine/cli/identity"
 )
 
-var errMistmatchedType = errors.New("Mismatched type and value in credential")
-
 // CredentialEnvelope is an unencrypted credential object with a
 // deserialized body
 type CredentialEnvelope struct {
@@ -51,8 +49,8 @@ func (c *CredentialValue) String() string {
 type credentialImpl struct {
 	Version uint8 `json:"version"`
 	Body    struct {
-		Type  string          `json:"type"`
-		Value json.RawMessage `json:"value"`
+		Type  string      `json:"type"`
+		Value interface{} `json:"value"`
 	} `json:"body"`
 }
 
@@ -76,21 +74,11 @@ func (c *CredentialValue) UnmarshalJSON(b []byte) error {
 	case "undefined":
 		c.unset = true
 	case "string":
-		var v string
-		err := json.Unmarshal(impl.Body.Value, &v)
-		if err != nil {
-			return errMistmatchedType
+		if v, ok := impl.Body.Value.(string); ok {
+			c.value = v
+		} else {
+			return errors.New("Mismatched type and value in credential")
 		}
-
-		c.value = v
-	case "number":
-		var v json.Number
-		err := json.Unmarshal(impl.Body.Value, &v)
-		if err != nil {
-			return errMistmatchedType
-		}
-
-		c.value = v.String()
 	default:
 		return errors.New("Decoding type " + impl.Body.Type + " is not supported")
 	}
