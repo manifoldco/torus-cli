@@ -11,6 +11,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -28,6 +29,18 @@ func init() {
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
 					SetUserEnv, checkRequiredFlags, listProjects,
+				),
+			},
+			{
+				Name:      "create",
+				Usage:     "Create a project in an organization",
+				ArgsUsage: "[name]",
+				Flags: []cli.Flag{
+					OrgFlag("Create the project in this org", false),
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					createProjectCmd,
 				),
 			},
 		},
@@ -72,5 +85,67 @@ func listProjects(ctx *cli.Context) error {
 	}
 	fmt.Println("")
 
+	return nil
+}
+
+const projectCreateFailed = "Could not create project. Please try again."
+
+func createProjectCmd(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return cli.NewExitError(projectCreateFailed, -1)
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	orgID, orgName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
+
+	args := ctx.Args()
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	}
+
+	label := "Project name"
+	if name == "" {
+		name, err = NamePrompt(&label, "")
+		if err != nil {
+			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
+				return err
+			}
+			fmt.Println("")
+			return cli.NewExitError(projectCreateFailed, -1)
+		}
+	} else {
+		fmt.Println(promptui.SuccessfulValue(label, name))
+	}
+
+	fmt.Println("")
+
+	if newOrg {
+		org, err := client.Orgs.Create(c, orgName)
+		orgID = org.ID
+		if err != nil {
+			return cli.NewExitError("Could not create org: "+err.Error(), -1)
+		}
+
+		err = generateKeypairsForOrg(ctx, c, client, org, false)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Org %s created.\n", orgName)
+	}
+
+	_, err = client.Projects.Create(c, orgID, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "resource exists") {
+			return cli.NewExitError("Project already exists", -1)
+		}
+		return cli.NewExitError(projectCreateFailed, -1)
+	}
+
+	fmt.Printf("Project %s created.\n", name)
 	return nil
 }
