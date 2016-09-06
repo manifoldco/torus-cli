@@ -137,8 +137,6 @@ func teamsListCmd(ctx *cli.Context) error {
 	return nil
 }
 
-const membersListFailed = "Could not list members, please try again."
-
 func teamMembersListCmd(ctx *cli.Context) error {
 	usage := usageString(ctx)
 
@@ -202,6 +200,11 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		)
 	}
 
+	if len(memberships) == 0 {
+		fmt.Printf("%s has no members\n", team.Body.Name)
+		return nil
+	}
+
 	membershipUserIDs := make(map[identity.ID]bool)
 	for _, membership := range memberships {
 		membershipUserIDs[*membership.Body.OwnerID] = true
@@ -212,10 +215,9 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		profileIDs = append(profileIDs, id)
 	}
 
-	// Lookup profiles of those who are members
 	profiles, err := client.Profiles.ListByID(c, profileIDs)
 	if err != nil {
-		return cli.NewExitError(membersListFailed, -1)
+		return err
 	}
 
 	count := strconv.Itoa(len(memberships))
