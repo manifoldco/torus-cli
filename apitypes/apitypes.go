@@ -4,6 +4,7 @@ package apitypes
 import (
 	"strings"
 
+	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
 
@@ -75,7 +76,14 @@ type OrgInvite struct {
 	Body    *primitive.OrgInvite `json:"body"`
 }
 
-// Environment contains information fo rcreating a new Env object
+// Service contains information for creating a new Service object
+type Service struct {
+	ID      *identity.ID       `json:"id"`
+	Version int                `json:"version"`
+	Body    *primitive.Service `json:"body"`
+}
+
+// Environment contains information for creating a new Env object
 type Environment struct {
 	ID      string                 `json:"id"`
 	Version int                    `json:"version"`

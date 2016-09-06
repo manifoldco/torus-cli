@@ -109,7 +109,6 @@ func signup(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("")
 
 	// Generate keypairs, look up the user's org
 	err = generateKeypairsForOrg(ctx, c, client, nil, true)

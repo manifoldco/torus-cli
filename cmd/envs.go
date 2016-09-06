@@ -54,7 +54,7 @@ func init() {
 	Cmds = append(Cmds, envs)
 }
 
-const envCreateFailed = "Could not create env, please try again."
+const envCreateFailed = "Could not create environment, please try again."
 
 func createEnv(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
@@ -62,46 +62,80 @@ func createEnv(ctx *cli.Context) error {
 		return cli.NewExitError(envCreateFailed, -1)
 	}
 
+	args := ctx.Args()
+	environmentName := ""
+	if len(args) > 0 {
+		environmentName = args[0]
+	}
+
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, project, createdNew, err := SelectCreateOrgAndProject(client, c, ctx, ctx.String("org"), ctx.String("project"))
+	// Ask the user which org they want to use
+	org, oName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
 	if err != nil {
-		fmt.Println("")
-		if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
-			return err
-		}
-		if strings.Contains(err.Error(), "not found") {
-			return err
-		}
-		return cli.NewExitError(envCreateFailed, -1)
+		return handleSelectError(err, "Org selection failed")
 	}
-	if createdNew {
+	if org == nil && !newOrg {
 		fmt.Println("")
+		return cli.NewExitError("Org not found", -1)
+	}
+	if newOrg && oName == "" {
+		fmt.Println("")
+		return cli.NewExitError("Invalid org name", -1)
 	}
 
-	args := ctx.Args()
-	name := ""
-	if len(args) > 0 {
-		name = args[0]
+	var orgID *identity.ID
+	if org != nil {
+		orgID = org.ID
+	}
+
+	// Ask the user which project they want to use
+	project, pName, newProject, err := SelectCreateProject(client, c, orgID, ctx.String("project"))
+	if err != nil {
+		return handleSelectError(err, "Project selection failed")
+	}
+	if project == nil && !newProject {
+		fmt.Println("")
+		return cli.NewExitError("Project not found", -1)
+	}
+	if newProject && pName == "" {
+		fmt.Println("")
+		return cli.NewExitError("Invalid project name", -1)
 	}
 
 	label := "Environment name"
-	if name == "" {
-		name, err = NamePrompt(&label, "")
+	if environmentName == "" {
+		environmentName, err = NamePrompt(&label, "")
 		if err != nil {
-			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
-				return err
-			}
-			fmt.Println("")
-			return cli.NewExitError(envCreateFailed, -1)
+			return handleSelectError(err, envCreateFailed)
 		}
 	} else {
-		fmt.Println(promptui.SuccessfulValue(label, name))
+		fmt.Println(promptui.SuccessfulValue(label, environmentName))
 	}
 
+	// Create the org now if needed
+	if org == nil && newProject {
+		org, err = createOrgByName(ctx, c, client, oName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
+		orgID = org.ID
+	}
+
+	// Create the project now if needed
+	if project == nil && newProject {
+		project, err = createProjectByName(c, client, orgID, pName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
+	}
+
+	// Create our new environment
 	fmt.Println("")
-	err = client.Environments.Create(c, org.ID, project.ID, name)
+	err = client.Environments.Create(c, org.ID, project.ID, environmentName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return cli.NewExitError("Environment already exists", -1)
@@ -109,7 +143,7 @@ func createEnv(ctx *cli.Context) error {
 		return cli.NewExitError(envCreateFailed, -1)
 	}
 
-	fmt.Println("Environment " + name + " created.")
+	fmt.Println("Environment " + environmentName + " created.")
 	return nil
 }
 

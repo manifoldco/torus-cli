@@ -80,16 +80,72 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 	return prompt.Run()
 }
 
+func handleSelectError(err error, generic string) error {
+	if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
+		return err
+	}
+	return cli.NewExitError(generic, -1)
+}
+
+// SelectCreateProject prompts the user to select a project from at list of projects
+// populated via api request.
+//
+// The user may select to create a new project, or they may preselect an project
+// via a non-empty name parameter.
+//
+// It returns the object of the selected project (if created a new project was not chosed),
+// the name of the selected project, and a boolean indicating if a new project should
+// be created.
+func SelectCreateProject(client *api.Client, c context.Context, orgID *identity.ID, name string) (*api.ProjectResult, string, bool, error) {
+	var projects []api.ProjectResult
+	var err error
+	if orgID != nil {
+		// Get the list of projects the user has access to in the specified org
+		projects, err = client.Projects.List(c, orgID, nil)
+		if err != nil {
+			return nil, "", false, cli.NewExitError("Error fetching projects list", -1)
+		}
+	}
+
+	var idx int
+	if name == "" {
+		idx, name, err = SelectProjectPrompt(projects)
+		if err != nil {
+			return nil, "", false, err
+		}
+	} else {
+		found := false
+		for i, p := range projects {
+			if p.Body.Name == name {
+				found = true
+				idx = i
+				break
+			}
+		}
+		if !found {
+			fmt.Println(promptui.FailedValue("Project name", name))
+			return nil, "", false, cli.NewExitError("Project not found", -1)
+		}
+		fmt.Println(promptui.SuccessfulValue("Project name", name))
+	}
+
+	if idx == promptui.SelectedAdd {
+		return nil, name, true, nil
+	}
+
+	return &projects[idx], name, false, nil
+}
+
 // SelectCreateOrg prompts the user to select an org from at list of orgs
 // populated via api request.
 //
 // The user may select to create a new org, or they may preselect an org
 // via a non-empty name parameter.
 //
-// It returns the id of the selected org (if created a new org was not chosed),
+// It returns the object of the selected org (if created a new org was not chosed),
 // the name of the selected org, and a boolean indicating if a new org should
 // be created.
-func SelectCreateOrg(client *api.Client, c context.Context, name string) (*identity.ID, string, bool, error) {
+func SelectCreateOrg(client *api.Client, c context.Context, name string) (*api.OrgResult, string, bool, error) {
 	// Get the list of orgs the user has access to
 	orgs, err := client.Orgs.List(c)
 	if err != nil {
@@ -123,86 +179,7 @@ func SelectCreateOrg(client *api.Client, c context.Context, name string) (*ident
 		return nil, name, true, nil
 	}
 
-	return orgs[idx].ID, name, false, nil
-}
-
-// SelectCreateOrgAndProject prompts for org and project and creates them if necessary
-func SelectCreateOrgAndProject(client *api.Client, c context.Context, ctx *cli.Context, oName, pName string) (*api.OrgResult, *api.ProjectResult, bool, error) {
-	var org *api.OrgResult
-	var project *api.ProjectResult
-	var newResource bool
-	var pIdx int
-	var pFound bool
-
-	orgID, oName, newOrg, err := SelectCreateOrg(client, c, oName)
-	if err != nil {
-		return nil, nil, newResource, err
-	}
-
-	var projects []api.ProjectResult
-
-	// Load existing projects for the selected org
-	if !newOrg {
-		projects, err = client.Projects.List(c, orgID, nil)
-		if err != nil {
-			return nil, nil, newResource, cli.NewExitError("Error fetching projects list", -1)
-		}
-	}
-
-	if pName == "" {
-		pIdx, pName, err = SelectProjectPrompt(projects)
-		if err != nil {
-			return nil, nil, newResource, err
-		}
-	} else {
-		for i, p := range projects {
-			if p.Body.Name == pName {
-				pIdx = i
-				pFound = true
-				break
-			}
-		}
-		if !pFound {
-			fmt.Println(promptui.FailedValue("Project name", pName))
-			return nil, nil, newResource, cli.NewExitError("Project not found", -1)
-		}
-		fmt.Println(promptui.SuccessfulValue("Project name", pName))
-	}
-
-	if newOrg || pIdx == promptui.SelectedAdd {
-		fmt.Println("")
-	}
-
-	// Create org if required
-	if newOrg {
-		org, err = client.Orgs.Create(c, oName)
-		if err != nil {
-			return nil, nil, newResource, cli.NewExitError("Could not create org: "+err.Error(), -1)
-		}
-
-		err = generateKeypairsForOrg(ctx, c, client, org, false)
-		if err != nil {
-			return nil, nil, newResource, err
-		}
-
-		newResource = true
-		fmt.Printf("Org %s created.\n", oName)
-	}
-
-	// Create project if required
-	if pIdx == promptui.SelectedAdd {
-		project, err = client.Projects.Create(c, org.ID, pName)
-		if err != nil {
-			return nil, nil, newResource, cli.NewExitError("Could not create project: "+err.Error(), -1)
-		}
-
-		newResource = true
-		fmt.Printf("Project %s created.\n", pName)
-	} else {
-		project = &projects[pIdx]
-	}
-
-	return org, project, newResource, nil
+	return &orgs[idx], name, false, nil
 }
 
 // PasswordPrompt prompts the user to input a password value

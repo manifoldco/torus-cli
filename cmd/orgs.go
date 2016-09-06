@@ -58,25 +58,28 @@ func orgsCreate(ctx *cli.Context) error {
 
 	client := api.NewClient(cfg)
 
-	org, err := client.Orgs.Create(c, args[0])
+	_, err = createOrgByName(ctx, c, client, args[0])
 	if err != nil {
-		return cli.NewExitError(orgCreateFailed, -1)
+		return err
 	}
 
-	var progress api.ProgressFunc = func(evt *api.Event, err error) {
-		if evt != nil {
-			fmt.Println(evt.Message)
-		}
+	return nil
+}
+
+func createOrgByName(ctx *cli.Context, c context.Context, client *api.Client, name string) (*api.OrgResult, error) {
+	org, err := client.Orgs.Create(c, name)
+	if err != nil {
+		return nil, cli.NewExitError(orgCreateFailed, -1)
 	}
 
-	err = client.Keypairs.Generate(c, org.ID, &progress)
+	err = generateKeypairsForOrg(ctx, c, client, org, false)
 	if err != nil {
 		msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
-		return cli.NewExitError(msg, -1)
+		return nil, cli.NewExitError(msg, -1)
 	}
 
-	fmt.Println("\nOrg " + org.Body.Name + " created.")
-	return nil
+	fmt.Println("Org " + org.Body.Name + " created.")
+	return org, nil
 }
 
 func orgsListCmd(ctx *cli.Context) error {
