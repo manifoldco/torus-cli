@@ -52,9 +52,6 @@ func viewCmd(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
 	for _, secret := range secrets {
 		value := secret.Body.Value
-		if value.IsUnset() {
-			continue
-		}
 		key := strings.ToUpper(secret.Body.Name)
 		if verbose {
 			spath := secret.Body.PathExp.String() + "/" + secret.Body.Name
@@ -94,5 +91,10 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 		return nil, "", cli.NewExitError("Error fetching secrets: "+err.Error(), -1)
 	}
 
-	return secrets, path, nil
+	cset := credentialSet{}
+	for _, c := range secrets {
+		cset.Add(c)
+	}
+
+	return cset.ToSlice(), path, nil
 }

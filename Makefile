@@ -45,4 +45,4 @@ generated:
 clean:
 	-@rm ${OUT} ${OUT}-v*
 
-.PHONY: run server static vet fmtcheck lint generated
+.PHONY: run server static vet fmtcheck lint generated test
