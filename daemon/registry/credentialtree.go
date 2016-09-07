@@ -8,6 +8,7 @@ import (
 
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
+	"github.com/arigatomachine/cli/pathexp"
 )
 
 // CredentialTreeClient represents the `/credentialtree` registry endpoint,
@@ -48,19 +49,19 @@ func (c *CredentialTreeClient) Post(ctx context.Context, t *CredentialTree) (*Cr
 // List returns back all segments of the CredentialGraph (Keyring, Keyring
 // Members, and Credentials) that match the given name, path, or path
 // expression.
-func (c *CredentialTreeClient) List(ctx context.Context, name, path,
-	pathexp string, ownerID *identity.ID) ([]CredentialTree, error) {
+func (c *CredentialTreeClient) List(ctx context.Context, name, path string,
+	pathExp *pathexp.PathExp, ownerID *identity.ID) ([]CredentialTree, error) {
 
 	query := url.Values{}
 
-	if path != "" && pathexp != "" {
+	if path != "" && pathExp != nil {
 		return nil, errors.New("cannot provide path and pathexp at the same time")
 	}
 	if path != "" {
 		query.Set("path", path)
 	}
-	if pathexp != "" {
-		query.Set("pathexp", pathexp)
+	if pathExp != nil {
+		query.Set("pathexp", pathExp.String())
 	}
 	if name != "" {
 		query.Set("name", name)

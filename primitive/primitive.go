@@ -7,6 +7,7 @@ import (
 
 	"github.com/arigatomachine/cli/base64"
 	"github.com/arigatomachine/cli/identity"
+	"github.com/arigatomachine/cli/pathexp"
 )
 
 // v1Schema embeds in other structs to indicate their schema version is 1.
@@ -146,7 +147,7 @@ type Credential struct {
 	Name              string           `json:"name"`
 	Nonce             *base64.Value    `json:"nonce"`
 	OrgID             *identity.ID     `json:"org_id"`
-	PathExp           string           `json:"pathexp"`
+	PathExp           *pathexp.PathExp `json:"pathexp"`
 	Previous          *identity.ID     `json:"previous"`
 	ProjectID         *identity.ID     `json:"project_id"`
 	CredentialVersion int              `json:"version"`
@@ -171,12 +172,12 @@ type CredentialValue struct {
 // Credentials belong to Keyrings
 type Keyring struct {
 	v1Schema
-	Created        time.Time    `json:"created_at"`
-	OrgID          *identity.ID `json:"org_id"`
-	PathExp        string       `json:"pathexp"`
-	Previous       *identity.ID `json:"previous"`
-	ProjectID      *identity.ID `json:"project_id"`
-	KeyringVersion int          `json:"version"`
+	Created        time.Time        `json:"created_at"`
+	OrgID          *identity.ID     `json:"org_id"`
+	PathExp        *pathexp.PathExp `json:"pathexp"`
+	Previous       *identity.ID     `json:"previous"`
+	ProjectID      *identity.ID     `json:"project_id"`
+	KeyringVersion int              `json:"version"`
 }
 
 // Type returns the enumerated byte representation of Keyring
