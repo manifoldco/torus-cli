@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
@@ -23,17 +24,17 @@ type TeamResult struct {
 }
 
 // GetByOrg retrieves all teams for an org id
-func (o *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]TeamResult, error) {
+func (t *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]TeamResult, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 
-	req, _, err := o.client.NewRequest("GET", "/teams", v, nil, true)
+	req, _, err := t.client.NewRequest("GET", "/teams", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	teams := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &teams, nil, nil)
+	_, err = t.client.Do(ctx, req, &teams, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -42,18 +43,18 @@ func (o *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]TeamR
 }
 
 // GetByName retrieves the team with the specified name
-func (o *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name string) ([]TeamResult, error) {
+func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name string) ([]TeamResult, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 	v.Set("name", name)
 
-	req, _, err := o.client.NewRequest("GET", "/teams", v, nil, true)
+	req, _, err := t.client.NewRequest("GET", "/teams", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	teams := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &teams, nil, nil)
+	_, err = t.client.Do(ctx, req, &teams, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -77,4 +78,40 @@ func buildTeamResults(teams []envelope.Unsigned) ([]TeamResult, error) {
 	}
 
 	return teamResults, nil
+}
+
+// Create performs a request to create a new team object
+func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name string) error {
+	if orgID == nil {
+		return errors.New("invalid org")
+	}
+
+	teamBody := primitive.Team{
+		Name:     name,
+		OrgID:    orgID,
+		TeamType: "user",
+	}
+
+	ID, err := identity.Mutable(&teamBody)
+	if err != nil {
+		return err
+	}
+
+	team := apitypes.Team{
+		ID:      &ID,
+		Version: 1,
+		Body:    &teamBody,
+	}
+
+	req, _, err := t.client.NewRequest("POST", "/teams", nil, team, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

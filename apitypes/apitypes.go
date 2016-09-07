@@ -76,6 +76,13 @@ type OrgInvite struct {
 	Body    *primitive.OrgInvite `json:"body"`
 }
 
+// Team contains information for creating a new Team object
+type Team struct {
+	ID      *identity.ID    `json:"id"`
+	Version int             `json:"version"`
+	Body    *primitive.Team `json:"body"`
+}
+
 // Service contains information for creating a new Service object
 type Service struct {
 	ID      *identity.ID       `json:"id"`

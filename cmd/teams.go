@@ -16,6 +16,7 @@ import (
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
+	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -45,6 +46,18 @@ func init() {
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
 					SetUserEnv, checkRequiredFlags, teamsListCmd,
+				),
+			},
+			{
+				Name:      "create",
+				Usage:     "Create a team in an organization",
+				ArgsUsage: "[name]",
+				Flags: []cli.Flag{
+					OrgFlag("Create the team in this org", false),
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					createTeamCmd,
 				),
 			},
 		},
@@ -238,5 +251,76 @@ func teamMembersListCmd(ctx *cli.Context) error {
 
 	w.Flush()
 	fmt.Println("\n  (*) you")
+	return nil
+}
+
+const teamCreateFailed = "Could not create team. Please try again."
+
+func createTeamCmd(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return cli.NewExitError(teamCreateFailed, -1)
+	}
+
+	args := ctx.Args()
+	teamName := ""
+	if len(args) > 0 {
+		teamName = args[0]
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	// Ask the user which org they want to use
+	org, oName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
+	if err != nil {
+		return handleSelectError(err, "Org selection failed")
+	}
+	if org == nil && !newOrg {
+		fmt.Println("")
+		return cli.NewExitError("Org not found", -1)
+	}
+	if newOrg && oName == "" {
+		fmt.Println("")
+		return cli.NewExitError("Invalid org name", -1)
+	}
+
+	var orgID *identity.ID
+	if org != nil {
+		orgID = org.ID
+	}
+
+	label := "Team name"
+	if teamName == "" {
+		teamName, err = NamePrompt(&label, "")
+		if err != nil {
+			return handleSelectError(err, teamCreateFailed)
+		}
+	} else {
+		fmt.Println(promptui.SuccessfulValue(label, teamName))
+	}
+
+	// Create the org now if needed
+	if org == nil && newOrg {
+		org, err = createOrgByName(ctx, c, client, oName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
+		orgID = org.ID
+	}
+
+	// Create our new team
+	fmt.Println("")
+	err = client.Teams.Create(c, orgID, teamName)
+	if err != nil {
+		if strings.Contains(err.Error(), "resource exists") {
+			return cli.NewExitError("Team already exists", -1)
+		}
+		fmt.Println(err)
+		return cli.NewExitError(teamCreateFailed, -1)
+	}
+
+	fmt.Printf("Team %s created.\n", teamName)
 	return nil
 }
