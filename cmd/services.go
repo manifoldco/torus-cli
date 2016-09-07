@@ -209,7 +209,7 @@ func createServiceCmd(ctx *cli.Context) error {
 	}
 
 	// Create the org now if needed
-	if org == nil && newProject {
+	if org == nil && newOrg {
 		org, err = createOrgByName(ctx, c, client, oName)
 		if err != nil {
 			fmt.Println("")
@@ -229,7 +229,7 @@ func createServiceCmd(ctx *cli.Context) error {
 
 	// Create our new service
 	fmt.Println("")
-	err = client.Services.Create(c, org.ID, project.ID, serviceName)
+	err = client.Services.Create(c, orgID, project.ID, serviceName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return cli.NewExitError("Service already exists", -1)

@@ -88,7 +88,7 @@ func linkCmd(ctx *cli.Context) error {
 	}
 
 	// Create the org now if needed
-	if org == nil && newProject {
+	if org == nil && newOrg {
 		org, err = createOrgByName(ctx, c, client, oName)
 		if err != nil {
 			fmt.Println("")

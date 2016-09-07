@@ -115,7 +115,7 @@ func createEnv(ctx *cli.Context) error {
 	}
 
 	// Create the org now if needed
-	if org == nil && newProject {
+	if org == nil && newOrg {
 		org, err = createOrgByName(ctx, c, client, oName)
 		if err != nil {
 			fmt.Println("")
@@ -135,7 +135,7 @@ func createEnv(ctx *cli.Context) error {
 
 	// Create our new environment
 	fmt.Println("")
-	err = client.Environments.Create(c, org.ID, project.ID, environmentName)
+	err = client.Environments.Create(c, orgID, project.ID, environmentName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return cli.NewExitError("Environment already exists", -1)
