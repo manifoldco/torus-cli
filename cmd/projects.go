@@ -137,7 +137,7 @@ func createProjectCmd(ctx *cli.Context) error {
 			return cli.NewExitError("Could not create org: "+err.Error(), -1)
 		}
 
-		err = generateKeypairsForOrg(ctx, c, client, org, false)
+		err = generateKeypairsForOrg(ctx, c, client, org.ID, false)
 		if err != nil {
 			return err
 		}

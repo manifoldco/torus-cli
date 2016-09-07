@@ -46,11 +46,11 @@ func signup(ctx *cli.Context) error {
 		return err
 	}
 
-	defaultInvite := ""
 	defaultEmail := ""
+	defaultInvite := ""
 	if len(args) == 2 {
-		defaultInvite = args[0]
-		defaultEmail = args[1]
+		defaultEmail = args[0]
+		defaultInvite = args[1]
 	}
 
 	email, err := EmailPrompt(defaultEmail)

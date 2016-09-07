@@ -1,4 +1,4 @@
-package invites
+package cmd
 
 import (
 	"context"
@@ -14,8 +14,7 @@ import (
 	"github.com/arigatomachine/cli/identity"
 )
 
-// List executes logic required to show invites for an org
-func List(ctx *cli.Context) error {
+func invitesList(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err

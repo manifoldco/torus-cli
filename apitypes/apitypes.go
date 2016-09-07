@@ -89,3 +89,10 @@ type Environment struct {
 	Version int                    `json:"version"`
 	Body    *primitive.Environment `json:"body"`
 }
+
+// InviteAccept contains data required to accept org invite
+type InviteAccept struct {
+	Org   string `json:"org"`
+	Email string `json:"email"`
+	Code  string `json:"code"`
+}

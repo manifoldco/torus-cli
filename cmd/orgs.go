@@ -89,7 +89,7 @@ func createOrgByName(ctx *cli.Context, c context.Context, client *api.Client, na
 		return nil, cli.NewExitError(orgCreateFailed, -1)
 	}
 
-	err = generateKeypairsForOrg(ctx, c, client, org, false)
+	err = generateKeypairsForOrg(ctx, c, client, org.ID, false)
 	if err != nil {
 		msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
 		return nil, cli.NewExitError(msg, -1)
