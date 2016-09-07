@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/ed25519"
@@ -30,12 +29,10 @@ func createCredentialTree(ctx context.Context, credBody *PlaintextCredential,
 	sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
 	client *registry.Client, engine *crypto.Engine) (*registry.CredentialTree, error) {
 
-	parts := strings.Split(credBody.PathExp, "/")
-	if len(parts) != 7 { // first part is empty
-		return nil, fmt.Errorf("Invalid path expression: %s", credBody.PathExp)
+	pathExp, err := credBody.PathExp.WithInstance("*")
+	if err != nil {
+		return nil, err
 	}
-
-	pathExp := strings.Join(parts[:6], "/") + "/*"
 
 	keyring, err := engine.SignedEnvelope(
 		ctx, &primitive.Keyring{

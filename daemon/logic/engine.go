@@ -111,7 +111,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		previousCredBody := previousCred.Body.(*primitive.Credential)
 
 		if previousCredBody.Name != credBody.Name ||
-			previousCredBody.PathExp != credBody.PathExp {
+			!previousCredBody.PathExp.Equal(credBody.PathExp) {
 
 			err = fmt.Errorf("Non-matching credential returned in tree")
 			log.Printf("Error finding previous credential version: %s", err)
@@ -178,7 +178,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	notifier *observer.Notifier, cpath string) ([]PlaintextCredentialEnvelope, error) {
 
 	trees, err := e.client.CredentialTree.List(
-		ctx, "", cpath, "", e.session.ID())
+		ctx, "", cpath, nil, e.session.ID())
 	if err != nil {
 		log.Printf("error retrieving credential trees: %s", err)
 		return nil, err
