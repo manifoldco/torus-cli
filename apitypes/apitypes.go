@@ -53,7 +53,7 @@ type Login struct {
 
 // Profile contains the fields in the response for the profiles endpoint
 type Profile struct {
-	ID   string `json:"id"`
+	ID   *identity.ID `json:"id"`
 	Body *struct {
 		Name     string `json:"name"`
 		Username string `json:"username"`

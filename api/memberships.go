@@ -61,3 +61,18 @@ func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.
 
 	return memberships, err
 }
+
+// Delete requests deletion of a specific membership row by ID
+func (m *MembershipsClient) Delete(ctx context.Context, membership *identity.ID) error {
+	req, _, err := m.client.NewRequest("DELETE", "/memberships/"+membership.String(), nil, nil, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = m.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
