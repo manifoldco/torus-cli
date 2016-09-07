@@ -8,6 +8,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/identity"
 )
 
 const approveInviteFailed = "Could not approve invitation to org, please try again."
@@ -45,7 +46,14 @@ func Approve(ctx *cli.Context) error {
 		return cli.NewExitError("Failed to retrieve invites, please try again.", -1)
 	}
 
-	if len(invites) < 1 {
+	// Find the target invite id
+	var targetInvite *identity.ID
+	for _, invite := range invites {
+		if invite.Body.Email == email {
+			targetInvite = invite.ID
+		}
+	}
+	if targetInvite == nil {
 		return cli.NewExitError("Invite not found", -1)
 	}
 
@@ -56,8 +64,7 @@ func Approve(ctx *cli.Context) error {
 		}
 	}
 
-	invite := invites[0]
-	err = client.Invites.Approve(context.Background(), *invite.ID, &output)
+	err = client.Invites.Approve(context.Background(), *targetInvite, &output)
 	if err != nil {
 		return err
 	}
