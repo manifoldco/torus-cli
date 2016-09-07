@@ -76,7 +76,7 @@ harvest.create = function (ctx) {
     project: ctx.target.project,
     service: builtFlags.service,
     environment: builtFlags.environment,
-    instance: ctx.option('instance').value,
+    instance: ctx.option('instance').value.toString(),
     identity: ctx.option('user').value || '*',
     name: name
   };
@@ -165,7 +165,7 @@ harvest.get = function (ctx) {
     project: ctx.target.project,
     environment: ctx.target.environment,
     service: ctx.target.service,
-    instance: ctx.option('instance').value
+    instance: ctx.option('instance').value.toString()
   };
 
   if (!data.org) {
