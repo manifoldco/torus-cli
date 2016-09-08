@@ -7,7 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/.."
 CMD=$1
 GOOS=${GOOS:=darwin}
 GOARCH=${GOARCH:=amd64}
-GOVERSION=${GOVERSION:="go1.7"}
+GOVERSION=${GOVERSION:="go1.7.1"}
 
 function usage {
   echo -e "CLI Docker Container"
