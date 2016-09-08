@@ -293,6 +293,60 @@ func (e *Engine) UnboxCredential(ctx context.Context, ct, encMec, mecNonce,
 	return pt, nil
 }
 
+// Unboxer provides an interface to unbox credentials, within the context
+type Unboxer interface {
+	Unbox(context.Context, []byte, []byte, []byte) ([]byte, error)
+}
+
+type unboxerImpl struct {
+	mek []byte
+}
+
+func (u *unboxerImpl) Unbox(ctx context.Context, ct, cekNonce, ctNonce []byte) ([]byte, error) {
+	cek, err := deriveKey(ctx, u.mek, cekNonce, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	cekb := [32]byte{}
+	copy(cekb[:], cek)
+
+	ctNonceb := [24]byte{}
+	copy(ctNonceb[:], ctNonce)
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pt, success := secretbox.Open([]byte{}, ct, &ctNonceb, &cekb)
+	if !success {
+		return nil, errors.New("Failed to decrypt ciphertext")
+	}
+
+	return pt, nil
+}
+
+// WithUnboxer returns an Unboxer for unboxing credentials within the context
+// of the provided keypairs.
+func (e *Engine) WithUnboxer(ctx context.Context, encMec, mecNonce []byte,
+	privKP *EncryptionKeyPair, pubKey []byte, fn func(Unboxer) error) error {
+
+	mek, err := e.Unbox(ctx, encMec, mecNonce, privKP, pubKey)
+	if err != nil {
+		return err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return err
+	}
+
+	u := unboxerImpl{mek: mek}
+
+	return fn(&u)
+}
+
 // CloneMembership decrypts the given KeyringMember object, and creates another
 // for the targeted user.
 func (e *Engine) CloneMembership(ctx context.Context, encMec, mecNonce []byte, privKP *EncryptionKeyPair, encPubKey, targetPubKey []byte) ([]byte, []byte, error) {

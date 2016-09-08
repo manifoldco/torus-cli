@@ -192,16 +192,23 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	n := notifier.Notifier(steps)
 	n.Notify(observer.Progress, "Credentials retrieved", true)
 
+	keypairs := make(map[identity.ID]*crypto.KeyPairs)
+	encryptingKeys := make(map[identity.ID]*primitive.PublicKey)
+
 	// Loop over the trees and unpack the credentials; later on we will
 	// actually do real work and decrypt each of these credentials but for
 	// now we just need ot return a list of them!
 	creds := []PlaintextCredentialEnvelope{}
 	for _, tree := range trees {
 		orgID := tree.Keyring.Body.(*primitive.Keyring).OrgID
-		_, _, kp, err := fetchKeyPairs(ctx, e.client, orgID)
-		if err != nil {
-			log.Printf("Error fetching keypairs: %s", err)
-			return nil, err
+		kp, ok := keypairs[*orgID]
+		if !ok {
+			_, _, kp, err = fetchKeyPairs(ctx, e.client, orgID)
+			if err != nil {
+				log.Printf("Error fetching keypairs: %s", err)
+				return nil, err
+			}
+			keypairs[*orgID] = kp
 		}
 
 		krm, err := findKeyringMember(e.session.ID(), &tree)
@@ -210,38 +217,46 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			return nil, err
 		}
 
-		encryptingKey, err := findEncryptingKey(ctx, e.client, orgID,
-			krm.EncryptingKeyID)
-		if err != nil {
-			log.Printf("Error finding encrypting key for user: %s", err)
-			return nil, err
-		}
-
-		for _, cred := range tree.Credentials {
-			credBody := cred.Body.(*primitive.Credential)
-			pt, err := e.crypto.UnboxCredential(ctx,
-				*credBody.Credential.Value, *krm.Key.Value, *krm.Key.Nonce,
-				*credBody.Nonce, *credBody.Credential.Nonce, &kp.Encryption,
-				*encryptingKey.Key.Value)
+		encryptingKey, ok := encryptingKeys[*krm.EncryptingKeyID]
+		if !ok {
+			encryptingKey, err = findEncryptingKey(ctx, e.client, orgID,
+				krm.EncryptingKeyID)
 			if err != nil {
-				log.Printf("Error decrypting credential: %s", err)
+				log.Printf("Error finding encrypting key for user: %s", err)
 				return nil, err
 			}
+			encryptingKeys[*krm.EncryptingKeyID] = encryptingKey
+		}
 
-			plainCred := PlaintextCredentialEnvelope{
-				ID:      cred.ID,
-				Version: cred.Version,
-				Body: &PlaintextCredential{
-					Name:      credBody.Name,
-					PathExp:   credBody.PathExp,
-					ProjectID: credBody.ProjectID,
-					OrgID:     credBody.OrgID,
-					Value:     string(pt),
-				},
+		err = e.crypto.WithUnboxer(ctx, *krm.Key.Value, *krm.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
+			for _, cred := range tree.Credentials {
+				credBody := cred.Body.(*primitive.Credential)
+				pt, err := u.Unbox(ctx, *credBody.Credential.Value,
+					*credBody.Nonce, *credBody.Credential.Nonce)
+				if err != nil {
+					log.Printf("Error decrypting credential: %s", err)
+					return err
+				}
+
+				plainCred := PlaintextCredentialEnvelope{
+					ID:      cred.ID,
+					Version: cred.Version,
+					Body: &PlaintextCredential{
+						Name:      credBody.Name,
+						PathExp:   credBody.PathExp,
+						ProjectID: credBody.ProjectID,
+						OrgID:     credBody.OrgID,
+						Value:     string(pt),
+					},
+				}
+				creds = append(creds, plainCred)
+
+				n.Notify(observer.Progress, "Credential decrypted", true)
 			}
-			creds = append(creds, plainCred)
-
-			n.Notify(observer.Progress, "Credential decrypted", true)
+			return nil
+		})
+		if err != nil {
+			return nil, err
 		}
 	}
 
