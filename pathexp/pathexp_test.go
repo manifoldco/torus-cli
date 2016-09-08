@@ -59,9 +59,10 @@ func TestParse(t *testing.T) {
 		}
 	}
 
-	// Empty alternation
+	// Empty & single alternation
 	testCases = append(testCases,
 		tc{path: "/o/p/e/s/u/[]", valid: false},
+		tc{path: "/o/p/e/s/u/[i]", valid: false},
 	)
 
 	// A too long part is invalid
