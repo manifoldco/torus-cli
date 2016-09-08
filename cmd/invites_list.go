@@ -70,8 +70,8 @@ func invitesList(ctx *cli.Context) error {
 	}
 
 	usernameByID := make(map[string]string)
-	for _, profile := range profiles {
-		usernameByID[profile.ID] = profile.Body.Username
+	for _, profile := range *profiles {
+		usernameByID[profile.ID.String()] = profile.Body.Username
 	}
 
 	fmt.Println("")
