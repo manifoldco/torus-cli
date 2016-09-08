@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/primitive"
 
@@ -42,8 +44,18 @@ func (u *Users) GetSelf(ctx context.Context, token string) (*envelope.Unsigned, 
 }
 
 // Create attempts to register a new user
-func (u *Users) Create(ctx context.Context, userObj User) (*envelope.Unsigned, error) {
-	req, err := u.client.NewRequest("POST", "/users", nil, userObj)
+func (u *Users) Create(ctx context.Context, userObj User, signup apitypes.Signup) (*envelope.Unsigned, error) {
+	v := &url.Values{}
+	if signup.InviteCode != "" {
+		v.Set("code", signup.InviteCode)
+	}
+	if signup.OrgInvite && signup.OrgName != "" {
+		v.Set("org", signup.OrgName)
+	}
+	if signup.Email != "" {
+		v.Set("email", signup.Email)
+	}
+	req, err := u.client.NewRequest("POST", "/users", v, userObj)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 		return nil, err
