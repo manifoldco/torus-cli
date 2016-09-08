@@ -30,7 +30,7 @@ type PoliciesResult struct {
 }
 
 // List retrieves relevant polciies by orgID and/or projectID
-func (o *PoliciesClient) List(ctx context.Context, orgID, projectID *identity.ID) ([]PoliciesResult, error) {
+func (p *PoliciesClient) List(ctx context.Context, orgID, projectID *identity.ID) ([]PoliciesResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
@@ -39,13 +39,13 @@ func (o *PoliciesClient) List(ctx context.Context, orgID, projectID *identity.ID
 		v.Set("project_id", projectID.String())
 	}
 
-	req, _, err := o.client.NewRequest("GET", "/policies", v, nil, true)
+	req, _, err := p.client.NewRequest("GET", "/policies", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
 	policies := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &policies, nil, nil)
+	_, err = p.client.Do(ctx, req, &policies, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -67,20 +67,40 @@ func (o *PoliciesClient) List(ctx context.Context, orgID, projectID *identity.ID
 	return policyResults, nil
 }
 
+// Detach deletes a specific attachment
+func (p *PoliciesClient) Detach(ctx context.Context, attachmentID *identity.ID) error {
+	req, _, err := p.client.NewRequest("DELETE", "/policy-attachments/"+attachmentID.String(), nil, nil, true)
+	if err != nil {
+		return err
+	}
+	_, err = p.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // AttachmentsList retrieves all policy attachments for an org
-func (o *PoliciesClient) AttachmentsList(ctx context.Context, orgID *identity.ID) ([]PolicyAttachmentResult, error) {
+func (p *PoliciesClient) AttachmentsList(ctx context.Context, orgID, ownerID, policyID *identity.ID) ([]PolicyAttachmentResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
 	}
+	if ownerID != nil {
+		v.Set("owner_id", ownerID.String())
+	}
+	if policyID != nil {
+		v.Set("policy_id", policyID.String())
+	}
 
-	req, _, err := o.client.NewRequest("GET", "/policy-attachments", v, nil, true)
+	req, _, err := p.client.NewRequest("GET", "/policy-attachments", v, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
-	attachments := make([]envelope.Unsigned, 1)
-	_, err = o.client.Do(ctx, req, &attachments, nil, nil)
+	var attachments []envelope.Unsigned
+	_, err = p.client.Do(ctx, req, &attachments, nil, nil)
 	if err != nil {
 		return nil, err
 	}

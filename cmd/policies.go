@@ -26,16 +26,130 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("org to show services for", true),
+					OrgFlag("org to show policies for", true),
 				},
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
 					SetUserEnv, checkRequiredFlags, listPolicies,
 				),
 			},
+			{
+				Name:      "detach",
+				Usage:     "Detach a policy from a team, does not delete the policy",
+				ArgsUsage: "<name> <team>",
+				Flags: []cli.Flag{
+					OrgFlag("org to detach policy from", true),
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					SetUserEnv, checkRequiredFlags, detachPolicies,
+				),
+			},
 		},
 	}
 	Cmds = append(Cmds, policies)
+}
+
+const policyDetachFailed = "Could not detach policy, please try again."
+
+func detachPolicies(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	var text string
+	usage := usageString(ctx)
+	args := ctx.Args()
+
+	if len(args) < 1 {
+		text = "Too few arguments\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+
+	} else if len(args) > 2 {
+		text = "Too few arguments\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+
+	policyName := args[0]
+	teamName := args[1]
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	// Look up the target org
+	var org *api.OrgResult
+	org, err = client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return cli.NewExitError(projectListFailed, -1)
+	}
+	if org == nil {
+		return cli.NewExitError("Org not found.", -1)
+	}
+
+	var waitPolicy sync.WaitGroup
+	waitPolicy.Add(2)
+
+	var team *api.TeamResult
+	var policy *api.PoliciesResult
+	var pErr, tErr error
+
+	go func() {
+		var policies []api.PoliciesResult
+		policies, pErr = client.Policies.List(c, org.ID, nil)
+		for _, p := range policies {
+			if p.Body.Policy.Name == policyName {
+				policy = &p
+				break
+			}
+		}
+		waitPolicy.Done()
+	}()
+
+	go func() {
+		teams, tErr := client.Teams.GetByName(c, org.ID, teamName)
+		if len(teams) < 1 || tErr != nil {
+			waitPolicy.Done()
+			return
+		}
+		team = &teams[0]
+		waitPolicy.Done()
+	}()
+
+	waitPolicy.Wait()
+	if tErr != nil || pErr != nil {
+		return cli.NewMultiError(
+			tErr,
+			pErr,
+		)
+	}
+	if team == nil {
+		return cli.NewExitError("Team "+teamName+" not found", -1)
+	}
+	if policy == nil {
+		return cli.NewExitError("Policy "+policyName+" not found", -1)
+	}
+
+	attachments, err := client.Policies.AttachmentsList(c, org.ID, team.ID, policy.ID)
+	if err != nil {
+		return cli.NewExitError(policyDetachFailed, -1)
+	}
+	if len(attachments) < 1 {
+		return cli.NewExitError(policyName+" policy is not currently attached to "+teamName, -1)
+	}
+
+	err = client.Policies.Detach(c, attachments[0].ID)
+	if err != nil {
+		if strings.Contains(err.Error(), "system team") {
+			return cli.NewExitError("Cannot delete system team attachment", -1)
+		}
+		return cli.NewExitError(policyDetachFailed, -1)
+	}
+
+	fmt.Println("Policy " + policyName + " has been detached from team " + teamName)
+	return nil
 }
 
 const policyListFailed = "Could not list policies, please try again."
@@ -73,7 +187,7 @@ func listPolicies(ctx *cli.Context) error {
 	var attachments []api.PolicyAttachmentResult
 	var aErr error
 	go func() {
-		attachments, aErr = client.Policies.AttachmentsList(c, org.ID)
+		attachments, aErr = client.Policies.AttachmentsList(c, org.ID, nil, nil)
 		getAttachments.Done()
 	}()
 
