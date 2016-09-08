@@ -1,6 +1,6 @@
 {
   "name": "ag",
-  "version": "0.6.2-rc",
+  "version": "0.7.0",
   "description": "A utility for sharing and securing secrets across teams, services, and environments.",
   "bin": {
     "ag": "bin/ag",
