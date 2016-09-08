@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -190,7 +191,7 @@ func reflectArgs(ctx *cli.Context, p *prefs.Preferences, i interface{},
 	flags := make(map[string]bool)
 	for _, flagName := range ctx.FlagNames() {
 		// This value is already set via arguments or env vars. skip it.
-		if ctx.String(flagName) != "" {
+		if isSet(ctx, flagName) {
 			continue
 		}
 
@@ -204,7 +205,10 @@ func reflectArgs(ctx *cli.Context, p *prefs.Preferences, i interface{},
 			if err != nil {
 				return err
 			}
-			ctx.Set(name, field.(string))
+
+			if f, ok := field.(string); ok && f != "" {
+				ctx.Set(name, field.(string))
+			}
 		}
 	}
 
@@ -228,8 +232,7 @@ func SetUserEnv(ctx *cli.Context) error {
 		return nil
 	}
 
-	env := ctx.String(argName)
-	if env != "" {
+	if isSet(ctx, argName) {
 		return nil
 	}
 
@@ -248,21 +251,49 @@ func SetUserEnv(ctx *cli.Context) error {
 	return nil
 }
 
+func isSet(ctx *cli.Context, name string) bool {
+	value := ctx.Generic(name)
+	if value != nil {
+		v := reflect.Indirect(reflect.ValueOf(value))
+		switch v.Kind() {
+		case reflect.Array, reflect.Slice, reflect.String:
+			return v.Len() != 0
+		}
+
+		return true
+	}
+
+	return false
+}
+
 // CheckRequiredFlags ensures that any required flags have been set either on
 // the command line, or through envvars/prefs files.
 func checkRequiredFlags(ctx *cli.Context) error {
 	missing := []string{}
 	for _, f := range ctx.Command.Flags {
-		if psf, ok := f.(placeHolderStringFlag); ok {
-			name := strings.SplitN(psf.GetName(), ",", 2)[0]
-			if psf.Required && ctx.String(name) == "" {
-				prefix := "-"
-				if len(name) > 1 {
-					prefix = "--"
-				}
-				missing = append(missing, prefix+name)
+		var name string
+		flagMissing := false
+		switch pf := f.(type) {
+		case placeHolderStringFlag:
+			name = strings.SplitN(pf.GetName(), ",", 2)[0]
+			if pf.Required && ctx.String(name) == "" {
+				flagMissing = true
 			}
+		case placeHolderStringSliceFlag:
+			name = strings.SplitN(pf.GetName(), ",", 2)[0]
+			if pf.Required && len(ctx.StringSlice(name)) == 0 {
+				flagMissing = true
+			}
+
 		}
+		if flagMissing {
+			prefix := "-"
+			if len(name) > 1 {
+				prefix = "--"
+			}
+			missing = append(missing, prefix+name)
+		}
+
 	}
 
 	if len(missing) > 0 {

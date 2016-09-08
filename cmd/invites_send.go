@@ -30,13 +30,6 @@ func invitesSend(ctx *cli.Context) error {
 	}
 	email := args[0]
 
-	var teamNames []string
-	if len(ctx.StringSlice("team")) > 0 {
-		teamNames = ctx.StringSlice("team")
-	} else {
-		teamNames = append(teamNames, "member")
-	}
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -64,11 +57,7 @@ func invitesSend(ctx *cli.Context) error {
 		return cli.NewExitError(orgInviteFailed, -1)
 	}
 
-	var matchTeams []string
-	matchTeams = ctx.StringSlice("team")
-	if len(ctx.StringSlice("team")) < 1 {
-		matchTeams = append(matchTeams, "member")
-	}
+	matchTeams := ctx.StringSlice("team")
 
 	// Verify all team names supplied exist for this org
 	teamIDs := make([]identity.ID, len(matchTeams))
