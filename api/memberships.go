@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
@@ -60,6 +61,48 @@ func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.
 	}
 
 	return memberships, err
+}
+
+// Create requests addition of a user to a team
+func (m *MembershipsClient) Create(ctx context.Context, userID, orgID, teamID *identity.ID) error {
+	if orgID == nil {
+		return errors.New("invalid org")
+	}
+	if userID == nil {
+		return errors.New("invalid user")
+	}
+	if teamID == nil {
+		return errors.New("invalid team")
+	}
+
+	membershipBody := primitive.Membership{
+		OwnerID: userID,
+		OrgID:   orgID,
+		TeamID:  teamID,
+	}
+
+	ID, err := identity.Mutable(&membershipBody)
+	if err != nil {
+		return err
+	}
+
+	membership := apitypes.Membership{
+		ID:      &ID,
+		Version: 1,
+		Body:    &membershipBody,
+	}
+
+	req, _, err := m.client.NewRequest("POST", "/memberships", nil, membership, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = m.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Delete requests deletion of a specific membership row by ID

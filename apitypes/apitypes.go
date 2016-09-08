@@ -105,3 +105,10 @@ type InviteAccept struct {
 	Email string `json:"email"`
 	Code  string `json:"code"`
 }
+
+// Membership contains data required to be added to a team
+type Membership struct {
+	ID      *identity.ID          `json:"id"`
+	Version int                   `json:"version"`
+	Body    *primitive.Membership `json:"body"`
+}
