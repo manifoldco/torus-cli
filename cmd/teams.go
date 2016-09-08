@@ -62,14 +62,27 @@ func init() {
 				),
 			},
 			{
-				Name:  "remove",
-				Usage: "Remove user from a specified team in an organization you administer",
+				Name:      "remove",
+				Usage:     "Remove user from a specified team in an organization you administer",
+				ArgsUsage: "<username> <team>",
 				Flags: []cli.Flag{
 					StdOrgFlag,
 				},
 				Action: Chain(
 					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
 					SetUserEnv, checkRequiredFlags, teamsRemoveCmd,
+				),
+			},
+			{
+				Name:      "add",
+				ArgsUsage: "<username> <team>",
+				Usage:     "Add user to a specified team in an organization you administer",
+				Flags: []cli.Flag{
+					StdOrgFlag,
+				},
+				Action: Chain(
+					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+					SetUserEnv, checkRequiredFlags, teamsAddCmd,
 				),
 			},
 		},
@@ -202,6 +215,8 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
 		if len(teams) != 1 {
 			tErr = cli.NewExitError("Team not found", -1)
+			getMembers.Done()
+			return
 		}
 		team = teams[0]
 
@@ -447,5 +462,112 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println(username + " has been removed from " + teamName + " team")
+	return nil
+}
+
+const teamAddFailed = "Failed to add team member, please try again"
+
+func teamsAddCmd(ctx *cli.Context) error {
+	usage := usageString(ctx)
+
+	args := ctx.Args()
+	if len(args) > 2 {
+		text := "Too many arguments\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+	if len(args) < 2 {
+		text := "Too few arguments\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+
+	username := args[0]
+	teamName := args[1]
+
+	if username == "" {
+		text := "Invalid username\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+	if teamName == "" {
+		text := "Invalid team name\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	var wait sync.WaitGroup
+	wait.Add(2)
+
+	var uErr, oErr, tErr error
+	var org *api.OrgResult
+	var team api.TeamResult
+	var user *apitypes.Profile
+
+	go func() {
+		// Identify the org supplied
+		result, err := client.Orgs.GetByName(c, ctx.String("org"))
+		if result == nil || err != nil {
+			oErr = cli.NewExitError("Org not found", -1)
+			wait.Done()
+			return
+		}
+		org = result
+
+		// Retrieve the team by name supplied
+		results, err := client.Teams.GetByName(c, org.ID, teamName)
+		if len(results) != 1 || err != nil {
+			tErr = cli.NewExitError("Team not found", -1)
+			wait.Done()
+			return
+		}
+		team = results[0]
+		wait.Done()
+	}()
+
+	go func() {
+		// Retrieve the user by name supplied
+		result, err := client.Profiles.ListByName(c, username)
+		if result == nil || err != nil {
+			uErr = cli.NewExitError("User not found", -1)
+		} else {
+			user = result
+		}
+		wait.Done()
+	}()
+
+	wait.Wait()
+	if uErr != nil || oErr != nil || tErr != nil {
+		return cli.NewMultiError(
+			oErr,
+			uErr,
+			tErr,
+		)
+	}
+
+	err = client.Memberships.Create(c, user.ID, org.ID, team.ID)
+	if err != nil {
+		msg := teamAddFailed
+		if strings.Contains(err.Error(), "member of the") {
+			msg = "Must be a member of the admin team to add members"
+		}
+		if strings.Contains(err.Error(), "resource exists") {
+			msg = username + " is already a member of the " + teamName + " team"
+		}
+		if strings.Contains(err.Error(), "to the members team") {
+			msg = username + " cannot be added to the " + teamName + " team"
+		}
+		return cli.NewExitError(msg, -1)
+	}
+
+	fmt.Println(username + " has been added to the " + teamName + " team")
 	return nil
 }
