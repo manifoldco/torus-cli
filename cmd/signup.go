@@ -18,12 +18,19 @@ func init() {
 		Usage:     "Create a new Arigato account which, while in alpha, requires an invite code",
 		ArgsUsage: "[email] [code]",
 		Category:  "ACCOUNT",
-		Action:    Chain(EnsureDaemon, signup),
+		Action:    Chain(EnsureDaemon, signupCmd),
 	}
 	Cmds = append(Cmds, signup)
 }
 
-func signup(ctx *cli.Context) error {
+func signupCmd(ctx *cli.Context) error {
+	return signup(ctx, false)
+}
+
+// signup can be ran as a sub-command when an account is needed prior to running
+// a particular action. the subCommand boolean signifies it is running as such
+// and not as a generic signup
+func signup(ctx *cli.Context, subCommand bool) error {
 	args := ctx.Args()
 	if len(args) > 0 && len(args) != 2 {
 		var text string
@@ -91,6 +98,8 @@ func signup(ctx *cli.Context) error {
 		Passphrase: password,
 		Email:      email,
 		InviteCode: inviteCode,
+		OrgName:    ctx.String("org"),
+		OrgInvite:  subCommand,
 	}
 
 	c := context.Background()

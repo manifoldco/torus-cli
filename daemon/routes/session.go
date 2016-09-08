@@ -180,7 +180,7 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			Body:    &userBody,
 		}
 
-		user, err := client.Users.Create(ctx, userObj)
+		user, err := client.Users.Create(ctx, userObj, signup)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return

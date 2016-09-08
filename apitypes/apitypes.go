@@ -67,6 +67,8 @@ type Signup struct {
 	Email      string
 	Passphrase string
 	InviteCode string
+	OrgName    string
+	OrgInvite  bool
 }
 
 // OrgInvite contains information for sending an Org invite

@@ -57,7 +57,7 @@ func invitesAccept(ctx *cli.Context) error {
 			}
 		case "Signup":
 			fmt.Println("")
-			err = signup(ctx)
+			err = signup(ctx, true)
 			if err != nil {
 				return err
 			}
