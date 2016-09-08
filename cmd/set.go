@@ -51,27 +51,52 @@ func setCmd(ctx *cli.Context) error {
 		return cli.NewExitError(msg, -1)
 	}
 
+	cred, err := setCredential(ctx, args[0], func() *apitypes.CredentialValue {
+		var v *apitypes.CredentialValue
+		if i, err := strconv.Atoi(args[1]); err == nil {
+			v = apitypes.NewIntCredentialValue(i)
+		} else if f, err := strconv.ParseFloat(args[1], 64); err == nil {
+			v = apitypes.NewFloatCredentialValue(f)
+		} else {
+			v = apitypes.NewStringCredentialValue(args[1])
+		}
+
+		return v
+	})
+
+	if err != nil {
+		return cli.NewExitError("Could not set credential: "+err.Error(), -1)
+	}
+
+	name := cred.Body.Name
+	pe := cred.Body.PathExp
+	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
+
+	return nil
+}
+
+func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apitypes.CredentialValue) (*apitypes.CredentialEnvelope, error) {
 	// First try and use the cli args as a full path. it should override any
 	// options.
-	idx := strings.LastIndex(args[0], "/")
-	name := args[0][idx+1:]
+	idx := strings.LastIndex(nameOrPath, "/")
+	name := nameOrPath[idx+1:]
 
 	var pe *pathexp.PathExp
 
 	// It looks like the user gave a path expression. use that instead of flags.
 	if idx != -1 {
 		var err error
-		path := args[0][:idx]
+		path := nameOrPath[:idx]
 		pe, err = pathexp.Parse(path)
 		if err != nil {
-			return cli.NewExitError("Error reading path expression: "+err.Error(), -1)
+			return nil, cli.NewExitError("Error reading path expression: "+err.Error(), -1)
 		}
 	} else {
 		// Falling back to flags. do the expensive population of the user flag now,
 		// and see if any required flags (all of them) are missing.
 		err := Chain(SetUserEnv, checkRequiredFlags)(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		pe, err = pathexp.New(ctx.String("org"), ctx.String("project"),
@@ -79,13 +104,13 @@ func setCmd(ctx *cli.Context) error {
 			ctx.StringSlice("user"), ctx.StringSlice("instance"),
 		)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	client := api.NewClient(cfg)
@@ -93,39 +118,23 @@ func setCmd(ctx *cli.Context) error {
 
 	org, err := client.Orgs.GetByName(c, pe.Org())
 	if org == nil || err != nil {
-		return cli.NewExitError("Org not found", -1)
+		return nil, cli.NewExitError("Org not found", -1)
 	}
 
 	pName := pe.Project()
 	projects, err := client.Projects.List(c, org.ID, &pName)
 	if len(projects) != 1 || err != nil {
-		return cli.NewExitError("Project not found", -1)
+		return nil, cli.NewExitError("Project not found", -1)
 	}
 	project := projects[0]
-
-	var v *apitypes.CredentialValue
-	if i, err := strconv.Atoi(args[1]); err == nil {
-		v = apitypes.NewIntCredentialValue(i)
-	} else if f, err := strconv.ParseFloat(args[1], 64); err == nil {
-		v = apitypes.NewFloatCredentialValue(f)
-	} else {
-		v = apitypes.NewStringCredentialValue(args[1])
-	}
 
 	cred := apitypes.Credential{
 		OrgID:     org.ID,
 		ProjectID: project.ID,
 		Name:      name,
 		PathExp:   pe,
-		Value:     v,
+		Value:     valueMaker(),
 	}
 
-	_, err = client.Credentials.Create(c, &cred, &progress)
-	if err != nil {
-		return cli.NewExitError("Could not set credential: "+err.Error(), -1)
-	}
-
-	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
-
-	return nil
+	return client.Credentials.Create(c, &cred, &progress)
 }
