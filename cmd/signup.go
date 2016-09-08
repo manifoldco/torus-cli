@@ -85,13 +85,6 @@ func signup(ctx *cli.Context, subCommand bool) error {
 
 	client := api.NewClient(cfg)
 
-	var output api.ProgressFunc
-	output = func(event *api.Event, err error) {
-		if event != nil {
-			fmt.Println(event.Message)
-		}
-	}
-
 	signup := apitypes.Signup{
 		Name:       name,
 		Username:   username,
@@ -105,7 +98,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	c := context.Background()
 
 	fmt.Println("")
-	user, err := client.Users.Signup(c, &signup, &output)
+	user, err := client.Users.Signup(c, &signup, &progress)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return cli.NewExitError("Email address in use, please try again.", -1)

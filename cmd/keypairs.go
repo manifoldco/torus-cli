@@ -157,11 +157,6 @@ func generateKeypairs(ctx *cli.Context) error {
 	}
 
 	var rErr error
-	var progress api.ProgressFunc = func(evt *api.Event, err error) {
-		if evt != nil {
-			fmt.Println("  " + evt.Message)
-		}
-	}
 
 	for orgID, name := range regenOrgs {
 		fmt.Println("Generating signing and encryption keypairs for org: " + name)
@@ -186,11 +181,6 @@ func generateKeypairs(ctx *cli.Context) error {
 
 func generateKeypairsForOrg(ctx *cli.Context, c context.Context, client *api.Client, orgID *identity.ID, lookupOrg bool) error {
 	var err error
-	var progress api.ProgressFunc = func(evt *api.Event, err error) {
-		if evt != nil {
-			fmt.Println(evt.Message)
-		}
-	}
 
 	msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
 	outputErr := cli.NewExitError(msg, -1)

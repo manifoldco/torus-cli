@@ -27,3 +27,18 @@ func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.Cr
 	_, err = c.client.Do(ctx, req, &creds, nil, nil)
 	return creds, err
 }
+
+// Create creates the given credential
+func (c *CredentialsClient) Create(ctx context.Context, cred *apitypes.Credential,
+	progress *ProgressFunc) (*apitypes.CredentialEnvelope, error) {
+
+	env := apitypes.CredentialEnvelope{Body: cred}
+	req, reqID, err := c.client.NewRequest("POST", "/credentials", nil, &env, false)
+	if err != nil {
+		return nil, err
+	}
+
+	out := apitypes.CredentialEnvelope{}
+	_, err = c.client.Do(ctx, req, &out, &reqID, progress)
+	return &out, err
+}

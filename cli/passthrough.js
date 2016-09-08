@@ -5,10 +5,8 @@ var fs = require('fs');
 var execSync = require('child_process').execSync;
 
 var CATEGORIES = {
-  set: 'SECRETS',
   unset: 'SECRETS',
 
-  signup: 'ACCOUNT',
   verify: 'ACCOUNT',
 
   allow: 'ACCESS CONTROL',

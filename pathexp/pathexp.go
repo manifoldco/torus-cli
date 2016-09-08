@@ -225,6 +225,16 @@ func (pe *PathExp) WithInstance(instance string) (*PathExp, error) {
 	}, nil
 }
 
+// Org returns the org set for this pathexp
+func (pe *PathExp) Org() string {
+	return string(pe.org)
+}
+
+// Project returns the project set for this pathexp
+func (pe *PathExp) Project() string {
+	return string(pe.project)
+}
+
 // String returns the unparsed string representation of the path expression
 func (pe *PathExp) String() string {
 	return strings.Join([]string{"", string(pe.org), string(pe.project),
