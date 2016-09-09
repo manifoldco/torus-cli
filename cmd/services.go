@@ -25,16 +25,16 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("org to show services for", true),
-					ProjectFlag("project to show services for", false),
+					orgFlag("org to show services for", true),
+					projectFlag("project to show services for", false),
 					cli.BoolFlag{
 						Name:  "all",
 						Usage: "Perform command on all projects",
 					},
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, listServices,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, listServices,
 				),
 			},
 			{
@@ -42,11 +42,11 @@ func init() {
 				Usage:     "Create a service in an organization",
 				ArgsUsage: "[name]",
 				Flags: []cli.Flag{
-					OrgFlag("Create the project in this org", false),
-					ProjectFlag("project to create services for", false),
+					orgFlag("Create the project in this org", false),
+					projectFlag("project to create services for", false),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					createServiceCmd,
 				),
 			},

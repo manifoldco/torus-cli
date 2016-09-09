@@ -11,7 +11,5 @@ travis/id_rsa*
 builds/*
 vendor/*
 
-passthrough.go
-
 *.sw[mnop]
 *.orig

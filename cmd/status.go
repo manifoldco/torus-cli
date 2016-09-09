@@ -19,8 +19,8 @@ func init() {
 		Usage:    "Show the current Arigato status associated with your account and project",
 		Category: "CONTEXT",
 		Flags: []cli.Flag{
-			StdEnvFlag,
-			ServiceFlag("Use this service.", "default", true),
+			stdEnvFlag,
+			serviceFlag("Use this service.", "default", true),
 
 			// These flags are hidden so we can still parse out the values
 			// from the prefs files and env vars, but we don't display
@@ -39,9 +39,9 @@ func init() {
 				Required:   true,
 			},
 		},
-		Action: Chain(
-			EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-			SetUserEnv, statusCmd,
+		Action: chain(
+			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+			setUserEnv, statusCmd,
 		),
 	}
 

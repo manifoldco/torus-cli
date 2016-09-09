@@ -17,15 +17,15 @@ func init() {
 		ArgsUsage: "[--] <command> [<arguments>...]",
 		Category:  "SECRETS",
 		Flags: []cli.Flag{
-			StdOrgFlag,
-			StdProjectFlag,
-			StdEnvFlag,
-			ServiceFlag("Use this service.", "default", true),
-			StdInstanceFlag,
+			stdOrgFlag,
+			stdProjectFlag,
+			stdEnvFlag,
+			serviceFlag("Use this service.", "default", true),
+			stdInstanceFlag,
 		},
-		Action: Chain(
-			EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-			SetUserEnv, checkRequiredFlags, runCmd,
+		Action: chain(
+			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+			setUserEnv, checkRequiredFlags, runCmd,
 		),
 	}
 

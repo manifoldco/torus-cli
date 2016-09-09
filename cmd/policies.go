@@ -26,11 +26,11 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("org to show policies for", true),
+					orgFlag("org to show policies for", true),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, listPolicies,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, listPolicies,
 				),
 			},
 			{
@@ -38,11 +38,11 @@ func init() {
 				Usage:     "Detach a policy from a team, does not delete the policy",
 				ArgsUsage: "<name> <team>",
 				Flags: []cli.Flag{
-					OrgFlag("org to detach policy from", true),
+					orgFlag("org to detach policy from", true),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, detachPolicies,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, detachPolicies,
 				),
 			},
 		},

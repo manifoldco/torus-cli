@@ -17,8 +17,8 @@ func init() {
 		ArgsUsage: "<code>",
 		Usage:     "Verify the email address for your account",
 		Category:  "ACCOUNT",
-		Action: Chain(
-			EnsureDaemon, EnsureSession, verifyEmailCmd,
+		Action: chain(
+			ensureDaemon, ensureSession, verifyEmailCmd,
 		),
 	}
 	Cmds = append(Cmds, version)

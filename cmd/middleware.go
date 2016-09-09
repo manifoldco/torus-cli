@@ -18,10 +18,9 @@ import (
 	"github.com/arigatomachine/cli/prefs"
 )
 
-// Chain allows easy sequential calling of BeforeFuncs and AfterFuncs.
-// Chain will exit on the first error seen.
-// XXX Chain is only public while we need it for passthrough.go
-func Chain(funcs ...func(*cli.Context) error) func(*cli.Context) error {
+// chain allows easy sequential calling of BeforeFuncs and AfterFuncs.
+// chain will exit on the first error seen.
+func chain(funcs ...func(*cli.Context) error) func(*cli.Context) error {
 	return func(ctx *cli.Context) error {
 
 		for _, f := range funcs {
@@ -35,12 +34,11 @@ func Chain(funcs ...func(*cli.Context) error) func(*cli.Context) error {
 	}
 }
 
-// EnsureDaemon ensures that the daemon is running, and is the correct version,
+// ensureDaemon ensures that the daemon is running, and is the correct version,
 // before a command is exeucted.
 // the daemon will be started/restarted once, to try and launch the latest
 // version.
-// XXX EnsureDaemon is only public while we need it for passthrough.go
-func EnsureDaemon(ctx *cli.Context) error {
+func ensureDaemon(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -94,15 +92,14 @@ func EnsureDaemon(ctx *cli.Context) error {
 		return err
 	}
 
-	return EnsureDaemon(ctx)
+	return ensureDaemon(ctx)
 }
 
-// EnsureSession ensures that the user is logged in with the daemon and has a
+// ensureSession ensures that the user is logged in with the daemon and has a
 // valid session. If not, it will attempt to log the user in via environment
 // variables. If they do not exist, of the login fails, it will abort the
 // command.
-// XXX EnsureSession is only public while we need it for passthrough.go
-func EnsureSession(ctx *cli.Context) error {
+func ensureSession(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -146,9 +143,8 @@ func EnsureSession(ctx *cli.Context) error {
 	return cli.NewExitError(msg, -1)
 }
 
-// LoadDirPrefs loads argument values from the .arigato.json file
-// XXX LoadDirPrefs is only public while we need it for passthrough.go
-func LoadDirPrefs(ctx *cli.Context) error {
+// loadDirPrefs loads argument values from the .arigato.json file
+func loadDirPrefs(ctx *cli.Context) error {
 	p, err := prefs.NewPreferences(true)
 	if err != nil {
 		return err
@@ -162,10 +158,9 @@ func LoadDirPrefs(ctx *cli.Context) error {
 	return reflectArgs(ctx, p, d, "json")
 }
 
-// LoadPrefDefaults loads default argument values from the .arigatorc
+// loadPrefDefaults loads default argument values from the .arigatorc
 // preferences file defaults section, inserting them into any unset flag values
-// XXX LoadPrefDefaults is only public while we need it for passthrough.go
-func LoadPrefDefaults(ctx *cli.Context) error {
+func loadPrefDefaults(ctx *cli.Context) error {
 	p, err := prefs.NewPreferences(true)
 	if err != nil {
 		return err
@@ -215,10 +210,9 @@ func reflectArgs(ctx *cli.Context, p *prefs.Preferences, i interface{},
 	return nil
 }
 
-// SetUserEnv populates the env argument, if present and unset,
+// setUserEnv populates the env argument, if present and unset,
 // with dev-USERNAME
-// XXX SetUserEnv is only public while we need it for passthrough.go
-func SetUserEnv(ctx *cli.Context) error {
+func setUserEnv(ctx *cli.Context) error {
 	argName := "environment"
 	// Check for env flag, just in case this middleware is misused
 	hasEnvFlag := false

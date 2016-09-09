@@ -18,7 +18,7 @@ func init() {
 		Usage:     "Create a new Arigato account which, while in alpha, requires an invite code",
 		ArgsUsage: "[email] [code]",
 		Category:  "ACCOUNT",
-		Action:    Chain(EnsureDaemon, signupCmd),
+		Action:    chain(ensureDaemon, signupCmd),
 	}
 	Cmds = append(Cmds, signup)
 }

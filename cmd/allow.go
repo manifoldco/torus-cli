@@ -22,7 +22,7 @@ func init() {
 		Usage:     "Grant a team permission to access specific resources",
 		ArgsUsage: "<crudl> <path> <team>",
 		Category:  "ACCESS CONTROL",
-		Action:    Chain(EnsureDaemon, EnsureSession, allowCmd),
+		Action:    chain(ensureDaemon, ensureSession, allowCmd),
 	}
 
 	Cmds = append(Cmds, allow)

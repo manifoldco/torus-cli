@@ -1,7 +1,6 @@
 package cmd
 
 // Standard flag definitions shared across commands
-// XXX: These are public for use in passthrough right now.
 
 import (
 	"fmt"
@@ -12,41 +11,41 @@ import (
 
 // Standard flags for path expression parts.
 var (
-	StdOrgFlag      = OrgFlag("Use this organization.", true)
-	StdProjectFlag  = ProjectFlag("Use this project.", true)
-	StdEnvFlag      = EnvFlag("Use this environment.", true)
-	StdServiceFlag  = ServiceFlag("Use this service.", "", true)
-	StdUserFlag     = UserFlag("Use this user.", true)
-	StdInstanceFlag = InstanceFlag("Use this instance.", true)
+	stdOrgFlag      = orgFlag("Use this organization.", true)
+	stdProjectFlag  = projectFlag("Use this project.", true)
+	stdEnvFlag      = envFlag("Use this environment.", true)
+	stdServiceFlag  = serviceFlag("Use this service.", "", true)
+	stdUserFlag     = userFlag("Use this user.", true)
+	stdInstanceFlag = instanceFlag("Use this instance.", true)
 )
 
-// OrgFlag creates a new --org cli.Flag with custom usage string.
-func OrgFlag(usage string, required bool) cli.Flag {
+// orgFlag creates a new --org cli.Flag with custom usage string.
+func orgFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("org, o", "ORG", usage, "", "AG_ORG", required)
 }
 
-// ProjectFlag creates a new --project cli.Flag with custom usage string.
-func ProjectFlag(usage string, required bool) cli.Flag {
+// projectFlag creates a new --project cli.Flag with custom usage string.
+func projectFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("project, p", "PROJECT", usage, "", "AG_PROJECT", required)
 }
 
-// EnvFlag creates a new --environment cli.Flag with custom usage string.
-func EnvFlag(usage string, required bool) cli.Flag {
+// envFlag creates a new --environment cli.Flag with custom usage string.
+func envFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("environment, e", "ENV", usage, "", "AG_ENVIRONMENT", required)
 }
 
-// ServiceFlag creates a new --service cli.Flag with custom usage string.
-func ServiceFlag(usage, value string, required bool) cli.Flag {
+// serviceFlag creates a new --service cli.Flag with custom usage string.
+func serviceFlag(usage, value string, required bool) cli.Flag {
 	return newPlaceholder("service, s", "SERVICE", usage, value, "AG_SERVICE", required)
 }
 
-// UserFlag creates a new --user cli.Flag with custom usage string.
-func UserFlag(usage string, required bool) cli.Flag {
+// userFlag creates a new --user cli.Flag with custom usage string.
+func userFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("user, u", "USER", usage, "", "AG_USER", required)
 }
 
-// InstanceFlag creates a new --instance cli.Flag with custom usage string.
-func InstanceFlag(usage string, required bool) cli.Flag {
+// instanceFlag creates a new --instance cli.Flag with custom usage string.
+func instanceFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "AG_INSTANCE", required)
 }
 

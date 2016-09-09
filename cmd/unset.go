@@ -15,8 +15,8 @@ func init() {
 		ArgsUsage: "<name|path>",
 		Category:  "SECRETS",
 		Flags: []cli.Flag{
-			StdOrgFlag,
-			StdProjectFlag,
+			stdOrgFlag,
+			stdProjectFlag,
 			newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
 				nil, "AG_ENVIRONMENT", true),
 			newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
@@ -26,8 +26,8 @@ func init() {
 			newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
 				[]string{"1"}, "AG_INSTANCE", true),
 		},
-		Action: Chain(
-			EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults, unsetCmd,
+		Action: chain(
+			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults, unsetCmd,
 		),
 	}
 

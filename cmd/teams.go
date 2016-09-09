@@ -31,22 +31,22 @@ func init() {
 				Usage:     "List members of a particular team in and organization",
 				ArgsUsage: "<team>",
 				Flags: []cli.Flag{
-					StdOrgFlag,
+					stdOrgFlag,
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, teamMembersListCmd,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, teamMembersListCmd,
 				),
 			},
 			{
 				Name:  "list",
 				Usage: "List teams in an organization",
 				Flags: []cli.Flag{
-					StdOrgFlag,
+					stdOrgFlag,
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, teamsListCmd,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, teamsListCmd,
 				),
 			},
 			{
@@ -54,10 +54,10 @@ func init() {
 				Usage:     "Create a team in an organization",
 				ArgsUsage: "[name]",
 				Flags: []cli.Flag{
-					OrgFlag("Create the team in this org", false),
+					orgFlag("Create the team in this org", false),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					createTeamCmd,
 				),
 			},
@@ -66,11 +66,11 @@ func init() {
 				Usage:     "Remove user from a specified team in an organization you administer",
 				ArgsUsage: "<username> <team>",
 				Flags: []cli.Flag{
-					StdOrgFlag,
+					stdOrgFlag,
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, teamsRemoveCmd,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, teamsRemoveCmd,
 				),
 			},
 			{
@@ -78,11 +78,11 @@ func init() {
 				ArgsUsage: "<username> <team>",
 				Usage:     "Add user to a specified team in an organization you administer",
 				Flags: []cli.Flag{
-					StdOrgFlag,
+					stdOrgFlag,
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, teamsAddCmd,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, teamsAddCmd,
 				),
 			},
 		},

@@ -25,11 +25,11 @@ func init() {
 				Name:  "create",
 				Usage: "Create an environment for a service inside an organization or project",
 				Flags: []cli.Flag{
-					OrgFlag("org to create environment for", false),
-					ProjectFlag("project to create environment for", false),
+					orgFlag("org to create environment for", false),
+					projectFlag("project to create environment for", false),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					checkRequiredFlags, createEnv,
 				),
 			},
@@ -37,15 +37,15 @@ func init() {
 				Name:  "list",
 				Usage: "List environments for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("org to show environments for", true),
-					ProjectFlag("project to shows environments for", false),
+					orgFlag("org to show environments for", true),
+					projectFlag("project to shows environments for", false),
 					cli.BoolFlag{
 						Name:  "all",
 						Usage: "Perform command on all projects",
 					},
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					checkRequiredFlags, listEnvs,
 				),
 			},

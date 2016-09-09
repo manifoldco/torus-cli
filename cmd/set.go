@@ -21,8 +21,8 @@ func init() {
 		ArgsUsage: "<name|path> <value>",
 		Category:  "SECRETS",
 		Flags: []cli.Flag{
-			StdOrgFlag,
-			StdProjectFlag,
+			stdOrgFlag,
+			stdProjectFlag,
 			newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
 				nil, "AG_ENVIRONMENT", true),
 			newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
@@ -32,8 +32,8 @@ func init() {
 			newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
 				[]string{"1"}, "AG_INSTANCE", true),
 		},
-		Action: Chain(
-			EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults, setCmd,
+		Action: chain(
+			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults, setCmd,
 		),
 	}
 
@@ -94,7 +94,7 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 	} else {
 		// Falling back to flags. do the expensive population of the user flag now,
 		// and see if any required flags (all of them) are missing.
-		err := Chain(SetUserEnv, checkRequiredFlags)(ctx)
+		err := chain(setUserEnv, checkRequiredFlags)(ctx)
 		if err != nil {
 			return nil, err
 		}
