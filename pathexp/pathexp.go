@@ -37,9 +37,8 @@ var (
 	fullglobOrGlob = regexp.MustCompile(`(^\*$)|(?:^(` + slugstr + `)(\*?)$)`)
 )
 
-// indicies into a pathexp string split on "/"
 const (
-	orgIdx = iota + 1
+	orgIdx = iota
 	projectIdx
 	envIdx
 	serviceIdx
@@ -197,11 +196,27 @@ func Parse(raw string) (*PathExp, error) {
 		return nil, errors.New("Wrong number of path segements")
 	}
 
+	if parts[0] != "" {
+		return nil, errors.New("Path expressions must start with '/'")
+	}
+	// remove leading empty section
+	parts = parts[1:]
+
+	splitParts := make([][]string, 6)
+	splitNames := []string{"", "", "environment", "service", "identity", "instance"}
+	var err error
+	for i := 2; i < len(splitParts); i++ {
+		splitParts[i], err = split(splitNames[i], parts[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return New(parts[orgIdx], parts[projectIdx],
-		split(parts[envIdx]),
-		split(parts[serviceIdx]),
-		split(parts[identityIdx]),
-		split(parts[instanceIdx]),
+		splitParts[envIdx],
+		splitParts[serviceIdx],
+		splitParts[identityIdx],
+		splitParts[instanceIdx],
 	)
 }
 
@@ -210,7 +225,12 @@ func Parse(raw string) (*PathExp, error) {
 //
 // XXX: this isn't really great. it would be nice to support all path types.
 func (pe *PathExp) WithInstance(instance string) (*PathExp, error) {
-	segment, err := parseMultiple("instance", split(instance))
+	parts, err := split("instance", instance)
+	if err != nil {
+		return nil, err
+	}
+
+	segment, err := parseMultiple("instance", parts)
 	if err != nil {
 		return nil, err
 	}
@@ -245,13 +265,17 @@ func (pe *PathExp) String() string {
 	}, "/")
 }
 
-func split(segment string) []string {
+func split(name, segment string) ([]string, error) {
 	parts := []string{segment}
 	if segment[0] == '[' && segment[len(segment)-1] == ']' {
 		parts = strings.Split(segment[1:len(segment)-1], "|")
+		// zero length is checked in parseMultiple
+		if len(parts) == 1 {
+			return nil, errors.New("Single item in segment alternation for " + name)
+		}
 	}
 
-	return parts
+	return parts, nil
 }
 
 func parseMultiple(name string, parts []string) (segment, error) {
