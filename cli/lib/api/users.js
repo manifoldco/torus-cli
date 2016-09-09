@@ -25,10 +25,3 @@ users.create = function (client, body, query) {
     return res.body;
   });
 };
-
-users.verify = function (client, body) {
-  return client.post({
-    url: '/users/verify',
-    json: body
-  });
-};

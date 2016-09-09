@@ -73,3 +73,21 @@ func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, outpu
 
 	return &user, nil
 }
+
+// VerifyEmail will confirm the user's email with the registry
+func (u *UsersClient) VerifyEmail(ctx context.Context, verifyCode string) error {
+	verify := apitypes.VerifyEmail{
+		Code: verifyCode,
+	}
+	req, _, err := u.client.NewRequest("POST", "/users/verify", nil, &verify, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = u.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
