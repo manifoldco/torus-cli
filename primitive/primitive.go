@@ -3,6 +3,8 @@
 package primitive
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/arigatomachine/cli/base64"
@@ -277,7 +279,7 @@ type Policy struct {
 	PolicyType string       `json:"type"`
 	Previous   *identity.ID `json:"previous"`
 	OrgID      *identity.ID `json:"org_id"`
-	Policy     *struct {
+	Policy     struct {
 		Name        string            `json:"name"`
 		Description string            `json:"description"`
 		Statements  []PolicyStatement `json:"statements"`
@@ -291,9 +293,118 @@ func (t *Policy) Type() byte {
 
 // PolicyStatement is an acl statement on a policy object
 type PolicyStatement struct {
-	Effect   string   `json:"effect"`
-	Action   []string `json:"action"` // XXX: This could potentially be a string and not []string
-	Resource string   `json:"resource"`
+	Effect   PolicyEffect `json:"effect"`
+	Action   PolicyAction `json:"action"`
+	Resource string       `json:"resource"`
+}
+
+// PolicyEffect is the effect type of the statement (allow or deny)
+type PolicyEffect bool
+
+// These are the two policy effect types
+const (
+	PolicyEffectAllow = true
+	PolicyEffectDeny  = false
+)
+
+// MarshalText implements the encoding.TextMarshaler interface, used for JSON
+// marshaling.
+func (pe *PolicyEffect) MarshalText() ([]byte, error) {
+	if *pe {
+		return []byte("allow"), nil
+	}
+	return []byte("deny"), nil
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface, used for
+// JSON unmarshaling.
+func (pe *PolicyEffect) UnmarshalText(b []byte) error {
+	*pe = string(b) == "allow"
+	return nil
+}
+
+// String returns a string representation of the PolicyEffect (allow or deny)
+func (pe *PolicyEffect) String() string {
+	b, _ := pe.MarshalText()
+	return string(b)
+}
+
+// PolicyAction represents the user actions that are covered by a statement.
+type PolicyAction byte
+
+// These are all the possible PolicyActions
+const (
+	PolicyActionCreate = 1 << iota
+	PolicyActionRead
+	PolicyActionUpdate
+	PolicyActionDelete
+	PolicyActionList
+)
+
+var policyActionStrings = []string{
+	"create",
+	"read",
+	"update",
+	"delete",
+	"list",
+}
+
+// MarshalJSON implements the json.Marshaler interface. A PolicyAction is
+// encoded in JSON either the string representations of its actions in a list,
+// or a single string when there is only one action.
+func (pa *PolicyAction) MarshalJSON() ([]byte, error) {
+	out := []string{}
+
+	for i, v := range policyActionStrings {
+		if (1<<uint(i))&byte(*pa) > 0 {
+			out = append(out, v)
+		}
+	}
+
+	if len(out) == 1 {
+		return json.Marshal(out[0])
+	}
+
+	return json.Marshal(out)
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (pa *PolicyAction) UnmarshalJSON(b []byte) error {
+	raw := make([]string, 1)
+
+	var err error
+	if len(b) > 0 && b[0] == '"' {
+		err = json.Unmarshal(b, &raw[0])
+	} else {
+		err = json.Unmarshal(b, &raw)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	for _, a := range raw {
+		for i, v := range policyActionStrings {
+			if a == v {
+				*pa |= 1 << uint(i)
+				continue
+			}
+		}
+	}
+
+	return nil
+}
+
+func (pa *PolicyAction) String() string {
+	out := []string{}
+
+	for i, v := range policyActionStrings {
+		if (1<<uint(i))&byte(*pa) > 0 {
+			out = append(out, v)
+		}
+	}
+
+	return strings.Join(out, ", ")
 }
 
 // PolicyAttachment is an entity that represents the link between policies and teams

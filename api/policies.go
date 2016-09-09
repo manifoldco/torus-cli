@@ -29,7 +29,31 @@ type PoliciesResult struct {
 	Body    *primitive.Policy `json:"body"`
 }
 
-// List retrieves relevant polciies by orgID and/or projectID
+// Create creates a new policy
+func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (*PoliciesResult, error) {
+
+	ID, err := identity.Mutable(policy)
+	if err != nil {
+		return nil, err
+	}
+
+	env := envelope.Unsigned{
+		ID:      &ID,
+		Version: 1,
+		Body:    policy,
+	}
+
+	req, _, err := p.client.NewRequest("POST", "/policies", nil, env, true)
+	if err != nil {
+		return nil, err
+	}
+
+	res := PoliciesResult{}
+	_, err = p.client.Do(ctx, req, &res, nil, nil)
+	return &res, err
+}
+
+// List retrieves relevant policiies by orgID and/or projectID
 func (p *PoliciesClient) List(ctx context.Context, orgID, projectID *identity.ID) ([]PoliciesResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
@@ -65,6 +89,37 @@ func (p *PoliciesClient) List(ctx context.Context, orgID, projectID *identity.ID
 	}
 
 	return policyResults, nil
+}
+
+// Attach attaches a policy to a team
+func (p *PoliciesClient) Attach(ctx context.Context, org, policy, team *identity.ID) error {
+	attachment := primitive.PolicyAttachment{
+		OrgID:    org,
+		OwnerID:  team,
+		PolicyID: policy,
+	}
+
+	ID, err := identity.Mutable(&attachment)
+	if err != nil {
+		return err
+	}
+
+	env := envelope.Unsigned{
+		ID:      &ID,
+		Version: 1,
+		Body:    &attachment,
+	}
+
+	req, _, err := p.client.NewRequest("POST", "/policy-attachments", nil, &env, true)
+	if err != nil {
+		return err
+	}
+	_, err = p.client.Do(ctx, req, nil, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Detach deletes a specific attachment
