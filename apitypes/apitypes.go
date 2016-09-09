@@ -112,3 +112,8 @@ type Membership struct {
 	Version int                   `json:"version"`
 	Body    *primitive.Membership `json:"body"`
 }
+
+// VerifyEmail contains email verification code
+type VerifyEmail struct {
+	Code string `json:"code"`
+}
