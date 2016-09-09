@@ -68,20 +68,13 @@ function build_release {
 }
 
 function run_tests {
-  echo "Running golang tests"
+  echo "Running tests"
   pushd "$DIR" >/dev/null
     make fmtcheck
     make vet
     make lint
     make test
   popd
-  echo "golang tests have passed"
-
-  echo "Running cli tests"
-  pushd "$DIR/cli" > /dev/null
-    gulp test
-  popd
-
   echo "All tests have passed!"
 }
 
