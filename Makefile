@@ -3,7 +3,7 @@ PKG = github.com/arigatomachine/cli
 SHA = $(shell git describe --always --long --dirty)
 PKG_LIST = $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES = $(shell find . -name '*.go' | grep -v /vendor/)
-VERSION = $(shell node -p -e "require('./cli/package.json').version")
+VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 all: binary
 

@@ -4,9 +4,7 @@ branches:
   only:
     - master
 
-language: node_js
-node_js:
-  - '6'
+language: bash
 services:
   - docker
 
@@ -14,14 +12,9 @@ before_install:
 - sudo apt-get update
 - sudo apt-get -o Dpkg::Options::="--force-confnew" install -y --force-yes docker-engine
 
-matrix:
-  fast_finish: true
-
 cache:
   apt: true
   directories:
-    - node_modules
-    - $HOME/.npm
     - vendor
 
 script:

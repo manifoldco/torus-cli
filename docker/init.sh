@@ -13,7 +13,7 @@ function usage {
   echo -e "CLI Docker Container"
   echo -e "Used for building binaries and testing code in a repeatable environment\n"
   echo -e "Available Commands:\n"
-  echo -e "\tbuild\t\t\t\tBuild the cli; npm install and go build"
+  echo -e "\tbuild\t\t\t\tBuild the cli"
   echo -e "\ttest\t\t\t\tBuild and then run all tests on the current build\n"
 }
 
@@ -31,7 +31,7 @@ function build_binary {
     exit 1
   fi
 
-  if ! go version | grep --quiet "$GOVERSION"; then
+  if ! go version | grep -q "$GOVERSION"; then
     echo ""
     echo "We require ag to be built with $GOVERSION"
     echo ""
@@ -79,7 +79,6 @@ function run_tests {
 }
 
 go version
-echo "node version `node -v`"
 
 case "$CMD" in
   "build")
