@@ -4,7 +4,7 @@ PKG_LIST = $(shell go list ${PKG}/... | grep -v /vendor/ | grep -v /data/bindata
 GO_FILES = $(shell find . -name '*.go' | grep -v /vendor/ | grep -v /data/bindata.go)
 VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
-PUBLIC_KEY ?= keys/production.json
+PUBLIC_KEY ?= data/keys/production.json
 
 all: binary
 
@@ -42,14 +42,36 @@ data/bindata.go: data/ca_bundle.pem data/public_key.json
 	go-bindata -pkg data -o $@ $^
 
 data/public_key.json: $(PUBLIC_KEY)
-	ln -s ../$< $@
+	ln -sf ../$< $@
 
 static: vet fmtcheck lint bindata
 	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/config.Version=${VERSION}" ${PKG}
+
+
+npm: builds/npm/package.json builds/npm/README.md builds/npm/LICENSE.md builds/npm/install.js npm-bin
+
+builds/npm builds/npm/bin:
+	mkdir -p $@
+
+builds/npm/package.json: npm/package.json.in builds/npm
+	sed 's/VERSION/$(VERSION)/' < $< > $@
+
+builds/npm/README.md: npm/README.md
+	cp $< $@
+
+builds/npm/LICENSE.md: LICENSE.md
+	cp $< $@
+
+builds/npm/install.js: npm/install.js
+	cp $< $@
+
+npm-bin: builds/npm/bin builds/ag-*
+	cp builds/ag-* builds/npm/bin/
 
 clean:
 	@rm -f ${OUT} ${OUT}-v*
 	@rm -f data/bindata.go
 	@rm -f data/public_key.json
+	@rm -rf builds/*
 
 .PHONY: static vet fmtcheck lint test bindata
