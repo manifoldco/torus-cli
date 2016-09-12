@@ -1,16 +1,17 @@
 OUT = ag
 PKG = github.com/arigatomachine/cli
-SHA = $(shell git describe --always --long --dirty)
-PKG_LIST = $(shell go list ${PKG}/... | grep -v /vendor/)
-GO_FILES = $(shell find . -name '*.go' | grep -v /vendor/)
+PKG_LIST = $(shell go list ${PKG}/... | grep -v /vendor/ | grep -v /data/bindata.go)
+GO_FILES = $(shell find . -name '*.go' | grep -v /vendor/ | grep -v /data/bindata.go)
 VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
+
+PUBLIC_KEY ?= keys/production.json
 
 all: binary
 
-binary:
+binary: bindata
 	go build -i -v -o ${OUT} -ldflags="-X ${PKG}/config.Version=${VERSION}" ${PKG}
 
-test:
+test: bindata
 	@go test -short $$(glide nv)
 
 vet:
@@ -36,10 +37,19 @@ lint:
 		exit 1 ; \
 	fi ;
 
-static: vet fmtcheck lint
+bindata: data/bindata.go
+data/bindata.go: data/ca_bundle.pem data/public_key.json
+	go-bindata -pkg data -o $@ $^
+
+data/public_key.json: $(PUBLIC_KEY)
+	ln -s ../$< $@
+
+static: vet fmtcheck lint bindata
 	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/config.Version=${VERSION}" ${PKG}
 
 clean:
-	-@rm ${OUT} ${OUT}-v*
+	@rm -f ${OUT} ${OUT}-v*
+	@rm -f data/bindata.go
+	@rm -f data/public_key.json
 
-.PHONY: run server static vet fmtcheck lint generated test
+.PHONY: static vet fmtcheck lint test bindata

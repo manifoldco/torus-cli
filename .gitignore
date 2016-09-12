@@ -6,10 +6,12 @@ cli/bin/ag-*
 !cli/bin/ag-node
 .DS_Store
 npm-debug*
-cli/ca_bundle.pem
 travis/id_rsa*
 builds/*
 vendor/*
+
+data/bindata.go
+data/public_key.json
 
 *.sw[mnop]
 *.orig

@@ -12,6 +12,7 @@ import (
 
 	"github.com/urfave/cli"
 
+	"github.com/arigatomachine/cli/data"
 	"github.com/arigatomachine/cli/prefs"
 )
 
@@ -114,8 +115,15 @@ func CreateArigatoRoot(arigatoRoot string) (string, error) {
 
 // Load CABundle creates a new CertPool from the given filename
 func loadCABundle(cafile string) (*x509.CertPool, error) {
+	var pem []byte
+	var err error
 
-	pem, err := ioutil.ReadFile(cafile)
+	if cafile == "" {
+		pem, err = data.Asset("data/ca_bundle.pem")
+	} else {
+		pem, err = ioutil.ReadFile(cafile)
+
+	}
 	if err != nil {
 		return nil, err
 	}

@@ -10,7 +10,8 @@ ENV PATH="/usr/local/bin:$PATH"
 
 # Now install our go specific dependencies
 RUN go get -u github.com/Masterminds/glide \
-        && go get -u github.com/golang/lint/golint
+        && go get -u github.com/golang/lint/golint \
+        && go get -u github.com/jteeuwen/go-bindata/...
 
 VOLUME /go/src/github.com/arigatomachine/cli
 VOLUME /builds
