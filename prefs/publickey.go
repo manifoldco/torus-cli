@@ -1,13 +1,16 @@
 package prefs
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/base64"
+	"github.com/arigatomachine/cli/data"
 )
 
 const requiredPermissions = 0700
@@ -21,7 +24,20 @@ type PublicKey struct {
 func LoadPublicKey(prefs *Preferences) (*PublicKey, error) {
 	filePath := prefs.Core.PublicKeyFile
 
-	fd, err := readPublicKeyFile(filePath)
+	var fd io.Reader
+	var err error
+
+	if filePath == "" {
+		var b []byte
+		b, err = data.Asset("data/public_key.json")
+
+		if err == nil {
+			fd = bytes.NewReader(b)
+		}
+	} else {
+		fd, err = readPublicKeyFile(filePath)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +62,7 @@ func readPublicKeyFile(filePath string) (*os.File, error) {
 	return fd, nil
 }
 
-func parsePublicKeyFile(fd *os.File) (*PublicKey, error) {
+func parsePublicKeyFile(fd io.Reader) (*PublicKey, error) {
 	key := &PublicKey{}
 	dec := json.NewDecoder(fd)
 

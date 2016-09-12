@@ -23,17 +23,10 @@ if [ "$ENVIRONMENT" != "staging" -a "$ENVIRONMENT" != "production" ]; then
 fi
 
 GIT_REPOSITORY="git@github.com:arigatomachine/cli.git"
-KEY_FILE="$SRC/keys/$ENVIRONMENT.json"
-CA_BUNDLE="$SRC/daemon/ca_bundle.pem"
 RELEASE_STAMP=`date -u +"%Y-%m-%dT%H-%M-%SZ"`
 BUILD_DIRECTORY=$HOME/build
 RELEASE_DIRECTORY="$BUILD_DIRECTORY/$RELEASE_STAMP"
 RELEASE_BUCKET="releases.arigato.sh"
-
-if [ ! -f "$KEY_FILE" ]; then
-    echo "Cannot find offline public key file: $KEY_FILE"
-    exit 1
-fi
 
 if [ ! -d "$BUILD_DIRECTORY" ]; then
     echo "Build directory $BUILD_DIRECTORY does not exist; creating."
@@ -79,14 +72,9 @@ echo ""
 docker run --name relase-builder --rm \
     -v $RELEASE_DIRECTORY:/go/src/github.com/arigatomachine/cli \
     -v $RELEASE_DIRECTORY/builds:/builds \
+    -e PUBLIC_KEY=keys/$ENVIRONMENT.json \
     arigato/cli:$TARGET_SHA \
     release
-
-echo ""
-echo "Copying Key File"
-echo ""
-cp $KEY_FILE cli/public_key.json
-cp $CA_BUNDLE cli/ca_bundle.pem
 
 # Remove the node modules; they'll get installed via npm on the way down.
 echo ""

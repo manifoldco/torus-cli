@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v0.8.0
+
+_Unreleased_
+
+**Notable Changes**
+
+- The conversion to Go is complete.
+- Required external files are now bundled into the Go binary.
+
 ## v0.7.0
 
 _Published: 2016-09-08_
@@ -67,7 +76,7 @@ This release marks the first stage of our conversion to go. As such, many change
  - Subcommands were previously delimited with a colon (ie `ag envs:create`). They are now delimited with a space (ie `ag envs create`).
  - Top-level commands containing subcommands are now `list` subcommands of the top-level command. For example, the old `ag orgs` is now `ag orgs list`.
  - For more details of the new command structure, please see `ag help` to view all top level commands, `ag <command> --help` to view the subcommands within a top-level command, and `ag <command> <subcommand> --help` to see the help for an individual subcommand.
- 
+
 **Notable Changes**
 
 - `ag run` reads `environment` and `service` from environment variables (`AG_ENVIRONMENT` and `AG_SERVICE`).

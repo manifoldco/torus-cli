@@ -1,7 +1,6 @@
 package prefs
 
 import (
-	"fmt"
 	"os"
 	"os/user"
 	"path"
@@ -9,16 +8,13 @@ import (
 	"strings"
 
 	"github.com/go-ini/ini"
-	"github.com/kardianos/osext"
 	"github.com/urfave/cli"
 	"gopkg.in/oleiade/reflections.v1"
 )
 
 const (
-	rcFilename        = ".arigatorc"
-	publicKeyFilename = "public_key.json"
-	caBundleFilename  = "ca_bundle.pem"
-	registryURI       = "https://registry.arigato.sh"
+	rcFilename  = ".arigatorc"
+	registryURI = "https://registry.arigato.sh"
 )
 
 // Preferences represents the configuration as user has in their arigatorc file
@@ -113,29 +109,18 @@ func RcPath() (string, error) {
 
 // NewPreferences returns a new instance of preferences struct
 func NewPreferences(useDefaults bool) (*Preferences, error) {
-	dir, err := osext.ExecutableFolder()
-	if err != nil {
-		return nil, fmt.Errorf("Could not determine executable location: %s", err)
-	}
-
-	// certs and keys live in the root of the node package
-	defaultKeyPath := path.Join(dir, "..", publicKeyFilename)
-	defaultBundlePath := path.Join(dir, "..", caBundleFilename)
-
 	prefs := &Preferences{}
 	if useDefaults == true {
 		prefs = &Preferences{
 			Core: Core{
-				PublicKeyFile: defaultKeyPath,
-				CABundleFile:  defaultBundlePath,
-				RegistryURI:   registryURI,
-				Context:       true,
+				RegistryURI: registryURI,
+				Context:     true,
 			},
 		}
 	}
 
 	filePath, _ := RcPath()
-	_, err = os.Stat(filePath)
+	_, err := os.Stat(filePath)
 	if os.IsNotExist(err) {
 		return prefs, nil
 	}
