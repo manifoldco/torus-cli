@@ -48,9 +48,9 @@ static: vet fmtcheck lint bindata
 	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/config.Version=${VERSION}" ${PKG}
 
 
-npm: builds/npm/package.json builds/npm/README.md builds/npm/LICENSE.md builds/npm/install.js npm-bin
+npm: builds/npm/package.json builds/npm/README.md builds/npm/LICENSE.md builds/npm/scripts/install.js npm-bin
 
-builds/npm builds/npm/bin:
+builds/npm builds/npm/bin builds/npm/scripts:
 	mkdir -p $@
 
 builds/npm/package.json: npm/package.json.in builds/npm
@@ -62,7 +62,7 @@ builds/npm/README.md: npm/README.md
 builds/npm/LICENSE.md: LICENSE.md
 	cp $< $@
 
-builds/npm/install.js: npm/install.js
+builds/npm/scripts/install.js: npm/install.js builds/npm/scripts
 	cp $< $@
 
 npm-bin: builds/npm/bin builds/ag-*
