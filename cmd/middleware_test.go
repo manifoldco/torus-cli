@@ -15,7 +15,7 @@ func TestChain(t *testing.T) {
 		secondRan := false
 
 		expected := cli.NewExitError("error", -1)
-		err := Chain(
+		err := chain(
 			func(ctx *cli.Context) error {
 				firstRan = true
 				if secondRan {
@@ -45,7 +45,7 @@ func TestChain(t *testing.T) {
 		firstRan := false
 		secondRan := false
 
-		Chain(
+		chain(
 			func(ctx *cli.Context) error {
 				firstRan = true
 				if secondRan {
@@ -142,8 +142,8 @@ func TestCheckRequiredFlags(t *testing.T) {
 	}
 	cmd := cli.Command{
 		Flags: []cli.Flag{
-			OrgFlag("an org", true),
-			ProjectFlag("a project", false),
+			orgFlag("an org", true),
+			projectFlag("a project", false),
 		},
 	}
 

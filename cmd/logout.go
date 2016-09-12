@@ -16,7 +16,7 @@ func init() {
 		Name:     "logout",
 		Usage:    "Log out of your Arigato account",
 		Category: "ACCOUNT",
-		Action:   Chain(EnsureDaemon, logoutCmd),
+		Action:   chain(ensureDaemon, logoutCmd),
 	}
 	Cmds = append(Cmds, logout)
 }

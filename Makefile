@@ -1,16 +1,16 @@
-OUT := ag
-PKG := github.com/arigatomachine/cli
-SHA := $(shell git describe --always --long --dirty)
-PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
-GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/)
-VERSION := $(shell node -p -e "require('./cli/package.json').version")
+OUT = ag
+PKG = github.com/arigatomachine/cli
+SHA = $(shell git describe --always --long --dirty)
+PKG_LIST = $(shell go list ${PKG}/... | grep -v /vendor/)
+GO_FILES = $(shell find . -name '*.go' | grep -v /vendor/)
+VERSION = $(shell node -p -e "require('./cli/package.json').version")
 
 all: binary
 
-binary: generated
+binary:
 	go build -i -v -o ${OUT} -ldflags="-X ${PKG}/config.Version=${VERSION}" ${PKG}
 
-test: generated
+test:
 	@go test -short $$(glide nv)
 
 vet:
@@ -36,11 +36,8 @@ lint:
 		exit 1 ; \
 	fi ;
 
-static: vet fmtcheck lint generated
+static: vet fmtcheck lint
 	go build -i -v -o ${OUT}-v${VERSION} -tags netgo -ldflags="-extldflags \"-static\" -w -s -X ${PKG}/config.Version=${VERSION}" ${PKG}
-
-generated:
-	go generate
 
 clean:
 	-@rm ${OUT} ${OUT}-v*

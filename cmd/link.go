@@ -27,7 +27,7 @@ func init() {
 				Usage: "Overwrite existing organization and project links.",
 			},
 		},
-		Action: Chain(EnsureDaemon, EnsureSession, linkCmd),
+		Action: chain(ensureDaemon, ensureSession, linkCmd),
 	}
 
 	Cmds = append(Cmds, link)

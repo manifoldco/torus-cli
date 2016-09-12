@@ -22,12 +22,12 @@ func init() {
 				Name:      "create",
 				Usage:     "Create a new organization",
 				ArgsUsage: "<name>",
-				Action:    Chain(EnsureDaemon, orgsCreate),
+				Action:    chain(ensureDaemon, orgsCreate),
 			},
 			{
 				Name:   "list",
 				Usage:  "List organizations associated with your account",
-				Action: Chain(EnsureDaemon, EnsureSession, orgsListCmd),
+				Action: chain(ensureDaemon, ensureSession, orgsListCmd),
 			},
 		},
 	}

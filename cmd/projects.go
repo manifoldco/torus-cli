@@ -25,11 +25,11 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("List projects in an organization", true),
+					orgFlag("List projects in an organization", true),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, listProjects,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, listProjects,
 				),
 			},
 			{
@@ -37,10 +37,10 @@ func init() {
 				Usage:     "Create a project in an organization",
 				ArgsUsage: "[name]",
 				Flags: []cli.Flag{
-					OrgFlag("Create the project in this org", false),
+					orgFlag("Create the project in this org", false),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					createProjectCmd,
 				),
 			},

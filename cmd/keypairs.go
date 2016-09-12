@@ -24,26 +24,26 @@ func init() {
 				Name:  "list",
 				Usage: "List your keypairs for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("org to show keypairs for", true),
+					orgFlag("org to show keypairs for", true),
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, listKeypairs,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, listKeypairs,
 				),
 			},
 			{
 				Name:  "generate",
 				Usage: "Generate keyparis for an organization",
 				Flags: []cli.Flag{
-					OrgFlag("org to show keypairs for", true),
+					orgFlag("org to show keypairs for", true),
 					cli.BoolFlag{
 						Name:  "all",
 						Usage: "Perform command for all orgs without valid keypairs",
 					},
 				},
-				Action: Chain(
-					EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-					SetUserEnv, checkRequiredFlags, generateKeypairs,
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, generateKeypairs,
 				),
 			},
 		},

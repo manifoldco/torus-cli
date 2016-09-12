@@ -15,7 +15,7 @@ func init() {
 		Name:     "login",
 		Usage:    "Log in to your Arigato account",
 		Category: "ACCOUNT",
-		Action:   Chain(EnsureDaemon, login),
+		Action:   chain(ensureDaemon, login),
 	}
 	Cmds = append(Cmds, login)
 }

@@ -20,19 +20,19 @@ func init() {
 		Usage:    "View secrets for the current service and environment",
 		Category: "SECRETS",
 		Flags: []cli.Flag{
-			StdOrgFlag,
-			StdProjectFlag,
-			StdEnvFlag,
-			ServiceFlag("Use this service.", "default", true),
-			StdInstanceFlag,
+			stdOrgFlag,
+			stdProjectFlag,
+			stdEnvFlag,
+			serviceFlag("Use this service.", "default", true),
+			stdInstanceFlag,
 			cli.BoolFlag{
 				Name:  "verbose, v",
 				Usage: "list the sources of the values",
 			},
 		},
-		Action: Chain(
-			EnsureDaemon, EnsureSession, LoadDirPrefs, LoadPrefDefaults,
-			SetUserEnv, checkRequiredFlags, viewCmd,
+		Action: chain(
+			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+			setUserEnv, checkRequiredFlags, viewCmd,
 		),
 	}
 
