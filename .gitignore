@@ -1,17 +1,18 @@
+# Things we get while testing/developing
 ag
 *.arigato.json
-cli/node_modules*
-cli/bin/ag
-cli/bin/ag-*
-!cli/bin/ag-node
-.DS_Store
-npm-debug*
+
 travis/id_rsa*
 builds/*
-vendor/*
 
+# Generated files for our binary
 data/bindata.go
 data/public_key.json
 
+# Our 3rd party deps
+vendor/*
+
+# Editor and OS stuff
+.DS_Store
 *.sw[mnop]
 *.orig

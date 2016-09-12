@@ -48,10 +48,9 @@ function build_binary {
   popd > /dev/null
 
   bin="ag-$os-$arch"
-  cp $DIR/ag $DIR/cli/bin/$bin
-  chmod +x $DIR/cli/bin/$bin
+  cp $DIR/ag /builds/$bin
 
-  echo "Copied $bin to $DIR/cli/bin/$bin"
+  echo "Copied $bin to builds/"
 }
 
 function build {
