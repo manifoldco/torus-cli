@@ -84,7 +84,7 @@ TAR_FILENAME="$TAR_FILENAME.tar.gz"
 echo ""
 echo "Creating Distributable ($RELEASE_STAMP.tar.gz) in $RELEASE_DIRECTORY"
 echo ""
-tar czf "$RELEASE_STAMP.tar.gz" builds/npm/
+tar czf "$RELEASE_STAMP.tar.gz" -C builds npm/
 
 read -p "Do you wish to publish the release to s3? [yn]" s3_publish
 case $s3_publish in
