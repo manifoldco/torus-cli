@@ -4,7 +4,7 @@ PKG_LIST = $(shell go list ${PKG}/... | grep -v /vendor/ | grep -v /data/bindata
 GO_FILES = $(shell find . -name '*.go' | grep -v /vendor/ | grep -v /data/bindata.go)
 VERSION = $(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
-PUBLIC_KEY ?= keys/production.json
+PUBLIC_KEY ?= data/keys/production.json
 
 all: binary
 
