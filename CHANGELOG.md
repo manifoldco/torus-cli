@@ -2,6 +2,8 @@
 
 ## v0.7.0
 
+_Published: 2016-09-08_
+
 **Notable Changes**
 
 - Five commands converted from Node.js to Go (run, view, invites accept, teams create, teams remove`).
@@ -14,13 +16,19 @@
 
 - Fixed an issue introduced in v0.6.0 that prevented alpha users from accepting invitations.
 
+
 ## v0.6.1
+
+_Published: 2016-09-08_
 
 **Fixes**
 
 - ag org invites approve, approved the first invite in the list instead of the invite for the supplied email.
 
+
 ## v0.6.0
+
+_Published: 2016-09-07_
 
 **Notable Changes**
 
@@ -46,7 +54,10 @@ We've converted 29 of 41 total commands from Node.js to Go since our last releas
 - ag unset
 - ag verify
 
+
 ## v0.5.0
+
+_Published: 2016-08-29_
 
 This release marks the first stage of our conversion to go. As such, many changes are structural, and not visible (but they're all still great!)
 
@@ -68,7 +79,10 @@ This release marks the first stage of our conversion to go. As such, many change
 - Help output is noticeably faster.
 - Server-side performance improvements will speed up most commands.
 
+
 ## v0.4.0
+
+_Published: 2016-08-22_
 
 **Breaking**
 
@@ -84,7 +98,10 @@ This release marks the first stage of our conversion to go. As such, many change
 - If the CLI cancels mid-operation the daemon now cancels its on-going crypto operations.
 - The CLI no longer checks the file permissions of the .arigato.json file
 
+
 ## v0.3.0
+
+_Published: 2016-08-17_
 
 **Notable Changes**
 
