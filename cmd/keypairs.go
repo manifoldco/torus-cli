@@ -104,7 +104,7 @@ func generateKeypairs(ctx *cli.Context) error {
 	subjectOrgs := make(map[*identity.ID]*api.OrgResult)
 	regenOrgs := make(map[*identity.ID]string)
 
-	if ctx.Bool("all") == true {
+	if ctx.Bool("all") {
 		// If all flag is supplied, we will get all their orgs
 		var orgs []api.OrgResult
 		orgs, oErr := client.Orgs.List(c)
@@ -184,12 +184,12 @@ func generateKeypairsForOrg(ctx *cli.Context, c context.Context, client *api.Cli
 
 	msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
 	outputErr := cli.NewExitError(msg, -1)
-	if orgID == nil && lookupOrg == false {
+	if orgID == nil && !lookupOrg {
 		return outputErr
 	}
 
 	// Lookup org if not supplied
-	if orgID == nil && lookupOrg == true {
+	if orgID == nil && lookupOrg {
 		orgs, err := client.Orgs.List(c)
 		if err != nil || len(orgs) < 1 {
 			return outputErr

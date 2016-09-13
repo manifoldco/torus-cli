@@ -76,11 +76,7 @@ func orgsCreate(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 
 	_, err = createOrgByName(ctx, c, client, name)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func createOrgByName(ctx *cli.Context, c context.Context, client *api.Client, name string) (*api.OrgResult, error) {

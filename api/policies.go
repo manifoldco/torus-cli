@@ -115,11 +115,7 @@ func (p *PoliciesClient) Attach(ctx context.Context, org, policy, team *identity
 		return err
 	}
 	_, err = p.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Detach deletes a specific attachment

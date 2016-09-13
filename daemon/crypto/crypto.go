@@ -70,11 +70,7 @@ func derivePassword(ctx context.Context, password, salt string) ([]byte, error) 
 	}
 
 	err = ctxutil.ErrIfDone(ctx)
-	if err != nil {
-		return pwh, err
-	}
-
-	return pwh, nil
+	return pwh, err
 }
 
 // EncryptPasswordObject derives the master key and password hash from password
