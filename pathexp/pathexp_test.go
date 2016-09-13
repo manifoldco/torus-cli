@@ -94,7 +94,6 @@ func TestParse(t *testing.T) {
 		"/org/project/e*/service/user/instance",
 		"/org/project/env/*/user/instance",
 		"/org/project/env/[abc|def]/user/instance",
-		"/org/project/env/[abc|def|candy10]/user/instance",
 		"/org/project/env/[abc|def|thing-*]/user/instance",
 	}
 
@@ -226,5 +225,19 @@ func TestWithInstance(t *testing.T) {
 	res := replaced.Equal(expected)
 	if !res {
 		t.Errorf("Expected %s Got %s", expected.String(), replaced.String())
+	}
+}
+
+func TestNormalize(t *testing.T) {
+	path := "/org/project/env/[abc|def|candy10]/user/instance"
+	pe, err := Parse(path)
+	if err != nil {
+		t.Errorf("Parsing of %s failed", path)
+	}
+
+	norm := "/org/project/env/[abc|candy10|def]/user/instance"
+	out := pe.String()
+	if out != norm {
+		t.Errorf("String() %s does not match normalized form %s", out, norm)
 	}
 }

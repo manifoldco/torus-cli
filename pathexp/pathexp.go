@@ -26,6 +26,7 @@ package pathexp
 import (
 	"errors"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -73,6 +74,11 @@ func (a alternation) String() string {
 	for _, s := range a {
 		strs = append(strs, s.String())
 	}
+
+	// XXX: pathexps must be normalized in sorted order for the server to accept
+	// them. We should revist this, so what the user puts in is what they get
+	// out.
+	sort.Strings(strs)
 
 	return "[" + strings.Join(strs, "|") + "]"
 }
