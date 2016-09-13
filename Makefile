@@ -61,7 +61,8 @@ OS=$(word 1, $(subst -, ,$*))
 ARCH=$(word 2, $(subst -, ,$*))
 BINARY=-o builds/$(OUT)-$(OS)-$(ARCH)
 $(addprefix release-,$(TARGETS)): release-%: gocheck bindata vendor
-	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY)
+	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
+		-ldflags='$(STATIC_FLAGS) $(VERSION_FLAG)' ${PKG}
 
 release-all: $(addprefix release-,$(TARGETS))
 

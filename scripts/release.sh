@@ -22,7 +22,6 @@ if [ "$ENVIRONMENT" != "staging" -a "$ENVIRONMENT" != "production" ]; then
     exit 1
 fi
 
-GIT_REPOSITORY="git@github.com:arigatomachine/cli.git"
 RELEASE_STAMP=`date -u +"%Y-%m-%dT%H-%M-%SZ"`
 BUILD_DIRECTORY=$HOME/build
 RELEASE_DIRECTORY="$BUILD_DIRECTORY/$RELEASE_STAMP"
@@ -48,7 +47,7 @@ echo "Changing CWD to $BUILD_DIRECTORY"
 cd $BUILD_DIRECTORY
 
 echo "Cloning repository into $BUILD_DIRECTORY/$RELEASE_STAMP"
-git clone --reference $SRC $GIT_REPOSITORY $RELEASE_STAMP
+git clone $SRC $RELEASE_STAMP
 
 echo "Switching into $RELEASE_DIRECTORY"
 cd "$RELEASE_DIRECTORY"
