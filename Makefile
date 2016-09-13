@@ -35,7 +35,7 @@ bootstrap: $(BOOTSTRAP)
 #################################################
 
 VERSION_FLAG=-X $(PKG)/config.Version=$(VERSION)
-STATIC_FLAGS=-extldflags "-static" -s -s
+STATIC_FLAGS=-extldflags "-static" -w -s
 GO_BUILD=go build -i -v
 
 binary: bindata vendor
