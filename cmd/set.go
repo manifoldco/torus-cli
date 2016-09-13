@@ -14,26 +14,29 @@ import (
 	"github.com/arigatomachine/cli/pathexp"
 )
 
+var setUnsetFlags = []cli.Flag{
+	stdOrgFlag,
+	stdProjectFlag,
+	newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
+		"", "AG_ENVIRONMENT", true),
+	newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
+		"default", "AG_SERVICE", true),
+	newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
+		"*", "AG_USER", true),
+	newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
+		"1", "AG_INSTANCE", true),
+}
+
 func init() {
 	set := cli.Command{
 		Name:      "set",
 		Usage:     "Set a secret for a service and environment",
 		ArgsUsage: "<name|path> <value>",
 		Category:  "SECRETS",
-		Flags: []cli.Flag{
-			stdOrgFlag,
-			stdProjectFlag,
-			newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
-				nil, "AG_ENVIRONMENT", true),
-			newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
-				[]string{"default"}, "AG_SERVICE", true),
-			newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
-				[]string{"*"}, "AG_USER", true),
-			newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
-				[]string{"1"}, "AG_INSTANCE", true),
-		},
+		Flags:     setUnsetFlags,
 		Action: chain(
-			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults, setCmd,
+			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+			setSliceDefaults, setCmd,
 		),
 	}
 

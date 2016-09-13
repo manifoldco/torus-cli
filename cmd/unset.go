@@ -14,20 +14,10 @@ func init() {
 		Usage:     "Remove a secret from a service and environment",
 		ArgsUsage: "<name|path>",
 		Category:  "SECRETS",
-		Flags: []cli.Flag{
-			stdOrgFlag,
-			stdProjectFlag,
-			newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
-				nil, "AG_ENVIRONMENT", true),
-			newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
-				[]string{"default"}, "AG_SERVICE", true),
-			newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
-				[]string{"*"}, "AG_USER", true),
-			newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
-				[]string{"1"}, "AG_INSTANCE", true),
-		},
+		Flags:     setUnsetFlags,
 		Action: chain(
-			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults, unsetCmd,
+			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+			setSliceDefaults, unsetCmd,
 		),
 	}
 
