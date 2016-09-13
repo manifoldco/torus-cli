@@ -18,7 +18,9 @@ cache:
     - vendor
 
 script:
-- ./travis/run.sh
+- docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
+- ./scripts/build-container.sh
+- ./scripts/test.sh
 
 env:
   global:
