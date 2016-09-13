@@ -14,11 +14,11 @@ func init() {
 				ArgsUsage: "<email>",
 				Flags: []cli.Flag{
 					orgFlag("org to invite user to", true),
-					newSlicePlaceholder("team, t", "TEAM", "team to add user to", []string{"member"}, "", true),
+					newSlicePlaceholder("team, t", "TEAM", "team to add user to", "member", "", true),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, invitesSend,
+					setSliceDefaults, setUserEnv, checkRequiredFlags, invitesSend,
 				),
 			},
 			{

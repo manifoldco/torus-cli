@@ -245,6 +245,22 @@ func setUserEnv(ctx *cli.Context) error {
 	return nil
 }
 
+// setSliceDefaults populates any string slice flags with the default value
+// if nothing else is set. This is different from the default urfave default
+// Value, which will always be included in the string slice options.
+func setSliceDefaults(ctx *cli.Context) error {
+	for _, f := range ctx.Command.Flags {
+		if psf, ok := f.(placeHolderStringSliceFlag); ok {
+			name := strings.SplitN(psf.GetName(), ",", 2)[0]
+			if psf.Default != "" && len(ctx.StringSlice(name)) == 0 {
+				ctx.Set(name, psf.Default)
+			}
+		}
+	}
+
+	return nil
+}
+
 func isSet(ctx *cli.Context, name string) bool {
 	value := ctx.Generic(name)
 	if value != nil {
