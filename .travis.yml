@@ -19,8 +19,8 @@ cache:
 
 script:
 - docker login -u=$DOCKER_USERNAME -p=$DOCKER_PASSWORD
-- ./scripts/build-container.sh
-- ./scripts/test.sh
+- make container
+- make docker-test
 
 env:
   global:

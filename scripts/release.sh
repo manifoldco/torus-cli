@@ -67,7 +67,7 @@ docker run --name relase-builder --rm \
     -v $RELEASE_DIRECTORY/builds:/builds \
     -e PUBLIC_KEY=data/keys/$ENVIRONMENT.json \
     arigato/cli:$TARGET_SHA \
-    release
+    release-all
 
 echo ""
 echo "Making npm package"
