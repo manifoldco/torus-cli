@@ -53,14 +53,14 @@ func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (
 	return &res, err
 }
 
-// List retrieves relevant policiies by orgID and/or projectID
-func (p *PoliciesClient) List(ctx context.Context, orgID, projectID *identity.ID) ([]PoliciesResult, error) {
+// List retrieves relevant policiies by orgID and/or name
+func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name string) ([]PoliciesResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
 	}
-	if projectID != nil && projectID.Type() != 0 {
-		v.Set("project_id", projectID.String())
+	if name != "" {
+		v.Set("name", name)
 	}
 
 	req, _, err := p.client.NewRequest("GET", "/policies", v, nil, true)
