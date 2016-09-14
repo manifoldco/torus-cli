@@ -148,7 +148,7 @@ func spawnDaemon() error {
 }
 
 func startDaemon(ctx *cli.Context) error {
-	arigatoRoot, err := config.CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
+	arigatoRoot, err := config.CreateArigatoRoot()
 	if err != nil {
 		return cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
 	}
