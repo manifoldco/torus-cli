@@ -59,10 +59,23 @@ func TestParse(t *testing.T) {
 		}
 	}
 
-	// Empty & single alternation
+	// Empty, single, and empty part alternation
 	testCases = append(testCases,
 		tc{path: "/o/p/e/s/u/[]", valid: false},
 		tc{path: "/o/p/e/s/u/[i]", valid: false},
+		tc{path: "/o/p/e/s/u/[|i]", valid: false},
+		tc{path: "/o/p/e/s/u/[i|]", valid: false},
+		tc{path: "/o/p/e/s/u/[|]", valid: false},
+	)
+
+	// partly formed alternations
+	testCases = append(testCases,
+		tc{path: "/o/p/e/s/u/[", valid: false},
+		tc{path: "/o/p/e/s/u/[i", valid: false},
+		tc{path: "/o/p/e/s/u/[i|", valid: false},
+		tc{path: "/o/p/e/s/u/|]", valid: false},
+		tc{path: "/o/p/e/s/u/|i]", valid: false},
+		tc{path: "/o/p/e/s/u/b|i]", valid: false},
 	)
 
 	// A too long part is invalid
@@ -74,6 +87,12 @@ func TestParse(t *testing.T) {
 	// A full glob in alternation is invalid
 	testCases = append(testCases, tc{
 		path:  "/org/project/env/service/[*|foo]/instance",
+		valid: false,
+	})
+
+	// An empty segment is invalid
+	testCases = append(testCases, tc{
+		path:  "/org/project/env/service//instance",
 		valid: false,
 	})
 
