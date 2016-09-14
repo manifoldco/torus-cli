@@ -273,6 +273,11 @@ func (pe *PathExp) String() string {
 
 func split(name, segment string) ([]string, error) {
 	parts := []string{segment}
+
+	if len(segment) == 0 {
+		return parts, nil // let elsewhere handle the empty single segment
+	}
+
 	if segment[0] == '[' && segment[len(segment)-1] == ']' {
 		parts = strings.Split(segment[1:len(segment)-1], "|")
 		// zero length is checked in parseMultiple
