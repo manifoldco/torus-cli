@@ -407,6 +407,22 @@ func (pa *PolicyAction) String() string {
 	return strings.Join(out, ", ")
 }
 
+// ShortString displays a single character representation of each of the
+// policy's actions.
+func (pa *PolicyAction) ShortString() string {
+	out := []byte{}
+
+	for i, v := range policyActionStrings {
+		if (1<<uint(i))&byte(*pa) > 0 {
+			out = append(out, v[0])
+		} else {
+			out = append(out, '-')
+		}
+	}
+
+	return string(out)
+}
+
 // PolicyAttachment is an entity that represents the link between policies and teams
 type PolicyAttachment struct {
 	v1Schema

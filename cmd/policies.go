@@ -24,7 +24,7 @@ func init() {
 		Subcommands: []cli.Command{
 			{
 				Name:  "list",
-				Usage: "List services for an organization",
+				Usage: "List ACL policies for an organization",
 				Flags: []cli.Flag{
 					orgFlag("org to show policies for", true),
 				},
@@ -33,6 +33,19 @@ func init() {
 					setUserEnv, checkRequiredFlags, listPolicies,
 				),
 			},
+			{
+				Name:      "view",
+				Usage:     "Display the contents of an ACL policy",
+				ArgsUsage: "<policy>",
+				Flags: []cli.Flag{
+					orgFlag("org to show policies for", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, viewPolicyCmd,
+				),
+			},
+
 			{
 				Name:      "detach",
 				Usage:     "Detach a policy from a team, does not delete the policy",
@@ -98,7 +111,7 @@ func detachPolicies(ctx *cli.Context) error {
 
 	go func() {
 		var policies []api.PoliciesResult
-		policies, pErr = client.Policies.List(c, org.ID, nil)
+		policies, pErr = client.Policies.List(c, org.ID, "")
 		for _, p := range policies {
 			if p.Body.Policy.Name == policyName {
 				policy = &p
@@ -180,7 +193,7 @@ func listPolicies(ctx *cli.Context) error {
 	var policies []api.PoliciesResult
 	var pErr error
 	go func() {
-		policies, pErr = client.Policies.List(c, org.ID, nil)
+		policies, pErr = client.Policies.List(c, org.ID, "")
 		getAttachments.Done()
 	}()
 
@@ -246,5 +259,59 @@ func listPolicies(ctx *cli.Context) error {
 
 	w.Flush()
 	fmt.Println("")
+	return nil
+}
+
+func viewPolicyCmd(ctx *cli.Context) error {
+	args := ctx.Args()
+	if len(args) != 1 {
+		msg := "policy name is required.\n"
+		if len(args) > 1 {
+			msg = "Too many arguments provided.\n"
+		}
+		msg += usageString(ctx)
+		return cli.NewExitError(msg, -1)
+	}
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return cli.NewExitError("Unable to lookup org. Please try again.", -1)
+	}
+	if org == nil {
+		return cli.NewExitError("Org not found.", -1)
+	}
+
+	policies, err := client.Policies.List(c, org.ID, args[0])
+	if err != nil {
+		return cli.NewExitError("Unable to list policies. Please try again.", -1)
+	}
+
+	if len(policies) < 1 {
+		return cli.NewExitError("Policy '"+args[0]+"' not found.", -1)
+	}
+
+	policy := policies[0]
+	p := policy.Body.Policy
+
+	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
+
+	fmt.Fprintf(w, "Name:\t%s\n", p.Name)
+	fmt.Fprintf(w, "Description:\t%s\n", p.Description)
+	fmt.Fprintln(w, "")
+	w.Flush()
+
+	for _, stmt := range p.Statements {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", stmt.Effect.String(), stmt.Action.ShortString(), stmt.Resource)
+	}
+	w.Flush()
+
 	return nil
 }
