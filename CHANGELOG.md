@@ -1,8 +1,16 @@
 # CHANGELOG
 
-## v0.8.0
+## v0.9.0
 
 _Unreleased_
+
+**Notable Changes**
+
+- Command added for viewing policy statements: ag policies view
+
+## v0.8.0
+
+_Published: 2016-09-13_
 
 **Notable Changes**
 

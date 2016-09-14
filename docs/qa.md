@@ -65,7 +65,8 @@ If you have `ag` installed, start fresh `npm uninstall -g ag`
 - [ ]   `ag policies list —org [org]` displays the generated policies attached to the appripriate `[team]`
 - [ ]   `ag policies detach [name] [team] —org [org]` detaches the policy from the team
 - [ ]  Members of `[team]` have appropriate access
-- [ ]  System polcies cannot be detached
+- [ ]  System policies cannot be detached
+- [ ]  `ag policies view [name]` displays statements contained within the policy
 
 ### Critical Path
 
