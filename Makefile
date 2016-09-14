@@ -36,8 +36,8 @@ bootstrap: $(BOOTSTRAP)
 #################################################
 
 VERSION_FLAG=-X $(PKG)/config.Version=$(VERSION)
-STATIC_FLAGS=-extldflags "-static" -w -s
-GO_BUILD=go build -i -v
+STATIC_FLAGS=-w -s
+GO_BUILD=CGO_ENABLED=0 go build -i -v
 
 binary: bindata vendor
 	$(GO_BUILD) -o ${OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
@@ -115,7 +115,7 @@ EACH_FILE=\
 	fi ;
 
 test: bindata vendor
-	@go test -short $$(glide nv)
+	@CGO_ENABLED=0 go test -short $$(glide nv)
 
 vet:
 	@go vet $$(glide nv)
@@ -148,6 +148,9 @@ docker-build:
 
 docker-test:
 	$(call RUN_IN_DOCKER,ci)
+
+docker-release-all:
+	$(call RUN_IN_DOCKER,release-all)
 
 container:
 	docker build -t arigato/cli:latest .
