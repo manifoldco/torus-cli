@@ -114,7 +114,7 @@ func linkCmd(ctx *cli.Context) error {
 	// Do not create default service if --bare is used or if existing project
 	// is selected from the prompt
 	createDefaultService := true
-	if ctx.Bool("bare") || newProject == false {
+	if ctx.Bool("bare") || !newProject {
 		createDefaultService = false
 	}
 

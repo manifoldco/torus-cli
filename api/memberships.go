@@ -98,11 +98,7 @@ func (m *MembershipsClient) Create(ctx context.Context, userID, orgID, teamID *i
 	}
 
 	_, err = m.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Delete requests deletion of a specific membership row by ID

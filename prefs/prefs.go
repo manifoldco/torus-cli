@@ -110,7 +110,7 @@ func RcPath() (string, error) {
 // NewPreferences returns a new instance of preferences struct
 func NewPreferences(useDefaults bool) (*Preferences, error) {
 	prefs := &Preferences{}
-	if useDefaults == true {
+	if useDefaults {
 		prefs = &Preferences{
 			Core: Core{
 				RegistryURI: registryURI,

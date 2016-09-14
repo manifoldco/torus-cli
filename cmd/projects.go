@@ -146,11 +146,7 @@ func createProjectCmd(ctx *cli.Context) error {
 	}
 
 	_, err = createProjectByName(c, client, orgID, name)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func createProjectByName(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.ProjectResult, error) {

@@ -101,11 +101,7 @@ func (i *InvitesClient) Send(ctx context.Context, email string, orgID, inviterID
 	}
 
 	_, err = i.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Accept executes the accept invite request

@@ -93,9 +93,5 @@ func (s *ServicesClient) Create(ctx context.Context, orgID, projectID *identity.
 	}
 
 	_, err = s.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

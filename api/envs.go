@@ -52,11 +52,7 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 	}
 
 	_, err = e.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // List retrieves relevant envs by name and/or orgID and/or projectID

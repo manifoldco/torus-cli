@@ -28,8 +28,8 @@ func TestNotifier(t *testing.T) {
 		go grandChildA.Notify(Progress, "woo", true)
 		go grandChildA.Notify(Progress, "hahahaha", false)
 
-		_ = <-o.notify
-		_ = <-o.notify
+		<-o.notify
+		<-o.notify
 		evtC := <-o.notify
 
 		if evtC.Total != 24 {
@@ -93,7 +93,7 @@ func TestNotifier(t *testing.T) {
 		}
 
 		go parent.Notify(Progress, "helo", true)
-		_ = <-o.notify
+		<-o.notify
 
 		parent.Notify(Progress, "haha", true)
 	})

@@ -11,7 +11,7 @@ PUBLIC_KEY?=data/keys/production.json
 VERSION=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 all: binary
-ci: binary vet fmtcheck lint test
+ci: binary vet fmtcheck simple lint test
 
 .PHONY: all ci
 
@@ -22,6 +22,7 @@ ci: binary vet fmtcheck lint test
 BOOTSTRAP=\
 	github.com/Masterminds/glide \
 	github.com/golang/lint/golint \
+	honnef.co/go/simple/cmd/gosimple \
 	github.com/jteeuwen/go-bindata/...
 
 $(BOOTSTRAP):
@@ -122,10 +123,13 @@ vet:
 fmtcheck:
 	$(call EACH_FILE,gofmt,gofmt -l -s)
 
+simple:
+	$(call EACH_FILE,gosimple,gosimple)
+
 lint:
 	$(call EACH_FILE,golint,golint)
 
-.PHONY: vet fmtcheck lint test
+.PHONY: vet fmtcheck simple lint test
 
 #################################################
 # Docker targets

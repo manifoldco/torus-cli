@@ -109,9 +109,5 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 	}
 
 	_, err = t.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
