@@ -78,7 +78,8 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 }
 
 // CreateArigatoRoot creates the root directory for the Arigato daemon.
-func CreateArigatoRoot(arigatoRoot string) (string, error) {
+func CreateArigatoRoot() (string, error) {
+	arigatoRoot := os.Getenv("AG_ROOT")
 	if len(arigatoRoot) == 0 {
 		arigatoRoot = path.Join(os.Getenv("HOME"), ".arigato")
 	}
@@ -139,7 +140,7 @@ func loadCABundle(cafile string) (*x509.CertPool, error) {
 
 // LoadConfig loads the config, standardizing cli errors on failure.
 func LoadConfig() (*Config, error) {
-	arigatoRoot, err := CreateArigatoRoot(os.Getenv("ARIGATO_ROOT"))
+	arigatoRoot, err := CreateArigatoRoot()
 	if err != nil {
 		return nil, cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
 	}
