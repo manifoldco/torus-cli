@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -73,25 +72,7 @@ func (e *EnvironmentsClient) List(ctx context.Context, orgID, projectID *identit
 		return nil, err
 	}
 
-	envs := make([]envelope.Unsigned, 1)
+	envs := []EnvironmentResult{}
 	_, err = e.client.Do(ctx, req, &envs, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	envResults := make([]EnvironmentResult, len(envs))
-	for i, t := range envs {
-		env := EnvironmentResult{}
-		env.ID = t.ID
-		env.Version = t.Version
-
-		envBody, ok := t.Body.(*primitive.Environment)
-		if !ok {
-			return nil, errors.New("invalid env body")
-		}
-		env.Body = envBody
-		envResults[i] = env
-	}
-
-	return envResults, nil
+	return envs, err
 }

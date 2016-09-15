@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -41,27 +40,9 @@ func (s *ServicesClient) List(ctx context.Context, orgID, projectID *identity.ID
 		return nil, err
 	}
 
-	services := make([]envelope.Unsigned, 1)
+	services := []ServiceResult{}
 	_, err = s.client.Do(ctx, req, &services, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	serviceResults := make([]ServiceResult, len(services))
-	for i, t := range services {
-		service := ServiceResult{}
-		service.ID = t.ID
-		service.Version = t.Version
-
-		serviceBody, ok := t.Body.(*primitive.Service)
-		if !ok {
-			return nil, errors.New("invalid service body")
-		}
-		service.Body = serviceBody
-		serviceResults[i] = service
-	}
-
-	return serviceResults, nil
+	return services, err
 }
 
 // Create performs a request to create a new service object

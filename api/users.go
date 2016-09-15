@@ -2,10 +2,8 @@ package api
 
 import (
 	"context"
-	"errors"
 
 	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -29,23 +27,9 @@ func (u *UsersClient) Self(ctx context.Context) (*UserResult, error) {
 		return nil, err
 	}
 
-	result := envelope.Unsigned{}
-	_, err = u.client.Do(ctx, req, &result, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	user := UserResult{}
-	user.ID = result.ID
-	user.Version = result.Version
-
-	userBody, ok := result.Body.(*primitive.User)
-	if !ok {
-		return nil, errors.New("invalid user body")
-	}
-	user.Body = userBody
-
-	return &user, nil
+	_, err = u.client.Do(ctx, req, &user, nil, nil)
+	return &user, err
 }
 
 // Signup will have the daemon create a new user request
@@ -55,23 +39,9 @@ func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, outpu
 		return nil, err
 	}
 
-	result := envelope.Unsigned{}
-	_, err = u.client.Do(ctx, req, &result, nil, output)
-	if err != nil {
-		return nil, err
-	}
-
 	user := UserResult{}
-	user.ID = result.ID
-	user.Version = result.Version
-
-	userBody, ok := result.Body.(*primitive.User)
-	if !ok {
-		return nil, errors.New("invalid user body")
-	}
-	user.Body = userBody
-
-	return &user, nil
+	_, err = u.client.Do(ctx, req, &user, nil, output)
+	return &user, err
 }
 
 // VerifyEmail will confirm the user's email with the registry

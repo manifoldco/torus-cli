@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -33,13 +32,9 @@ func (t *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]TeamR
 		return nil, err
 	}
 
-	teams := make([]envelope.Unsigned, 1)
+	teams := []TeamResult{}
 	_, err = t.client.Do(ctx, req, &teams, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return buildTeamResults(teams)
+	return teams, err
 }
 
 // GetByName retrieves the team with the specified name
@@ -53,31 +48,9 @@ func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name st
 		return nil, err
 	}
 
-	teams := make([]envelope.Unsigned, 1)
+	teams := []TeamResult{}
 	_, err = t.client.Do(ctx, req, &teams, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return buildTeamResults(teams)
-}
-
-func buildTeamResults(teams []envelope.Unsigned) ([]TeamResult, error) {
-	teamResults := make([]TeamResult, len(teams))
-	for i, t := range teams {
-		team := TeamResult{}
-		team.ID = t.ID
-		team.Version = t.Version
-
-		teamBody, ok := t.Body.(*primitive.Team)
-		if !ok {
-			return nil, errors.New("invalid team body")
-		}
-		team.Body = teamBody
-		teamResults[i] = team
-	}
-
-	return teamResults, nil
+	return teams, err
 }
 
 // Create performs a request to create a new team object

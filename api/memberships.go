@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -41,25 +40,8 @@ func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.
 		return nil, err
 	}
 
-	envs := []envelope.Unsigned{}
-	_, err = m.client.Do(ctx, req, &envs, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	memberships := make([]MembershipResult, len(envs))
-	for i, env := range envs {
-		membershipBody, ok := env.Body.(*primitive.Membership)
-		if !ok {
-			return nil, errors.New("invalid membership body")
-		}
-		memberships[i] = MembershipResult{
-			ID:      env.ID,
-			Version: env.Version,
-			Body:    membershipBody,
-		}
-	}
-
+	memberships := []MembershipResult{}
+	_, err = m.client.Do(ctx, req, &memberships, nil, nil)
 	return memberships, err
 }
 
