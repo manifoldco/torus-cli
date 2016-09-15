@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/url"
 
 	"github.com/arigatomachine/cli/envelope"
@@ -68,27 +67,9 @@ func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name stri
 		return nil, err
 	}
 
-	policies := make([]envelope.Unsigned, 1)
+	policies := []PoliciesResult{}
 	_, err = p.client.Do(ctx, req, &policies, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	policyResults := make([]PoliciesResult, len(policies))
-	for i, t := range policies {
-		policy := PoliciesResult{}
-		policy.ID = t.ID
-		policy.Version = t.Version
-
-		policyBody, ok := t.Body.(*primitive.Policy)
-		if !ok {
-			return nil, errors.New("invalid policy body")
-		}
-		policy.Body = policyBody
-		policyResults[i] = policy
-	}
-
-	return policyResults, nil
+	return policies, err
 }
 
 // Attach attaches a policy to a team
@@ -150,25 +131,7 @@ func (p *PoliciesClient) AttachmentsList(ctx context.Context, orgID, ownerID, po
 		return nil, err
 	}
 
-	var attachments []envelope.Unsigned
+	attachments := []PolicyAttachmentResult{}
 	_, err = p.client.Do(ctx, req, &attachments, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	policyAttachmentResults := make([]PolicyAttachmentResult, len(attachments))
-	for i, a := range attachments {
-		attachment := PolicyAttachmentResult{}
-		attachment.ID = a.ID
-		attachment.Version = a.Version
-
-		policyBody, ok := a.Body.(*primitive.PolicyAttachment)
-		if !ok {
-			return nil, errors.New("invalid policy attachment body")
-		}
-		attachment.Body = policyBody
-		policyAttachmentResults[i] = attachment
-	}
-
-	return policyAttachmentResults, nil
+	return attachments, err
 }

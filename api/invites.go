@@ -2,12 +2,10 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/url"
 	"time"
 
 	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -38,34 +36,9 @@ func (i *InvitesClient) List(ctx context.Context, orgID *identity.ID, states []s
 		return nil, err
 	}
 
-	var invites []envelope.Unsigned
+	invites := []InviteResult{}
 	_, err = i.client.Do(ctx, req, &invites, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	invitesResults := make([]InviteResult, len(invites))
-	for i, inv := range invites {
-		invite, err := convertInviteResults(inv)
-		if err != nil {
-			return nil, err
-		}
-		invitesResults[i] = *invite
-	}
-	return invitesResults, nil
-}
-
-func convertInviteResults(i envelope.Unsigned) (*InviteResult, error) {
-	invite := InviteResult{}
-	invite.ID = i.ID
-	invite.Version = i.Version
-
-	inviteBody, ok := i.Body.(*primitive.OrgInvite)
-	if !ok {
-		return nil, errors.New("invalid org invite body")
-	}
-	invite.Body = inviteBody
-	return &invite, nil
+	return invites, err
 }
 
 // Send creates a new org invitation
@@ -139,21 +112,9 @@ func (i *InvitesClient) Associate(ctx context.Context, org, email, code string) 
 		return nil, err
 	}
 
-	var invites envelope.Unsigned
-	_, err = i.client.Do(ctx, req, &invites, &reqID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := convertInviteResults(invites)
-	if err != nil {
-		return nil, err
-	}
-	if result == nil {
-		return nil, errors.New("invalid org invite response")
-	}
-
-	return result, nil
+	invite := InviteResult{}
+	_, err = i.client.Do(ctx, req, &invite, &reqID, nil)
+	return &invite, err
 }
 
 // Approve executes the approve invite request

@@ -2,10 +2,8 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/url"
 
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -60,25 +58,7 @@ func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID, name *str
 		return nil, err
 	}
 
-	projects := make([]envelope.Unsigned, 1)
+	projects := []ProjectResult{}
 	_, err = p.client.Do(ctx, req, &projects, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	projectResults := make([]ProjectResult, len(projects))
-	for i, t := range projects {
-		project := ProjectResult{}
-		project.ID = t.ID
-		project.Version = t.Version
-
-		projectBody, ok := t.Body.(*primitive.Project)
-		if !ok {
-			return nil, errors.New("invalid project body")
-		}
-		project.Body = projectBody
-		projectResults[i] = project
-	}
-
-	return projectResults, nil
+	return projects, err
 }

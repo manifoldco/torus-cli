@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -56,7 +55,7 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, er
 		return nil, err
 	}
 
-	orgs := make([]envelope.Unsigned, 1)
+	orgs := []OrgResult{}
 	_, err = o.client.Do(ctx, req, &orgs, nil, nil)
 	if err != nil {
 		return nil, err
@@ -65,7 +64,7 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, er
 		return nil, nil
 	}
 
-	return convertOrg(&orgs[0])
+	return &orgs[0], nil
 }
 
 // List returns all organizations that the signed-in user has access to
@@ -75,34 +74,7 @@ func (o *OrgsClient) List(ctx context.Context) ([]OrgResult, error) {
 		return nil, err
 	}
 
-	orgs := []envelope.Unsigned{}
+	orgs := []OrgResult{}
 	_, err = o.client.Do(ctx, req, &orgs, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	res := make([]OrgResult, len(orgs))
-	for i, env := range orgs {
-		org, err := convertOrg(&env)
-		if err != nil {
-			return nil, err
-		}
-		res[i] = *org
-	}
-
-	return res, nil
-}
-
-func convertOrg(env *envelope.Unsigned) (*OrgResult, error) {
-	org := OrgResult{}
-	org.ID = env.ID
-	org.Version = env.Version
-
-	orgBody, ok := env.Body.(*primitive.Org)
-	if !ok {
-		return nil, errors.New("invalid org body")
-	}
-	org.Body = orgBody
-
-	return &org, nil
+	return orgs, err
 }
