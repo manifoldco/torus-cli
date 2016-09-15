@@ -39,7 +39,21 @@ func listVersionsCmd(ctx *cli.Context) error {
 
 	client := api.NewClient(cfg)
 	c := context.Background()
+	daemonVersion, registryVersion, err := retrieveVersions(client, c)
+	if err != nil {
+		return err
+	}
 
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
+	fmt.Fprintf(w, "%s\t%s\n", "CLI", cfg.Version)
+	fmt.Fprintf(w, "%s\t%s\n", "Daemon", daemonVersion.Version)
+	fmt.Fprintf(w, "%s\t%s\n", "Registry", registryVersion.Version)
+	w.Flush()
+
+	return nil
+}
+
+func retrieveVersions(client *api.Client, c context.Context) (*apitypes.Version, *apitypes.Version, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -55,14 +69,9 @@ func listVersionsCmd(ctx *cli.Context) error {
 	wg.Wait()
 
 	if dErr != nil || rErr != nil {
-		return cli.NewMultiError(dErr, rErr)
+		return nil, nil, cli.NewMultiError(dErr, rErr)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
-	fmt.Fprintf(w, "%s\t%s\n", "CLI", cfg.Version)
-	fmt.Fprintf(w, "%s\t%s\n", "Daemon", daemonVersion.Version)
-	fmt.Fprintf(w, "%s\t%s\n", "Registry", registryVersion.Version)
-	w.Flush()
+	return daemonVersion, registryVersion, nil
 
-	return nil
 }
