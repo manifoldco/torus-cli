@@ -31,6 +31,14 @@ type mutable struct{}
 
 func (mutable) Mutable() {}
 
+// v2Schema embeds in other structs to indicate their schema version is 2.
+type v2Schema struct{}
+
+// Version returns the schema version of structs that embed this type.
+func (v2Schema) Version() int {
+	return 2
+}
+
 // User is the body of a user object
 type User struct { // type: 0x01
 	v1Schema
@@ -154,12 +162,7 @@ type CredentialValue struct {
 	Value     *base64.Value `json:"value"`
 }
 
-// Keyring is a mechanism for sharing a shared secret between many different
-// users and machines at a position in the credential path.
-//
-// Credentials belong to Keyrings
-type Keyring struct { // type: 0x09
-	v1Schema
+type baseKeyring struct {
 	immutable
 	Created        time.Time        `json:"created_at"`
 	OrgID          *identity.ID     `json:"org_id"`
@@ -169,11 +172,43 @@ type Keyring struct { // type: 0x09
 	KeyringVersion int              `json:"version"`
 }
 
-// KeyringMember is a record of sharing a master secret key with a user or
+// KeyringV1 is the old keyring format, without claims or mekshares.
+type KeyringV1 struct { // type: 0x09
+	v1Schema
+	baseKeyring
+}
+
+// Keyring is a mechanism for sharing a shared secret between many different
+// users and machines at a position in the credential path.
+//
+// Credentials belong to Keyrings
+type Keyring struct { // type: 0x09
+	v2Schema
+	baseKeyring
+}
+
+// NewKeyring returns a new v2 Keyring, with the created time set to now
+func NewKeyring(orgID, projectID *identity.ID, pathExp *pathexp.PathExp) *Keyring {
+	return &Keyring{
+		baseKeyring: baseKeyring{
+			Created:   time.Now().UTC(),
+			OrgID:     orgID,
+			PathExp:   pathExp,
+			ProjectID: projectID,
+
+			// This is the first instance of the keyring, so version is 1,
+			// and there is no previous instance.
+			Previous:       nil,
+			KeyringVersion: 1,
+		},
+	}
+}
+
+// KeyringMemberV1 is a record of sharing a master secret key with a user or
 // machine.
 //
 // KeyringMember belongs to a Keyring
-type KeyringMember struct { // type: 0x0a
+type KeyringMemberV1 struct { // type: 0x0a
 	v1Schema
 	immutable
 	Created         time.Time         `json:"created_at"`
@@ -186,12 +221,56 @@ type KeyringMember struct { // type: 0x0a
 	PublicKeyID     *identity.ID      `json:"public_key_id"`
 }
 
+// KeyringMember is a record of sharing a master secret key with a user or
+// machine.
+//
+// This is the v2 schema version, which has a detached mekshare so it can be
+// revoked.
+//
+// KeyringMember belongs to a Keyring
+type KeyringMember struct { // type: 0x0a
+	v2Schema
+	immutable
+	Created         time.Time    `json:"created_at"`
+	EncryptingKeyID *identity.ID `json:"encrypting_key_id"`
+	KeyringID       *identity.ID `json:"keyring_id"`
+	OrgID           *identity.ID `json:"org_id"`
+	OwnerID         *identity.ID `json:"owner_id"`
+	PublicKeyID     *identity.ID `json:"public_key_id"`
+}
+
 // KeyringMemberKey is the keyring master encryption key, encrypted for the
-// owner of a KeyringMember
+// owner of a KeyringMember/MEKShare
 type KeyringMemberKey struct {
 	Algorithm string        `json:"alg"`
 	Nonce     *base64.Value `json:"nonce"`
 	Value     *base64.Value `json:"value"`
+}
+
+// MEKShare is a V2 KeyringMember's share of the keyring master encryption key.
+type MEKShare struct { // type: 0x16
+	v1Schema
+	immutable
+	Created         time.Time         `json:"created_at"`
+	OrgID           *identity.ID      `json:"org_id"`
+	OwnerID         *identity.ID      `json:"owner_id"`
+	KeyringID       *identity.ID      `json:"keyring_id"`
+	KeyringMemberID *identity.ID      `json:"keyring_member_id"`
+	Key             *KeyringMemberKey `json:"key"`
+}
+
+// KeyringMemberClaim is a claim for a keyring member. Only revocation is
+// supported as a claim type.
+type KeyringMemberClaim struct { // type: 0x15
+	v1Schema
+	immutable
+	OrgID           *identity.ID `json:"org_id"`
+	KeyringID       *identity.ID `json:"keyring_id"`
+	KeyringMemberID *identity.ID `json:"keyring_member_id"`
+	OwnerID         *identity.ID `json:"owner_id"`
+	Previous        *identity.ID `json:"previous"`
+	ClaimType       string       `json:"type"`
+	Created         time.Time    `json:"created_at"`
 }
 
 // Org is a grouping of users that collaborate with each other

@@ -23,11 +23,11 @@ const (
 	signingKeyType    = "signing"
 )
 
-// createCredentialTree generates, signs, and posts a new CredentialTree
+// createCredentialGraph generates, signs, and posts a new CredentialGraph
 // to the registry.
-func createCredentialTree(ctx context.Context, credBody *PlaintextCredential,
+func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
-	client *registry.Client, engine *crypto.Engine) (*registry.CredentialTree, error) {
+	client *registry.Client, engine *crypto.Engine) (*registry.CredentialGraphV2, error) {
 
 	pathExp, err := credBody.PathExp.WithInstance("*")
 	if err != nil {
@@ -35,17 +35,7 @@ func createCredentialTree(ctx context.Context, credBody *PlaintextCredential,
 	}
 
 	keyring, err := engine.SignedEnvelope(
-		ctx, &primitive.Keyring{
-			Created:   time.Now().UTC(),
-			OrgID:     credBody.OrgID,
-			PathExp:   pathExp,
-			ProjectID: credBody.ProjectID,
-
-			// This is the first instance of the keyring, so version is 1,
-			// and there is no previous instance.
-			Previous:       nil,
-			KeyringVersion: 1,
-		},
+		ctx, primitive.NewKeyring(credBody.OrgID, credBody.ProjectID, pathExp),
 		sigID, &kp.Signature)
 	if err != nil {
 		return nil, err
@@ -85,7 +75,7 @@ func createCredentialTree(ctx context.Context, credBody *PlaintextCredential,
 	// get users in the members group of this org.
 	// use their public key to encrypt the mek with a random nonce.
 	// XXX: we need to filter this down
-	members := []envelope.Signed{}
+	members := []registry.KeyringMember{}
 	for _, membership := range memberships {
 		mBody := membership.Body.(*primitive.Membership)
 
@@ -101,23 +91,14 @@ func createCredentialTree(ctx context.Context, credBody *PlaintextCredential,
 			return nil, err
 		}
 
-		member, err := engine.SignedEnvelope(
-			ctx, &primitive.KeyringMember{
-				Created:         time.Now().UTC(),
-				OrgID:           credBody.OrgID,
-				ProjectID:       credBody.ProjectID,
-				KeyringID:       keyring.ID,
-				OwnerID:         pubKey.OwnerID,
-				PublicKeyID:     encPubKey.ID,
-				EncryptingKeyID: encID,
+		key := &primitive.KeyringMemberKey{
+			Algorithm: crypto.EasyBox,
+			Nonce:     base64.NewValue(nonce),
+			Value:     base64.NewValue(encmek),
+		}
 
-				Key: &primitive.KeyringMemberKey{
-					Algorithm: crypto.EasyBox,
-					Nonce:     base64.NewValue(nonce),
-					Value:     base64.NewValue(encmek),
-				},
-			},
-			sigID, &kp.Signature)
+		member, err := newV2KeyringMember(ctx, engine, credBody.OrgID, keyring.ID,
+			pubKey.OwnerID, encPubKey.ID, encID, sigID, key, kp)
 		if err != nil {
 			return nil, err
 		}
@@ -125,12 +106,68 @@ func createCredentialTree(ctx context.Context, credBody *PlaintextCredential,
 		members = append(members, *member)
 	}
 
-	tree := registry.CredentialTree{
-		Keyring: keyring,
-		Members: members,
+	graph := registry.CredentialGraphV2{
+		KeyringSectionV2: registry.KeyringSectionV2{
+			Keyring: keyring,
+			Claims:  []envelope.Signed{},
+			Members: members,
+		},
 	}
 
-	return &tree, nil
+	return &graph, nil
+}
+
+func newV1KeyringMember(ctx context.Context, engine *crypto.Engine,
+	orgID, projectID, keyringID, ownerID, pubKeyID, encKeyID, sigID *identity.ID,
+	key *primitive.KeyringMemberKey, kp *crypto.KeyPairs) (*envelope.Signed, error) {
+
+	now := time.Now().UTC()
+	return engine.SignedEnvelope(ctx, &primitive.KeyringMemberV1{
+		Created:         now,
+		OrgID:           orgID,
+		ProjectID:       projectID,
+		KeyringID:       keyringID,
+		OwnerID:         ownerID,
+		PublicKeyID:     pubKeyID,
+		EncryptingKeyID: encKeyID,
+		Key:             key,
+	}, sigID, &kp.Signature)
+}
+
+func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
+	orgID, keyringID, ownerID, pubKeyID, encKeyID, sigID *identity.ID,
+	key *primitive.KeyringMemberKey, kp *crypto.KeyPairs) (*registry.KeyringMember, error) {
+
+	now := time.Now().UTC()
+	member, err := engine.SignedEnvelope(ctx, &primitive.KeyringMember{
+		Created:         now,
+		OrgID:           orgID,
+		KeyringID:       keyringID,
+		OwnerID:         ownerID,
+		PublicKeyID:     pubKeyID,
+		EncryptingKeyID: encKeyID,
+	}, sigID, &kp.Signature)
+
+	if err != nil {
+		return nil, err
+	}
+
+	mekshare, err := engine.SignedEnvelope(ctx, &primitive.MEKShare{
+		Created:         now,
+		OrgID:           orgID,
+		OwnerID:         ownerID,
+		KeyringID:       keyringID,
+		KeyringMemberID: member.ID,
+		Key:             key,
+	}, sigID, &kp.Signature)
+	if err != nil {
+		return nil, err
+	}
+
+	return &registry.KeyringMember{
+		Member:   member,
+		MEKShare: mekshare,
+	}, nil
 }
 
 // fetchKeyPairs fetches the user's signing and encryption keypairs from the
@@ -187,26 +224,6 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 	return sigClaimed.PublicKey.ID, encClaimed.PublicKey.ID, &kp, nil
 }
 
-// findKeyringMember finds the keyring member with the given id
-func findKeyringMember(id *identity.ID,
-	tree *registry.CredentialTree) (*primitive.KeyringMember, error) {
-	var krm *primitive.KeyringMember
-	for _, m := range tree.Members {
-		mBody := m.Body.(*primitive.KeyringMember)
-		if *mBody.OwnerID == *id {
-			krm = mBody
-			break
-		}
-	}
-
-	if krm == nil {
-		err := fmt.Errorf("No keyring membership found")
-		return nil, err
-	}
-
-	return krm, nil
-}
-
 // findEncryptingKey queries the registry for public keys in the given org, to
 // find the matching one
 func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *identity.ID,
@@ -254,28 +271,6 @@ func findMembersTeam(teams []envelope.Unsigned) (*envelope.Unsigned, error) {
 	}
 
 	return team, nil
-}
-
-// findKeyringSegmentMember takes a keyring and finds the membership for the
-// given owner id.
-func findKeyringSegmentMember(id *identity.ID,
-	section *registry.KeyringSection) (*primitive.KeyringMember, error) {
-
-	var krm *primitive.KeyringMember
-	for _, m := range section.Members {
-		mBody := m.Body.(*primitive.KeyringMember)
-		if *mBody.OwnerID == *id {
-			krm = mBody
-			break
-		}
-	}
-
-	if krm == nil {
-		err := fmt.Errorf("No keyring membership found for %s", id.String())
-		return nil, err
-	}
-
-	return krm, nil
 }
 
 func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
