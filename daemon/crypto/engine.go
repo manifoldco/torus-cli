@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/dchest/blake2b"
-	triplesec "github.com/keybase/go-triplesec"
+	"github.com/keybase/go-triplesec"
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
