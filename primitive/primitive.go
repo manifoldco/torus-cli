@@ -16,7 +16,7 @@ import (
 type v1Schema struct{}
 
 // Version returns the schema version of structs that embed this type.
-func (v *v1Schema) Version() int {
+func (v1Schema) Version() int {
 	return 1
 }
 
