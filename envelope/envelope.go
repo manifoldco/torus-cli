@@ -3,9 +3,6 @@
 package envelope
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -72,64 +69,4 @@ func (e *Unsigned) UnmarshalJSON(b []byte) error {
 	e.Body = body
 
 	return nil
-}
-
-// Shared unmarshaling for signed and unsigned Envelopes
-func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
-	o := outEnvelope{}
-	err := json.Unmarshal(b, &o)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var body identity.Identifiable
-
-	t := o.ID.Type()
-	switch t {
-	case 0x01:
-		body = &primitive.User{}
-	case 0x03:
-		body = &primitive.Service{}
-	case 0x04:
-		body = &primitive.Project{}
-	case 0x05:
-		body = &primitive.Environment{}
-	case 0x06:
-		body = &primitive.PublicKey{}
-	case 0x07:
-		body = &primitive.PrivateKey{}
-	case 0x08:
-		body = &primitive.Claim{}
-	case 0x09:
-		body = &primitive.Keyring{}
-	case 0x12:
-		body = &primitive.PolicyAttachment{}
-	case 0x11:
-		body = &primitive.Policy{}
-	case 0x0a:
-		body = &primitive.KeyringMember{}
-	case 0x0b:
-		body = &primitive.Credential{}
-	case 0x0d:
-		body = &primitive.Org{}
-	case 0x0e:
-		body = &primitive.Membership{}
-	case 0x0f:
-		body = &primitive.Team{}
-	case 0x13:
-		body = &primitive.OrgInvite{}
-	default:
-		return nil, nil, fmt.Errorf("Unknown primitive type id: %d", t)
-	}
-
-	err = json.Unmarshal(o.Body, body)
-
-	return &o, body, err
-}
-
-type outEnvelope struct {
-	ID        *identity.ID        `json:"id"`
-	Version   uint8               `json:"version"`
-	Body      json.RawMessage     `json:"body"`
-	Signature primitive.Signature `json:"sig"`
 }

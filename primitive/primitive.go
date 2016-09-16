@@ -21,7 +21,7 @@ func (v1Schema) Version() int {
 }
 
 // User is the body of a user object
-type User struct {
+type User struct { // type: 0x01
 	v1Schema
 	Username string        `json:"username"`
 	Name     string        `json:"name"`
@@ -44,23 +44,13 @@ type UserPassword struct {
 	Alg   string        `json:"alg"`
 }
 
-// Type returns the enumerated byte representation of User.
-func (u *User) Type() byte {
-	return byte(0x01)
-}
-
-// Signature is an immutable object, but not technically a payload. Its fields
-// must be ordered properly so that ID generation is correct.
-//
+// Signature is an immutable object, but not technically a payload.
 // If PublicKeyID is nil, the signature is self-signed.
 type Signature struct {
 	Algorithm   string        `json:"alg"`
 	PublicKeyID *identity.ID  `json:"public_key_id"`
 	Value       *base64.Value `json:"value"`
 }
-
-// Immutable object payloads. Their fields must be lexicographically ordered by
-// the json value, so we can correctly calculate the signature.
 
 // PrivateKeyValue holds the encrypted value of the PrivateKey.
 type PrivateKeyValue struct {
@@ -69,7 +59,7 @@ type PrivateKeyValue struct {
 }
 
 // PrivateKey is the private portion of an asymetric key.
-type PrivateKey struct {
+type PrivateKey struct { // type: 0x07
 	v1Schema
 	Key         PrivateKeyValue `json:"key"`
 	OrgID       *identity.ID    `json:"org_id"`
@@ -78,18 +68,13 @@ type PrivateKey struct {
 	PublicKeyID *identity.ID    `json:"public_key_id"`
 }
 
-// Type returns the enumerated byte representation of PrivateKey.
-func (pk *PrivateKey) Type() byte {
-	return byte(0x07)
-}
-
 // PublicKeyValue is the actual value of a PublicKey.
 type PublicKeyValue struct {
 	Value *base64.Value `json:"value"`
 }
 
 // PublicKey is the public portion of an asymetric key.
-type PublicKey struct {
+type PublicKey struct { // type: 0x06
 	v1Schema
 	Algorithm string         `json:"alg"`
 	Created   time.Time      `json:"created_at"`
@@ -100,11 +85,6 @@ type PublicKey struct {
 	KeyType   string         `json:"type"`
 }
 
-// Type returns the enumerated byte representation of PublicKey.
-func (pk *PublicKey) Type() byte {
-	return byte(0x06)
-}
-
 // Types of claims that can be made against public keys.
 const (
 	SignatureClaimType  = "signature"
@@ -112,7 +92,7 @@ const (
 )
 
 // Claim is a signature or revocation claim against a public key.
-type Claim struct {
+type Claim struct { // type: 0x08
 	v1Schema
 	Created     time.Time    `json:"created_at"`
 	OrgID       *identity.ID `json:"org_id"`
@@ -120,11 +100,6 @@ type Claim struct {
 	Previous    *identity.ID `json:"previous"`
 	PublicKeyID *identity.ID `json:"public_key_id"`
 	KeyType     string       `json:"type"`
-}
-
-// Type returns the enumerated byte representation of Claim.
-func (c *Claim) Type() byte {
-	return byte(0x08)
 }
 
 // NewClaim returns a new Claim, with the created time set to now
@@ -142,7 +117,7 @@ func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID,
 
 // Credential is a secret value shared between a group of services based
 // on users identity, operating environment, project, and organization
-type Credential struct {
+type Credential struct { // type: 0x0b
 	v1Schema
 	Credential        *CredentialValue `json:"credential"`
 	KeyringID         *identity.ID     `json:"keyring_id"`
@@ -153,11 +128,6 @@ type Credential struct {
 	Previous          *identity.ID     `json:"previous"`
 	ProjectID         *identity.ID     `json:"project_id"`
 	CredentialVersion int              `json:"version"`
-}
-
-// Type returns the enumerated byte representation of Credential
-func (c *Credential) Type() byte {
-	return byte(0xb)
 }
 
 // CredentialValue is the secretbox encrypted value of the containing
@@ -172,7 +142,7 @@ type CredentialValue struct {
 // users and machines at a position in the credential path.
 //
 // Credentials belong to Keyrings
-type Keyring struct {
+type Keyring struct { // type: 0x09
 	v1Schema
 	Created        time.Time        `json:"created_at"`
 	OrgID          *identity.ID     `json:"org_id"`
@@ -182,16 +152,11 @@ type Keyring struct {
 	KeyringVersion int              `json:"version"`
 }
 
-// Type returns the enumerated byte representation of Keyring
-func (k *Keyring) Type() byte {
-	return byte(0x09)
-}
-
 // KeyringMember is a record of sharing a master secret key with a user or
 // machine.
 //
 // KeyringMember belongs to a Keyring
-type KeyringMember struct {
+type KeyringMember struct { // type: 0x0a
 	v1Schema
 	Created         time.Time         `json:"created_at"`
 	EncryptingKeyID *identity.ID      `json:"encrypting_key_id"`
@@ -203,11 +168,6 @@ type KeyringMember struct {
 	PublicKeyID     *identity.ID      `json:"public_key_id"`
 }
 
-// Type returns the enumerated byte representation of KeyringMember
-func (km *KeyringMember) Type() byte {
-	return byte(0x0a)
-}
-
 // KeyringMemberKey is the keyring master encryption key, encrypted for the
 // owner of a KeyringMember
 type KeyringMemberKey struct {
@@ -217,14 +177,9 @@ type KeyringMemberKey struct {
 }
 
 // Org is a grouping of users that collaborate with each other
-type Org struct {
+type Org struct { // type: 0x0d
 	v1Schema
 	Name string `json:"name"`
-}
-
-// Type returns the enumerated byte representation of Org
-func (o *Org) Type() byte {
-	return byte(0xd)
 }
 
 // Org Invitations exist in four states: pending, associated,
@@ -237,7 +192,7 @@ const (
 )
 
 // OrgInvite is an invitation for an individual to join an organization
-type OrgInvite struct {
+type OrgInvite struct { // type: 0x13
 	v1Schema
 	OrgID      *identity.ID `json:"org_id"`
 	Email      string       `json:"email"`
@@ -256,25 +211,15 @@ type OrgInvite struct {
 	Approved     *time.Time    `json:"approved_at"`
 }
 
-// Type returns the numerated byte representation of OrgInvite
-func (o *OrgInvite) Type() byte {
-	return byte(0x13)
-}
-
 // Project is an entity that represents a group of services
-type Project struct {
+type Project struct { // type: 0x04
 	v1Schema
 	Name  string       `json:"name"`
 	OrgID *identity.ID `json:"org_id"`
 }
 
-// Type returns the enumerated byte representation of Project
-func (t *Project) Type() byte {
-	return byte(0x04)
-}
-
 // Policy is an entity that represents a group of statements for acl
-type Policy struct {
+type Policy struct { // type: 0x11
 	v1Schema
 	PolicyType string       `json:"type"`
 	Previous   *identity.ID `json:"previous"`
@@ -284,11 +229,6 @@ type Policy struct {
 		Description string            `json:"description"`
 		Statements  []PolicyStatement `json:"statements"`
 	} `json:"policy"`
-}
-
-// Type returns the enumerated byte representation of Policy
-func (t *Policy) Type() byte {
-	return byte(0x11)
 }
 
 // PolicyStatement is an acl statement on a policy object
@@ -424,42 +364,27 @@ func (pa *PolicyAction) ShortString() string {
 }
 
 // PolicyAttachment is an entity that represents the link between policies and teams
-type PolicyAttachment struct {
+type PolicyAttachment struct { // type: 0x12
 	v1Schema
 	OwnerID  *identity.ID `json:"owner_id"`
 	PolicyID *identity.ID `json:"policy_id"`
 	OrgID    *identity.ID `json:"org_id"`
 }
 
-// Type returns the enumerated byte representation of PolicyAttchment
-func (t *PolicyAttachment) Type() byte {
-	return byte(0x12)
-}
-
 // Service is an entity that represents a group of processes
-type Service struct {
+type Service struct { // type: 0x03
 	v1Schema
 	Name      string       `json:"name"`
 	OrgID     *identity.ID `json:"org_id"`
 	ProjectID *identity.ID `json:"project_id"`
-}
-
-// Type returns the enumerated byte representation of Service
-func (t *Service) Type() byte {
-	return byte(0x03)
 }
 
 // Environment is an entity that represents a group of processes
-type Environment struct {
+type Environment struct { // type: 0x05
 	v1Schema
 	Name      string       `json:"name"`
 	OrgID     *identity.ID `json:"org_id"`
 	ProjectID *identity.ID `json:"project_id"`
-}
-
-// Type returns the enumerated byte representation of Environment
-func (t *Environment) Type() byte {
-	return byte(0x05)
 }
 
 // There are two types of teams: system and user. System teams are
@@ -470,28 +395,18 @@ const (
 )
 
 // Team is an entity that represents a group of users
-type Team struct {
+type Team struct { // type: 0x0f
 	v1Schema
 	Name     string       `json:"name"`
 	OrgID    *identity.ID `json:"org_id"`
 	TeamType string       `json:"type"`
 }
 
-// Type returns the enumerated byte representation of Team
-func (t *Team) Type() byte {
-	return byte(0x0f)
-}
-
 // Membership is an entity that represents whether a user or
 // machine is a part of a team in an organization.
-type Membership struct {
+type Membership struct { // type: 0x0e
 	v1Schema
 	OrgID   *identity.ID `json:"org_id"`
 	OwnerID *identity.ID `json:"owner_id"`
 	TeamID  *identity.ID `json:"team_id"`
-}
-
-// Type returns the enumerated byte representation of Membership
-func (m *Membership) Type() byte {
-	return byte(0x0e)
 }
