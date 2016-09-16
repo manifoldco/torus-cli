@@ -6,11 +6,14 @@ travis/id_rsa*
 builds/*
 
 # Generated files for our binary
-data/bindata.go
 data/public_key.json
+zz_generated_*.go
 
 # Our 3rd party deps
 vendor/*
+
+# Code generators
+tools/bin
 
 # Editor and OS stuff
 .DS_Store

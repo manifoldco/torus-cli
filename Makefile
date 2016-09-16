@@ -39,10 +39,10 @@ VERSION_FLAG=-X $(PKG)/config.Version=$(VERSION)
 STATIC_FLAGS=-w -s
 GO_BUILD=CGO_ENABLED=0 go build -i -v
 
-binary: bindata vendor
+binary: generated vendor
 	$(GO_BUILD) -o ${OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
 
-static: bindata vendor
+static: generated vendor
 	$(GO_BUILD) -o ${OUT}-v${VERSION} \
 		-ldflags='$(STATIC_FLAGS) $(VERSION_FLAG)' ${PKG}
 
@@ -61,7 +61,7 @@ endif
 OS=$(word 1, $(subst -, ,$*))
 ARCH=$(word 2, $(subst -, ,$*))
 BINARY=-o builds/$(OUT)-$(OS)-$(ARCH)
-$(addprefix release-,$(TARGETS)): release-%: gocheck bindata vendor
+$(addprefix release-,$(TARGETS)): release-%: gocheck generated vendor
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
 		-ldflags='$(STATIC_FLAGS) $(VERSION_FLAG)' ${PKG}
 
@@ -73,9 +73,19 @@ release-all: $(addprefix release-,$(TARGETS))
 # Code generation and dependency grabbing
 #################################################
 
-bindata: data/bindata.go
-data/bindata.go: data/ca_bundle.pem data/public_key.json
+TOOLS=tools/bin
+
+GENERATED_FILES=\
+	data/zz_generated_bindata.go \
+	envelope/zz_generated_envelope.go \
+	primitive/zz_generated_primitive.go
+generated: $(GENERATED_FILES)
+
+data/zz_generated_bindata.go: data/ca_bundle.pem data/public_key.json
 	go-bindata -pkg data -o $@ $^
+
+primitive/zz_generated_primitive.go envelope/zz_generated_envelope.go: $(TOOLS)/primitive-boilerplate primitive/primitive.go
+	$^
 
 data/public_key.json: $(PUBLIC_KEY)
 	ln -sf ../$< $@
@@ -83,7 +93,10 @@ data/public_key.json: $(PUBLIC_KEY)
 vendor: glide.lock
 	glide install
 
-.PHONY: bindata
+$(TOOLS)/primitive-boilerplate: $(wildcard tools/primitive-boilerplate/*.go) $(wildcard tools/primitive-boilerplate/*.tmpl)
+	$(GO_BUILD) -o $@ ./tools/primitive-boilerplate
+
+.PHONY: generated
 
 #################################################
 # Cleanup
@@ -91,7 +104,8 @@ vendor: glide.lock
 
 clean:
 	@rm -f ${OUT} ${OUT}-v*
-	@rm -f data/bindata.go
+	@rm -f $(GENERATED_FILES)
+	@rm -f $(TOOLS)/*
 	@rm -f data/public_key.json
 	@rm -rf builds/*
 
@@ -102,7 +116,7 @@ clean:
 #################################################
 
 GO_FILES=$(shell find . -name '*.go' | grep -v /vendor/ | \
-		grep -v /data/bindata.go)
+		grep -v /data/zz_generated_bindata.go)
 
 EACH_FILE=\
 	@RES=$$(for file in ${GO_FILES} ;  do \
@@ -114,7 +128,7 @@ EACH_FILE=\
 		exit 1 ; \
 	fi ;
 
-test: bindata vendor
+test: generated vendor
 	@CGO_ENABLED=0 go test -short $$(glide nv)
 
 vet:
