@@ -26,6 +26,12 @@ var envelopeTmpl = template.Must(func() (*template.Template, error) {
 	return template.ParseFiles(filepath.Join(d, "../primitive-boilerplate/envelope.tmpl"))
 }())
 
+type envTmplData struct {
+	Name       string
+	Mutability string
+	Types      []data
+}
+
 type field struct {
 	Name  string
 	Field string
@@ -38,9 +44,11 @@ func (s sortFields) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s sortFields) Less(i, j int) bool { return strings.Compare(s[i].Name, s[j].Name) < 0 }
 
 type data struct {
-	Name   string
-	Fields []field
-	Byte   string
+	Name      string
+	Fields    []field
+	Byte      string
+	Immutable bool
+	Visible   bool
 }
 
 type sortData []data
@@ -98,22 +106,35 @@ func main() {
 		if strings.ToUpper(string(k[0])) != string(k[0]) { // not exported
 			continue
 		}
-		reachStruct(fset, typedecls, reachable, structmap, k)
+		reachStruct(fset, typedecls, reachable, structmap, k, false)
 	}
 
 	for _, d := range reachable {
 		types = append(types, *d)
 	}
-
 	sort.Sort(sortData(types))
-	tmplData := struct {
-		Types []data
-	}{
-		Types: types,
+
+	mutable := []data{}
+	immutable := []data{}
+	for _, d := range types {
+		if d.Byte == "" {
+			continue
+		}
+
+		if d.Immutable {
+			immutable = append(immutable, d)
+		} else {
+			mutable = append(mutable, d)
+		}
 	}
 
-	writeTemplate("primitive/zz_generated_primitive.go", primitiveTmpl, tmplData)
-	writeTemplate("envelope/zz_generated_envelope.go", envelopeTmpl, tmplData)
+	writeTemplate("primitive/zz_generated_primitive.go", primitiveTmpl,
+		struct{ Types []data }{Types: types})
+
+	writeTemplate("envelope/zz_generated_envelope.go", envelopeTmpl, []envTmplData{
+		{Name: "Unsigned", Mutability: "Mutable", Types: mutable},
+		{Name: "Signed", Mutability: "Immutable", Types: immutable},
+	})
 }
 
 func writeTemplate(fileName string, tmpl *template.Template, data interface{}) {
@@ -137,7 +158,7 @@ func writeTemplate(fileName string, tmpl *template.Template, data interface{}) {
 	fd.Write(formatted)
 }
 
-func reachStruct(fset *token.FileSet, typedecls map[int]string, reachable map[string]*data, structmap map[string]*ast.StructType, k string) {
+func reachStruct(fset *token.FileSet, typedecls map[int]string, reachable map[string]*data, structmap map[string]*ast.StructType, k string, visible bool) {
 	if _, ok := reachable[k]; ok { // already included
 		return
 	}
@@ -145,21 +166,22 @@ func reachStruct(fset *token.FileSet, typedecls map[int]string, reachable map[st
 	s := structmap[k]
 
 	d := data{
-		Name:   k,
-		Byte:   typedecls[fset.Position(s.Pos()).Line],
-		Fields: gatherFields(fset, typedecls, reachable, structmap, s),
+		Name: k,
+		Byte: typedecls[fset.Position(s.Pos()).Line],
 	}
+	d.Immutable, d.Fields = gatherFields(fset, typedecls, reachable, structmap, s, visible)
+	d.Visible = visible || d.Immutable
 
 	sort.Sort(sortFields(d.Fields))
 	reachable[k] = &d
-
 }
 
-func gatherFields(fset *token.FileSet, typedecls map[int]string, reachable map[string]*data, structmap map[string]*ast.StructType, s *ast.StructType) []field {
+func gatherFields(fset *token.FileSet, typedecls map[int]string, reachable map[string]*data, structmap map[string]*ast.StructType, s *ast.StructType, visible bool) (bool, []field) {
 	fields := []field{}
 
+	immutable := false
 	if s == nil {
-		return fields
+		return immutable, fields
 	}
 
 	for _, f := range s.Fields.List {
@@ -173,8 +195,13 @@ func gatherFields(fset *token.FileSet, typedecls map[int]string, reachable map[s
 			}
 		}
 		if len(f.Names) == 0 {
+			if typeName == "immutable" {
+				immutable = true
+			}
 			embedded := structmap[typeName]
-			embeddedFields := gatherFields(fset, typedecls, reachable, structmap, embedded)
+			embImmutable, embeddedFields := gatherFields(fset, typedecls, reachable, structmap, embedded, visible || immutable)
+			immutable = immutable || embImmutable
+			visible = visible || immutable
 			fields = append(fields, embeddedFields...)
 			continue
 		}
@@ -183,7 +210,7 @@ func gatherFields(fset *token.FileSet, typedecls map[int]string, reachable map[s
 		// that is now reachable. we need to create a MarshalJSON func for
 		// it if so.
 		if _, ok := structmap[typeName]; ok {
-			reachStruct(fset, typedecls, reachable, structmap, typeName)
+			reachStruct(fset, typedecls, reachable, structmap, typeName, visible)
 		}
 
 		for _, n := range f.Names {
@@ -201,7 +228,7 @@ func gatherFields(fset *token.FileSet, typedecls map[int]string, reachable map[s
 		}
 	}
 
-	return fields
+	return immutable, fields
 }
 
 func parseJSONTag(tag string) string {

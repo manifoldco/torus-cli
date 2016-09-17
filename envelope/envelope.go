@@ -16,10 +16,10 @@ type Envelope interface {
 // Signed is the generic format for encapsulating signed immutable
 // request/response objects to/from arigato.
 type Signed struct {
-	ID        *identity.ID          `json:"id"`
-	Version   uint8                 `json:"version"`
-	Body      identity.Identifiable `json:"body"`
-	Signature primitive.Signature   `json:"sig"`
+	ID        *identity.ID        `json:"id"`
+	Version   uint8               `json:"version"`
+	Body      identity.Immutable  `json:"body"`
+	Signature primitive.Signature `json:"sig"`
 }
 
 // GetID returns the ID of the object encapsulated in this envelope.
@@ -27,46 +27,15 @@ func (e *Signed) GetID() *identity.ID {
 	return e.ID
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface for Signed
-// envelopes.
-func (e *Signed) UnmarshalJSON(b []byte) error {
-	o, body, err := envelopeUnmarshal(b)
-	if err != nil {
-		return err
-	}
-
-	e.ID = o.ID
-	e.Version = o.Version
-	e.Signature = o.Signature
-	e.Body = body
-
-	return nil
-}
-
 // Unsigned is the generic format for encapsulating unsigned mutable
 // request/response objects to/from arigato.
 type Unsigned struct {
-	ID      *identity.ID          `json:"id"`
-	Version uint8                 `json:"version"`
-	Body    identity.Identifiable `json:"body"`
+	ID      *identity.ID     `json:"id"`
+	Version uint8            `json:"version"`
+	Body    identity.Mutable `json:"body"`
 }
 
 // GetID returns the ID of the object encapsulated in this envelope.
 func (e *Unsigned) GetID() *identity.ID {
 	return e.ID
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface for Unsigned
-// envelopes.
-func (e *Unsigned) UnmarshalJSON(b []byte) error {
-	o, body, err := envelopeUnmarshal(b)
-	if err != nil {
-		return err
-	}
-
-	e.ID = o.ID
-	e.Version = o.Version
-	e.Body = body
-
-	return nil
 }
