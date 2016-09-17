@@ -67,6 +67,8 @@ func main() {
 
 	var types []data
 
+	structmap := make(map[string]*ast.StructType)
+
 	for k, o := range p.Scope.Objects {
 		// We only care about types
 		if o.Kind != ast.Typ {
@@ -83,39 +85,24 @@ func main() {
 			continue
 		}
 
-		// Empty struct? likely one ofthe schema types. skip.
+		// Empty struct? We don't need to generate and json for it. skip.
 		if len(s.Fields.List) == 0 {
 			continue
 		}
 
-		d := data{
-			Name: k,
-			Byte: typedecls[fset.Position(s.Pos()).Line],
+		structmap[k] = s
+	}
+
+	reachable := make(map[string]*data)
+	for k := range structmap {
+		if strings.ToUpper(string(k[0])) != string(k[0]) { // not exported
+			continue
 		}
+		reachStruct(fset, typedecls, reachable, structmap, k)
+	}
 
-		for _, f := range s.Fields.List {
-
-			if len(f.Names) == 0 {
-				// embedded struct
-			} else {
-				for _, n := range f.Names {
-					name := n.Name
-					if f.Tag != nil {
-						tname := parseJSONTag(f.Tag.Value)
-						if tname != "" {
-							name = tname
-						}
-					}
-					d.Fields = append(d.Fields, field{
-						Name:  name,
-						Field: n.Name,
-					})
-				}
-			}
-		}
-
-		sort.Sort(sortFields(d.Fields))
-		types = append(types, d)
+	for _, d := range reachable {
+		types = append(types, *d)
 	}
 
 	sort.Sort(sortData(types))
@@ -148,6 +135,73 @@ func writeTemplate(fileName string, tmpl *template.Template, data interface{}) {
 	defer fd.Close()
 
 	fd.Write(formatted)
+}
+
+func reachStruct(fset *token.FileSet, typedecls map[int]string, reachable map[string]*data, structmap map[string]*ast.StructType, k string) {
+	if _, ok := reachable[k]; ok { // already included
+		return
+	}
+
+	s := structmap[k]
+
+	d := data{
+		Name:   k,
+		Byte:   typedecls[fset.Position(s.Pos()).Line],
+		Fields: gatherFields(fset, typedecls, reachable, structmap, s),
+	}
+
+	sort.Sort(sortFields(d.Fields))
+	reachable[k] = &d
+
+}
+
+func gatherFields(fset *token.FileSet, typedecls map[int]string, reachable map[string]*data, structmap map[string]*ast.StructType, s *ast.StructType) []field {
+	fields := []field{}
+
+	if s == nil {
+		return fields
+	}
+
+	for _, f := range s.Fields.List {
+		var typeName string
+		switch t := f.Type.(type) {
+		case *ast.Ident:
+			typeName = t.Name
+		case *ast.StarExpr:
+			if i, ok := t.X.(*ast.Ident); ok {
+				typeName = i.Name
+			}
+		}
+		if len(f.Names) == 0 {
+			embedded := structmap[typeName]
+			embeddedFields := gatherFields(fset, typedecls, reachable, structmap, embedded)
+			fields = append(fields, embeddedFields...)
+			continue
+		}
+
+		// This isn't an embedded struct, but it might be our own struct
+		// that is now reachable. we need to create a MarshalJSON func for
+		// it if so.
+		if _, ok := structmap[typeName]; ok {
+			reachStruct(fset, typedecls, reachable, structmap, typeName)
+		}
+
+		for _, n := range f.Names {
+			name := n.Name
+			if f.Tag != nil {
+				tname := parseJSONTag(f.Tag.Value)
+				if tname != "" {
+					name = tname
+				}
+			}
+			fields = append(fields, field{
+				Name:  name,
+				Field: n.Name,
+			})
+		}
+	}
+
+	return fields
 }
 
 func parseJSONTag(tag string) string {
