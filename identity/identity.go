@@ -26,6 +26,18 @@ type Identifiable interface {
 	Type() byte
 }
 
+// Immutable structs are Identifiables that do not change, and should be signed.
+type Immutable interface {
+	Identifiable
+	Immutable() // We don't ever need to call this, its just for type checking.
+}
+
+// Mutable structs are Identifiables that can be changed.
+type Mutable interface {
+	Identifiable
+	Mutable() // also just for type checking.
+}
+
 var lowerBase32 = base32.NewEncoding(base32Alphabet)
 
 // ID is an encoded unique identifier for an object.
@@ -36,8 +48,8 @@ var lowerBase32 = base32.NewEncoding(base32Alphabet)
 // immutable objects, or a random value for mutable objects.
 type ID [18]byte
 
-// Mutable returns a new ID for a mutable object.
-func Mutable(body Identifiable) (ID, error) {
+// NewMutable returns a new ID for a mutable object.
+func NewMutable(body Mutable) (ID, error) {
 	id := ID{idVersion, body.Type()}
 	_, err := rand.Read(id[2:])
 	if err != nil {
@@ -46,10 +58,10 @@ func Mutable(body Identifiable) (ID, error) {
 	return id, nil
 }
 
-// Immutable returns a new signed ID for an immutable object.
+// NewImmutable returns a new signed ID for an immutable object.
 //
 // sig should be a registry.Signature type
-func Immutable(body Identifiable, sig interface{}) (ID, error) {
+func NewImmutable(body Immutable, sig interface{}) (ID, error) {
 	h, err := blake2b.New(&blake2b.Config{Size: 16})
 	if err != nil {
 		return ID{}, err

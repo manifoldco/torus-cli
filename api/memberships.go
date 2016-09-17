@@ -63,7 +63,7 @@ func (m *MembershipsClient) Create(ctx context.Context, userID, orgID, teamID *i
 		TeamID:  teamID,
 	}
 
-	ID, err := identity.Mutable(&membershipBody)
+	ID, err := identity.NewMutable(&membershipBody)
 	if err != nil {
 		return err
 	}

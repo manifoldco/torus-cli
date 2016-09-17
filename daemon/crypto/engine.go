@@ -432,7 +432,7 @@ func (e *Engine) Verify(ctx context.Context, s SignatureKeyPair, b, sig []byte) 
 }
 
 // SignedEnvelope returns a new SignedEnvelope containing body
-func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Identifiable,
+func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Immutable,
 	sigID *identity.ID, sigKP *SignatureKeyPair) (*envelope.Signed, error) {
 
 	err := ctxutil.ErrIfDone(ctx)
@@ -456,7 +456,7 @@ func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Identifiable,
 		Value:       base64.NewValue(s),
 	}
 
-	id, err := identity.Immutable(body, &sig)
+	id, err := identity.NewImmutable(body, &sig)
 	if err != nil {
 		return nil, err
 	}

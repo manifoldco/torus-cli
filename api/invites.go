@@ -59,7 +59,7 @@ func (i *InvitesClient) Send(ctx context.Context, email string, orgID, inviterID
 		Approved:   nil,
 	}
 
-	ID, err := identity.Mutable(&inviteBody)
+	ID, err := identity.NewMutable(&inviteBody)
 	if err != nil {
 		return err
 	}

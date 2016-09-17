@@ -20,9 +20,21 @@ func (v1Schema) Version() int {
 	return 1
 }
 
+// Embedding the immutable or mutable struct in a struct denotes if it is
+// immutable and should be signed, or a mutable type.
+
+type immutable struct{}
+
+func (immutable) Immutable() {}
+
+type mutable struct{}
+
+func (mutable) Mutable() {}
+
 // User is the body of a user object
 type User struct { // type: 0x01
 	v1Schema
+	mutable
 	Username string        `json:"username"`
 	Name     string        `json:"name"`
 	Email    string        `json:"email"`
@@ -61,6 +73,7 @@ type PrivateKeyValue struct {
 // PrivateKey is the private portion of an asymetric key.
 type PrivateKey struct { // type: 0x07
 	v1Schema
+	immutable
 	Key         PrivateKeyValue `json:"key"`
 	OrgID       *identity.ID    `json:"org_id"`
 	OwnerID     *identity.ID    `json:"owner_id"`
@@ -76,6 +89,7 @@ type PublicKeyValue struct {
 // PublicKey is the public portion of an asymetric key.
 type PublicKey struct { // type: 0x06
 	v1Schema
+	immutable
 	Algorithm string         `json:"alg"`
 	Created   time.Time      `json:"created_at"`
 	Expires   time.Time      `json:"expires_at"`
@@ -94,6 +108,7 @@ const (
 // Claim is a signature or revocation claim against a public key.
 type Claim struct { // type: 0x08
 	v1Schema
+	immutable
 	Created     time.Time    `json:"created_at"`
 	OrgID       *identity.ID `json:"org_id"`
 	OwnerID     *identity.ID `json:"owner_id"`
@@ -119,6 +134,7 @@ func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID,
 // on users identity, operating environment, project, and organization
 type Credential struct { // type: 0x0b
 	v1Schema
+	immutable
 	Credential        *CredentialValue `json:"credential"`
 	KeyringID         *identity.ID     `json:"keyring_id"`
 	Name              string           `json:"name"`
@@ -144,6 +160,7 @@ type CredentialValue struct {
 // Credentials belong to Keyrings
 type Keyring struct { // type: 0x09
 	v1Schema
+	immutable
 	Created        time.Time        `json:"created_at"`
 	OrgID          *identity.ID     `json:"org_id"`
 	PathExp        *pathexp.PathExp `json:"pathexp"`
@@ -158,6 +175,7 @@ type Keyring struct { // type: 0x09
 // KeyringMember belongs to a Keyring
 type KeyringMember struct { // type: 0x0a
 	v1Schema
+	immutable
 	Created         time.Time         `json:"created_at"`
 	EncryptingKeyID *identity.ID      `json:"encrypting_key_id"`
 	Key             *KeyringMemberKey `json:"key"`
@@ -179,6 +197,7 @@ type KeyringMemberKey struct {
 // Org is a grouping of users that collaborate with each other
 type Org struct { // type: 0x0d
 	v1Schema
+	mutable
 	Name string `json:"name"`
 }
 
@@ -194,6 +213,7 @@ const (
 // OrgInvite is an invitation for an individual to join an organization
 type OrgInvite struct { // type: 0x13
 	v1Schema
+	mutable
 	OrgID      *identity.ID `json:"org_id"`
 	Email      string       `json:"email"`
 	InviterID  *identity.ID `json:"inviter_id"`
@@ -214,6 +234,7 @@ type OrgInvite struct { // type: 0x13
 // Project is an entity that represents a group of services
 type Project struct { // type: 0x04
 	v1Schema
+	mutable
 	Name  string       `json:"name"`
 	OrgID *identity.ID `json:"org_id"`
 }
@@ -221,6 +242,7 @@ type Project struct { // type: 0x04
 // Policy is an entity that represents a group of statements for acl
 type Policy struct { // type: 0x11
 	v1Schema
+	mutable
 	PolicyType string       `json:"type"`
 	Previous   *identity.ID `json:"previous"`
 	OrgID      *identity.ID `json:"org_id"`
@@ -366,6 +388,7 @@ func (pa *PolicyAction) ShortString() string {
 // PolicyAttachment is an entity that represents the link between policies and teams
 type PolicyAttachment struct { // type: 0x12
 	v1Schema
+	mutable
 	OwnerID  *identity.ID `json:"owner_id"`
 	PolicyID *identity.ID `json:"policy_id"`
 	OrgID    *identity.ID `json:"org_id"`
@@ -374,6 +397,7 @@ type PolicyAttachment struct { // type: 0x12
 // Service is an entity that represents a group of processes
 type Service struct { // type: 0x03
 	v1Schema
+	mutable
 	Name      string       `json:"name"`
 	OrgID     *identity.ID `json:"org_id"`
 	ProjectID *identity.ID `json:"project_id"`
@@ -382,6 +406,7 @@ type Service struct { // type: 0x03
 // Environment is an entity that represents a group of processes
 type Environment struct { // type: 0x05
 	v1Schema
+	mutable
 	Name      string       `json:"name"`
 	OrgID     *identity.ID `json:"org_id"`
 	ProjectID *identity.ID `json:"project_id"`
@@ -397,6 +422,7 @@ const (
 // Team is an entity that represents a group of users
 type Team struct { // type: 0x0f
 	v1Schema
+	mutable
 	Name     string       `json:"name"`
 	OrgID    *identity.ID `json:"org_id"`
 	TeamType string       `json:"type"`
@@ -406,6 +432,7 @@ type Team struct { // type: 0x0f
 // machine is a part of a team in an organization.
 type Membership struct { // type: 0x0e
 	v1Schema
+	mutable
 	OrgID   *identity.ID `json:"org_id"`
 	OwnerID *identity.ID `json:"owner_id"`
 	TeamID  *identity.ID `json:"team_id"`

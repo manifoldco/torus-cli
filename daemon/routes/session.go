@@ -168,7 +168,7 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			Master:   &masterObj,
 		}
 
-		ID, err := identity.Mutable(&userBody)
+		ID, err := identity.NewMutable(&userBody)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return

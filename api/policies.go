@@ -31,7 +31,7 @@ type PoliciesResult struct {
 // Create creates a new policy
 func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (*PoliciesResult, error) {
 
-	ID, err := identity.Mutable(policy)
+	ID, err := identity.NewMutable(policy)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func (p *PoliciesClient) Attach(ctx context.Context, org, policy, team *identity
 		PolicyID: policy,
 	}
 
-	ID, err := identity.Mutable(&attachment)
+	ID, err := identity.NewMutable(&attachment)
 	if err != nil {
 		return err
 	}
