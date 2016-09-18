@@ -30,12 +30,21 @@ func (e *{{.Name}}) UnmarshalJSON(b []byte) error {
 
 	t := o.ID.Type()
 	switch t {
-	{{- range .Types -}}
-	case {{.Byte}}:
-		body = &primitive.{{.Name}}{}
+	{{- range $b, $ts := .Types -}}
+	case {{$b}}:
+		switch o.Version {
+		{{- range $ts -}}
+		case {{.Version}}:
+			body = &primitive.{{.Name}}{}
+		{{end -}}
+		}
 	{{end -}}
 	default:
 		return fmt.Errorf("Unknown primitive type id: %#02x", t)
+	}
+
+	if body == nil {
+		return fmt.Errorf("Unknown schema version %d for primitive type id: %#02x", o.Version, t)
 	}
 
 	err = json.Unmarshal(o.Body, body)
