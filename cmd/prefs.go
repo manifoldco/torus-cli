@@ -84,10 +84,7 @@ func setPref(ctx *cli.Context) error {
 	key := args.Get(0)
 	value := args.Get(1)
 	if len(key) < 1 || len(value) < 1 {
-		spacer := "    "
-		usage := "Usage:\n" + spacer + ctx.App.HelpName + " " + ctx.Command.Name + " " + ctx.Command.ArgsUsage
-		text := "error: must supply a key and value\n\n"
-		text += usage
+		text := "error: must supply a key and value\n\n" + usageString(ctx)
 		return cli.NewExitError(text, -1)
 	}
 
