@@ -34,7 +34,7 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 		ProjectID: projectID,
 	}
 
-	ID, err := identity.Mutable(&envBody)
+	ID, err := identity.NewMutable(&envBody)
 	if err != nil {
 		return err
 	}

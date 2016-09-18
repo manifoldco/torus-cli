@@ -9,36 +9,45 @@ import (
 	"github.com/arigatomachine/cli/primitive"
 )
 
-// Shared unmarshaling for signed and unsigned Envelopes
-func envelopeUnmarshal(b []byte) (*outEnvelope, identity.Identifiable, error) {
-	o := outEnvelope{}
-	err := json.Unmarshal(b, &o)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var body identity.Identifiable
-
-	t := o.ID.Type()
-	switch t {
-	{{- range.Types}}
-		{{- if .Byte}}
-			case {{.Byte}}:
-				body = &primitive.{{.Name}}{}
-		{{- end -}}
-	{{end}}
-	default:
-		return nil, nil, fmt.Errorf("Unknown primitive type id: %d", t)
-	}
-
-	err = json.Unmarshal(o.Body, body)
-
-	return &o, body, err
-}
-
 type outEnvelope struct {
 	ID        *identity.ID        `json:"id"`
 	Version   uint8               `json:"version"`
 	Body      json.RawMessage     `json:"body"`
 	Signature primitive.Signature `json:"sig"`
 }
+
+{{range .}}
+// UnmarshalJSON implements the json.Unmarshaler interface for {{.Name}}
+// envelopes.
+func (e *{{.Name}}) UnmarshalJSON(b []byte) error {
+	o := outEnvelope{}
+	err := json.Unmarshal(b, &o)
+	if err != nil {
+		return err
+	}
+
+	var body identity.{{.Mutability}}
+
+	t := o.ID.Type()
+	switch t {
+	{{- range .Types -}}
+	case {{.Byte}}:
+		body = &primitive.{{.Name}}{}
+	{{end -}}
+	default:
+		return fmt.Errorf("Unknown primitive type id: %#02x", t)
+	}
+
+	err = json.Unmarshal(o.Body, body)
+	if err != nil {
+		return err
+	}
+
+	e.ID = o.ID
+	e.Version = o.Version
+	{{if eq .Mutability "Immutable"}}e.Signature = o.Signature{{end}}
+	e.Body = body
+
+	return nil
+}
+{{end}}

@@ -16,32 +16,42 @@ import (
 	"github.com/kardianos/osext"
 )
 
-var primitiveTmpl = template.Must(func() (*template.Template, error) {
-	d, _ := osext.ExecutableFolder()
-	return template.ParseFiles(filepath.Join(d, "../primitive-boilerplate/primitive.tmpl"))
-}())
+// Our output files
+const (
+	primitiveFile = "primitive/zz_generated_primitive.go"
+	envelopeFile  = "envelope/zz_generated_envelope.go"
+)
 
-var envelopeTmpl = template.Must(func() (*template.Template, error) {
-	d, _ := osext.ExecutableFolder()
-	return template.ParseFiles(filepath.Join(d, "../primitive-boilerplate/envelope.tmpl"))
-}())
+var primitiveTmpl, envelopeTmpl *template.Template
 
-type field struct {
-	Name  string
-	Field string
+func init() {
+	d, _ := osext.ExecutableFolder() // template loading will handle the error
+
+	primitiveName := filepath.Join(d, "../primitive-boilerplate/primitive.tmpl")
+	primitiveTmpl = template.Must(template.ParseFiles(primitiveName))
+
+	envelopeName := filepath.Join(d, "../primitive-boilerplate/envelope.tmpl")
+	envelopeTmpl = template.Must(template.ParseFiles(envelopeName))
 }
 
-type sortFields []field
-
-func (s sortFields) Len() int           { return len(s) }
-func (s sortFields) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s sortFields) Less(i, j int) bool { return strings.Compare(s[i].Name, s[j].Name) < 0 }
-
+// data is a representation of one of our primitive structs, or a struct
+// referenced by one of our primitives.
 type data struct {
-	Name   string
-	Fields []field
-	Byte   string
+	Name      string
+	Fields    []field
+	Byte      string // The enumerated byte type, if present.
+	Immutable bool   // Is the type immutable?
+	Visible   bool   // Is the type visible from an immutable type?
 }
+
+// field is a representation of a struct field.
+type field struct {
+	Name  string // The JSON representation
+	Field string // The actual struct field name
+}
+
+// sortData and sortFields are used for sorting the data and field types.
+// data is sorted by the enumerated byte type. fields are sorted by name.
 
 type sortData []data
 
@@ -49,25 +59,148 @@ func (d sortData) Len() int           { return len(d) }
 func (d sortData) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 func (d sortData) Less(i, j int) bool { return strings.Compare(d[i].Byte, d[j].Byte) < 0 }
 
-func main() {
-	fset := token.NewFileSet()
-	p, err := parser.ParseFile(fset, os.Args[1], nil, parser.ParseComments)
-	if err != nil {
-		log.Fatal(err)
+type sortFields []field
+
+func (s sortFields) Len() int           { return len(s) }
+func (s sortFields) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s sortFields) Less(i, j int) bool { return strings.Compare(s[i].Name, s[j].Name) < 0 }
+
+// envTmplData is the data passed for populating the envelope package template
+// file, defined here for convenience.
+type envTmplData struct {
+	Name       string
+	Mutability string
+	Types      []data
+}
+
+// primitiveParser handles iterating and inspecting the defined primitive structs
+type primitiveParser struct {
+	fset *token.FileSet
+	p    *ast.File
+
+	typedecls map[int]string // our comment annotated type bytes
+	structmap map[string]*ast.StructType
+}
+
+// Parse performs the actual work of walking over all defined structs,
+// and building data representations of them for use in template rendering.
+func (pp *primitiveParser) Parse() map[string]*data {
+	pp.loadTypeComments()
+	pp.loadStructs()
+
+	visible := make(map[string]*data)
+	for k := range pp.structmap {
+		if strings.ToUpper(string(k[0])) != string(k[0]) { // not exported
+			continue
+		}
+		pp.visitStruct(visible, k, false)
 	}
 
-	typedecls := make(map[int]string)
-	for _, c := range p.Comments {
-		cmt := strings.Trim(c.List[0].Text, "/* \t")
-		parts := strings.Split(cmt, " ")
-		if len(parts) == 2 && parts[0] == "type:" {
-			typedecls[fset.Position(c.List[0].Pos()).Line] = parts[1]
+	return visible
+}
+
+// visitStruct inspects the struct with the given name, parsing out its
+// field definitions and mutability state.
+func (pp *primitiveParser) visitStruct(reachable map[string]*data, k string, visible bool) {
+	if _, ok := reachable[k]; ok { // already included
+		return
+	}
+
+	s := pp.structmap[k]
+
+	d := data{
+		Name: k,
+		Byte: pp.typedecls[pp.fset.Position(s.Pos()).Line],
+	}
+	d.Immutable, d.Fields = pp.gatherFields(reachable, s, visible)
+	d.Visible = visible || d.Immutable
+
+	sort.Sort(sortFields(d.Fields))
+	reachable[k] = &d
+}
+
+// gatherFields is used by visitStruct to gather the fields for a struct.
+// embedded struct fields are hoisted up to the enclosing struct for JSON
+// representation.
+// referenced structs will in turn be visited.
+//
+// gatherFields transfers visibility from immutable structs, or any already
+// known visible structs, to structs that they reference.
+// visibility determines if we should create a MarshalJSON func for the struct.
+func (pp *primitiveParser) gatherFields(reachable map[string]*data, s *ast.StructType, visible bool) (bool, []field) {
+	fields := []field{}
+
+	immutable := false
+	if s == nil {
+		return immutable, fields
+	}
+
+	for _, f := range s.Fields.List {
+		var typeName string
+		switch t := f.Type.(type) {
+		case *ast.Ident:
+			typeName = t.Name
+		case *ast.StarExpr:
+			if i, ok := t.X.(*ast.Ident); ok {
+				typeName = i.Name
+			}
+		}
+		if len(f.Names) == 0 {
+			if typeName == "immutable" {
+				immutable = true
+			}
+			embedded := pp.structmap[typeName]
+			embImmutable, embeddedFields := pp.gatherFields(reachable, embedded, visible || immutable)
+			immutable = immutable || embImmutable
+			visible = visible || immutable
+			fields = append(fields, embeddedFields...)
+			continue
+		}
+
+		// This isn't an embedded struct, but it might be our own struct
+		// that is now reachable. we need to create a MarshalJSON func for
+		// it if so.
+		if _, ok := pp.structmap[typeName]; ok {
+			pp.visitStruct(reachable, typeName, visible)
+		}
+
+		for _, n := range f.Names {
+			name := n.Name
+			if f.Tag != nil {
+				tname := parseJSONTag(f.Tag.Value)
+				if tname != "" {
+					name = tname
+				}
+			}
+			fields = append(fields, field{
+				Name:  name,
+				Field: n.Name,
+			})
 		}
 	}
 
-	var types []data
+	return immutable, fields
+}
 
-	for k, o := range p.Scope.Objects {
+// loadTypeComments loads our annotation comments on structs, indicating
+// their enumerated byte type, allowing us to look it up later by line.
+func (pp *primitiveParser) loadTypeComments() {
+	pp.typedecls = make(map[int]string)
+	for _, c := range pp.p.Comments {
+		cmt := strings.Trim(c.List[0].Text, "/* \t")
+		parts := strings.Split(cmt, " ")
+		if len(parts) == 2 && parts[0] == "type:" {
+			pp.typedecls[pp.fset.Position(c.List[0].Pos()).Line] = parts[1]
+		}
+	}
+}
+
+// loadStructs creates a map of name to ast node for struct types from the
+// parsed file, filtering out other types.
+func (pp *primitiveParser) loadStructs() {
+	pp.structmap = make(map[string]*ast.StructType)
+
+	for k, o := range pp.p.Scope.Objects {
 		// We only care about types
 		if o.Kind != ast.Typ {
 			continue
@@ -83,52 +216,34 @@ func main() {
 			continue
 		}
 
-		// Empty struct? likely one ofthe schema types. skip.
+		// Empty struct? We don't need to generate and json for it. skip.
 		if len(s.Fields.List) == 0 {
 			continue
 		}
 
-		d := data{
-			Name: k,
-			Byte: typedecls[fset.Position(s.Pos()).Line],
-		}
-
-		for _, f := range s.Fields.List {
-
-			if len(f.Names) == 0 {
-				// embedded struct
-			} else {
-				for _, n := range f.Names {
-					name := n.Name
-					if f.Tag != nil {
-						tname := parseJSONTag(f.Tag.Value)
-						if tname != "" {
-							name = tname
-						}
-					}
-					d.Fields = append(d.Fields, field{
-						Name:  name,
-						Field: n.Name,
-					})
-				}
-			}
-		}
-
-		sort.Sort(sortFields(d.Fields))
-		types = append(types, d)
+		pp.structmap[k] = s
 	}
-
-	sort.Sort(sortData(types))
-	tmplData := struct {
-		Types []data
-	}{
-		Types: types,
-	}
-
-	writeTemplate("primitive/zz_generated_primitive.go", primitiveTmpl, tmplData)
-	writeTemplate("envelope/zz_generated_envelope.go", envelopeTmpl, tmplData)
 }
 
+// parseJSONTag parses the given JSON struct field tag, to get its name.
+// omitting fields via tags is not supported.
+func parseJSONTag(tag string) string {
+	if len(tag) == 0 {
+		return ""
+	}
+
+	if tag[:7] != "`json:\"" {
+		return ""
+	}
+
+	parts := strings.Split(tag[7:len(tag)-2], ",")
+
+	return parts[0]
+}
+
+// writeTemplate writes the given template to the given file, with the given
+// data. Templates are assumed to be generating go source files, so they
+// are formatted as well.
 func writeTemplate(fileName string, tmpl *template.Template, data interface{}) {
 	buf := &bytes.Buffer{}
 	err := tmpl.Execute(buf, data)
@@ -150,16 +265,42 @@ func writeTemplate(fileName string, tmpl *template.Template, data interface{}) {
 	fd.Write(formatted)
 }
 
-func parseJSONTag(tag string) string {
-	if len(tag) == 0 {
-		return ""
+func main() {
+	fset := token.NewFileSet()
+	p, err := parser.ParseFile(fset, os.Args[1], nil, parser.ParseComments)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	if tag[:7] != "`json:\"" {
-		return ""
+	pp := &primitiveParser{fset: fset, p: p}
+	visible := pp.Parse()
+
+	// Sort all types by byte type, for primitive file output.
+	var types []data
+	for _, d := range visible {
+		types = append(types, *d)
+	}
+	sort.Sort(sortData(types))
+
+	// Split the sorted values into immutable/mutable, for envelope output.
+	mutable := []data{}
+	immutable := []data{}
+	for _, d := range types {
+		if d.Byte == "" {
+			continue
+		}
+
+		if d.Immutable {
+			immutable = append(immutable, d)
+		} else {
+			mutable = append(mutable, d)
+		}
 	}
 
-	parts := strings.Split(tag[7:len(tag)-2], ",")
+	writeTemplate(primitiveFile, primitiveTmpl, struct{ Types []data }{Types: types})
 
-	return parts[0]
+	writeTemplate(envelopeFile, envelopeTmpl, []envTmplData{
+		{Name: "Unsigned", Mutability: "Mutable", Types: mutable},
+		{Name: "Signed", Mutability: "Immutable", Types: immutable},
+	})
 }

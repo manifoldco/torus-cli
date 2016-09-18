@@ -65,7 +65,7 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 		TeamType: "user",
 	}
 
-	ID, err := identity.Mutable(&teamBody)
+	ID, err := identity.NewMutable(&teamBody)
 	if err != nil {
 		return err
 	}

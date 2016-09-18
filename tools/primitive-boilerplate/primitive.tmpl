@@ -4,6 +4,7 @@ package primitive
 import "encoding/json"
 
 {{range .Types}}
+{{if .Immutable}}
 // MarshalJSON implements the json.Marshaler interface for {{.Name}}.
 func (t *{{.Name}}) MarshalJSON() ([]byte, error) {
 	var ob []byte
@@ -23,6 +24,7 @@ func (t *{{.Name}}) MarshalJSON() ([]byte, error) {
 
 	return b, nil
 }
+{{end}}
 
 {{if .Byte}}
 // Type returns the enumerated byte representation of {{.Name}}.

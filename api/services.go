@@ -57,7 +57,7 @@ func (s *ServicesClient) Create(ctx context.Context, orgID, projectID *identity.
 		ProjectID: projectID,
 	}
 
-	ID, err := identity.Mutable(&serviceBody)
+	ID, err := identity.NewMutable(&serviceBody)
 	if err != nil {
 		return err
 	}
