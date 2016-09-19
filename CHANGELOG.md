@@ -6,7 +6,11 @@ _Unreleased_
 
 **Notable Changes**
 
-- Command added for viewing policy statements: ag policies view
+- Command added for viewing policy statements: `ag policies view`
+
+**Fixes**
+
+- Corrected the help message for `ag invites approve`
 
 ## v0.8.0
 
