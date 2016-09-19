@@ -22,9 +22,8 @@ func init() {
 				),
 			},
 			{
-				Name:      "list",
-				Usage:     "List outstanding invitations for an organization. These invites have yet to be approved.",
-				ArgsUsage: "",
+				Name:  "list",
+				Usage: "List outstanding invitations for an organization. These invites have yet to be approved.",
 				Flags: []cli.Flag{
 					orgFlag("org to list invites for", true),
 					cli.BoolFlag{
@@ -40,7 +39,7 @@ func init() {
 			{
 				Name:      "approve",
 				Usage:     "Approve an invitation previously sent to an email address to join an organization",
-				ArgsUsage: "",
+				ArgsUsage: "<email>",
 				Flags: []cli.Flag{
 					orgFlag("org to approve invite for", true),
 				},
