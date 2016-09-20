@@ -12,8 +12,6 @@ import (
 	"sort"
 	"strings"
 	"text/template"
-
-	"github.com/kardianos/osext"
 )
 
 // Our output files
@@ -25,12 +23,11 @@ const (
 var primitiveTmpl, envelopeTmpl *template.Template
 
 func init() {
-	d, _ := osext.ExecutableFolder() // template loading will handle the error
-
-	primitiveName := filepath.Join(d, "../primitive-boilerplate/primitive.tmpl")
+	prefix := "tools/primitive-boilerplate/"
+	primitiveName := filepath.Join(prefix, "primitive.tmpl")
 	primitiveTmpl = template.Must(template.ParseFiles(primitiveName))
 
-	envelopeName := filepath.Join(d, "../primitive-boilerplate/envelope.tmpl")
+	envelopeName := filepath.Join(prefix, "envelope.tmpl")
 	envelopeTmpl = template.Must(template.ParseFiles(envelopeName))
 }
 
