@@ -2,7 +2,7 @@
 
 ## v0.9.0
 
-_Unreleased_
+_Published: 2016-09-20_
 
 **Notable Changes**
 
