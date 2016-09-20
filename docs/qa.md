@@ -16,7 +16,7 @@ note any failures by linking the appropriate bug.
 - [ ]  By default, `video-1` is selected
 - [ ]  All three videos play
 - [ ]  You can leave emoji feedback
-- [ ]  You can initiate an intercom session using the intercome 'bubble'
+- [ ]  You can initiate an intercom session using the intercom 'bubble'
 - [ ]  You can initiate an intercom session by click `Send us your feedback`
 
 ### Installation and Signup
@@ -27,7 +27,7 @@ If you have `ag` installed, start fresh `npm uninstall -g ag`
 - [ ]   `ag help` displays the help prompt after an `npm install -g ag`
 - [ ]   `ag prefs list` displays the path to your `public_key_file`
 - [ ]   `ag signup` prompts you for an access code, username, name and email, before verifying and authenticating you
-- [ ]  A user cannot sign-up with a valid access code
+- [ ]  A user cannot sign-up without a valid access code
 - [ ]   `ag status` displays your current working context
 - [ ]   `ag logout` logs you out
 - [ ]   `ag login` prompts you for an email and password, before authenticating you
@@ -36,7 +36,6 @@ If you have `ag` installed, start fresh `npm uninstall -g ag`
 
 - [ ]   `ag teams list --org [username]` displays `owner` `admin` and `member` teams, and you are a member of each
 - [ ]   `ag teams create [name] --org [org-name]` creates an org.
-- [ ]   `ag invites list —org [org]` S
 - [ ]   `ag invites send [email] —org [org-name]` generates an access code and sends it to the user
 - [ ]   `ag invites accept —org [org] [email] [code]` prompts a user to sign-up or login
 - [ ]  The user cannot manage resources in this org
