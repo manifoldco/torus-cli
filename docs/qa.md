@@ -25,7 +25,7 @@ If you have `ag` installed, start fresh `npm uninstall -g ag`
 
 - [ ]   `npm install -g ag` installs `ag`
 - [ ]   `ag help` displays the help prompt after an `npm install -g ag`
-- [ ]   `ag prefs` displays the path to your `public_key_file`
+- [ ]   `ag prefs list` displays the path to your `public_key_file`
 - [ ]   `ag signup` prompts you for an access code, username, name and email, before verifying and authenticating you
 - [ ]  A user cannot sign-up with a valid access code
 - [ ]   `ag status` displays your current working context
