@@ -28,7 +28,11 @@ func init() {
 	primitiveTmpl = template.Must(template.ParseFiles(primitiveName))
 
 	envelopeName := filepath.Join(prefix, "envelope.tmpl")
-	envelopeTmpl = template.Must(template.ParseFiles(envelopeName))
+	envelopeTmpl = template.Must(template.New("envelope.tmpl").Funcs(template.FuncMap{
+		"add": func(a, b int) int {
+			return a + b
+		},
+	}).ParseFiles(envelopeName))
 }
 
 // data is a representation of one of our primitive structs, or a struct
@@ -37,6 +41,7 @@ type data struct {
 	Name      string
 	Fields    []field
 	Byte      string // The enumerated byte type, if present.
+	Version   uint8  // schema version, if present.
 	Immutable bool   // Is the type immutable?
 	Visible   bool   // Is the type visible from an immutable type?
 }
@@ -62,12 +67,19 @@ func (s sortFields) Len() int           { return len(s) }
 func (s sortFields) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s sortFields) Less(i, j int) bool { return strings.Compare(s[i].Name, s[j].Name) < 0 }
 
+// sortDataByVersion sorts data by schema version, for envelope output.
+type sortDataByVersion []data
+
+func (d sortDataByVersion) Len() int           { return len(d) }
+func (d sortDataByVersion) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
+func (d sortDataByVersion) Less(i, j int) bool { return d[i].Version < d[j].Version }
+
 // envTmplData is the data passed for populating the envelope package template
 // file, defined here for convenience.
 type envTmplData struct {
 	Name       string
 	Mutability string
-	Types      []data
+	Types      map[string][]data
 }
 
 // primitiveParser handles iterating and inspecting the defined primitive structs
@@ -109,7 +121,7 @@ func (pp *primitiveParser) visitStruct(reachable map[string]*data, k string, vis
 		Name: k,
 		Byte: pp.typedecls[pp.fset.Position(s.Pos()).Line],
 	}
-	d.Immutable, d.Fields = pp.gatherFields(reachable, s, visible)
+	d.Immutable, d.Version, d.Fields = pp.gatherFields(reachable, s, visible)
 	d.Visible = visible || d.Immutable
 
 	sort.Sort(sortFields(d.Fields))
@@ -124,12 +136,13 @@ func (pp *primitiveParser) visitStruct(reachable map[string]*data, k string, vis
 // gatherFields transfers visibility from immutable structs, or any already
 // known visible structs, to structs that they reference.
 // visibility determines if we should create a MarshalJSON func for the struct.
-func (pp *primitiveParser) gatherFields(reachable map[string]*data, s *ast.StructType, visible bool) (bool, []field) {
+func (pp *primitiveParser) gatherFields(reachable map[string]*data, s *ast.StructType, visible bool) (bool, uint8, []field) {
 	fields := []field{}
 
 	immutable := false
+	var version uint8
 	if s == nil {
-		return immutable, fields
+		return immutable, version, fields
 	}
 
 	for _, f := range s.Fields.List {
@@ -143,13 +156,21 @@ func (pp *primitiveParser) gatherFields(reachable map[string]*data, s *ast.Struc
 			}
 		}
 		if len(f.Names) == 0 {
-			if typeName == "immutable" {
+			switch typeName {
+			case "immutable":
 				immutable = true
+			case "v1Schema":
+				version = 1
+			case "v2Schema":
+				version = 2
 			}
 			embedded := pp.structmap[typeName]
-			embImmutable, embeddedFields := pp.gatherFields(reachable, embedded, visible || immutable)
+			embImmutable, embVersion, embeddedFields := pp.gatherFields(reachable, embedded, visible || immutable)
 			immutable = immutable || embImmutable
 			visible = visible || immutable
+			if version == 0 {
+				version = embVersion
+			}
 			fields = append(fields, embeddedFields...)
 			continue
 		}
@@ -176,7 +197,7 @@ func (pp *primitiveParser) gatherFields(reachable map[string]*data, s *ast.Struc
 		}
 	}
 
-	return immutable, fields
+	return immutable, version, fields
 }
 
 // loadTypeComments loads our annotation comments on structs, indicating
@@ -280,18 +301,27 @@ func main() {
 	sort.Sort(sortData(types))
 
 	// Split the sorted values into immutable/mutable, for envelope output.
-	mutable := []data{}
-	immutable := []data{}
+	mutable := map[string][]data{}
+	immutable := map[string][]data{}
 	for _, d := range types {
 		if d.Byte == "" {
 			continue
 		}
 
 		if d.Immutable {
-			immutable = append(immutable, d)
+			immutable[d.Byte] = append(immutable[d.Byte], d)
 		} else {
-			mutable = append(mutable, d)
+			mutable[d.Byte] = append(mutable[d.Byte], d)
 		}
+	}
+
+	// Template output will automatically sort maps for us, but sorted schema
+	// versions in the switch statements would be nice, too.
+	for _, d := range mutable {
+		sort.Sort(sortDataByVersion(d))
+	}
+	for _, d := range immutable {
+		sort.Sort(sortDataByVersion(d))
 	}
 
 	writeTemplate(primitiveFile, primitiveTmpl, struct{ Types []data }{Types: types})

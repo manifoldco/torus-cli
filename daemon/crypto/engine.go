@@ -463,7 +463,7 @@ func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Immutable,
 
 	return &envelope.Signed{
 		ID:        &id,
-		Version:   1,
+		Version:   uint8(body.Version()),
 		Body:      body,
 		Signature: sig,
 	}, nil

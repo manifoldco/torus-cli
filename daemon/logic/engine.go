@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/base64"
@@ -56,10 +55,10 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	n := notifier.Notifier(4)
 
 	// Ensure we have an existing keyring for this credential's pathexp
-	trees, err := e.client.CredentialTree.List(ctx, cred.Body.Name, "",
+	graphs, err := e.client.CredentialGraph.List(ctx, cred.Body.Name, "",
 		cred.Body.PathExp, e.session.ID())
 	if err != nil {
-		log.Printf("Error retrieving credential trees: %s", err)
+		log.Printf("Error retrieving credential graphs: %s", err)
 		return nil, err
 	}
 
@@ -73,28 +72,27 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Keypairs retrieved", true)
 
-	newTree := false
-	// No matching CredentialTree/KeyRing for this credential.
+	var newGraph *registry.CredentialGraphV2
+	// No matching CredentialGraph/KeyRing for this credential.
 	// We'll make a new one now.
-	if len(trees) == 0 {
-		tree, err := createCredentialTree(ctx, cred.Body, sigID, encID, kp,
+	if len(graphs) == 0 {
+		newGraph, err = createCredentialGraph(ctx, cred.Body, sigID, encID, kp,
 			e.client, e.crypto)
 		if err != nil {
-			log.Printf("error creating credential tree: %s", err)
+			log.Printf("error creating credential graph: %s", err)
 			return nil, err
 		}
-		trees = []registry.CredentialTree{*tree}
-		newTree = true
+		graphs = []registry.CredentialGraph{newGraph}
 	}
 
-	tree := trees[0]
-	creds := tree.Credentials
+	graph := graphs[0]
+	creds := graph.GetCredentials()
 
 	// Construct an encrypted and signed version of the credential
 	credBody := primitive.Credential{
 		Name:      cred.Body.Name,
 		PathExp:   cred.Body.PathExp,
-		KeyringID: tree.Keyring.ID,
+		KeyringID: graph.GetKeyring().ID,
 		ProjectID: cred.Body.ProjectID,
 		OrgID:     cred.Body.OrgID,
 		Credential: &primitive.CredentialValue{
@@ -122,9 +120,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		credBody.CredentialVersion = previousCredBody.CredentialVersion + 1
 	}
 
-	// Find our keyring membership entry, so we can access the keyring
-	// master encryption key.
-	krm, err := findKeyringMember(e.session.ID(), &tree)
+	krm, mekshare, err := graph.FindMember(e.session.ID())
 	if err != nil {
 		log.Printf("Error finding keyring membership: %s", err)
 		return nil, err
@@ -142,7 +138,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	// Derive a key for the credential using the keyring master key
 	// and use the derived key to encrypt the credential
 	cekNonce, ctNonce, ct, err := e.crypto.BoxCredential(
-		ctx, []byte(cred.Body.Value), *krm.Key.Value, *krm.Key.Nonce,
+		ctx, []byte(cred.Body.Value), *mekshare.Key.Value, *mekshare.Key.Nonce,
 		&kp.Encryption, *encryptingKey.Key.Value)
 
 	credBody.Nonce = base64.NewValue(cekNonce)
@@ -158,9 +154,9 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Credential encrypted", true)
 
-	if newTree {
-		tree.Credentials = []envelope.Signed{*signed}
-		_, err = e.client.CredentialTree.Post(ctx, &tree)
+	if newGraph != nil {
+		newGraph.Credentials = []envelope.Signed{*signed}
+		_, err = e.client.CredentialGraph.Post(ctx, &graph)
 	} else {
 		_, err = e.client.Credentials.Create(ctx, signed)
 	}
@@ -177,16 +173,16 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 func (e *Engine) RetrieveCredentials(ctx context.Context,
 	notifier *observer.Notifier, cpath string) ([]PlaintextCredentialEnvelope, error) {
 
-	trees, err := e.client.CredentialTree.List(
+	graphs, err := e.client.CredentialGraph.List(
 		ctx, "", cpath, nil, e.session.ID())
 	if err != nil {
-		log.Printf("error retrieving credential trees: %s", err)
+		log.Printf("error retrieving credential graphs: %s", err)
 		return nil, err
 	}
 
 	var steps uint = 1
-	for _, tree := range trees {
-		steps += uint(len(tree.Credentials))
+	for _, graph := range graphs {
+		steps += uint(len(graph.GetCredentials()))
 	}
 
 	n := notifier.Notifier(steps)
@@ -199,8 +195,16 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	// actually do real work and decrypt each of these credentials but for
 	// now we just need ot return a list of them!
 	creds := []PlaintextCredentialEnvelope{}
-	for _, tree := range trees {
-		orgID := tree.Keyring.Body.(*primitive.Keyring).OrgID
+	for _, graph := range graphs {
+		var orgID *identity.ID
+		switch b := graph.GetKeyring().Body.(type) {
+		case *primitive.Keyring:
+			orgID = b.OrgID
+		case *primitive.KeyringV1:
+			orgID = b.OrgID
+		default:
+			return nil, fmt.Errorf("Malformed keyring body")
+		}
 		kp, ok := keypairs[*orgID]
 		if !ok {
 			_, _, kp, err = fetchKeyPairs(ctx, e.client, orgID)
@@ -211,7 +215,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			keypairs[*orgID] = kp
 		}
 
-		krm, err := findKeyringMember(e.session.ID(), &tree)
+		krm, mekshare, err := graph.FindMember(e.session.ID())
 		if err != nil {
 			log.Printf("Error finding keyring membership: %s", err)
 			return nil, err
@@ -228,8 +232,8 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			encryptingKeys[*krm.EncryptingKeyID] = encryptingKey
 		}
 
-		err = e.crypto.WithUnboxer(ctx, *krm.Key.Value, *krm.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
-			for _, cred := range tree.Credentials {
+		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
+			for _, cred := range graph.GetCredentials() {
 				credBody := cred.Body.(*primitive.Credential)
 				pt, err := u.Unbox(ctx, *credBody.Credential.Value,
 					*credBody.Nonce, *credBody.Credential.Nonce)
@@ -332,9 +336,10 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n.Notify(observer.Progress, "Keyrings retrieved", true)
 
-	members := []envelope.Signed{}
+	v1members := []envelope.Signed{}
+	v2members := []registry.KeyringMember{}
 	for _, segment := range keyringSections {
-		krm, err := findKeyringSegmentMember(e.session.ID(), &segment)
+		krm, mekshare, err := segment.FindMember(e.session.ID())
 		if err != nil {
 			log.Printf("could not find keyring membership: %s", err)
 			return nil, fmt.Errorf("could not find keyring membership")
@@ -349,36 +354,38 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 		encPKBody := encPubKey.Body.(*primitive.PublicKey)
 		targetPKBody := targetPubKey.Body.(*primitive.PublicKey)
 
-		encMek, nonce, err := e.crypto.CloneMembership(ctx, *krm.Key.Value,
-			*krm.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
+		encMek, nonce, err := e.crypto.CloneMembership(ctx, *mekshare.Key.Value,
+			*mekshare.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
 		if err != nil {
 			log.Printf("could not clone keyring membership: %s", err)
 			return nil, err
 		}
 
-		member, err := e.crypto.SignedEnvelope(
-			ctx, &primitive.KeyringMember{
-				Created:         time.Now().UTC(),
-				OrgID:           krm.OrgID,
-				ProjectID:       krm.ProjectID,
-				KeyringID:       krm.KeyringID,
-				OwnerID:         inviteBody.InviteeID,
-				PublicKeyID:     targetPubKey.ID,
-				EncryptingKeyID: encID,
-
-				Key: &primitive.KeyringMemberKey{
-					Algorithm: crypto.EasyBox,
-					Nonce:     base64.NewValue(nonce),
-					Value:     base64.NewValue(encMek),
-				},
-			},
-			sigID, &kp.Signature)
-		if err != nil {
-			log.Printf("could not create KeyringMember object: %s", err)
-			return nil, err
+		key := &primitive.KeyringMemberKey{
+			Algorithm: crypto.EasyBox,
+			Nonce:     base64.NewValue(nonce),
+			Value:     base64.NewValue(encMek),
 		}
 
-		members = append(members, *member)
+		switch segment.GetKeyring().Version {
+		case 1:
+			projectID := segment.GetKeyring().Body.(*primitive.KeyringV1).ProjectID
+			member, err := newV1KeyringMember(ctx, e.crypto, krm.OrgID, projectID,
+				krm.KeyringID, inviteBody.InviteeID, targetPubKey.ID, encID, sigID, key, kp)
+			if err != nil {
+				return nil, err
+			}
+			v1members = append(v1members, *member)
+		case 2:
+			member, err := newV2KeyringMember(ctx, e.crypto, krm.OrgID, krm.KeyringID,
+				inviteBody.InviteeID, targetPubKey.ID, encID, sigID, key, kp)
+			if err != nil {
+				return nil, err
+			}
+			v2members = append(v2members, *member)
+		default:
+			return nil, fmt.Errorf("Unknown keyring schema version")
+		}
 	}
 
 	n.Notify(observer.Progress, "Keyring memberships created", true)
@@ -391,8 +398,16 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n.Notify(observer.Progress, "Invite approved", true)
 
-	if len(members) != 0 {
-		_, err = e.client.KeyringMember.Post(ctx, members)
+	if len(v1members) != 0 {
+		_, err = e.client.KeyringMember.Post(ctx, v1members)
+		if err != nil {
+			log.Printf("error uploading memberships: %s", err)
+			return nil, err
+		}
+	}
+
+	for _, member := range v2members {
+		err = e.client.Keyring.Members.Post(ctx, member)
 		if err != nil {
 			log.Printf("error uploading memberships: %s", err)
 			return nil, err
