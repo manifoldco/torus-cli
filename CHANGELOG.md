@@ -1,12 +1,21 @@
 # CHANGELOG
 
-## Unpublished
+## v0.10.0
 
 **Breaking**
 
 - The command line utility has been renamed to `torus` from `ag`.
-- All `.arigatorc` and `.arigato.json` files will need to be renamed to `.torusrc` and `.torus.json`.
+- All `.arigatorc` and `.arigato.json` files will need to be renamed to
+  `.torusrc` and `.torus.json`.
 - The arigato root directory has been renamed to `~/.torus` from `~/.arigato`
+
+**Upgrade Instructions**
+
+- If you already have `ag` installed, stop the daemon using `ag daemon stop`
+- Uninstall the `ag` using `npm uninstall -g ag`
+- Install the new version using `npm install -g torus-cli`
+- Rename `.arigato.json` and `.arigatorc` to `.torus.json` and `.torusrc`
+  respectively
 
 **Notable Changes**
 
