@@ -1,4 +1,4 @@
-# Arigato CLI and Daemon
+# Torus CLI and Daemon
 
 ## Issues and Process
 
@@ -24,10 +24,10 @@ daemon/cli and [registry](https://github.com/arigatomachine/registry).
 3. Now, you can build the daemon using `make docker-build`  or `make`inside the
    `$CLI_REPO` folder.
 4. Override the host name to communicate with your local registry using
-  `./ag prefs set core.registry_uri https://arigato.tools`
+  `./torus prefs set core.registry_uri https://arigato.tools`
 4. Finally, before you can start working with the daemon and cli you must
-   override the arigato root key with your local development keys. Using
-   `./ag prefs set core.public_key_file $REGISTRY_REPO/keys/offline-pub.json`
+   override the torus root key with your local development keys. Using
+   `./torus prefs set core.public_key_file $REGISTRY_REPO/keys/offline-pub.json`
 5. Now you should be able to begin interacting with the CLI.
 
 
@@ -92,8 +92,8 @@ The steps for packaging the CLI:
 
 ## Codebase
 
-This repository contains the code for both the arigato daemon and cli. It's
-also the home of all arigato issues (server and client).
+This repository contains the code for both the torus daemon and cli. It's
+also the home of all torus issues (server and client).
 
 The daemon is responsible for:
 - holding sensitive data (the user's password and access tokens).
@@ -125,6 +125,6 @@ used for both development and continuous integration.
 
 1. Are you up to date with master in both registry, and cli?
 3. Did you kill your daemon process after rebuild?
-4. Does your `~/.arigatorc` point to the offline signing public key?
+4. Does your `~/.torusrc` point to the offline signing public key?
  - Under `[core]` set `public_key_file=$REGISTRY_REPO/keys/offline-pub.json` where `$REGISTRY_REPO` is the path to your repo on disk.
-5. What does `tail -f ~/.arigato/daemon.log` say?
+5. What does `tail -f ~/.torus/daemon.log` say?

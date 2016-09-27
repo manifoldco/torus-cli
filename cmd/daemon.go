@@ -133,7 +133,7 @@ func spawnDaemon() error {
 	// no need to keep those hanging around in a long lived-process!
 	cmd.Env = []string{}
 	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "AG_EMAIL=") || strings.HasPrefix(e, "AG_PASSWORD=") {
+		if strings.HasPrefix(e, "TORUS_EMAIL=") || strings.HasPrefix(e, "TORUS_PASSWORD=") {
 			continue
 		}
 		cmd.Env = append(cmd.Env, e)
@@ -148,21 +148,21 @@ func spawnDaemon() error {
 }
 
 func startDaemon(ctx *cli.Context) error {
-	arigatoRoot, err := config.CreateArigatoRoot()
+	torusRoot, err := config.CreateTorusRoot()
 	if err != nil {
-		return cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
+		return cli.NewExitError("Failed to initialize Torus root dir: "+err.Error(), -1)
 	}
 
 	if ctx.Bool("daemonize") {
 		log.SetOutput(&lumberjack.Logger{
-			Filename:   path.Join(arigatoRoot, "daemon.log"),
+			Filename:   path.Join(torusRoot, "daemon.log"),
 			MaxSize:    10, // megabytes
 			MaxBackups: 3,
 			MaxAge:     28, // days
 		})
 	}
 
-	cfg, err := config.NewConfig(arigatoRoot)
+	cfg, err := config.NewConfig(torusRoot)
 	if err != nil {
 		return cli.NewExitError("Failed to load config: "+err.Error(), -1)
 	}

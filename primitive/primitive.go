@@ -492,7 +492,7 @@ type Environment struct { // type: 0x05
 }
 
 // There are two types of teams: system and user. System teams are
-// managed by the Arigato registry.
+// managed by the Torus registry.
 const (
 	SystemTeam = "system"
 	UserTeam   = "user"

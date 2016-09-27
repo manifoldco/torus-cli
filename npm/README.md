@@ -1,15 +1,15 @@
-# Ag
+# Torus
 
 A secure, shared workspace for secrets
 
 Secure and manage config secrets across teams, environments and services.
-Just ag set and let Arigato do the hard work
+Just `torus set` and let Torus do the hard work
 
-Sign up for the alpha: [https://arigato.sh](https://arigato.sh)!
+Sign up for the alpha: [https://torus.sh](https://torus.sh)!
 
 ### Disclaimer
 
-This release of the AG command line tool is meant to be a work-in-progress preview.
+This release of the torus command line tool is meant to be a work-in-progress preview.
 
 **We strongly recommend you do not use this tool in production**, though we
 encourage you to test and offer feedback as you see fit. We can not guarantee
@@ -18,7 +18,7 @@ the data integrity or security of the product at this stage of development.
 ### Security Bug Disclosure
 
 If you are aware of a security bug or a potential vulnerability, you can notify
-us privately by contacting `security@arigato.sh`.
+us privately by contacting `security@manifold.co`.
 
 You can encrypt your message using PGP with the public key listed below, which
 is also available on [keybase](https://keybase.io/ianlivingstone).
@@ -105,7 +105,7 @@ gRvGPJZJ1Bw00Baoa7MhrMup3qKSvKKqyMB+366qJ7vsrQIGT3B7iG8ZLaa+QGhV
 
 ### License
 
-Arigato: a utility for sharing and securing secrets across teams, services, and environments.
+Torus: a utility for sharing and securing secrets across teams, services, and environments.
 Copyright (C) 2016  Arigato Machine Inc.
 
 This program is free software: you can redistribute it and/or modify

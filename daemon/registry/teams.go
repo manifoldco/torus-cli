@@ -11,7 +11,7 @@ import (
 )
 
 // TeamsClient represents the `/teams` registry endpoint, used for
-// accessing teams stored in Arigato.
+// accessing teams stored in Torus.
 type TeamsClient struct {
 	client *Client
 }

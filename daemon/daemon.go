@@ -12,7 +12,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/socket"
 )
 
-// Daemon is the arigato coprocess that contains session secrets, handles
+// Daemon is the torus coprocess that contains session secrets, handles
 // cryptographic operations, and communication with the registry.
 type Daemon struct {
 	proxy       *socket.AuthProxy

@@ -15,7 +15,7 @@ import (
 func init() {
 	signup := cli.Command{
 		Name:      "signup",
-		Usage:     "Create a new Arigato account which, while in alpha, requires an invite code",
+		Usage:     "Create a new Torus account which, while in alpha, requires an invite code",
 		ArgsUsage: "[email] [code]",
 		Category:  "ACCOUNT",
 		Action:    chain(ensureDaemon, signupCmd),
@@ -66,7 +66,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	var inviteCode string
-	if os.Getenv("AG_DEBUG") == "" {
+	if os.Getenv("TORUS_DEBUG") == "" {
 		inviteCode, err = InviteCodePrompt(defaultInvite)
 		if err != nil {
 			return err

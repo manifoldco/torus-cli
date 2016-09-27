@@ -1,4 +1,4 @@
-// Package envelope defines the generic encapsulating format for Arigato
+// Package envelope defines the generic encapsulating format for torus
 // objects.
 package envelope
 
@@ -8,13 +8,13 @@ import (
 )
 
 // Envelope is the interface implemented by objects that encapsulate 'true'
-// Arigato objects.
+// torus objects.
 type Envelope interface {
 	GetID() *identity.ID // avoid field collision
 }
 
 // Signed is the generic format for encapsulating signed immutable
-// request/response objects to/from arigato.
+// request/response objects to/from torus.
 type Signed struct {
 	ID        *identity.ID        `json:"id"`
 	Version   uint8               `json:"version"`
@@ -28,7 +28,7 @@ func (e *Signed) GetID() *identity.ID {
 }
 
 // Unsigned is the generic format for encapsulating unsigned mutable
-// request/response objects to/from arigato.
+// request/response objects to/from torus.
 type Unsigned struct {
 	ID      *identity.ID     `json:"id"`
 	Version uint8            `json:"version"`

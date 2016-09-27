@@ -13,7 +13,7 @@ import (
 func init() {
 	login := cli.Command{
 		Name:     "login",
-		Usage:    "Log in to your Arigato account",
+		Usage:    "Log in to your Torus account",
 		Category: "ACCOUNT",
 		Action:   chain(ensureDaemon, login),
 	}

@@ -1,4 +1,4 @@
-// Package cmd contains all of the Arigato cli commands
+// Package cmd contains all of the Torus cli commands
 package cmd
 
 import (

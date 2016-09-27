@@ -9,7 +9,7 @@ import (
 )
 
 // Orgs represents the `/orgs` registry endpoint, used for accessing
-// organizations stored in Arigato.
+// organizations stored in Torus.
 type Orgs struct {
 	client *Client
 }

@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	rcFilename  = ".arigatorc"
+	rcFilename  = ".torusrc"
 	registryURI = "https://registry.arigato.sh"
 )
 
-// Preferences represents the configuration as user has in their arigatorc file
+// Preferences represents the configuration as user has in their torusrc file
 type Preferences struct {
 	Core     Core     `ini:"core"`
 	Defaults Defaults `ini:"defaults"`
@@ -98,7 +98,7 @@ func findElemByName(values reflect.Value, iniField string) string {
 	return fieldName
 }
 
-// RcPath returns the arigatorc filepath
+// RcPath returns the torusrc filepath
 func RcPath() (string, error) {
 	u, err := user.Current()
 	if err != nil {

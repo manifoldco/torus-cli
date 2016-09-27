@@ -10,7 +10,7 @@ import (
 )
 
 // OrgInviteClient represents the `/org-invites` registry endpoint, used for
-// sending, accepting, and approving invitations to organizations in Arigato.
+// sending, accepting, and approving invitations to organizations in Torus.
 type OrgInviteClient struct {
 	client *Client
 }

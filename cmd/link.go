@@ -19,7 +19,7 @@ import (
 func init() {
 	link := cli.Command{
 		Name:     "link",
-		Usage:    "Link your current directory to Arigato",
+		Usage:    "Link your current directory to Torus",
 		Category: "CONTEXT",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
@@ -138,7 +138,7 @@ func linkCmd(ctx *cli.Context) error {
 
 	dPrefs.Organization = oName
 	dPrefs.Project = pName
-	dPrefs.Path = filepath.Join(cwd, ".arigato.json")
+	dPrefs.Path = filepath.Join(cwd, ".torus.json")
 
 	err = dPrefs.Save()
 	if err != nil {

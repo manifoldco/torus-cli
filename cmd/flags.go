@@ -21,32 +21,32 @@ var (
 
 // orgFlag creates a new --org cli.Flag with custom usage string.
 func orgFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("org, o", "ORG", usage, "", "AG_ORG", required)
+	return newPlaceholder("org, o", "ORG", usage, "", "TORUS_ORG", required)
 }
 
 // projectFlag creates a new --project cli.Flag with custom usage string.
 func projectFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("project, p", "PROJECT", usage, "", "AG_PROJECT", required)
+	return newPlaceholder("project, p", "PROJECT", usage, "", "TORUS_PROJECT", required)
 }
 
 // envFlag creates a new --environment cli.Flag with custom usage string.
 func envFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("environment, e", "ENV", usage, "", "AG_ENVIRONMENT", required)
+	return newPlaceholder("environment, e", "ENV", usage, "", "TORUS_ENVIRONMENT", required)
 }
 
 // serviceFlag creates a new --service cli.Flag with custom usage string.
 func serviceFlag(usage, value string, required bool) cli.Flag {
-	return newPlaceholder("service, s", "SERVICE", usage, value, "AG_SERVICE", required)
+	return newPlaceholder("service, s", "SERVICE", usage, value, "TORUS_SERVICE", required)
 }
 
 // userFlag creates a new --user cli.Flag with custom usage string.
 func userFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("user, u", "USER", usage, "", "AG_USER", required)
+	return newPlaceholder("user, u", "USER", usage, "", "TORUS_USER", required)
 }
 
 // instanceFlag creates a new --instance cli.Flag with custom usage string.
 func instanceFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "AG_INSTANCE", required)
+	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "TORUS_INSTANCE", required)
 }
 
 // placeHolderStringSliceFlag is a StringSliceFlag that has been extended to use a

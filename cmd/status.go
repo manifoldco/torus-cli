@@ -16,7 +16,7 @@ import (
 func init() {
 	status := cli.Command{
 		Name:     "status",
-		Usage:    "Show the current Arigato status associated with your account and project",
+		Usage:    "Show the current Torus status associated with your account and project",
 		Category: "CONTEXT",
 		Flags: []cli.Flag{
 			stdEnvFlag,
@@ -27,15 +27,15 @@ func init() {
 			// them to the users in help.
 			// A user could still set the flag on the command line though :(
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "org", EnvVar: "AG_ORG", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "org", EnvVar: "TORUS_ORG", Hidden: true},
 				Required:   true,
 			},
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "project", EnvVar: "AG_PROJECT", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "project", EnvVar: "TORUS_PROJECT", Hidden: true},
 				Required:   true,
 			},
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "instance", EnvVar: "AG_INSTANCE", Value: "*", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "instance", EnvVar: "TORUS_INSTANCE", Value: "*", Hidden: true},
 				Required:   true,
 			},
 		},

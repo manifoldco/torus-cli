@@ -27,23 +27,23 @@ func init() {
 			// them to the users in help.
 			// A user could still set the flag on the command line though :(
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "environment", EnvVar: "AG_ENVIRONMENT", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "environment", EnvVar: "TORUS_ENVIRONMENT", Hidden: true},
 				Required:   true,
 			},
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "service", Value: "default", EnvVar: "AG_SERVICE", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "service", Value: "default", EnvVar: "TORUS_SERVICE", Hidden: true},
 				Required:   true,
 			},
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "org", EnvVar: "AG_ORG", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "org", EnvVar: "TORUS_ORG", Hidden: true},
 				Required:   true,
 			},
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "project", EnvVar: "AG_PROJECT", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "project", EnvVar: "TORUS_PROJECT", Hidden: true},
 				Required:   true,
 			},
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "instance", EnvVar: "AG_INSTANCE", Value: "*", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "instance", EnvVar: "TORUS_INSTANCE", Value: "*", Hidden: true},
 				Required:   true,
 			},
 		},
@@ -90,7 +90,7 @@ func debugInfoCmd(ctx *cli.Context) error {
 
 	// Debug environment variable used
 	debug := false
-	if os.Getenv("AG_DEBUG") != "" {
+	if os.Getenv("TORUS_DEBUG") != "" {
 		debug = true
 	}
 
