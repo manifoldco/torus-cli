@@ -13,7 +13,7 @@ import (
 func init() {
 	unlink := cli.Command{
 		Name:     "unlink",
-		Usage:    "Remove the link between this project and Arigato",
+		Usage:    "Remove the link between this project and Torus",
 		Category: "CONTEXT",
 		Action:   unlinkCmd,
 	}

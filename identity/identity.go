@@ -1,5 +1,5 @@
 // Package identity defines the ID format used for uniquely identifying
-// objects in Arigato.
+// objects in Torus.
 package identity
 
 import (

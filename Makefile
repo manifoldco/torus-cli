@@ -1,4 +1,4 @@
-OUT=ag
+OUT=torus
 PKG=github.com/arigatomachine/cli
 
 TARGETS=\
@@ -198,7 +198,7 @@ builds/npm/LICENSE.md: LICENSE.md builds/npm
 builds/npm/scripts/install.js: npm/install.js builds/npm/scripts
 	cp $< $@
 
-npm-bin: builds/npm/bin builds/ag-*
-	cp builds/ag-* builds/npm/bin/
+npm-bin: builds/npm/bin builds/torus-*
+	cp builds/torus-* builds/npm/bin/
 
 .PHONY: npm npm-bin

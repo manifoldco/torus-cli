@@ -1,10 +1,10 @@
 {
-  "name": "ag",
+  "name": "torus-cli",
   "version": "VERSION",
   "description": "A utility for sharing and securing secrets across teams, services, and environments.",
   "bin": {
-    "ag": "bin/ag",
-    "arigato": "bin/ag"
+    "torus": "bin/torus",
+    "torus-cli": "bin/torus"
   },
   "os": [
     "darwin",
@@ -22,15 +22,15 @@
   },
   "author": "Arigato Machine Inc.",
   "contributors": [
-    "Jevon MacDonaold <jevon@arigato.sh>",
-    "Ian Livingstone <ian@arigato.sh>",
-    "Jeff Andersen <jeff@arigato.sh>",
-    "Matthew Creager <matt@arigato.sh>",
-    "Nick Tassone <nick@arigato.sh>",
-    "Peter Cho <peter@arigato.sh>",
-    "James Bowes <james@arigato.sh>"
+    "Jevon MacDonald <jevon@manifold.co>",
+    "Ian Livingstone <ian@manifold.co>",
+    "Jeff Andersen <jeff@manifold.co>",
+    "Matthew Creager <matt@manifold.co>",
+    "Nick Tassone <nick@manifold.co>",
+    "Peter Cho <peter@manifold.co>",
+    "James Bowes <james@manifold.co>"
   ],
-  "logo": "https://s3.amazonaws.com/marketing.arigato.sh/logo.png",
+  "logo": "https://s3.amazonaws.com/marketing.arigato.sh/torus_logo.png",
   "license": "AGPL-3.0",
   "dependencies": {
   },

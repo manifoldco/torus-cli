@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## Unpublished
+
+**Breaking**
+
+- The command line utility has been renamed to `torus` from `ag`.
+- All `.arigatorc` and `.arigato.json` files will need to be renamed to `.torusrc` and `.torus.json`.
+- The arigato root directory has been renamed to `~/.torus` from `~/.arigato`
+
+**Notable Changes**
+
+- All environment variables are now prefixed with `TORUS_` instead of `AG_`
+- `torus link` will now generate a `.torus.json` file instead of `.arigato.json`
+- `torus prefs` will now read and write to a global `.torusrc` file
+
 ## v0.9.0
 
 _Published: 2016-09-20_

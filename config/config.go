@@ -23,15 +23,15 @@ var apiVersion = "0.1.0"
 const requiredPermissions = 0700
 
 // Config represents the static and user defined configuration data
-// for Arigato.
+// for Torus.
 type Config struct {
 	APIVersion string
 	Version    string
 
-	ArigatoRoot string
-	SocketPath  string
-	PidPath     string
-	DBPath      string
+	TorusRoot  string
+	SocketPath string
+	PidPath    string
+	DBPath     string
 
 	RegistryURI *url.URL
 	CABundle    *x509.CertPool
@@ -39,7 +39,7 @@ type Config struct {
 }
 
 // NewConfig returns a new Config, with loaded user preferences.
-func NewConfig(arigatoRoot string) (*Config, error) {
+func NewConfig(torusRoot string) (*Config, error) {
 	preferences, err := prefs.NewPreferences(true)
 	if err != nil {
 		return nil, err
@@ -64,10 +64,10 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 		APIVersion: apiVersion,
 		Version:    Version,
 
-		ArigatoRoot: arigatoRoot,
-		SocketPath:  path.Join(arigatoRoot, "daemon.socket"),
-		PidPath:     path.Join(arigatoRoot, "daemon.pid"),
-		DBPath:      path.Join(arigatoRoot, "daemon.db"),
+		TorusRoot:  torusRoot,
+		SocketPath: path.Join(torusRoot, "daemon.socket"),
+		PidPath:    path.Join(torusRoot, "daemon.pid"),
+		DBPath:     path.Join(torusRoot, "daemon.db"),
 
 		RegistryURI: registryURI,
 		CABundle:    caBundle,
@@ -77,29 +77,29 @@ func NewConfig(arigatoRoot string) (*Config, error) {
 	return cfg, nil
 }
 
-// CreateArigatoRoot creates the root directory for the Arigato daemon.
-func CreateArigatoRoot() (string, error) {
-	arigatoRoot := os.Getenv("AG_ROOT")
-	if len(arigatoRoot) == 0 {
-		arigatoRoot = path.Join(os.Getenv("HOME"), ".arigato")
+// CreateTorusRoot creates the root directory for the Torus daemon.
+func CreateTorusRoot() (string, error) {
+	torusRoot := os.Getenv("TORUS_ROOT")
+	if len(torusRoot) == 0 {
+		torusRoot = path.Join(os.Getenv("HOME"), ".torus")
 	}
 
-	src, err := os.Stat(arigatoRoot)
+	src, err := os.Stat(torusRoot)
 	if err != nil && !os.IsNotExist(err) {
 		return "", err
 	}
 
 	if err == nil && !src.IsDir() {
-		return "", fmt.Errorf("%s exists but is not a dir", arigatoRoot)
+		return "", fmt.Errorf("%s exists but is not a dir", torusRoot)
 	}
 
 	if os.IsNotExist(err) {
-		err = os.Mkdir(arigatoRoot, requiredPermissions)
+		err = os.Mkdir(torusRoot, requiredPermissions)
 		if err != nil {
 			return "", err
 		}
 
-		src, err = os.Stat(arigatoRoot)
+		src, err = os.Stat(torusRoot)
 		if err != nil {
 			return "", err
 		}
@@ -108,10 +108,10 @@ func CreateArigatoRoot() (string, error) {
 	fMode := src.Mode()
 	if fMode.Perm() != requiredPermissions {
 		return "", fmt.Errorf("%s has permissions %d requires %d",
-			arigatoRoot, fMode.Perm(), requiredPermissions)
+			torusRoot, fMode.Perm(), requiredPermissions)
 	}
 
-	return arigatoRoot, nil
+	return torusRoot, nil
 }
 
 // Load CABundle creates a new CertPool from the given filename
@@ -140,12 +140,12 @@ func loadCABundle(cafile string) (*x509.CertPool, error) {
 
 // LoadConfig loads the config, standardizing cli errors on failure.
 func LoadConfig() (*Config, error) {
-	arigatoRoot, err := CreateArigatoRoot()
+	torusRoot, err := CreateTorusRoot()
 	if err != nil {
-		return nil, cli.NewExitError("Failed to initialize Arigato root dir: "+err.Error(), -1)
+		return nil, cli.NewExitError("Failed to initialize Torus root dir: "+err.Error(), -1)
 	}
 
-	cfg, err := NewConfig(arigatoRoot)
+	cfg, err := NewConfig(torusRoot)
 	if err != nil {
 		return nil, cli.NewExitError("Failed to load config: "+err.Error(), -1)
 	}

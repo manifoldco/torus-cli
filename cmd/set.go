@@ -18,13 +18,13 @@ var setUnsetFlags = []cli.Flag{
 	stdOrgFlag,
 	stdProjectFlag,
 	newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
-		"", "AG_ENVIRONMENT", true),
+		"", "TORUS_ENVIRONMENT", true),
 	newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
-		"default", "AG_SERVICE", true),
+		"default", "TORUS_SERVICE", true),
 	newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
-		"*", "AG_USER", true),
+		"*", "TORUS_USER", true),
 	newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
-		"1", "AG_INSTANCE", true),
+		"1", "TORUS_INSTANCE", true),
 }
 
 func init() {

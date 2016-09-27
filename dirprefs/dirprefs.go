@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-// DirPreferences holds preferences for arguments set in .arigato.json files
+// DirPreferences holds preferences for arguments set in .torus.json files
 type DirPreferences struct {
 	Organization string `json:"org,omitempty"`
 	Project      string `json:"project,omitempty"`
@@ -15,10 +15,10 @@ type DirPreferences struct {
 }
 
 // Load loads DirPreferences. It starts in the current working directory,
-// looking for a readable '.arigato.json' file, and walks up the directory
+// looking for a readable '.torus.json' file, and walks up the directory
 // hierarchy until it finds one, or reaches the root of the fs.
 //
-// It returns an empty DirPreferences is no '.arigato.json' files are found.
+// It returns an empty DirPreferences is no '.torus.json' files are found.
 // It returns an error if a malformed file is found, or if any errors occur
 // during file system access.
 func Load(recurse bool) (*DirPreferences, error) {
@@ -31,7 +31,7 @@ func Load(recurse bool) (*DirPreferences, error) {
 
 	var f *os.File
 	for {
-		f, err = os.Open(filepath.Join(path, ".arigato.json"))
+		f, err = os.Open(filepath.Join(path, ".torus.json"))
 		if err != nil {
 			if len(path) == 1 && path == string(os.PathSeparator) || !recurse {
 				return prefs, nil

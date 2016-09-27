@@ -67,7 +67,7 @@ func listPref(ctx *cli.Context) error {
 	}
 
 	if defaultsCount < 1 && coreCount < 1 {
-		fmt.Println("No preferences set. Use 'ag prefs set' to update.")
+		fmt.Println("No preferences set. Use 'torus prefs set' to update.")
 		fmt.Println("")
 	}
 

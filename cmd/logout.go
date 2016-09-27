@@ -14,7 +14,7 @@ import (
 func init() {
 	logout := cli.Command{
 		Name:     "logout",
-		Usage:    "Log out of your Arigato account",
+		Usage:    "Log out of your Torus account",
 		Category: "ACCOUNT",
 		Action:   chain(ensureDaemon, logoutCmd),
 	}

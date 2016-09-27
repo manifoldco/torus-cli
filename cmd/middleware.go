@@ -124,8 +124,8 @@ func ensureSession(ctx *cli.Context) error {
 		return nil
 	}
 
-	email, hasEmail := os.LookupEnv("AG_EMAIL")
-	password, hasPassword := os.LookupEnv("AG_PASSWORD")
+	email, hasEmail := os.LookupEnv("TORUS_EMAIL")
+	password, hasPassword := os.LookupEnv("TORUS_PASSWORD")
 
 	if hasEmail && hasPassword {
 		fmt.Println("Attempting to login with email: " + email)
@@ -143,7 +143,7 @@ func ensureSession(ctx *cli.Context) error {
 	return cli.NewExitError(msg, -1)
 }
 
-// loadDirPrefs loads argument values from the .arigato.json file
+// loadDirPrefs loads argument values from the .torus.json file
 func loadDirPrefs(ctx *cli.Context) error {
 	p, err := prefs.NewPreferences(true)
 	if err != nil {
@@ -158,7 +158,7 @@ func loadDirPrefs(ctx *cli.Context) error {
 	return reflectArgs(ctx, p, d, "json")
 }
 
-// loadPrefDefaults loads default argument values from the .arigatorc
+// loadPrefDefaults loads default argument values from the .torusrc
 // preferences file defaults section, inserting them into any unset flag values
 func loadPrefDefaults(ctx *cli.Context) error {
 	p, err := prefs.NewPreferences(true)
@@ -172,7 +172,7 @@ func loadPrefDefaults(ctx *cli.Context) error {
 func reflectArgs(ctx *cli.Context, p *prefs.Preferences, i interface{},
 	tagName string) error {
 
-	// The user has disabled reading arguments from prefs and .arigato.json
+	// The user has disabled reading arguments from prefs and .torus.json
 	if !p.Core.Context {
 		return nil
 	}

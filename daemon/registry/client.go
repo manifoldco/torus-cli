@@ -1,4 +1,4 @@
-// Package registry provides access to the Arigato registry REST API.
+// Package registry provides access to the Torus registry REST API.
 package registry
 
 import (
@@ -102,7 +102,7 @@ func (c *Client) NewTokenRequest(token, method, path string, query *url.Values,
 	}
 
 	req.Header.Set("Host", c.prefix)
-	req.Header.Set("User-Agent", "Ag-Daemon/"+c.version)
+	req.Header.Set("User-Agent", "Torus-Daemon/"+c.version)
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("X-Registry-Version", c.apiVersion)
 

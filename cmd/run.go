@@ -55,9 +55,9 @@ func runCmd(ctx *cli.Context) error {
 	cmd.Stderr = os.Stderr
 
 	cmd.Env = []string{}
-	// Clone the existing environment, without sensitve AG values.
+	// Clone the existing environment, without sensitve TORUS values.
 	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "AG_EMAIL=") || strings.HasPrefix(e, "AG_PASSWORD=") {
+		if strings.HasPrefix(e, "TORUS_EMAIL=") || strings.HasPrefix(e, "TORUS_PASSWORD=") {
 			continue
 		}
 		cmd.Env = append(cmd.Env, e)

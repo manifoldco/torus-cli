@@ -1,6 +1,8 @@
 # Things we get while testing/developing
 ag
+torus
 *.arigato.json
+*.torus.json
 
 travis/id_rsa*
 builds/*
