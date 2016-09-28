@@ -2,6 +2,11 @@
 
 ## v0.10.0
 
+**Deprecation**:
+
+- All previous versions of `ag` are deprecated and support will cease as of
+  October 24th 2016. Please switch to using `torus` by that date.
+
 **Breaking**
 
 - The command line utility has been renamed to `torus` from `ag`.
