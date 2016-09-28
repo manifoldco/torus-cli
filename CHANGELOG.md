@@ -23,6 +23,11 @@
 - `torus link` will now generate a `.torus.json` file instead of `.arigato.json`
 - `torus prefs` will now read and write to a global `.torusrc` file
 
+**Fixes**
+
+- A secret can no longer be set for a non-existent service, environment, or
+  user.
+
 ## v0.9.0
 
 _Published: 2016-09-20_
