@@ -134,7 +134,7 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 	cred := apitypes.Credential{
 		OrgID:     org.ID,
 		ProjectID: project.ID,
-		Name:      name,
+		Name:      strings.ToLower(name),
 		PathExp:   pe,
 		Value:     valueMaker(),
 	}

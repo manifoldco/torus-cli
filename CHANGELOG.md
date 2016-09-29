@@ -1,6 +1,17 @@
 # CHANGELOG
 
+## v0.10.1
+
+_Published: 2016-09-29_
+
+**Fixes**
+
+- Credential names are case insensitive, normalized to lower case. Teach the
+  cli to do this before sending credentials to the server.
+
 ## v0.10.0
+
+_Published: 2016-09-28_
 
 **Deprecation**:
 
