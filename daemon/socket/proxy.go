@@ -125,7 +125,7 @@ func requestIDHandler(next http.Handler) http.Handler {
 		if id == "" {
 			id = uuid.NewV4().String()
 		}
-		ctx := context.WithValue(r.Context(), "id", id)
+		ctx := context.WithValue(r.Context(), observer.CtxRequestID, id)
 
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)

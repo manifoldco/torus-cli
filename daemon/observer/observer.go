@@ -12,6 +12,11 @@ import (
 	"net/http"
 )
 
+type ctxkey string
+
+// CtxRequestID is the context WithValue key for a request id.
+var CtxRequestID ctxkey = "id"
+
 // EventType represents all possible types of events that can be observed.
 type EventType string
 
@@ -165,7 +170,7 @@ func (o *Observer) Notifier(ctx context.Context, total uint) (*Notifier, error) 
 		return nil, errors.New("Context must be provided")
 	}
 
-	id, ok := ctx.Value("id").(string)
+	id, ok := ctx.Value(CtxRequestID).(string)
 	if !ok {
 		return nil, errors.New("Missing 'id' property in Context")
 	}

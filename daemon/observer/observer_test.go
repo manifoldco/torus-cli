@@ -13,7 +13,7 @@ func TestNotifier(t *testing.T) {
 	t.Run("a chained notifier keeps track of total", func(t *testing.T) {
 		o := New()
 		id := uuid.NewV4().String()
-		ctx := context.WithValue(context.Background(), "id", id)
+		ctx := context.WithValue(context.Background(), CtxRequestID, id)
 
 		parent, err := o.Notifier(ctx, 5)
 		if err != nil {
@@ -46,7 +46,7 @@ func TestNotifier(t *testing.T) {
 		id := uuid.NewV4().String()
 
 		parentCtx, cancel := context.WithCancel(context.Background())
-		ctx := context.WithValue(parentCtx, "id", id)
+		ctx := context.WithValue(parentCtx, CtxRequestID, id)
 
 		parent, err := o.Notifier(ctx, 1)
 		if err != nil {
@@ -63,7 +63,7 @@ func TestNotifier(t *testing.T) {
 	t.Run("a chained Notify when observer is Closed", func(t *testing.T) {
 		o := New()
 		id := uuid.NewV4().String()
-		ctx := context.WithValue(context.Background(), "id", id)
+		ctx := context.WithValue(context.Background(), CtxRequestID, id)
 
 		parent, err := o.Notifier(ctx, 1)
 		if err != nil {
@@ -79,7 +79,7 @@ func TestNotifier(t *testing.T) {
 	t.Run("panic's if total is exceeded", func(t *testing.T) {
 		o := New()
 		id := uuid.NewV4().String()
-		ctx := context.WithValue(context.Background(), "id", id)
+		ctx := context.WithValue(context.Background(), CtxRequestID, id)
 
 		defer func() {
 			if r := recover(); r == nil {
@@ -116,7 +116,7 @@ func TestObserverServeHTTP(t *testing.T) {
 	t.Run("events are sent via SSE", func(t *testing.T) {
 		o := New()
 		id := uuid.NewV4().String()
-		ctx := context.WithValue(context.Background(), "id", id)
+		ctx := context.WithValue(context.Background(), CtxRequestID, id)
 
 		go o.Start()
 		defer o.Stop()
