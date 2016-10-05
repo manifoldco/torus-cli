@@ -44,7 +44,7 @@ func (u *Users) GetSelf(ctx context.Context, token string) (*envelope.Unsigned, 
 }
 
 // Create attempts to register a new user
-func (u *Users) Create(ctx context.Context, userObj User, signup apitypes.Signup) (*envelope.Unsigned, error) {
+func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Signup) (*envelope.Unsigned, error) {
 	v := &url.Values{}
 	if signup.InviteCode != "" {
 		v.Set("code", signup.InviteCode)
@@ -103,9 +103,32 @@ func validateSelf(s *envelope.Unsigned) error {
 	return nil
 }
 
-// User contains fields for signup
-type User struct {
-	ID      string          `json:"id"`
-	Version int             `json:"version"`
-	Body    *primitive.User `json:"body"`
+// Signup contains fields for signup
+type Signup struct {
+	ID      string      `json:"id"`
+	Version int         `json:"version"`
+	Body    *SignupBody `json:"body"`
 }
+
+// SignupBody contains fields for Signup object body during signup
+type SignupBody struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	// State is not a field because the server determines it, client cannot
+	Password *primitive.UserPassword `json:"password"`
+	Master   *primitive.UserMaster   `json:"master"`
+}
+
+// Version returns the object version
+func (SignupBody) Version() int {
+	return 1
+}
+
+// Type returns the User byte
+func (SignupBody) Type() byte {
+	return 0x01
+}
+
+// Mutable indicates this object is Mutable type
+func (SignupBody) Mutable() {}

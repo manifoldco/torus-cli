@@ -10,7 +10,6 @@ import (
 
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
 
 	"github.com/arigatomachine/cli/daemon/crypto"
 	"github.com/arigatomachine/cli/daemon/db"
@@ -160,7 +159,7 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			return
 		}
 
-		userBody := primitive.User{
+		userBody := registry.SignupBody{
 			Username: signup.Username,
 			Name:     signup.Name,
 			Email:    signup.Email,
@@ -174,7 +173,7 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			return
 		}
 
-		userObj := registry.User{
+		userObj := registry.Signup{
 			ID:      ID.String(),
 			Version: 1,
 			Body:    &userBody,
