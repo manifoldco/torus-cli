@@ -20,7 +20,6 @@ import (
 	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
-	"github.com/arigatomachine/cli/pathexp"
 )
 
 // Engine exposes methods for performing actions that will affect the keys,
@@ -111,25 +110,20 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	} else {
 		previousCred := creds[len(creds)-1]
 
-		var previousName string
-		var previousCredVersion int
-		var previousPathExp *pathexp.PathExp
-		var previousID *identity.ID
-
+		var baseBody *primitive.BaseCredential
 		switch t := previousCred.Body.(type) {
 		case *primitive.Credential:
-			previousID = previousCred.ID
-			previousName = t.Name
-			previousPathExp = t.PathExp
-			previousCredVersion = t.CredentialVersion
+			baseBody = &t.BaseCredential
 		case *primitive.CredentialV1:
-			previousID = previousCred.ID
-			previousName = t.Name
-			previousPathExp = t.PathExp
-			previousCredVersion = t.CredentialVersion
+			baseBody = &t.BaseCredential
 		default:
 			panic("unknown credential version")
 		}
+
+		previousName := baseBody.Name
+		previousCredVersion := baseBody.CredentialVersion
+		previousPathExp := baseBody.PathExp
+		previousID := previousCred.ID
 
 		if previousName != credBody.Name ||
 			!previousPathExp.Equal(credBody.PathExp) {
@@ -257,37 +251,26 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 
 		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
 			for _, cred := range graph.GetCredentials() {
-				var credValue *base64.Value
-				var credValueNonce *base64.Value
-				var credNonce *base64.Value
-				var credPathExp *pathexp.PathExp
-				var credProjectID *identity.ID
-				var credOrgID *identity.ID
 				var credState *string
-				var credName string
 
+				var baseBody *primitive.BaseCredential
 				switch t := cred.Body.(type) {
 				case *primitive.Credential:
-					credName = t.Name
-					credValue = t.Credential.Value
-					credValueNonce = t.Credential.Nonce
-					credNonce = t.Nonce
-					credPathExp = t.PathExp
-					credProjectID = t.ProjectID
-					credOrgID = t.OrgID
-					credState = t.State
+					baseBody = &t.BaseCredential
 				case *primitive.CredentialV1:
-					credName = t.Name
-					credValue = t.Credential.Value
-					credValueNonce = t.Credential.Nonce
-					credNonce = t.Nonce
-					credPathExp = t.PathExp
-					credProjectID = t.ProjectID
-					credOrgID = t.OrgID
+					baseBody = &t.BaseCredential
 					credState = nil
 				default:
 					panic("unknown credential version")
 				}
+
+				credName := baseBody.Name
+				credValue := baseBody.Credential.Value
+				credValueNonce := baseBody.Credential.Nonce
+				credNonce := baseBody.Nonce
+				credPathExp := baseBody.PathExp
+				credProjectID := baseBody.ProjectID
+				credOrgID := baseBody.OrgID
 
 				pt, err := u.Unbox(ctx, *credValue, *credNonce, *credValueNonce)
 				if err != nil {
