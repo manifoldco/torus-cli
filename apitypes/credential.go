@@ -26,13 +26,57 @@ type CredentialEnvelope struct {
 	Body    *Credential  `json:"body"`
 }
 
-// Credential is the body of an unencrypted Credential
-type Credential struct {
+// CredentialResp is used to facilitate unmarshalling of versioned objects
+type CredentialResp struct {
+	ID      *identity.ID    `json:"id"`
+	Version uint8           `json:"version"`
+	Body    json.RawMessage `json:"body"`
+}
+
+// Credential interface is either a v1 or v2 credential object
+type Credential interface {
+	GetName() string
+	GetOrgID() *identity.ID
+	GetPathExp() *pathexp.PathExp
+	GetProjectID() *identity.ID
+	GetValue() *CredentialValue
+}
+
+// CredentialV1 is the body of an unencrypted Credential
+type CredentialV1 struct {
 	Name      string           `json:"name"`
 	OrgID     *identity.ID     `json:"org_id"`
 	PathExp   *pathexp.PathExp `json:"pathexp"`
 	ProjectID *identity.ID     `json:"project_id"`
 	Value     *CredentialValue `json:"value"`
+}
+
+// GetName returns the name
+func (c *CredentialV1) GetName() string {
+	return c.Name
+}
+
+// GetOrgID returns the org id
+func (c *CredentialV1) GetOrgID() *identity.ID {
+	return c.OrgID
+}
+
+// GetPathExp returns the pathexp
+func (c *CredentialV1) GetPathExp() *pathexp.PathExp {
+	return c.PathExp
+}
+
+// GetProjectID returns the project id
+func (c *CredentialV1) GetProjectID() *identity.ID {
+	return c.ProjectID
+}
+
+// GetValue returns the value object, unless unset then returns nil
+func (c *CredentialV1) GetValue() *CredentialValue {
+	if c.Value.cvtype == unsetCV {
+		return nil
+	}
+	return c.Value
 }
 
 // CredentialValue is the raw value of a credential.

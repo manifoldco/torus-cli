@@ -65,8 +65,9 @@ func runCmd(ctx *cli.Context) error {
 
 	// Add the secrets into the env
 	for _, secret := range secrets {
-		value := secret.Body.Value
-		key := strings.ToUpper(secret.Body.Name)
+		body := *secret.Body
+		value := body.GetValue()
+		key := strings.ToUpper(body.GetName())
 
 		cmd.Env = append(cmd.Env, key+"="+value.String())
 	}

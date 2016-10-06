@@ -71,8 +71,9 @@ func setCmd(ctx *cli.Context) error {
 		return cli.NewExitError("Could not set credential: "+err.Error(), -1)
 	}
 
-	name := cred.Body.Name
-	pe := cred.Body.PathExp
+	body := *cred.Body
+	name := body.GetName()
+	pe := body.GetPathExp()
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
 
 	return nil
@@ -131,13 +132,15 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 	}
 	project := projects[0]
 
-	cred := apitypes.Credential{
+	var cred apitypes.Credential
+	cBodyV1 := apitypes.CredentialV1{
 		OrgID:     org.ID,
 		ProjectID: project.ID,
 		Name:      strings.ToLower(name),
 		PathExp:   pe,
 		Value:     valueMaker(),
 	}
+	cred = &cBodyV1
 
 	return client.Credentials.Create(c, &cred, &progress)
 }
