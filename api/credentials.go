@@ -47,7 +47,7 @@ func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.Cr
 func (c *CredentialsClient) Create(ctx context.Context, cred *apitypes.Credential,
 	progress *ProgressFunc) (*apitypes.CredentialEnvelope, error) {
 
-	env := apitypes.CredentialEnvelope{Version: 1, Body: cred}
+	env := apitypes.CredentialEnvelope{Version: 2, Body: cred}
 	req, reqID, err := c.client.NewRequest("POST", "/credentials", nil, &env, false)
 	if err != nil {
 		return nil, err
