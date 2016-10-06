@@ -89,10 +89,12 @@ func TestCredentialSet(t *testing.T) {
 		path, _ := pathexp.Parse("/o/p/e/s/*/i")
 		var cBody apitypes.Credential
 		cBodyV2 := apitypes.CredentialV2{
-			State:   "unset",
-			Name:    "nothing",
-			PathExp: path,
-			Value:   unsetv2,
+			State: "unset",
+			BaseCredential: apitypes.BaseCredential{
+				Name:    "nothing",
+				PathExp: path,
+				Value:   unsetv2,
+			},
 		}
 		cBody = &cBodyV2
 		cred := apitypes.CredentialEnvelope{Body: &cBody}
@@ -100,7 +102,7 @@ func TestCredentialSet(t *testing.T) {
 
 		// Version one unset credential
 		path, _ = pathexp.Parse("/o/p/e/s/u/i")
-		cBodyV1 := apitypes.CredentialV1{
+		cBodyV1 := apitypes.BaseCredential{
 			Name:    "nothing",
 			PathExp: path,
 			Value:   unset,
@@ -119,10 +121,12 @@ func TestCredentialSet(t *testing.T) {
 		path, _ := pathexp.Parse("/o/p/e/s/*/i")
 		var cBodyOne apitypes.Credential
 		cBodyOneV2 := apitypes.CredentialV2{
-			State:   "set",
-			Name:    "1",
-			PathExp: path,
-			Value:   astring,
+			State: "set",
+			BaseCredential: apitypes.BaseCredential{
+				Name:    "1",
+				PathExp: path,
+				Value:   astring,
+			},
 		}
 		cBodyOne = &cBodyOneV2
 		credOne := apitypes.CredentialEnvelope{Body: &cBodyOne}
@@ -130,10 +134,12 @@ func TestCredentialSet(t *testing.T) {
 		path, _ = pathexp.Parse("/o/p/e/s/u/i")
 		var cBodyTwo apitypes.Credential
 		cBodyTwoV2 := apitypes.CredentialV2{
-			State:   "set",
-			Name:    "1",
-			PathExp: path,
-			Value:   bstring,
+			State: "set",
+			BaseCredential: apitypes.BaseCredential{
+				Name:    "1",
+				PathExp: path,
+				Value:   bstring,
+			},
 		}
 		cBodyTwo = &cBodyTwoV2
 		credTwo := apitypes.CredentialEnvelope{Body: &cBodyTwo}
@@ -164,10 +170,12 @@ func TestCredentialSet(t *testing.T) {
 			path, _ := pathexp.Parse("/o/p/e/s/*/i")
 			var cBody apitypes.Credential
 			cBodyV2 := apitypes.CredentialV2{
-				State:   "set",
-				Name:    name,
-				PathExp: path,
-				Value:   astring,
+				State: "set",
+				BaseCredential: apitypes.BaseCredential{
+					Name:    name,
+					PathExp: path,
+					Value:   astring,
+				},
 			}
 			cBody = &cBodyV2
 			return apitypes.CredentialEnvelope{Body: &cBody}

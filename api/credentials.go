@@ -68,7 +68,7 @@ func createEnvelopeFromResp(c apitypes.CredentialResp) (*apitypes.CredentialEnve
 	var cBody apitypes.Credential
 	switch c.Version {
 	case 1:
-		cBodyV1 := apitypes.CredentialV1{}
+		cBodyV1 := apitypes.BaseCredential{}
 		err := json.Unmarshal(c.Body, &cBodyV1)
 		if err != nil {
 			return nil, err

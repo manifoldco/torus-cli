@@ -139,12 +139,14 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 
 	var cred apitypes.Credential
 	cBodyV2 := apitypes.CredentialV2{
-		OrgID:     org.ID,
-		ProjectID: project.ID,
-		Name:      strings.ToLower(name),
-		PathExp:   pe,
-		State:     state,
-		Value:     valueMaker(),
+		BaseCredential: apitypes.BaseCredential{
+			OrgID:     org.ID,
+			ProjectID: project.ID,
+			Name:      strings.ToLower(name),
+			PathExp:   pe,
+			Value:     valueMaker(),
+		},
+		State: state,
 	}
 	cred = &cBodyV2
 

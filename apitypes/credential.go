@@ -42,8 +42,8 @@ type Credential interface {
 	GetValue() *CredentialValue
 }
 
-// CredentialV1 is the body of an unencrypted Credential
-type CredentialV1 struct {
+// BaseCredential is the body of an unencrypted Credential
+type BaseCredential struct {
 	Name      string           `json:"name"`
 	OrgID     *identity.ID     `json:"org_id"`
 	PathExp   *pathexp.PathExp `json:"pathexp"`
@@ -52,27 +52,27 @@ type CredentialV1 struct {
 }
 
 // GetName returns the name
-func (c *CredentialV1) GetName() string {
+func (c *BaseCredential) GetName() string {
 	return c.Name
 }
 
 // GetOrgID returns the org id
-func (c *CredentialV1) GetOrgID() *identity.ID {
+func (c *BaseCredential) GetOrgID() *identity.ID {
 	return c.OrgID
 }
 
 // GetPathExp returns the pathexp
-func (c *CredentialV1) GetPathExp() *pathexp.PathExp {
+func (c *BaseCredential) GetPathExp() *pathexp.PathExp {
 	return c.PathExp
 }
 
 // GetProjectID returns the project id
-func (c *CredentialV1) GetProjectID() *identity.ID {
+func (c *BaseCredential) GetProjectID() *identity.ID {
 	return c.ProjectID
 }
 
 // GetValue returns the value object, unless unset then returns nil
-func (c *CredentialV1) GetValue() *CredentialValue {
+func (c *BaseCredential) GetValue() *CredentialValue {
 	if c.Value.cvtype == unsetCV {
 		return nil
 	}
@@ -81,32 +81,8 @@ func (c *CredentialV1) GetValue() *CredentialValue {
 
 // CredentialV2 is the body of an unencrypted Credential
 type CredentialV2 struct {
-	Name      string           `json:"name"`
-	OrgID     *identity.ID     `json:"org_id"`
-	PathExp   *pathexp.PathExp `json:"pathexp"`
-	ProjectID *identity.ID     `json:"project_id"`
-	State     string           `json:"state"`
-	Value     *CredentialValue `json:"value"`
-}
-
-// GetName returns the name
-func (c *CredentialV2) GetName() string {
-	return c.Name
-}
-
-// GetOrgID returns the org id
-func (c *CredentialV2) GetOrgID() *identity.ID {
-	return c.OrgID
-}
-
-// GetPathExp returns the pathexp
-func (c *CredentialV2) GetPathExp() *pathexp.PathExp {
-	return c.PathExp
-}
-
-// GetProjectID returns the project id
-func (c *CredentialV2) GetProjectID() *identity.ID {
-	return c.ProjectID
+	BaseCredential
+	State string `json:"state"`
 }
 
 // GetValue returns the value object, unless unset then returns nil
