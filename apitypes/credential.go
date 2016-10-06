@@ -79,6 +79,47 @@ func (c *CredentialV1) GetValue() *CredentialValue {
 	return c.Value
 }
 
+// CredentialV2 is the body of an unencrypted Credential
+type CredentialV2 struct {
+	Name      string           `json:"name"`
+	OrgID     *identity.ID     `json:"org_id"`
+	PathExp   *pathexp.PathExp `json:"pathexp"`
+	ProjectID *identity.ID     `json:"project_id"`
+	State     string           `json:"state"`
+	Value     *CredentialValue `json:"value"`
+}
+
+// GetName returns the name
+func (c *CredentialV2) GetName() string {
+	return c.Name
+}
+
+// GetOrgID returns the org id
+func (c *CredentialV2) GetOrgID() *identity.ID {
+	return c.OrgID
+}
+
+// GetPathExp returns the pathexp
+func (c *CredentialV2) GetPathExp() *pathexp.PathExp {
+	return c.PathExp
+}
+
+// GetProjectID returns the project id
+func (c *CredentialV2) GetProjectID() *identity.ID {
+	return c.ProjectID
+}
+
+// GetValue returns the value object, unless unset then returns nil
+func (c *CredentialV2) GetValue() *CredentialValue {
+	if c.State == "" {
+		panic("Missing state field")
+	}
+	if c.State == "unset" {
+		return nil
+	}
+	return c.Value
+}
+
 // CredentialValue is the raw value of a credential.
 type CredentialValue struct {
 	cvtype int

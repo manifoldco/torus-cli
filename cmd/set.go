@@ -131,16 +131,23 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 		return nil, cli.NewExitError("Project not found", -1)
 	}
 	project := projects[0]
+	value := valueMaker()
+
+	state := "set"
+	if value.IsUnset() {
+		state = "unset"
+	}
 
 	var cred apitypes.Credential
-	cBodyV1 := apitypes.CredentialV1{
+	cBodyV2 := apitypes.CredentialV2{
 		OrgID:     org.ID,
 		ProjectID: project.ID,
 		Name:      strings.ToLower(name),
 		PathExp:   pe,
+		State:     state,
 		Value:     valueMaker(),
 	}
-	cred = &cBodyV1
+	cred = &cBodyV2
 
 	return client.Credentials.Create(c, &cred, &progress)
 }

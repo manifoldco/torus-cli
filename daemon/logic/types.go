@@ -19,4 +19,5 @@ type PlaintextCredential struct {
 	PathExp   *pathexp.PathExp `json:"pathexp"`
 	ProjectID *identity.ID     `json:"project_id"`
 	Value     string           `json:"value"`
+	State     *string          `json:"state"`
 }

@@ -65,26 +65,32 @@ func (c *CredentialsClient) Create(ctx context.Context, cred *apitypes.Credentia
 
 func createEnvelopeFromResp(c apitypes.CredentialResp) (*apitypes.CredentialEnvelope, error) {
 	var envelope apitypes.CredentialEnvelope
+	var cBody apitypes.Credential
 	switch c.Version {
 	case 1:
-		var cBody apitypes.Credential
 		cBodyV1 := apitypes.CredentialV1{}
-
 		err := json.Unmarshal(c.Body, &cBodyV1)
 		if err != nil {
 			return nil, err
 		}
 
 		cBody = &cBodyV1
-		envelope = apitypes.CredentialEnvelope{
-			ID:      c.ID,
-			Version: c.Version,
-			Body:    &cBody,
+	case 2:
+		cBodyV2 := apitypes.CredentialV2{}
+		err := json.Unmarshal(c.Body, &cBodyV2)
+		if err != nil {
+			return nil, err
 		}
-		break
+
+		cBody = &cBodyV2
 	default:
-		panic("Omg I don't know this version")
+		panic("Unknown credential version")
 	}
 
+	envelope = apitypes.CredentialEnvelope{
+		ID:      c.ID,
+		Version: c.Version,
+		Body:    &cBody,
+	}
 	return &envelope, nil
 }

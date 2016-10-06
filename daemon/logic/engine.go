@@ -20,6 +20,7 @@ import (
 	"github.com/arigatomachine/cli/daemon/observer"
 	"github.com/arigatomachine/cli/daemon/registry"
 	"github.com/arigatomachine/cli/daemon/session"
+	"github.com/arigatomachine/cli/pathexp"
 )
 
 // Engine exposes methods for performing actions that will affect the keys,
@@ -90,13 +91,16 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	// Construct an encrypted and signed version of the credential
 	credBody := primitive.Credential{
-		Name:      cred.Body.Name,
-		PathExp:   cred.Body.PathExp,
-		KeyringID: graph.GetKeyring().ID,
-		ProjectID: cred.Body.ProjectID,
-		OrgID:     cred.Body.OrgID,
-		Credential: &primitive.CredentialValue{
-			Algorithm: crypto.SecretBox,
+		State: cred.Body.State,
+		BaseCredential: primitive.BaseCredential{
+			Name:      cred.Body.Name,
+			PathExp:   cred.Body.PathExp,
+			KeyringID: graph.GetKeyring().ID,
+			ProjectID: cred.Body.ProjectID,
+			OrgID:     cred.Body.OrgID,
+			Credential: &primitive.CredentialValue{
+				Algorithm: crypto.SecretBox,
+			},
 		},
 	}
 
@@ -106,18 +110,37 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		credBody.CredentialVersion = 1
 	} else {
 		previousCred := creds[len(creds)-1]
-		previousCredBody := previousCred.Body.(*primitive.Credential)
 
-		if previousCredBody.Name != credBody.Name ||
-			!previousCredBody.PathExp.Equal(credBody.PathExp) {
+		var previousName string
+		var previousCredVersion int
+		var previousPathExp *pathexp.PathExp
+		var previousID *identity.ID
+
+		switch t := previousCred.Body.(type) {
+		case *primitive.Credential:
+			previousID = previousCred.ID
+			previousName = t.Name
+			previousPathExp = t.PathExp
+			previousCredVersion = t.CredentialVersion
+		case *primitive.CredentialV1:
+			previousID = previousCred.ID
+			previousName = t.Name
+			previousPathExp = t.PathExp
+			previousCredVersion = t.CredentialVersion
+		default:
+			panic("unknown credential version")
+		}
+
+		if previousName != credBody.Name ||
+			!previousPathExp.Equal(credBody.PathExp) {
 
 			err = fmt.Errorf("Non-matching credential returned in tree")
 			log.Printf("Error finding previous credential version: %s", err)
 			return nil, err
 		}
 
-		credBody.Previous = previousCred.ID
-		credBody.CredentialVersion = previousCredBody.CredentialVersion + 1
+		credBody.Previous = previousID
+		credBody.CredentialVersion = previousCredVersion + 1
 	}
 
 	krm, mekshare, err := graph.FindMember(e.session.ID())
@@ -234,9 +257,39 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 
 		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
 			for _, cred := range graph.GetCredentials() {
-				credBody := cred.Body.(*primitive.Credential)
-				pt, err := u.Unbox(ctx, *credBody.Credential.Value,
-					*credBody.Nonce, *credBody.Credential.Nonce)
+				var credValue *base64.Value
+				var credValueNonce *base64.Value
+				var credNonce *base64.Value
+				var credPathExp *pathexp.PathExp
+				var credProjectID *identity.ID
+				var credOrgID *identity.ID
+				var credState *string
+				var credName string
+
+				switch t := cred.Body.(type) {
+				case *primitive.Credential:
+					credName = t.Name
+					credValue = t.Credential.Value
+					credValueNonce = t.Credential.Nonce
+					credNonce = t.Nonce
+					credPathExp = t.PathExp
+					credProjectID = t.ProjectID
+					credOrgID = t.OrgID
+					credState = t.State
+				case *primitive.CredentialV1:
+					credName = t.Name
+					credValue = t.Credential.Value
+					credValueNonce = t.Credential.Nonce
+					credNonce = t.Nonce
+					credPathExp = t.PathExp
+					credProjectID = t.ProjectID
+					credOrgID = t.OrgID
+					credState = nil
+				default:
+					panic("unknown credential version")
+				}
+
+				pt, err := u.Unbox(ctx, *credValue, *credNonce, *credValueNonce)
 				if err != nil {
 					log.Printf("Error decrypting credential: %s", err)
 					return err
@@ -246,11 +299,12 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 					ID:      cred.ID,
 					Version: cred.Version,
 					Body: &PlaintextCredential{
-						Name:      credBody.Name,
-						PathExp:   credBody.PathExp,
-						ProjectID: credBody.ProjectID,
-						OrgID:     credBody.OrgID,
+						Name:      credName,
+						PathExp:   credPathExp,
+						ProjectID: credProjectID,
+						OrgID:     credOrgID,
 						Value:     string(pt),
+						State:     credState,
 					},
 				}
 				creds = append(creds, plainCred)
