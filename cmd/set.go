@@ -71,9 +71,8 @@ func setCmd(ctx *cli.Context) error {
 		return cli.NewExitError("Could not set credential: "+err.Error(), -1)
 	}
 
-	body := *cred.Body
-	name := body.GetName()
-	pe := body.GetPathExp()
+	name := (*cred.Body).GetName()
+	pe := (*cred.Body).GetPathExp()
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
 
 	return nil

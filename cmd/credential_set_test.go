@@ -27,6 +27,7 @@ func interfaceToCredentialValue(t *testing.T, i interface{}) (*apitypes.Credenti
 
 func TestCredentialSet(t *testing.T) {
 
+	// Version one unset credential
 	uv := map[string]interface{}{
 		"version": 1,
 		"body": map[string]interface{}{
@@ -40,6 +41,7 @@ func TestCredentialSet(t *testing.T) {
 		t.Fatal("Unable to decode credential value: " + err.Error())
 	}
 
+	// Version two unset credential
 	uv2 := map[string]interface{}{
 		"version": 2,
 		"state":   "unset",
@@ -83,6 +85,7 @@ func TestCredentialSet(t *testing.T) {
 	t.Run("unset is ignored", func(t *testing.T) {
 		cset := credentialSet{}
 
+		// Version two unset credential
 		path, _ := pathexp.Parse("/o/p/e/s/*/i")
 		var cBody apitypes.Credential
 		cBodyV2 := apitypes.CredentialV2{
@@ -95,6 +98,7 @@ func TestCredentialSet(t *testing.T) {
 		cred := apitypes.CredentialEnvelope{Body: &cBody}
 		cset.Add(cred)
 
+		// Version one unset credential
 		path, _ = pathexp.Parse("/o/p/e/s/u/i")
 		cBodyV1 := apitypes.CredentialV1{
 			Name:    "nothing",
@@ -145,8 +149,7 @@ func TestCredentialSet(t *testing.T) {
 				t.Errorf("Incorrect ToSlice length. wanted: %d got %d", 1, len(slice))
 			}
 
-			body := *slice[0].Body
-			if body.GetValue() != bstring {
+			if (*slice[0].Body).GetValue() != bstring {
 				t.Error("Wrong value kept")
 			}
 		}

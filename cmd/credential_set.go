@@ -19,17 +19,16 @@ type credentialSet map[string]*apitypes.CredentialEnvelope
 //
 // If the added credential is an unset value, it is summarily ignored.
 func (c credentialSet) Add(cred apitypes.CredentialEnvelope) {
-	body := *cred.Body
-	if body.GetValue() == nil {
+	if (*cred.Body).GetValue() == nil {
 		return
 	}
 
-	name := body.GetName()
+	name := (*cred.Body).GetName()
 	if existing, ok := c[name]; ok {
 		// The new credential is either as specific, or less specific than
 		// the existing one. Keep the existing one.
 		eBody := *existing.Body
-		if body.GetPathExp().CompareSpecificity(eBody.GetPathExp()) != 1 {
+		if (*cred.Body).GetPathExp().CompareSpecificity(eBody.GetPathExp()) != 1 {
 			return
 		}
 	}
