@@ -87,8 +87,8 @@ type CredentialV2 struct {
 
 // GetValue returns the value object, unless unset then returns nil
 func (c *CredentialV2) GetValue() *CredentialValue {
-	if c.State == "" {
-		panic("Missing state field")
+	if c.Value == nil {
+		return nil
 	}
 	if c.State == "unset" {
 		return nil
@@ -167,6 +167,11 @@ func (c *CredentialValue) UnmarshalJSON(b []byte) error {
 	s, err := strconv.Unquote(string(b))
 	if err != nil {
 		return err
+	}
+
+	if len(s) == 0 {
+		c = nil
+		return nil
 	}
 
 	err = json.Unmarshal([]byte(s), &impl)
