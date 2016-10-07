@@ -19,15 +19,16 @@ type credentialSet map[string]*apitypes.CredentialEnvelope
 //
 // If the added credential is an unset value, it is summarily ignored.
 func (c credentialSet) Add(cred apitypes.CredentialEnvelope) {
-	if cred.Body.Value.IsUnset() {
+	if (*cred.Body).GetValue() == nil {
 		return
 	}
 
-	name := cred.Body.Name
+	name := (*cred.Body).GetName()
 	if existing, ok := c[name]; ok {
 		// The new credential is either as specific, or less specific than
 		// the existing one. Keep the existing one.
-		if cred.Body.PathExp.CompareSpecificity(existing.Body.PathExp) != 1 {
+		eBody := *existing.Body
+		if (*cred.Body).GetPathExp().CompareSpecificity(eBody.GetPathExp()) != 1 {
 			return
 		}
 	}
@@ -53,6 +54,10 @@ func (c credentialSet) ToSlice() []apitypes.CredentialEnvelope {
 // lexicographically by name.
 type credSorter []apitypes.CredentialEnvelope
 
-func (c credSorter) Len() int           { return len(c) }
-func (c credSorter) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
-func (c credSorter) Less(i, j int) bool { return c[i].Body.Name < c[j].Body.Name }
+func (c credSorter) Len() int      { return len(c) }
+func (c credSorter) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
+func (c credSorter) Less(i, j int) bool {
+	a := *c[i].Body
+	b := *c[j].Body
+	return a.GetName() < b.GetName()
+}

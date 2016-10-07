@@ -141,8 +141,23 @@ func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID,
 // Credential is a secret value shared between a group of services based
 // on users identity, operating environment, project, and organization
 type Credential struct { // type: 0x0b
+	v2Schema
+	immutable
+	BaseCredential
+	State *string `json:"state"`
+}
+
+// CredentialV1 is a secret value shared between a group of services based
+// on users identity, operating environment, project, and organization
+type CredentialV1 struct { // type: 0x0b
 	v1Schema
 	immutable
+	BaseCredential
+}
+
+// BaseCredential is a secret value shared between a group of services based
+// on users identity, operating environment, project, and organization
+type BaseCredential struct {
 	Credential        *CredentialValue `json:"credential"`
 	KeyringID         *identity.ID     `json:"keyring_id"`
 	Name              string           `json:"name"`

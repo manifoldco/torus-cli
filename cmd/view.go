@@ -51,10 +51,11 @@ func viewCmd(ctx *cli.Context) error {
 	}
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
 	for _, secret := range secrets {
-		value := secret.Body.Value
-		key := strings.ToUpper(secret.Body.Name)
+		value := (*secret.Body).GetValue()
+		name := (*secret.Body).GetName()
+		key := strings.ToUpper(name)
 		if verbose {
-			spath := secret.Body.PathExp.String() + "/" + secret.Body.Name
+			spath := (*secret.Body).GetPathExp().String() + "/" + name
 			fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)
 		} else {
 			fmt.Fprintf(w, "%s=%s\n", key, value.String())

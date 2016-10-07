@@ -3,6 +3,7 @@ package apitypes
 import (
 	"encoding/json"
 	"errors"
+	"reflect"
 	"strconv"
 
 	"github.com/arigatomachine/cli/identity"
@@ -26,13 +27,74 @@ type CredentialEnvelope struct {
 	Body    *Credential  `json:"body"`
 }
 
-// Credential is the body of an unencrypted Credential
-type Credential struct {
+// CredentialResp is used to facilitate unmarshalling of versioned objects
+type CredentialResp struct {
+	ID      *identity.ID    `json:"id"`
+	Version uint8           `json:"version"`
+	Body    json.RawMessage `json:"body"`
+}
+
+// Credential interface is either a v1 or v2 credential object
+type Credential interface {
+	GetName() string
+	GetOrgID() *identity.ID
+	GetPathExp() *pathexp.PathExp
+	GetProjectID() *identity.ID
+	GetValue() *CredentialValue
+}
+
+// BaseCredential is the body of an unencrypted Credential
+type BaseCredential struct {
 	Name      string           `json:"name"`
 	OrgID     *identity.ID     `json:"org_id"`
 	PathExp   *pathexp.PathExp `json:"pathexp"`
 	ProjectID *identity.ID     `json:"project_id"`
 	Value     *CredentialValue `json:"value"`
+}
+
+// GetName returns the name
+func (c *BaseCredential) GetName() string {
+	return c.Name
+}
+
+// GetOrgID returns the org id
+func (c *BaseCredential) GetOrgID() *identity.ID {
+	return c.OrgID
+}
+
+// GetPathExp returns the pathexp
+func (c *BaseCredential) GetPathExp() *pathexp.PathExp {
+	return c.PathExp
+}
+
+// GetProjectID returns the project id
+func (c *BaseCredential) GetProjectID() *identity.ID {
+	return c.ProjectID
+}
+
+// GetValue returns the value object, unless unset then returns nil
+func (c *BaseCredential) GetValue() *CredentialValue {
+	if c.Value.cvtype == unsetCV {
+		return nil
+	}
+	return c.Value
+}
+
+// CredentialV2 is the body of an unencrypted Credential
+type CredentialV2 struct {
+	BaseCredential
+	State string `json:"state"`
+}
+
+// GetValue returns the value object, unless unset then returns nil
+func (c *CredentialV2) GetValue() *CredentialValue {
+	if c.Value == nil {
+		return nil
+	}
+	if c.State == "unset" {
+		return nil
+	}
+	return c.Value
 }
 
 // CredentialValue is the raw value of a credential.
@@ -106,6 +168,12 @@ func (c *CredentialValue) UnmarshalJSON(b []byte) error {
 	s, err := strconv.Unquote(string(b))
 	if err != nil {
 		return err
+	}
+
+	if len(s) == 0 {
+		v := reflect.ValueOf(c).Elem()
+		v.Set(reflect.Zero(v.Type()))
+		return nil
 	}
 
 	err = json.Unmarshal([]byte(s), &impl)
