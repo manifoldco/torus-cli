@@ -3,6 +3,7 @@ package apitypes
 import (
 	"encoding/json"
 	"errors"
+	"reflect"
 	"strconv"
 
 	"github.com/arigatomachine/cli/identity"
@@ -170,7 +171,8 @@ func (c *CredentialValue) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(s) == 0 {
-		c = nil
+		v := reflect.ValueOf(c).Elem()
+		v.Set(reflect.Zero(v.Type()))
 		return nil
 	}
 

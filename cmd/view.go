@@ -54,9 +54,6 @@ func viewCmd(ctx *cli.Context) error {
 		value := (*secret.Body).GetValue()
 		name := (*secret.Body).GetName()
 		key := strings.ToUpper(name)
-		if value.IsUnset() {
-			continue
-		}
 		if verbose {
 			spath := (*secret.Body).GetPathExp().String() + "/" + name
 			fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)

@@ -135,6 +135,7 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 	state := "set"
 	if value.IsUnset() {
 		state = "unset"
+		value = nil
 	}
 
 	var cred apitypes.Credential
@@ -144,7 +145,7 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 			ProjectID: project.ID,
 			Name:      strings.ToLower(name),
 			PathExp:   pe,
-			Value:     valueMaker(),
+			Value:     value,
 		},
 		State: state,
 	}
