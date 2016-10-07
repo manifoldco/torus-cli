@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/url"
 
 	"github.com/arigatomachine/cli/apitypes"
@@ -84,7 +85,7 @@ func createEnvelopeFromResp(c apitypes.CredentialResp) (*apitypes.CredentialEnve
 
 		cBody = &cBodyV2
 	default:
-		panic("Unknown credential version")
+		return nil, errors.New("Unknown credential version")
 	}
 
 	envelope = apitypes.CredentialEnvelope{

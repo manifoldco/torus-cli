@@ -5,6 +5,7 @@ package logic
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -117,7 +118,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		case *primitive.CredentialV1:
 			baseBody = &t.BaseCredential
 		default:
-			panic("unknown credential version")
+			return nil, errors.New("Unknown credential version")
 		}
 
 		previousName := baseBody.Name
@@ -261,7 +262,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 					baseBody = &t.BaseCredential
 					credState = nil
 				default:
-					panic("unknown credential version")
+					return errors.New("Unknown credential version")
 				}
 
 				credName := baseBody.Name
