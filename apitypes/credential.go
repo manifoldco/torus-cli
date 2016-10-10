@@ -88,10 +88,13 @@ type CredentialV2 struct {
 
 // GetValue returns the value object, unless unset then returns nil
 func (c *CredentialV2) GetValue() *CredentialValue {
-	if c.Value == nil {
+	if c.State == "unset" { // v2 unset state
 		return nil
 	}
-	if c.State == "unset" {
+	if c.Value == nil { // v2 value nilled
+		return nil
+	}
+	if c.Value.IsUnset() { // value contains v1 undefined type
 		return nil
 	}
 	return c.Value
