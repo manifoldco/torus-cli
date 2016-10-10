@@ -83,7 +83,7 @@ func invitesList(ctx *cli.Context) error {
 	fmt.Println("")
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintln(w, "EMAIL\tSTATE\tINVITED BY\tCREATION DATE")
+	fmt.Fprintln(w, "EMAIL\tUSERNAME\tSTATE\tINVITED BY\tCREATION DATE")
 	fmt.Fprintln(w, " \t \t \t ")
 	for _, invite := range invites {
 		inviter := usernameByID[invite.Body.InviterID.String()]
@@ -91,13 +91,11 @@ func invitesList(ctx *cli.Context) error {
 			continue
 		}
 		identity := invite.Body.Email
+		invitee := "-"
 		if invite.Body.InviteeID != nil {
-			invitee := usernameByID[invite.Body.InviteeID.String()]
-			if invitee != "" {
-				identity = identity + " (" + invitee + ")"
-			}
+			invitee = usernameByID[invite.Body.InviteeID.String()]
 		}
-		fmt.Fprintln(w, identity+"\t"+invite.Body.State+"\t"+inviter+"\t"+invite.Body.Created.Format(time.RFC3339))
+		fmt.Fprintln(w, identity+"\t"+invitee+"\t"+invite.Body.State+"\t"+inviter+"\t"+invite.Body.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")
