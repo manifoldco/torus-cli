@@ -85,11 +85,13 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		graphs = []registry.CredentialGraph{newGraph}
 	}
 
+	cgs := newCredentialGraphSet()
+	cgs.Add(graphs...)
+
 	// Filter out the returned credentials down to those that explicitly match
 	// the pathexp and name.
 	graph := graphs[0]
-	creds := graph.GetCredentials()
-	creds, err = findMatchingCreds(creds, cred.Body.PathExp, cred.Body.Name)
+	previousCred, err := cgs.HeadCredential(cred.Body.PathExp, cred.Body.Name)
 	if err != nil {
 		log.Printf("error finding credentials to match: %s", err)
 		return nil, err
@@ -110,33 +112,26 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		},
 	}
 
-	if len(creds) == 0 {
+	if previousCred == nil {
 		log.Printf("no previous")
 		credBody.Previous = nil
 		credBody.CredentialVersion = 1
 	} else {
-		previousCred := creds[len(creds)-1]
-
-		base, err := baseCredential(&previousCred)
+		base, err := baseCredential(previousCred)
 		if err != nil {
 			return nil, err
 		}
 
-		previousName := base.Name
-		previousCredVersion := base.CredentialVersion
-		previousPathExp := base.PathExp
-		previousID := previousCred.ID
-
-		if previousName != credBody.Name ||
-			!previousPathExp.Equal(credBody.PathExp) {
+		if base.Name != credBody.Name ||
+			!base.PathExp.Equal(credBody.PathExp) {
 
 			err = fmt.Errorf("Non-matching credential returned in tree")
 			log.Printf("Error finding previous credential version: %s", err)
 			return nil, err
 		}
 
-		credBody.Previous = previousID
-		credBody.CredentialVersion = previousCredVersion + 1
+		credBody.Previous = previousCred.ID
+		credBody.CredentialVersion = base.CredentialVersion + 1
 	}
 
 	krm, mekshare, err := graph.FindMember(e.session.ID())

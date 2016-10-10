@@ -12,7 +12,6 @@ import (
 	"github.com/arigatomachine/cli/base64"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/pathexp"
 	"github.com/arigatomachine/cli/primitive"
 
 	"github.com/arigatomachine/cli/daemon/crypto"
@@ -385,24 +384,6 @@ func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	}
 
 	return engine.SignedEnvelope(ctx, &body, sigID, sigKP)
-}
-
-func findMatchingCreds(creds []envelope.Signed, pathexp *pathexp.PathExp,
-	name string) ([]envelope.Signed, error) {
-
-	results := make([]envelope.Signed, 0)
-	for _, c := range creds {
-		base, err := baseCredential(&c)
-		if err != nil {
-			return nil, err
-		}
-
-		if base.PathExp.Equal(pathexp) && base.Name == name {
-			results = append(results, c)
-		}
-	}
-
-	return results, nil
 }
 
 var errCredVersionMistmach = errors.New("Mismatched credential version and body")
