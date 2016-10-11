@@ -118,9 +118,10 @@ func generateKeypairs(ctx *cli.Context) error {
 	} else {
 		// Verify the org they've specified exists
 		var org *api.OrgResult
-		org, oErr := client.Orgs.GetByName(c, ctx.String("org"))
-		if oErr != nil {
-			return cli.NewExitError("Org not found", -1)
+		orgName := ctx.String("org")
+		org, oErr := client.Orgs.GetByName(c, orgName)
+		if oErr != nil || org == nil {
+			return cli.NewExitError("Org '"+orgName+"' not found", -1)
 		}
 		subjectOrgs[org.ID] = org
 		orgNames[org.ID] = org.Body.Name
