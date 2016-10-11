@@ -8,7 +8,6 @@ travis/id_rsa*
 builds/*
 
 # Generated files for our binary
-data/public_key.json
 zz_generated_*.go
 
 # Our 3rd party deps

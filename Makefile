@@ -6,8 +6,6 @@ TARGETS=\
 	linux-amd64
 GO_REQUIRED_VERSION=1.7.1
 
-PUBLIC_KEY?=data/keys/production.json
-
 VERSION=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 all: binary
@@ -87,9 +85,6 @@ data/zz_generated_bindata.go: data/ca_bundle.pem data/public_key.json
 primitive/zz_generated_primitive.go envelope/zz_generated_envelope.go: $(TOOLS)/primitive-boilerplate primitive/primitive.go
 	$^
 
-data/public_key.json: $(PUBLIC_KEY)
-	ln -sf ../$< $@
-
 vendor: glide.lock
 	glide install
 
@@ -106,7 +101,6 @@ clean:
 	@rm -f ${OUT} ${OUT}-v*
 	@rm -f $(GENERATED_FILES)
 	@rm -f $(TOOLS)/*
-	@rm -f data/public_key.json
 	@rm -rf builds/*
 
 .PHONY: clean

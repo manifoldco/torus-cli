@@ -64,7 +64,6 @@ echo ""
 docker run --name relase-builder --rm \
     -v $RELEASE_DIRECTORY:/go/src/github.com/arigatomachine/cli \
     -v $RELEASE_DIRECTORY/builds:/builds \
-    -e PUBLIC_KEY=data/keys/$ENVIRONMENT.json \
     arigato/cli:$TARGET_SHA \
     release-all
 
