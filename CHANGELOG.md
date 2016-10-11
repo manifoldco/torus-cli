@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## v0.11.0
+
+_Published: TBD_
+
+**Breaking**
+
+- The credential schema revision has changed to make unset credentials
+  easier to identify. This change is backwards incompatible; `torus` clients
+  before `v0.11.0` will error when trying to read credentials set or unset by
+  `v0.11.0`+ clients.
+
+**Fixes**
+
+- Grammar fixes in command output.
+- Fix a panic in `keypairs generate` when the supplied org is not found.
+
+**Notable Changes**
+
+- `torus` now ships with the final production root signing key.
+
 ## v0.10.1
 
 _Published: 2016-09-29_
