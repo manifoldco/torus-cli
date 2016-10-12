@@ -10,6 +10,8 @@ _Published: TBD_
   easier to identify. This change is backwards incompatible; `torus` clients
   before `v0.11.0` will error when trying to read credentials set or unset by
   `v0.11.0`+ clients.
+- An API change to the server breaks compatability with `torus` clients with
+  versions at or above `v0.10.0` and before this version (`v0.11.0`).
 
 **Fixes**
 
