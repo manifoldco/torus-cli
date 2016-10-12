@@ -56,8 +56,8 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	n := notifier.Notifier(4)
 
 	// Ensure we have an existing keyring for this credential's pathexp
-	graphs, err := e.client.CredentialGraph.List(ctx, cred.Body.Name, "",
-		cred.Body.PathExp, e.session.ID())
+	graphs, err := e.client.CredentialGraph.List(ctx, "", cred.Body.PathExp,
+		e.session.ID())
 	if err != nil {
 		log.Printf("Error retrieving credential graphs: %s", err)
 		return nil, err
@@ -86,8 +86,15 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		graphs = []registry.CredentialGraph{newGraph}
 	}
 
+	// Filter out the returned credentials down to those that explicitly match
+	// the pathexp and name.
 	graph := graphs[0]
 	creds := graph.GetCredentials()
+	creds, err = findMatchingCreds(creds, cred.Body.PathExp, cred.Body.Name)
+	if err != nil {
+		log.Printf("error finding credentials to match: %s", err)
+		return nil, err
+	}
 
 	// Construct an encrypted and signed version of the credential
 	credBody := primitive.Credential{
@@ -191,8 +198,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 func (e *Engine) RetrieveCredentials(ctx context.Context,
 	notifier *observer.Notifier, cpath string) ([]PlaintextCredentialEnvelope, error) {
 
-	graphs, err := e.client.CredentialGraph.List(
-		ctx, "", cpath, nil, e.session.ID())
+	graphs, err := e.client.CredentialGraph.List(ctx, cpath, nil, e.session.ID())
 	if err != nil {
 		log.Printf("error retrieving credential graphs: %s", err)
 		return nil, err

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/arigatomachine/cli/base64"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
+	"github.com/arigatomachine/cli/pathexp"
 	"github.com/arigatomachine/cli/primitive"
 
 	"github.com/arigatomachine/cli/daemon/crypto"
@@ -383,4 +385,27 @@ func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	}
 
 	return engine.SignedEnvelope(ctx, &body, sigID, sigKP)
+}
+
+func findMatchingCreds(creds []envelope.Signed, pathexp *pathexp.PathExp,
+	name string) ([]envelope.Signed, error) {
+
+	results := make([]envelope.Signed, 0)
+	for _, c := range creds {
+		var baseBody *primitive.BaseCredential
+		switch t := c.Body.(type) {
+		case *primitive.Credential:
+			baseBody = &t.BaseCredential
+		case *primitive.CredentialV1:
+			baseBody = &t.BaseCredential
+		default:
+			return nil, errors.New("Unknown credential version")
+		}
+
+		if baseBody.PathExp.Equal(pathexp) && baseBody.Name == name {
+			results = append(results, c)
+		}
+	}
+
+	return results, nil
 }
