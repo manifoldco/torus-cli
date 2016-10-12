@@ -73,7 +73,7 @@ func (c *CredentialGraphClient) Post(ctx context.Context, t *CredentialGraph) (*
 // List returns back all segments of the CredentialGraph (Keyring, Keyring
 // Members, and Credentials) that match the given name, path, or path
 // expression.
-func (c *CredentialGraphClient) List(ctx context.Context, name, path string,
+func (c *CredentialGraphClient) List(ctx context.Context, path string,
 	pathExp *pathexp.PathExp, ownerID *identity.ID) ([]CredentialGraph, error) {
 
 	query := url.Values{}
@@ -86,9 +86,6 @@ func (c *CredentialGraphClient) List(ctx context.Context, name, path string,
 	}
 	if pathExp != nil {
 		query.Set("pathexp", pathExp.String())
-	}
-	if name != "" {
-		query.Set("name", name)
 	}
 	if ownerID != nil {
 		query.Set("owner_id", ownerID.String())
