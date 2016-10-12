@@ -2,7 +2,7 @@
 
 ## v0.11.0
 
-_Published: TBD_
+_Published: 2016-10-12_
 
 **Breaking**
 
