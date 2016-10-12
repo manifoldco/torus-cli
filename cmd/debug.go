@@ -43,7 +43,7 @@ func init() {
 				Required:   true,
 			},
 			placeHolderStringFlag{
-				StringFlag: cli.StringFlag{Name: "instance", EnvVar: "TORUS_INSTANCE", Value: "*", Hidden: true},
+				StringFlag: cli.StringFlag{Name: "instance", EnvVar: "TORUS_INSTANCE", Value: "1", Hidden: true},
 				Required:   true,
 			},
 		},
