@@ -24,7 +24,7 @@ var setUnsetFlags = []cli.Flag{
 	newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
 		"*", "TORUS_USER", true),
 	newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
-		"1", "TORUS_INSTANCE", true),
+		"*", "TORUS_INSTANCE", true),
 }
 
 func init() {

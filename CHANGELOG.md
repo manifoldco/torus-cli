@@ -16,10 +16,14 @@ _Published: TBD_
 **Fixes**
 
 - Grammar fixes in command output.
+- The username displayed in `invites list` now has its own column.
 - Fix a panic in `keypairs generate` when the supplied org is not found.
 
 **Notable Changes**
 
+- Defaults for the `instance` value have been cleaned up. During `set` and
+  `unset`, `instance` defaults to `*` (all instances of a service run by an
+  identity). During `view`, `run`, and `status`, it defaults to `1`.
 - `torus` now ships with the final production root signing key.
 
 ## v0.10.1
