@@ -17,6 +17,7 @@ import (
 const slugPattern = "^[a-z][a-z0-9\\-\\_]{0,63}$"
 const namePattern = "^[a-zA-Z\\s,\\.'\\-pL]{1,64}$"
 const inviteCodePattern = "^[0-9a-ht-zjkmnpqr]{10}$"
+const verifyCodePattern = "^[0-9a-ht-zjkmnpqr]{9}$"
 
 func validateSlug(slugType string) promptui.ValidateFunc {
 	msg := slugType + " names can only use a-z, 0-9, hyphens and underscores"
@@ -46,6 +47,22 @@ func NamePrompt(override *string, defaultValue string) (string, error) {
 		Label:    label,
 		Default:  defaultValue,
 		Validate: validateSlug(strings.ToLower(label)),
+	}
+
+	return prompt.Run()
+}
+
+// VerificationPrompt prompts the user to input an email verify code
+func VerificationPrompt() (string, error) {
+	prompt := promptui.Prompt{
+		Label: "Verification code",
+		Validate: func(input string) error {
+			input = strings.ToLower(input)
+			if govalidator.StringMatches(input, verifyCodePattern) {
+				return nil
+			}
+			return promptui.NewValidationError("Please enter a valid code")
+		},
 	}
 
 	return prompt.Run()

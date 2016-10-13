@@ -119,5 +119,24 @@ func signup(ctx *cli.Context, subCommand bool) error {
 
 	fmt.Println("")
 	fmt.Println("Your account has been created!")
+
+	if !subCommand {
+		fmt.Println("")
+		fmt.Println("We have emailed you a verification code.")
+		fmt.Println("Please verify your email address by entering the code below.")
+		fmt.Println("")
+
+		code, err := VerificationPrompt()
+		if err != nil {
+			return err
+		}
+		fmt.Println("")
+
+		err = verifyEmail(ctx, &code, true)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
