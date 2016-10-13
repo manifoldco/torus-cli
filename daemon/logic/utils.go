@@ -27,7 +27,7 @@ const (
 // createCredentialGraph generates, signs, and posts a new CredentialGraph
 // to the registry.
 func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
-	sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
+	parent registry.CredentialGraph, sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
 	client *registry.Client, engine *crypto.Engine) (*registry.CredentialGraphV2, error) {
 
 	pathExp, err := credBody.PathExp.WithInstance("*")
@@ -35,9 +35,13 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		return nil, err
 	}
 
-	keyring, err := engine.SignedEnvelope(
-		ctx, primitive.NewKeyring(credBody.OrgID, credBody.ProjectID, pathExp),
-		sigID, &kp.Signature)
+	keyringBody := primitive.NewKeyring(credBody.OrgID, credBody.ProjectID, pathExp)
+	if parent != nil {
+		keyringBody.Previous = parent.GetKeyring().ID
+		keyringBody.KeyringVersion = parent.KeyringVersion() + 1
+	}
+
+	keyring, err := engine.SignedEnvelope(ctx, keyringBody, sigID, &kp.Signature)
 	if err != nil {
 		return nil, err
 	}

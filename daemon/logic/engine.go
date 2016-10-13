@@ -94,9 +94,9 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	var newGraph *registry.CredentialGraphV2
 	// No matching CredentialGraph/KeyRing for this credential.
 	// We'll make a new one now.
-	if graph == nil {
-		newGraph, err = createCredentialGraph(ctx, cred.Body, sigID, encID, kp,
-			e.client, e.crypto)
+	if graph == nil || graph.HasRevocations() {
+		newGraph, err = createCredentialGraph(ctx, cred.Body, graph, sigID,
+			encID, kp, e.client, e.crypto)
 		if err != nil {
 			log.Printf("error creating credential graph: %s", err)
 			return nil, err

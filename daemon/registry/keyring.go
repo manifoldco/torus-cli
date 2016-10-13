@@ -27,6 +27,7 @@ type KeyringClient struct {
 type KeyringSection interface {
 	GetKeyring() *envelope.Signed
 	FindMember(*identity.ID) (*primitive.KeyringMember, *primitive.MEKShare, error)
+	HasRevocations() bool
 }
 
 // KeyringSectionV1 represents a section of the CredentialGraph only pertaining to
@@ -71,6 +72,12 @@ func (k *KeyringSectionV1) FindMember(id *identity.ID) (*primitive.KeyringMember
 	return krm, mekshare, nil
 }
 
+// HasRevocations indicates that a Keyring holds revoked user keys. We don't
+// track in V1 so it is always false.
+func (KeyringSectionV1) HasRevocations() bool {
+	return false
+}
+
 // KeyringSectionV2 represents a Keyring and its members.
 type KeyringSectionV2 struct {
 	Keyring *envelope.Signed  `json:"keyring"`
@@ -101,6 +108,16 @@ func (k *KeyringSectionV2) FindMember(id *identity.ID) (*primitive.KeyringMember
 	}
 
 	return krm, mekshare, nil
+}
+
+// HasRevocations indicates that a Keyring holds revoked user keys.
+func (k *KeyringSectionV2) HasRevocations() bool {
+	for _, claim := range k.Claims {
+		if claim.Body.(*primitive.KeyringMemberClaim).ClaimType == primitive.RevocationClaimType {
+			return true
+		}
+	}
+	return false
 }
 
 // KeyringMember holds membership information for v2 keyrings. In v2, a user
