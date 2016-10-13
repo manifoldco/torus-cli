@@ -47,6 +47,24 @@ func (cgs *credentialGraphSet) Add(graphs ...registry.CredentialGraph) error {
 	return nil
 }
 
+// Head returns the most recent version of a CredentialGraph that would contain
+// the given PathExp.
+func (cgs *credentialGraphSet) Head(pe *pathexp.PathExp) (registry.CredentialGraph, error) {
+
+	gpe, err := pe.WithInstance("*")
+	if err != nil {
+		return nil, err
+	}
+
+	graphs, ok := cgs.graphs[*gpe]
+	if !ok {
+		return nil, nil
+	}
+
+	sort.Sort(graphSorter(graphs))
+	return graphs[0], nil
+}
+
 // HeadCredential returns the most recent version of a Credential that shares
 // the provided PathExp and Name
 //

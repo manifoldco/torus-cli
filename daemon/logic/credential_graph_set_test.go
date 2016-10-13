@@ -97,6 +97,46 @@ func TestCredentialGraphSetAdd(t *testing.T) {
 	}
 }
 
+func TestCredentialGraphSetHead(t *testing.T) {
+	t.Run("no match", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s1/u/*", 2))
+		cgs.Add(buildGraph("/o/p/e/s1/u/*", 1))
+
+		out, err := cgs.Head(mustPathExp("/o/p/e/s2/u/i"))
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		if out != nil {
+			t.Error("Head CredentialGraph found when there should not be one")
+		}
+	})
+
+	t.Run("match", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1))
+
+		out, err := cgs.Head(mustPathExp("/o/p/e/s/u/i"))
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		if out == nil {
+			t.Fatal("Head CredentialGraph not found when there should be one")
+		}
+
+		if out.KeyringVersion() != 3 {
+			t.Error("Wrong CredentialGraph version returned")
+		}
+	})
+
+}
+
 func TestCredentialGraphSetHeadCredential(t *testing.T) {
 	t.Run("no match", func(t *testing.T) {
 		cgs := newCredentialGraphSet()

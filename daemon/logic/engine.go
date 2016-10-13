@@ -72,29 +72,37 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Keypairs retrieved", true)
 
+	cgs := newCredentialGraphSet()
+	err = cgs.Add(graphs...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the credentialgraph/keyring that we should store our credential in
+	graph, err := cgs.Head(cred.Body.PathExp)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the  most recent version of this credential to act as our previous.
+	previousCred, err := cgs.HeadCredential(cred.Body.PathExp, cred.Body.Name)
+	if err != nil {
+		log.Printf("error finding credentials to match: %s", err)
+		return nil, err
+	}
+
 	var newGraph *registry.CredentialGraphV2
 	// No matching CredentialGraph/KeyRing for this credential.
 	// We'll make a new one now.
-	if len(graphs) == 0 {
+	if graph == nil {
 		newGraph, err = createCredentialGraph(ctx, cred.Body, sigID, encID, kp,
 			e.client, e.crypto)
 		if err != nil {
 			log.Printf("error creating credential graph: %s", err)
 			return nil, err
 		}
-		graphs = []registry.CredentialGraph{newGraph}
-	}
-
-	cgs := newCredentialGraphSet()
-	cgs.Add(graphs...)
-
-	// Filter out the returned credentials down to those that explicitly match
-	// the pathexp and name.
-	graph := graphs[0]
-	previousCred, err := cgs.HeadCredential(cred.Body.PathExp, cred.Body.Name)
-	if err != nil {
-		log.Printf("error finding credentials to match: %s", err)
-		return nil, err
+		cgs.Add(newGraph)
+		graph = newGraph
 	}
 
 	// Construct an encrypted and signed version of the credential
@@ -119,14 +127,6 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	} else {
 		base, err := baseCredential(previousCred)
 		if err != nil {
-			return nil, err
-		}
-
-		if base.Name != credBody.Name ||
-			!base.PathExp.Equal(credBody.PathExp) {
-
-			err = fmt.Errorf("Non-matching credential returned in tree")
-			log.Printf("Error finding previous credential version: %s", err)
 			return nil, err
 		}
 
