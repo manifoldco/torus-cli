@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/arigatomachine/cli/api"
@@ -66,7 +65,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	var inviteCode string
-	if os.Getenv("TORUS_DEBUG") == "" {
+	if subCommand {
 		inviteCode, err = InviteCodePrompt(defaultInvite)
 		if err != nil {
 			return err
