@@ -103,6 +103,25 @@ func (c *CredentialGraphClient) List(ctx context.Context, path string,
 		query.Set("owner_id", ownerID.String())
 	}
 
+	return c.getGraph(ctx, query)
+}
+
+// Search returns back all segments of the CredentialGraph (Keyring, Keyring
+// Members, and Credentials) that are contained within the given loose path
+// expression. It is loose in that it can have * for projects.
+func (c *CredentialGraphClient) Search(ctx context.Context, pathExp string,
+	ownerID *identity.ID) ([]CredentialGraph, error) {
+
+	query := url.Values{}
+
+	query.Set("pathexp", pathExp)
+	query.Set("owner_id", ownerID.String())
+	query.Set("mode", "contains")
+
+	return c.getGraph(ctx, query)
+}
+
+func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) ([]CredentialGraph, error) {
 	req, err := c.client.NewRequest("GET", "/credentialgraph", &query, nil)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)

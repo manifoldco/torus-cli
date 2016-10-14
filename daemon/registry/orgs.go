@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/arigatomachine/cli/envelope"
+	"github.com/arigatomachine/cli/identity"
 )
 
 // Orgs represents the `/orgs` registry endpoint, used for accessing
@@ -36,4 +37,22 @@ func (o *Orgs) List(ctx context.Context, name string) ([]envelope.Unsigned, erro
 	}
 
 	return orgs, nil
+}
+
+// Get returns the organization with the given ID.
+func (o *Orgs) Get(ctx context.Context, orgID *identity.ID) (*envelope.Unsigned, error) {
+	req, err := o.client.NewRequest("GET", "/orgs/"+orgID.String(), nil, nil)
+	if err != nil {
+		log.Printf("Error building GET /orgs api request: %s", err)
+		return nil, err
+	}
+
+	org := envelope.Unsigned{}
+	_, err = o.client.Do(ctx, req, &org)
+	if err != nil {
+		log.Printf("Error performing api request: %s", err)
+		return nil, err
+	}
+
+	return &org, nil
 }
