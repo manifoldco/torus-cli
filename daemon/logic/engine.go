@@ -264,9 +264,9 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 				switch t := cred.Body.(type) {
 				case *primitive.Credential:
 					baseBody = &t.BaseCredential
+					credState = t.State
 				case *primitive.CredentialV1:
 					baseBody = &t.BaseCredential
-					credState = nil
 				default:
 					return errors.New("Unknown credential version")
 				}
