@@ -5,7 +5,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -118,19 +117,14 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	} else {
 		previousCred := creds[len(creds)-1]
 
-		var baseBody *primitive.BaseCredential
-		switch t := previousCred.Body.(type) {
-		case *primitive.Credential:
-			baseBody = &t.BaseCredential
-		case *primitive.CredentialV1:
-			baseBody = &t.BaseCredential
-		default:
-			return nil, errors.New("Unknown credential version")
+		base, err := baseCredential(&previousCred)
+		if err != nil {
+			return nil, err
 		}
 
-		previousName := baseBody.Name
-		previousCredVersion := baseBody.CredentialVersion
-		previousPathExp := baseBody.PathExp
+		previousName := base.Name
+		previousCredVersion := base.CredentialVersion
+		previousPathExp := base.PathExp
 		previousID := previousCred.ID
 
 		if previousName != credBody.Name ||
@@ -258,28 +252,18 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 
 		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
 			for _, cred := range graph.GetCredentials() {
-				var credState *string
+				var state *string
 
-				var baseBody *primitive.BaseCredential
-				switch t := cred.Body.(type) {
-				case *primitive.Credential:
-					baseBody = &t.BaseCredential
-					credState = t.State
-				case *primitive.CredentialV1:
-					baseBody = &t.BaseCredential
-				default:
-					return errors.New("Unknown credential version")
+				base, err := baseCredential(&cred)
+				if err != nil {
+					return err
 				}
 
-				credName := baseBody.Name
-				credValue := baseBody.Credential.Value
-				credValueNonce := baseBody.Credential.Nonce
-				credNonce := baseBody.Nonce
-				credPathExp := baseBody.PathExp
-				credProjectID := baseBody.ProjectID
-				credOrgID := baseBody.OrgID
+				if c, ok := cred.Body.(*primitive.Credential); ok {
+					state = c.State
+				}
 
-				pt, err := u.Unbox(ctx, *credValue, *credNonce, *credValueNonce)
+				pt, err := u.Unbox(ctx, *base.Credential.Value, *base.Credential.Nonce, *base.Nonce)
 				if err != nil {
 					log.Printf("Error decrypting credential: %s", err)
 					return err
@@ -289,12 +273,12 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 					ID:      cred.ID,
 					Version: cred.Version,
 					Body: &PlaintextCredential{
-						Name:      credName,
-						PathExp:   credPathExp,
-						ProjectID: credProjectID,
-						OrgID:     credOrgID,
+						Name:      base.Name,
+						PathExp:   base.PathExp,
+						ProjectID: base.ProjectID,
+						OrgID:     base.OrgID,
 						Value:     string(pt),
-						State:     credState,
+						State:     state,
 					},
 				}
 				creds = append(creds, plainCred)

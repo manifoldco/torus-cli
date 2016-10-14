@@ -392,20 +392,34 @@ func findMatchingCreds(creds []envelope.Signed, pathexp *pathexp.PathExp,
 
 	results := make([]envelope.Signed, 0)
 	for _, c := range creds {
-		var baseBody *primitive.BaseCredential
-		switch t := c.Body.(type) {
-		case *primitive.Credential:
-			baseBody = &t.BaseCredential
-		case *primitive.CredentialV1:
-			baseBody = &t.BaseCredential
-		default:
-			return nil, errors.New("Unknown credential version")
+		base, err := baseCredential(&c)
+		if err != nil {
+			return nil, err
 		}
 
-		if baseBody.PathExp.Equal(pathexp) && baseBody.Name == name {
+		if base.PathExp.Equal(pathexp) && base.Name == name {
 			results = append(results, c)
 		}
 	}
 
 	return results, nil
+}
+
+var errCredVersionMistmach = errors.New("Mismatched credential version and body")
+
+func baseCredential(cred *envelope.Signed) (*primitive.BaseCredential, error) {
+	switch v := cred.Version; v {
+	case 1:
+		if b, ok := cred.Body.(*primitive.CredentialV1); ok {
+			return &b.BaseCredential, nil
+		}
+		return nil, errCredVersionMistmach
+	case 2:
+		if b, ok := cred.Body.(*primitive.Credential); ok {
+			return &b.BaseCredential, nil
+		}
+		return nil, errCredVersionMistmach
+	default:
+		return nil, fmt.Errorf("Unknown credential version %d", v)
+	}
 }
