@@ -44,6 +44,10 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.PostFunc("/org-invites/:id/approve",
 		orgInvitesApproveRoute(lEngine, o))
 
+	mux.GetFunc("/worklog", worklogListRoute(lEngine, o))
+	mux.GetFunc("/worklog/:id", worklogGetRoute(lEngine, o))
+	mux.PostFunc("/worklog/:id", worklogResolveRoute(lEngine, o))
+
 	mux.GetFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
 		err := enc.Encode(&apitypes.Version{Version: c.Version})
