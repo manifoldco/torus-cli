@@ -41,7 +41,7 @@ func loginRoute(client *registry.Client, s session.Session,
 			return
 		}
 
-		err = attemptLogin(client, s, db, ctx, creds)
+		err = attemptLogin(ctx, client, s, db, creds)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -51,7 +51,7 @@ func loginRoute(client *registry.Client, s session.Session,
 	}
 }
 
-func attemptLogin(client *registry.Client, s session.Session, db *db.DB, ctx context.Context, creds apitypes.Login) error {
+func attemptLogin(ctx context.Context, client *registry.Client, s session.Session, db *db.DB, creds apitypes.Login) error {
 	salt, loginToken, err := client.Tokens.PostLogin(ctx, creds.Email)
 	if err != nil {
 		return err

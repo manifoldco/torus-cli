@@ -100,7 +100,7 @@ func createProjectCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, orgName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
+	org, orgName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
 
 	var orgID *identity.ID
 	if !newOrg {
@@ -137,7 +137,7 @@ func createProjectCmd(ctx *cli.Context) error {
 			return cli.NewExitError("Could not create org: "+err.Error(), -1)
 		}
 
-		err = generateKeypairsForOrg(ctx, c, client, org.ID, false)
+		err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
 		if err != nil {
 			return err
 		}

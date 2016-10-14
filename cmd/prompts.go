@@ -103,7 +103,7 @@ func handleSelectError(err error, generic string) error {
 // It returns the object of the selected project (if created a new project was not chosed),
 // the name of the selected project, and a boolean indicating if a new project should
 // be created.
-func SelectCreateProject(client *api.Client, c context.Context, orgID *identity.ID, name string) (*api.ProjectResult, string, bool, error) {
+func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.ProjectResult, string, bool, error) {
 	var projects []api.ProjectResult
 	var err error
 	if orgID != nil {
@@ -152,7 +152,7 @@ func SelectCreateProject(client *api.Client, c context.Context, orgID *identity.
 // It returns the object of the selected org (if created a new org was not chosed),
 // the name of the selected org, and a boolean indicating if a new org should
 // be created.
-func SelectCreateOrg(client *api.Client, c context.Context, name string) (*api.OrgResult, string, bool, error) {
+func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.OrgResult, string, bool, error) {
 	// Get the list of orgs the user has access to
 	orgs, err := client.Orgs.List(c)
 	if err != nil {

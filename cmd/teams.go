@@ -304,7 +304,7 @@ func createTeamCmd(ctx *cli.Context) error {
 	c := context.Background()
 
 	// Ask the user which org they want to use
-	org, oName, newOrg, err := SelectCreateOrg(client, c, ctx.String("org"))
+	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
 	if err != nil {
 		return handleSelectError(err, "Org selection failed")
 	}
@@ -334,7 +334,7 @@ func createTeamCmd(ctx *cli.Context) error {
 
 	// Create the org now if needed
 	if org == nil && newOrg {
-		org, err = createOrgByName(ctx, c, client, oName)
+		org, err = createOrgByName(c, ctx, client, oName)
 		if err != nil {
 			fmt.Println("")
 			return err

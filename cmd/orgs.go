@@ -75,17 +75,17 @@ func orgsCreate(ctx *cli.Context) error {
 
 	client := api.NewClient(cfg)
 
-	_, err = createOrgByName(ctx, c, client, name)
+	_, err = createOrgByName(c, ctx, client, name)
 	return err
 }
 
-func createOrgByName(ctx *cli.Context, c context.Context, client *api.Client, name string) (*api.OrgResult, error) {
+func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, name string) (*api.OrgResult, error) {
 	org, err := client.Orgs.Create(c, name)
 	if err != nil {
 		return nil, cli.NewExitError(orgCreateFailed, -1)
 	}
 
-	err = generateKeypairsForOrg(ctx, c, client, org.ID, false)
+	err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
 	if err != nil {
 		msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
 		return nil, cli.NewExitError(msg, -1)

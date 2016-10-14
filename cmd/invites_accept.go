@@ -79,7 +79,7 @@ func invitesAccept(ctx *cli.Context) error {
 		return cli.NewExitError(acceptInviteFailed, -1)
 	}
 
-	err = generateKeypairsForOrg(ctx, c, client, invite.Body.OrgID, false)
+	err = generateKeypairsForOrg(c, ctx, client, invite.Body.OrgID, false)
 	if err != nil {
 		// We'd rather they generate keypairs through accept again, so generic err
 		return cli.NewExitError(acceptInviteFailed, -1)
