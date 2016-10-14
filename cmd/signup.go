@@ -113,7 +113,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	// Generate keypairs, look up the user's org
-	err = generateKeypairsForOrg(ctx, c, client, nil, true)
+	err = generateKeypairsForOrg(c, ctx, client, nil, true)
 	if err != nil {
 		return err
 	}

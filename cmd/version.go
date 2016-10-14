@@ -39,7 +39,7 @@ func listVersionsCmd(ctx *cli.Context) error {
 
 	client := api.NewClient(cfg)
 	c := context.Background()
-	daemonVersion, registryVersion, err := retrieveVersions(client, c)
+	daemonVersion, registryVersion, err := retrieveVersions(c, client)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func listVersionsCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func retrieveVersions(client *api.Client, c context.Context) (*apitypes.Version, *apitypes.Version, error) {
+func retrieveVersions(c context.Context, client *api.Client) (*apitypes.Version, *apitypes.Version, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 

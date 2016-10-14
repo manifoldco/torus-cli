@@ -180,7 +180,7 @@ func generateKeypairs(ctx *cli.Context) error {
 	return nil
 }
 
-func generateKeypairsForOrg(ctx *cli.Context, c context.Context, client *api.Client, orgID *identity.ID, lookupOrg bool) error {
+func generateKeypairsForOrg(c context.Context, ctx *cli.Context, client *api.Client, orgID *identity.ID, lookupOrg bool) error {
 	var err error
 
 	msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
