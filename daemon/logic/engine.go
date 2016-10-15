@@ -5,7 +5,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -73,27 +72,37 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Keypairs retrieved", true)
 
+	cgs := newCredentialGraphSet()
+	err = cgs.Add(graphs...)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the credentialgraph/keyring that we should store our credential in
+	graph, err := cgs.Head(cred.Body.PathExp)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the  most recent version of this credential to act as our previous.
+	previousCred, err := cgs.HeadCredential(cred.Body.PathExp, cred.Body.Name)
+	if err != nil {
+		log.Printf("error finding credentials to match: %s", err)
+		return nil, err
+	}
+
 	var newGraph *registry.CredentialGraphV2
 	// No matching CredentialGraph/KeyRing for this credential.
 	// We'll make a new one now.
-	if len(graphs) == 0 {
-		newGraph, err = createCredentialGraph(ctx, cred.Body, sigID, encID, kp,
-			e.client, e.crypto)
+	if graph == nil || graph.HasRevocations() {
+		newGraph, err = createCredentialGraph(ctx, cred.Body, graph, sigID,
+			encID, kp, e.client, e.crypto)
 		if err != nil {
 			log.Printf("error creating credential graph: %s", err)
 			return nil, err
 		}
-		graphs = []registry.CredentialGraph{newGraph}
-	}
-
-	// Filter out the returned credentials down to those that explicitly match
-	// the pathexp and name.
-	graph := graphs[0]
-	creds := graph.GetCredentials()
-	creds, err = findMatchingCreds(creds, cred.Body.PathExp, cred.Body.Name)
-	if err != nil {
-		log.Printf("error finding credentials to match: %s", err)
-		return nil, err
+		cgs.Add(newGraph)
+		graph = newGraph
 	}
 
 	// Construct an encrypted and signed version of the credential
@@ -111,38 +120,18 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		},
 	}
 
-	if len(creds) == 0 {
+	if previousCred == nil {
 		log.Printf("no previous")
 		credBody.Previous = nil
 		credBody.CredentialVersion = 1
 	} else {
-		previousCred := creds[len(creds)-1]
-
-		var baseBody *primitive.BaseCredential
-		switch t := previousCred.Body.(type) {
-		case *primitive.Credential:
-			baseBody = &t.BaseCredential
-		case *primitive.CredentialV1:
-			baseBody = &t.BaseCredential
-		default:
-			return nil, errors.New("Unknown credential version")
-		}
-
-		previousName := baseBody.Name
-		previousCredVersion := baseBody.CredentialVersion
-		previousPathExp := baseBody.PathExp
-		previousID := previousCred.ID
-
-		if previousName != credBody.Name ||
-			!previousPathExp.Equal(credBody.PathExp) {
-
-			err = fmt.Errorf("Non-matching credential returned in tree")
-			log.Printf("Error finding previous credential version: %s", err)
+		base, err := baseCredential(previousCred)
+		if err != nil {
 			return nil, err
 		}
 
-		credBody.Previous = previousID
-		credBody.CredentialVersion = previousCredVersion + 1
+		credBody.Previous = previousCred.ID
+		credBody.CredentialVersion = base.CredentialVersion + 1
 	}
 
 	krm, mekshare, err := graph.FindMember(e.session.ID())
@@ -258,28 +247,18 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 
 		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
 			for _, cred := range graph.GetCredentials() {
-				var credState *string
+				var state *string
 
-				var baseBody *primitive.BaseCredential
-				switch t := cred.Body.(type) {
-				case *primitive.Credential:
-					baseBody = &t.BaseCredential
-					credState = t.State
-				case *primitive.CredentialV1:
-					baseBody = &t.BaseCredential
-				default:
-					return errors.New("Unknown credential version")
+				base, err := baseCredential(&cred)
+				if err != nil {
+					return err
 				}
 
-				credName := baseBody.Name
-				credValue := baseBody.Credential.Value
-				credValueNonce := baseBody.Credential.Nonce
-				credNonce := baseBody.Nonce
-				credPathExp := baseBody.PathExp
-				credProjectID := baseBody.ProjectID
-				credOrgID := baseBody.OrgID
+				if c, ok := cred.Body.(*primitive.Credential); ok {
+					state = c.State
+				}
 
-				pt, err := u.Unbox(ctx, *credValue, *credNonce, *credValueNonce)
+				pt, err := u.Unbox(ctx, *base.Credential.Value, *base.Credential.Nonce, *base.Nonce)
 				if err != nil {
 					log.Printf("Error decrypting credential: %s", err)
 					return err
@@ -289,12 +268,12 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 					ID:      cred.ID,
 					Version: cred.Version,
 					Body: &PlaintextCredential{
-						Name:      credName,
-						PathExp:   credPathExp,
-						ProjectID: credProjectID,
-						OrgID:     credOrgID,
+						Name:      base.Name,
+						PathExp:   base.PathExp,
+						ProjectID: base.ProjectID,
+						OrgID:     base.OrgID,
 						Value:     string(pt),
-						State:     credState,
+						State:     state,
 					},
 				}
 				creds = append(creds, plainCred)

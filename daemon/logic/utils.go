@@ -12,7 +12,6 @@ import (
 	"github.com/arigatomachine/cli/base64"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/pathexp"
 	"github.com/arigatomachine/cli/primitive"
 
 	"github.com/arigatomachine/cli/daemon/crypto"
@@ -28,7 +27,7 @@ const (
 // createCredentialGraph generates, signs, and posts a new CredentialGraph
 // to the registry.
 func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
-	sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
+	parent registry.CredentialGraph, sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
 	client *registry.Client, engine *crypto.Engine) (*registry.CredentialGraphV2, error) {
 
 	pathExp, err := credBody.PathExp.WithInstance("*")
@@ -36,9 +35,13 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		return nil, err
 	}
 
-	keyring, err := engine.SignedEnvelope(
-		ctx, primitive.NewKeyring(credBody.OrgID, credBody.ProjectID, pathExp),
-		sigID, &kp.Signature)
+	keyringBody := primitive.NewKeyring(credBody.OrgID, credBody.ProjectID, pathExp)
+	if parent != nil {
+		keyringBody.Previous = parent.GetKeyring().ID
+		keyringBody.KeyringVersion = parent.KeyringVersion() + 1
+	}
+
+	keyring, err := engine.SignedEnvelope(ctx, keyringBody, sigID, &kp.Signature)
 	if err != nil {
 		return nil, err
 	}
@@ -387,25 +390,21 @@ func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	return engine.SignedEnvelope(ctx, &body, sigID, sigKP)
 }
 
-func findMatchingCreds(creds []envelope.Signed, pathexp *pathexp.PathExp,
-	name string) ([]envelope.Signed, error) {
+var errCredVersionMistmach = errors.New("Mismatched credential version and body")
 
-	results := make([]envelope.Signed, 0)
-	for _, c := range creds {
-		var baseBody *primitive.BaseCredential
-		switch t := c.Body.(type) {
-		case *primitive.Credential:
-			baseBody = &t.BaseCredential
-		case *primitive.CredentialV1:
-			baseBody = &t.BaseCredential
-		default:
-			return nil, errors.New("Unknown credential version")
+func baseCredential(cred *envelope.Signed) (*primitive.BaseCredential, error) {
+	switch v := cred.Version; v {
+	case 1:
+		if b, ok := cred.Body.(*primitive.CredentialV1); ok {
+			return &b.BaseCredential, nil
 		}
-
-		if baseBody.PathExp.Equal(pathexp) && baseBody.Name == name {
-			results = append(results, c)
+		return nil, errCredVersionMistmach
+	case 2:
+		if b, ok := cred.Body.(*primitive.Credential); ok {
+			return &b.BaseCredential, nil
 		}
+		return nil, errCredVersionMistmach
+	default:
+		return nil, fmt.Errorf("Unknown credential version %d", v)
 	}
-
-	return results, nil
 }

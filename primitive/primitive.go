@@ -177,7 +177,8 @@ type CredentialValue struct {
 	Value     *base64.Value `json:"value"`
 }
 
-type baseKeyring struct {
+// BaseKeyring is the shared structure between keyring schema versions.
+type BaseKeyring struct {
 	immutable
 	Created        time.Time        `json:"created_at"`
 	OrgID          *identity.ID     `json:"org_id"`
@@ -190,7 +191,7 @@ type baseKeyring struct {
 // KeyringV1 is the old keyring format, without claims or mekshares.
 type KeyringV1 struct { // type: 0x09
 	v1Schema
-	baseKeyring
+	BaseKeyring
 }
 
 // Keyring is a mechanism for sharing a shared secret between many different
@@ -199,13 +200,13 @@ type KeyringV1 struct { // type: 0x09
 // Credentials belong to Keyrings
 type Keyring struct { // type: 0x09
 	v2Schema
-	baseKeyring
+	BaseKeyring
 }
 
 // NewKeyring returns a new v2 Keyring, with the created time set to now
 func NewKeyring(orgID, projectID *identity.ID, pathExp *pathexp.PathExp) *Keyring {
 	return &Keyring{
-		baseKeyring: baseKeyring{
+		BaseKeyring: BaseKeyring{
 			Created:   time.Now().UTC(),
 			OrgID:     orgID,
 			PathExp:   pathExp,

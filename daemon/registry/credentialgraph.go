@@ -10,6 +10,7 @@ import (
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/pathexp"
+	"github.com/arigatomachine/cli/primitive"
 )
 
 // CredentialGraphClient represents the `/credentialgraph` registry endpoint,
@@ -24,6 +25,7 @@ type CredentialGraphClient struct {
 type CredentialGraph interface {
 	KeyringSection
 	GetCredentials() []envelope.Signed
+	KeyringVersion() int
 }
 
 // CredentialGraphV1 represents a Keyring, it's members, and associated
@@ -38,6 +40,11 @@ func (c *CredentialGraphV1) GetCredentials() []envelope.Signed {
 	return c.Credentials
 }
 
+// KeyringVersion returns the version of the keyring itself (not its schema).
+func (c *CredentialGraphV1) KeyringVersion() int {
+	return c.Keyring.Body.(*primitive.KeyringV1).BaseKeyring.KeyringVersion
+}
+
 // CredentialGraphV2 represents a Keyring, it's members, and associated
 // Credentials.
 type CredentialGraphV2 struct {
@@ -48,6 +55,11 @@ type CredentialGraphV2 struct {
 // GetCredentials returns the Credentials objects in this CredentialGraph
 func (c *CredentialGraphV2) GetCredentials() []envelope.Signed {
 	return c.Credentials
+}
+
+// KeyringVersion returns the version of the keyring itself (not its schema).
+func (c *CredentialGraphV2) KeyringVersion() int {
+	return c.Keyring.Body.(*primitive.Keyring).BaseKeyring.KeyringVersion
 }
 
 // Post creates a new CredentialGraph on the registry.
