@@ -34,6 +34,19 @@ func (e *Error) Error() string {
 	return e.Type + ": " + strings.Join(e.Err, " ")
 }
 
+// IsNotFoundError returns whether or not an error is a 404 result from the api.
+func IsNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if apiErr, ok := err.(*Error); ok {
+		return apiErr.Type == NotFoundError
+	}
+
+	return false
+}
+
 // Version contains the release version of the daemon.
 type Version struct {
 	Version string `json:"version"`

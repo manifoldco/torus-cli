@@ -6,10 +6,17 @@ _Unpublished_
 
 **Notable Changes**
 
+- Introduce new `orgs remove <username>` command, to remove a user from an
+  org, including their team memberships and secret access.
+
 - Introduce keyring versioning. After a user has been removed from a keyring,
   we increment the keyring version, creating a logical access boundary. New
   credentials are added to the new keyring version, and old credentails can be
   called out as needing to be rotated.
+
+**Fixes**
+
+ - Assorted fixes for help text.
 
 ## v0.11.0
 

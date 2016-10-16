@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/api"
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/promptui"
 )
@@ -28,6 +29,18 @@ func init() {
 				Name:   "list",
 				Usage:  "List organizations associated with your account",
 				Action: chain(ensureDaemon, ensureSession, orgsListCmd),
+			},
+			{
+				Name:      "remove",
+				Usage:     "Remove a user from an org",
+				ArgsUsage: "<username>",
+				Flags: []cli.Flag{
+					orgFlag("org to remove the user from", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, orgsRemove,
+				),
 			},
 		},
 	}
@@ -137,5 +150,64 @@ func orgsListCmd(ctx *cli.Context) error {
 		fmt.Printf("  %s\n", o.Body.Name)
 	}
 
+	return nil
+}
+
+func orgsRemove(ctx *cli.Context) error {
+	usage := usageString(ctx)
+
+	args := ctx.Args()
+	if len(args) < 1 || args[0] == "" {
+		text := "Missing username\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+	if len(args) > 1 {
+		text := "Too many arguments\n\n"
+		text += usage
+		return cli.NewExitError(text, -1)
+	}
+	username := args[0]
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	const userNotFound = "User not found"
+	const orgsRemoveFailed = "Could remove user from the org. Please try again."
+
+	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return cli.NewExitError(orgsRemoveFailed, -1)
+	}
+	if org == nil {
+		return cli.NewExitError("Org not found", -1)
+	}
+
+	profile, err := client.Profiles.ListByName(c, username)
+	if apitypes.IsNotFoundError(err) {
+		return cli.NewExitError(userNotFound, -1)
+	}
+	if err != nil {
+		return cli.NewExitError(orgsRemoveFailed, -1)
+	}
+	if profile == nil {
+		return cli.NewExitError(userNotFound, -1)
+	}
+
+	err = client.Orgs.RemoveMember(c, *org.ID, *profile.ID)
+	if apitypes.IsNotFoundError(err) {
+		fmt.Println("User is not a member of the org")
+		return nil
+	}
+	if err != nil {
+		return cli.NewExitError(orgsRemoveFailed, -1)
+	}
+
+	fmt.Println("User has been removed from the org.")
 	return nil
 }

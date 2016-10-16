@@ -78,3 +78,17 @@ func (o *OrgsClient) List(ctx context.Context) ([]OrgResult, error) {
 	_, err = o.client.Do(ctx, req, &orgs, nil, nil)
 	return orgs, err
 }
+
+// RemoveMember removes a user from an org
+func (o *OrgsClient) RemoveMember(ctx context.Context, orgID identity.ID,
+	userID identity.ID) error {
+
+	req, _, err := o.client.NewRequest("DELETE",
+		"/orgs/"+orgID.String()+"/members/"+userID.String(), nil, nil, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = o.client.Do(ctx, req, nil, nil, nil)
+	return err
+}
