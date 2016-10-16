@@ -91,7 +91,11 @@ func (c *Client) NewTokenRequest(token, method, path string, query *url.Values,
 		query = &url.Values{}
 	}
 
-	fullPath := c.prefix + path + "?" + query.Encode()
+	fullPath := c.prefix + path
+	if q := query.Encode(); q != "" {
+		fullPath += "?" + q
+	}
+
 	req, err := http.NewRequest(method, fullPath, b)
 	if err != nil {
 		return nil, err
