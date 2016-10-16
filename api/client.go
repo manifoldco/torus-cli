@@ -92,7 +92,11 @@ func (c *Client) NewRequest(method, path string, query *url.Values, body interfa
 		version = "proxy"
 	}
 
-	fullPath := "http://localhost/" + version + path + "?" + query.Encode()
+	fullPath := "http://localhost/" + version + path
+	if q := query.Encode(); q != "" {
+		fullPath += "?" + q
+	}
+
 	req, err := http.NewRequest(method, fullPath, b)
 	if err != nil {
 		return nil, requestID, err
