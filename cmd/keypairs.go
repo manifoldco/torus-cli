@@ -35,7 +35,7 @@ func init() {
 				Name:  "generate",
 				Usage: "Generate keyparis for an organization",
 				Flags: []cli.Flag{
-					orgFlag("org to show keypairs for", true),
+					orgFlag("org to generate keypairs for", true),
 					cli.BoolFlag{
 						Name:  "all",
 						Usage: "Perform command for all orgs without valid keypairs",
