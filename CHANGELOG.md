@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.12.0
+
+_Unpublished_
+
+**Fixes**
+
+- Assorted fixes for help text.
+
 ## v0.11.0
 
 _Published: 2016-10-12_
