@@ -45,6 +45,7 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus teams add [name] [username] —org [org-name]` adds the user to a team
 - [ ]   `torus teams remove [name] [username] —org [org-name]` removes the user from a team
 - [ ]  Users cannot remove themselves from system-teams
+- [ ]   `torus orgs remove [username] —org [org-name]` removes the user from the org.
 
 ### Context
 
