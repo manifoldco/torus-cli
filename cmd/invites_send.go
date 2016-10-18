@@ -59,6 +59,20 @@ func invitesSend(ctx *cli.Context) error {
 
 	matchTeams := ctx.StringSlice("team")
 
+	// ensure that even with custom teams, users are always invited to the
+	// member team
+	const memberTeam = "member"
+	memberFound := false
+	for _, team := range matchTeams {
+		if team == memberTeam {
+			memberFound = true
+			break
+		}
+	}
+	if !memberFound {
+		matchTeams = append(matchTeams, memberTeam)
+	}
+
 	// Verify all team names supplied exist for this org
 	teamIDs := make([]identity.ID, len(matchTeams))
 	var missingTeams []string
