@@ -262,7 +262,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 					state = c.State
 				}
 
-				pt, err := u.Unbox(ctx, *base.Credential.Value, *base.Credential.Nonce, *base.Nonce)
+				pt, err := u.Unbox(ctx, *base.Credential.Value, *base.Nonce, *base.Credential.Nonce)
 				if err != nil {
 					log.Printf("Error decrypting credential: %s", err)
 					return err
