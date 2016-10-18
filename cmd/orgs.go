@@ -10,7 +10,6 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
-	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -66,17 +65,10 @@ func orgsCreate(ctx *cli.Context) error {
 	}
 
 	label := "Org name"
-	if name == "" {
-		name, err = NamePrompt(&label, "")
-		if err != nil {
-			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
-				return err
-			}
-			fmt.Println("")
-			return cli.NewExitError(orgCreateFailed, -1)
-		}
-	} else {
-		fmt.Println(promptui.SuccessfulValue(label, name))
+	autoAccept := name != ""
+	name, err = NamePrompt(&label, name, autoAccept)
+	if err != nil {
+		return handleSelectError(err, orgCreateFailed)
 	}
 
 	c := context.Background()

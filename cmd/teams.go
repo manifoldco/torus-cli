@@ -17,7 +17,6 @@ import (
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/primitive"
-	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -323,13 +322,10 @@ func createTeamCmd(ctx *cli.Context) error {
 	}
 
 	label := "Team name"
-	if teamName == "" {
-		teamName, err = NamePrompt(&label, "")
-		if err != nil {
-			return handleSelectError(err, teamCreateFailed)
-		}
-	} else {
-		fmt.Println(promptui.SuccessfulValue(label, teamName))
+	autoAccept := teamName != ""
+	teamName, err = NamePrompt(&label, teamName, autoAccept)
+	if err != nil {
+		return handleSelectError(err, teamCreateFailed)
 	}
 
 	// Create the org now if needed

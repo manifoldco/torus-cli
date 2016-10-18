@@ -12,7 +12,6 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -105,13 +104,10 @@ func createEnv(ctx *cli.Context) error {
 	}
 
 	label := "Environment name"
-	if environmentName == "" {
-		environmentName, err = NamePrompt(&label, "")
-		if err != nil {
-			return handleSelectError(err, envCreateFailed)
-		}
-	} else {
-		fmt.Println(promptui.SuccessfulValue(label, environmentName))
+	autoAccept := environmentName != ""
+	environmentName, err = NamePrompt(&label, environmentName, autoAccept)
+	if err != nil {
+		return handleSelectError(err, envCreateFailed)
 	}
 
 	// Create the org now if needed

@@ -12,7 +12,6 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -199,13 +198,10 @@ func createServiceCmd(ctx *cli.Context) error {
 	}
 
 	label := "Service name"
-	if serviceName == "" {
-		serviceName, err = NamePrompt(&label, "")
-		if err != nil {
-			return handleSelectError(err, serviceCreateFailed)
-		}
-	} else {
-		fmt.Println(promptui.SuccessfulValue(label, serviceName))
+	autoAccept := serviceName != ""
+	serviceName, err = NamePrompt(&label, serviceName, autoAccept)
+	if err != nil {
+		return handleSelectError(err, serviceCreateFailed)
 	}
 
 	// Create the org now if needed

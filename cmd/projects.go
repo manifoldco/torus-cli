@@ -12,7 +12,6 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -117,17 +116,10 @@ func createProjectCmd(ctx *cli.Context) error {
 	}
 
 	label := "Project name"
-	if name == "" {
-		name, err = NamePrompt(&label, "")
-		if err != nil {
-			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
-				return err
-			}
-			fmt.Println("")
-			return cli.NewExitError(projectCreateFailed, -1)
-		}
-	} else {
-		fmt.Println(promptui.SuccessfulValue(label, name))
+	autoAccept := name != ""
+	name, err = NamePrompt(&label, name, autoAccept)
+	if err != nil {
+		return handleSelectError(err, projectCreateFailed)
 	}
 
 	if newOrg {

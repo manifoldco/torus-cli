@@ -38,17 +38,29 @@ func validateInviteCode(input string) error {
 }
 
 // NamePrompt prompts the user to input a person's name
-func NamePrompt(override *string, defaultValue string) (string, error) {
+func NamePrompt(override *string, defaultValue string, autoAccept bool) (string, error) {
+	var prompt promptui.Prompt
+
 	label := "Name"
 	if override != nil {
 		label = *override
 	}
-	prompt := promptui.Prompt{
+
+	if autoAccept {
+		err := validateSlug(strings.ToLower(label))(defaultValue)
+		if err != nil {
+			fmt.Println(promptui.FailedValue(label, defaultValue))
+		} else {
+			fmt.Println(promptui.SuccessfulValue(label, defaultValue))
+		}
+		return defaultValue, err
+	}
+
+	prompt = promptui.Prompt{
 		Label:    label,
 		Default:  defaultValue,
 		Validate: validateSlug(strings.ToLower(label)),
 	}
-
 	return prompt.Run()
 }
 

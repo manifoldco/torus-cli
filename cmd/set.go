@@ -68,7 +68,7 @@ func setCmd(ctx *cli.Context) error {
 	})
 
 	if err != nil {
-		return cli.NewExitError("Could not set credential: "+err.Error(), -1)
+		return cli.NewExitError("Could not set credential.\n"+err.Error(), -1)
 	}
 
 	name := (*cred.Body).GetName()
