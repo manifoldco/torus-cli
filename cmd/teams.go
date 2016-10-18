@@ -418,8 +418,9 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 		results, err := client.Teams.GetByName(c, org.ID, teamName)
 		if len(results) != 1 || err != nil {
 			tErr = cli.NewExitError("Team not found", -1)
+		} else {
+			team = results[0]
 		}
-		team = results[0]
 		wait.Done()
 	}()
 
