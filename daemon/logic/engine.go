@@ -341,11 +341,28 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 	// Get all the keyrings and memberships for the current user. This way we
 	// can decrypt the MEK for each and then create a new KeyringMember for
 	// our wonderful new org member!
-	keyringSections, err := e.client.Keyring.List(
-		ctx, inviteBody.OrgID, e.session.ID())
+	org, err := e.client.Orgs.Get(ctx, inviteBody.OrgID)
 	if err != nil {
-		log.Printf("could not retrieve keyring sections for user: %s", err)
 		return nil, err
+	}
+
+	projects, err := e.client.Projects.List(ctx, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var graphs []registry.CredentialGraph
+	orgName := org.Body.(*primitive.Org).Name
+	for _, project := range projects {
+		projName := project.Body.(*primitive.Project).Name
+		projGraphs, err := e.client.CredentialGraph.Search(ctx,
+			"/"+orgName+"/"+projName+"/*/*/*/*", e.session.ID())
+		if err != nil {
+			log.Printf("Error retrieving credential graphs: %s", err)
+			return nil, err
+		}
+
+		graphs = append(graphs, projGraphs...)
 	}
 
 	// Find encryption keys for user
@@ -357,12 +374,23 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 		return nil, err
 	}
 
+	cgs := newCredentialGraphSet()
+	err = cgs.Add(graphs...)
+	if err != nil {
+		return nil, err
+	}
+
+	activeGraphs, err := cgs.Active()
+	if err != nil {
+		return nil, err
+	}
+
 	n.Notify(observer.Progress, "Keyrings retrieved", true)
 
 	v1members := []envelope.Signed{}
 	v2members := []registry.KeyringMember{}
-	for _, segment := range keyringSections {
-		krm, mekshare, err := segment.FindMember(e.session.ID())
+	for _, graph := range activeGraphs {
+		krm, mekshare, err := graph.FindMember(e.session.ID())
 		if err != nil {
 			log.Printf("could not find keyring membership: %s", err)
 			return nil, fmt.Errorf("could not find keyring membership")
@@ -390,9 +418,9 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 			Value:     base64.NewValue(encMek),
 		}
 
-		switch segment.GetKeyring().Version {
+		switch graph.GetKeyring().Version {
 		case 1:
-			projectID := segment.GetKeyring().Body.(*primitive.KeyringV1).ProjectID
+			projectID := graph.GetKeyring().Body.(*primitive.KeyringV1).ProjectID
 			member, err := newV1KeyringMember(ctx, e.crypto, krm.OrgID, projectID,
 				krm.KeyringID, inviteBody.InviteeID, targetPubKey.ID, encID, sigID, key, kp)
 			if err != nil {

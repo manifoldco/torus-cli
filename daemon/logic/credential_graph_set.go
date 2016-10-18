@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/arigatomachine/cli/envelope"
+	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/pathexp"
 	"github.com/arigatomachine/cli/primitive"
 
@@ -45,6 +46,77 @@ func (cgs *credentialGraphSet) Add(graphs ...registry.CredentialGraph) error {
 	}
 
 	return nil
+}
+
+// Active returns a slice of CredentialGraphs that contain credentials that
+// are still reachable.
+// A credential is reachable if a newer version of the CredentialGraph has not
+// replaced its value, and it is not an `unset` Credential.
+func (cgs *credentialGraphSet) Active() ([]registry.CredentialGraph, error) {
+	active := make([]registry.CredentialGraph, 0, len(cgs.graphs))
+
+	for _, graphs := range cgs.graphs {
+
+		// parents is the slice of IDs already seen in Previous fields.
+		// they cannot be active as they have been overwritten.
+		var parents []identity.ID
+
+		sort.Sort(graphSorter(graphs))
+		for headOffset, graph := range graphs {
+			creds := graph.GetCredentials()
+
+			// maybeActive is a set of potentially active credentials.
+			// It will never contain unset credentials as they can't be
+			// active.
+			maybeActive := make(map[identity.ID]struct{}, len(creds))
+			unchecked := make([]identity.ID, 0, len(creds))
+			for _, cred := range creds {
+				var parent *identity.ID
+				switch cred.Version {
+				case 1:
+					parent = cred.Body.(*primitive.CredentialV1).Previous
+					maybeActive[*cred.ID] = struct{}{}
+				case 2:
+					body := cred.Body.(*primitive.Credential)
+					parent = body.Previous
+
+					if body.State == nil || *body.State != "unset" {
+						maybeActive[*cred.ID] = struct{}{}
+					}
+				default:
+					return nil, errors.New("Unknown credential version")
+				}
+
+				if parent != nil {
+					unchecked = append(unchecked, *parent)
+				}
+			}
+
+			// unchecked will contain the existing parents, and the parents
+			// of all credentials in this version of the keyring
+			unchecked = append(unchecked, parents...)
+			parents = []identity.ID{}
+
+			for len(unchecked) > 0 {
+				var id identity.ID
+				id, unchecked = unchecked[0], unchecked[1:]
+
+				if _, ok := maybeActive[id]; ok {
+					delete(maybeActive, id)
+				} else {
+					parents = append(parents, id)
+				}
+			}
+
+			// the most recent version of a keyring is always active
+			// (it could be filled entirely with unset values)
+			if len(maybeActive) > 0 || headOffset == 0 {
+				active = append(active, graph)
+			}
+		}
+	}
+
+	return active, nil
 }
 
 // Head returns the most recent version of a CredentialGraph that would contain

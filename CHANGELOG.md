@@ -4,9 +4,12 @@
 
 _Unpublished_
 
-**Fixes**
+**Notable Changes**
 
-- Assorted fixes for help text.
+- Introduce keyring versioning. After a user has been removed from a keyring,
+  we increment the keyring version, creating a logical access boundary. New
+  credentials are added to the new keyring version, and old credentails can be
+  called out as needing to be rotated.
 
 ## v0.11.0
 
