@@ -4,19 +4,18 @@ package identity
 
 import (
 	"crypto/rand"
-	"encoding/base32"
 	"encoding/json"
 	"errors"
 	"strconv"
-	"strings"
 
 	"github.com/dchest/blake2b"
+
+	"github.com/arigatomachine/cli/base32"
 )
 
 const (
-	base32Alphabet = "0123456789abcdefghjkmnpqrtuvwxyz"
-	idVersion      = 0x01
-	byteLength     = 18
+	idVersion  = 0x01
+	byteLength = 18
 )
 
 // Identifiable is the interface implemented by objects that can be given
@@ -37,8 +36,6 @@ type Mutable interface {
 	Identifiable
 	Mutable() // also just for type checking.
 }
-
-var lowerBase32 = base32.NewEncoding(base32Alphabet)
 
 // ID is an encoded unique identifier for an object.
 //
@@ -106,7 +103,7 @@ func (id *ID) Type() byte {
 }
 
 func (id *ID) String() string {
-	return strings.TrimRight(lowerBase32.EncodeToString(id[:]), "=")
+	return base32.EncodeToString(id[:])
 }
 
 // MarshalJSON implements the json.Marshaler interface for IDs.
@@ -136,14 +133,7 @@ func (id *ID) fillID(raw []byte) error {
 }
 
 func decodeFromByte(raw []byte) ([]byte, error) {
-	pad := 8 - (len(raw) % 8)
-	nb := make([]byte, len(raw)+pad)
-	copy(nb, raw)
-	for i := 0; i < pad; i++ {
-		nb[len(raw)+i] = '='
-	}
-
-	out, err := lowerBase32.DecodeString(string(nb))
+	out, err := base32.DecodeString(string(raw))
 	if err != nil {
 		return nil, err
 	}

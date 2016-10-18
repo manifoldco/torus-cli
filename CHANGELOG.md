@@ -8,11 +8,13 @@ _Unpublished_
 
 - Introduce new `orgs remove <username>` command, to remove a user from an
   org, including their team memberships and secret access.
-
 - Introduce keyring versioning. After a user has been removed from a keyring,
   we increment the keyring version, creating a logical access boundary. New
-  credentials are added to the new keyring version, and old credentails can be
+  secrets are added to the new keyring version, and old secrets can be
   called out as needing to be rotated.
+- Introduce the `worklog` command. `worklog` discovers and tracks important
+  tasks to do within `torus`. The first type of item it tracks are secrets
+  that should be rotated due to users being removed from an organization.
 
 **Fixes**
 

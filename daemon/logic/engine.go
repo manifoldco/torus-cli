@@ -33,18 +33,22 @@ type Engine struct {
 	db      *db.DB
 	crypto  *crypto.Engine
 	client  *registry.Client
+
+	Worklog Worklog
 }
 
 // NewEngine returns a new Engine
 func NewEngine(c *config.Config, s session.Session, db *db.DB, e *crypto.Engine,
 	client *registry.Client) *Engine {
-	return &Engine{
+	engine := &Engine{
 		config:  c,
 		session: s,
 		db:      db,
 		crypto:  e,
 		client:  client,
 	}
+	engine.Worklog = Worklog{engine: engine}
+	return engine
 }
 
 // AppendCredential attempts to append a plain-text Credential object to the
