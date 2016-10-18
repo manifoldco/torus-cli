@@ -32,6 +32,7 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus logout` logs you out
 - [ ]   `torus login` prompts you for an email and password, before authenticating you
 - [ ]  You can login using environment variables (`TORUS_EMAIL` and `TORUS_PASSWORD`)
+
 ### Teams
 
 - [ ]   `torus teams list --org [username]` displays `owner` `admin` and `member` teams, and you are a member of each
@@ -45,7 +46,6 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus teams add [name] [username] —org [org-name]` adds the user to a team
 - [ ]   `torus teams remove [name] [username] —org [org-name]` removes the user from a team
 - [ ]  Users cannot remove themselves from system-teams
-- [ ]   `torus orgs remove [username] —org [org-name]` removes the user from the org.
 
 ### Context
 
@@ -67,6 +67,24 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]  Members of `[team]` have appropriate access
 - [ ]  System policies cannot be detached
 - [ ]  `torus policies view [name]` displays statements contained within the policy
+
+### Worklog/Keyring Versioning
+
+- [ ] *prerequisite:* Create an org, and invite another user.
+- [ ] *prerequisite:* Create a team, add the other user to it, and give it
+      access to a project (`projA`)
+- [ ] *prerequisite:* Create a second project (`projB`) that the other user
+      does not have access to.
+- [ ] *prerequiresite:* Set two secrets in both projects
+- [ ] `torus orgs remove [username] —org [org-name]` removes the user from the
+      org.
+- [ ] `torus worklog list` shows the secrets from `projA` as needing to be
+      changed, but does not show the secrets from `projB`.
+- [ ] `torus worklog view <id>` shows a worklog entry by id.
+- [ ] After each secret from `projA` is changed, it no longer appears in the
+      worklog.
+- [ ] `torus view` can display a mixture of old and new secrets (ie after a
+      single new set in `projA`).
 
 ### Critical Path
 
