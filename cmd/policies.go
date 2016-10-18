@@ -75,13 +75,13 @@ func detachPolicies(ctx *cli.Context) error {
 	usage := usageString(ctx)
 	args := ctx.Args()
 
-	if len(args) < 1 {
+	if len(args) < 2 {
 		text = "Too few arguments\n\n"
 		text += usage
 		return cli.NewExitError(text, -1)
 
 	} else if len(args) > 2 {
-		text = "Too few arguments\n\n"
+		text = "Too many arguments\n\n"
 		text += usage
 		return cli.NewExitError(text, -1)
 	}
