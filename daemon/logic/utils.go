@@ -343,6 +343,7 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 
 	return encKey, nil
 }
+
 func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	orgID *identity.ID, keyType string, public []byte, sigID *identity.ID,
 	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {

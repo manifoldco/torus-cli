@@ -87,6 +87,18 @@ func buildGraph(rawPathExp string, version int, secrets ...cred) registry.Creden
 	return cg
 }
 
+func buildGraphWithRevocation(rawPathExp string, version int, secrets ...cred) registry.CredentialGraph {
+	cg := buildGraph(rawPathExp, version, secrets...)
+
+	cg.(*registry.CredentialGraphV2).Claims = []envelope.Signed{
+		{Body: &primitive.KeyringMemberClaim{
+			ClaimType: primitive.RevocationClaimType,
+		}},
+	}
+
+	return cg
+}
+
 func TestCredentialGraphSetAdd(t *testing.T) {
 	cgs := newCredentialGraphSet()
 	cg := buildGraph("/o/p/e/s/u/i", 1)
@@ -374,6 +386,86 @@ func TestCredentialGraphSetHeadCredential(t *testing.T) {
 
 		if out.ID != id2 {
 			t.Error("Wrong head credential found. wanted:", id2, "got:", out.ID)
+		}
+	})
+}
+
+func TestCredentialGraphSetNeedRotation(t *testing.T) {
+	t.Run("no credentials need rotation", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		pe := "/o/p/e/s/u/i"
+		name := "cred"
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3, cred{id: id3, pe: &pe, name: &name}))
+
+		out, err := cgs.NeedRotation()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		if len(out) != 0 {
+			t.Error("Credentials reported as needing rotation when there shouldn't be")
+		}
+	})
+
+	t.Run("version in head keyring needs rotation", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		pe := "/o/p/e/s/u/i"
+		name := "cred"
+
+		cgs.Add(buildGraphWithRevocation("/o/p/e/s/u/*", 3, cred{id: id3, pe: &pe, name: &name}))
+
+		out, err := cgs.NeedRotation()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		if len(out) != 1 {
+			t.Error("Wrong number of credentials needing revision found")
+		}
+	})
+
+	t.Run("version in old keyring needs rotation", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		pe := "/o/p/e/s/u/i"
+		name := "cred"
+		othername := "othercred"
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3, cred{id: id3, pe: &pe, name: &name}))
+		cgs.Add(buildGraphWithRevocation("/o/p/e/s/u/*", 2, cred{id: id2, pe: &pe, name: &othername}))
+
+		out, err := cgs.NeedRotation()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		if len(out) != 1 {
+			t.Fatal("Wrong number of credentials needing revision found")
+		}
+
+		if out[0].ID != id2 {
+			t.Error("Wrong credential needing revision returned")
+		}
+	})
+
+	t.Run("already rotated value is not returned", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		pe := "/o/p/e/s/u/i"
+		name := "cred"
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3, cred{id: id3, prev: id2, pe: &pe, name: &name}))
+		cgs.Add(buildGraphWithRevocation("/o/p/e/s/u/*", 2, cred{id: id2, pe: &pe, name: &name}))
+
+		out, err := cgs.NeedRotation()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		if len(out) != 0 {
+			t.Error("Wrong number of credentials needing revision found")
 		}
 	})
 }
