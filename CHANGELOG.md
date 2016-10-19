@@ -18,7 +18,11 @@ _Unpublished_
 
 **Fixes**
 
- - Assorted fixes for help text.
+- Assorted fixes for help text.
+- Fixed a bug with `orgs invite send` which prevented a user from being invited
+  if any teams were specified.
+- `teams remove` no longer panics if a bad team name is supplied.
+- `policies detach` no longer panics if too few arguments are supplied.
 
 ## v0.11.0
 
