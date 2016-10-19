@@ -24,7 +24,7 @@ func invitesList(ctx *cli.Context) error {
 
 	org, err := client.Orgs.GetByName(context.Background(), ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(orgInviteFailed, -1)
+		return cli.NewExitError("Could not retrieve org information.", -1)
 	}
 	if org == nil {
 		return cli.NewExitError("Org not found.", -1)
