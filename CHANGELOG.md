@@ -23,6 +23,7 @@ _2016-10-18_
   if any teams were specified.
 - `teams remove` no longer panics if a bad team name is supplied.
 - `policies detach` no longer panics if too few arguments are supplied.
+- Adding an admin or owner to a team with a deny no longer removes their access.
 
 ## v0.11.0
 
