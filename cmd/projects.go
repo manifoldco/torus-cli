@@ -29,7 +29,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, listProjects,
+					setUserEnv, checkRequiredFlags, listProjectsCmd,
 				),
 			},
 			{
@@ -51,34 +51,16 @@ func init() {
 
 const projectListFailed = "Could not list projects, please try again."
 
-func listProjects(ctx *cli.Context) error {
-	cfg, err := config.LoadConfig()
+func listProjectsCmd(ctx *cli.Context) error {
+	orgName := ctx.String("org")
+	projects, err := listProjectsByOrgName(nil, nil, orgName)
 	if err != nil {
 		return err
 	}
 
-	client := api.NewClient(cfg)
-	c := context.Background()
-
-	// Look up the target org
-	var org *api.OrgResult
-	org, err = client.Orgs.GetByName(c, ctx.String("org"))
-	if err != nil {
-		return errs.NewExitError(projectListFailed)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
-	}
-
-	// Pull all projects for the given orgID
-	projects, err := client.Projects.List(c, org.ID, nil)
-	if err != nil {
-		return errs.NewExitError(projectListFailed)
-	}
-
 	fmt.Println("")
 	count := strconv.Itoa(len(projects))
-	title := org.Body.Name + " org (" + count + ")"
+	title := orgName + " org (" + count + ")"
 	fmt.Println(title)
 	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
 	for _, project := range projects {
@@ -87,6 +69,60 @@ func listProjects(ctx *cli.Context) error {
 	fmt.Println("")
 
 	return nil
+}
+
+func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, name *string) ([]api.ProjectResult, error) {
+	c, client, err := NewAPIClient(ctx, client)
+	if err != nil {
+		return nil, cli.NewExitError(projectListFailed, -1)
+	}
+
+	var orgIDs []*identity.ID
+	if orgID != nil {
+		orgIDs = []*identity.ID{orgID}
+	}
+
+	var projectNames []string
+	if name != nil {
+		projectNames = []string{*name}
+	}
+
+	return client.Projects.List(c, &orgIDs, &projectNames)
+}
+
+func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []*identity.ID) ([]api.ProjectResult, error) {
+	c, client, err := NewAPIClient(ctx, client)
+	if err != nil {
+		return nil, cli.NewExitError(projectListFailed, -1)
+	}
+
+	return client.Projects.List(c, &orgIDs, nil)
+}
+
+func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName string) ([]api.ProjectResult, error) {
+	c, client, err := NewAPIClient(ctx, client)
+	if err != nil {
+		return nil, cli.NewExitError(projectListFailed, -1)
+	}
+
+	// Look up the target org
+	var org *api.OrgResult
+	org, err = client.Orgs.GetByName(c, orgName)
+	if err != nil {
+		return nil, errs.NewExitError(projectListFailed)
+	}
+	if org == nil {
+		return nil, errs.NewExitError("Org not found.")
+	}
+
+	// Pull all projects for the given orgID
+	orgIDs := []*identity.ID{org.ID}
+	projects, err := listProjectsByOrgID(&c, client, orgIDs)
+	if err != nil {
+		return nil, errs.NewExitError(projectListFailed)
+	}
+
+	return projects, nil
 }
 
 const projectCreateFailed = "Could not create project. Please try again."

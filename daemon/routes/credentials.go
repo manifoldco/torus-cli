@@ -4,6 +4,7 @@ package routes
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
@@ -13,6 +14,8 @@ import (
 
 func credentialsGetRoute(engine *logic.Engine, o *observer.Observer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var err error
+
 		ctx := r.Context()
 		q := r.URL.Query()
 		n, err := o.Notifier(ctx, 1)
@@ -22,7 +25,21 @@ func credentialsGetRoute(engine *logic.Engine, o *observer.Observer) http.Handle
 			return
 		}
 
-		creds, err := engine.RetrieveCredentials(ctx, n, q.Get("path"))
+		path := q.Get("path")
+		pathexp := q.Get("pathexp")
+		if path == "" && pathexp == "" {
+			err = errors.New("missing path or pathexp")
+			log.Printf("Error constructing request: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		var creds []logic.PlaintextCredentialEnvelope
+		if path != "" {
+			creds, err = engine.RetrieveCredentials(ctx, n, &path, nil)
+		} else {
+			creds, err = engine.RetrieveCredentials(ctx, n, nil, &pathexp)
+		}
 		if err != nil {
 			// Rely on logs inside engine for debugging
 			encodeResponseErr(w, err)

@@ -23,16 +23,22 @@ type ServiceResult struct {
 }
 
 // List retrieves relevant services by name and/or orgID and/or projectID
-func (s *ServicesClient) List(ctx context.Context, orgID, projectID *identity.ID, name *string) ([]ServiceResult, error) {
+func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs *[]*identity.ID, names *[]string) ([]ServiceResult, error) {
 	v := &url.Values{}
-	if orgID != nil {
-		v.Set("org_id", orgID.String())
+	if orgIDs != nil {
+		for _, id := range *orgIDs {
+			v.Add("org_id", id.String())
+		}
 	}
-	if projectID != nil && projectID.Type() != 0 {
-		v.Set("project_id", projectID.String())
+	if projectIDs != nil {
+		for _, id := range *projectIDs {
+			v.Add("project_id", id.String())
+		}
 	}
-	if name != nil {
-		v.Set("name", *name)
+	if names != nil {
+		for _, n := range *names {
+			v.Add("name", n)
+		}
 	}
 
 	req, _, err := s.client.NewRequest("GET", "/services", v, nil, true)

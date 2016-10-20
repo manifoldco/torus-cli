@@ -136,7 +136,7 @@ func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.
 	var err error
 	if orgID != nil {
 		// Get the list of projects the user has access to in the specified org
-		projects, err = client.Projects.List(c, orgID, nil)
+		projects, err = listProjects(&c, client, orgID, nil)
 		if err != nil {
 			return nil, "", false, errs.NewExitError("Error fetching projects list.")
 		}

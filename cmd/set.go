@@ -125,7 +125,7 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 	}
 
 	pName := pe.Project()
-	projects, err := client.Projects.List(c, org.ID, &pName)
+	projects, err := listProjects(&c, client, org.ID, &pName)
 	if len(projects) != 1 || err != nil {
 		return nil, errs.NewExitError("Project not found")
 	}
