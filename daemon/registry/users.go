@@ -93,7 +93,12 @@ func validateSelf(s *envelope.Unsigned) error {
 	}
 
 	if body.Master.Alg != crypto.Triplesec {
-		return fmt.Errorf("Unknown alg: %s", body.Master.Alg)
+		return &apitypes.Error{
+			Type: apitypes.InternalServerError,
+			Err: []string{
+				fmt.Sprintf("Unknown alg: %s", body.Master.Alg),
+			},
+		}
 	}
 
 	if len(*body.Master.Value) == 0 {

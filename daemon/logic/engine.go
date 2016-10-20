@@ -220,7 +220,10 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 		case *primitive.KeyringV1:
 			orgID = b.OrgID
 		default:
-			return nil, fmt.Errorf("Malformed keyring body")
+			return nil, &apitypes.Error{
+				Type: apitypes.InternalServerError,
+				Err:  []string{"Malformed keyring body"},
+			}
 		}
 		kp, ok := keypairs[*orgID]
 		if !ok {
@@ -336,8 +339,12 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	if len(claimTrees) != 1 {
 		log.Printf("incorrect number of claim trees returned: %d", len(claimTrees))
-		return nil, fmt.Errorf(
-			"No claim tree found for org: %s", inviteBody.OrgID)
+		return nil, &apitypes.Error{
+			Type: apitypes.NotFoundError,
+			Err: []string{
+				fmt.Sprintf("Claim tree not found for org: %s", inviteBody.OrgID),
+			},
+		}
 	}
 
 	n.Notify(observer.Progress, "Claims retrieved", true)
@@ -397,7 +404,10 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 		krm, mekshare, err := graph.FindMember(e.session.ID())
 		if err != nil {
 			log.Printf("could not find keyring membership: %s", err)
-			return nil, fmt.Errorf("could not find keyring membership")
+			return nil, &apitypes.Error{
+				Type: apitypes.NotFoundError,
+				Err:  []string{"Keyring membership not found"},
+			}
 		}
 
 		encPubKey, err := findEncryptionPublicKeyByID(claimTrees, inviteBody.OrgID, krm.EncryptingKeyID)
@@ -439,7 +449,10 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 			}
 			v2members = append(v2members, *member)
 		default:
-			return nil, fmt.Errorf("Unknown keyring schema version")
+			return nil, &apitypes.Error{
+				Type: apitypes.InternalServerError,
+				Err:  []string{"Unknown keyring schema version"},
+			}
 		}
 	}
 
