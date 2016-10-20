@@ -291,7 +291,7 @@ func findMembersTeam(teams []envelope.Unsigned) (*envelope.Unsigned, error) {
 
 	if team == nil {
 		return nil, &apitypes.Error{
-			Err:  []string{"Member team not found"},
+			Err:  []string{"Member team not found."},
 			Type: apitypes.NotFoundError,
 		}
 	}

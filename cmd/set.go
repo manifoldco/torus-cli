@@ -92,7 +92,7 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 		path := nameOrPath[:idx]
 		pe, err = pathexp.Parse(path)
 		if err != nil {
-			return nil, cli.NewExitError("Error reading path expression: "+err.Error(), -1)
+			return nil, cli.NewExitError(err.Error(), -1)
 		}
 	} else {
 		// Falling back to flags. do the expensive population of the user flag now,
@@ -121,13 +121,13 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 
 	org, err := client.Orgs.GetByName(c, pe.Org())
 	if org == nil || err != nil {
-		return nil, cli.NewExitError("Org not found", -1)
+		return nil, cli.NewExitError("Org not found.", -1)
 	}
 
 	pName := pe.Project()
 	projects, err := client.Projects.List(c, org.ID, &pName)
 	if len(projects) != 1 || err != nil {
-		return nil, cli.NewExitError("Project not found", -1)
+		return nil, cli.NewExitError("Project not found.", -1)
 	}
 	project := projects[0]
 	value := valueMaker()

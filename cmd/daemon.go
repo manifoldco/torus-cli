@@ -85,7 +85,7 @@ func daemonStatus(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	v, err := client.Version.Get(context.Background())
 	if err != nil {
-		return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
+		return cli.NewExitError("Error communicating with the daemon.\n"+err.Error(), -1)
 	}
 
 	fmt.Printf("Daemon is running. pid: %d version: v%s\n", proc.Pid, v.Version)
@@ -121,7 +121,7 @@ func spawnDaemonCmd() error {
 func spawnDaemon() error {
 	executable, err := osext.Executable()
 	if err != nil {
-		return cli.NewExitError("Unable to find executable: "+err.Error(), -1)
+		return cli.NewExitError("Unable to find executable.\n"+err.Error(), -1)
 	}
 
 	cmd := exec.Command(executable, "daemon", "start", "--foreground", "--daemonize")
@@ -141,7 +141,7 @@ func spawnDaemon() error {
 
 	err = cmd.Start()
 	if err != nil {
-		return cli.NewExitError("Unable to start daemon: "+err.Error(), -1)
+		return cli.NewExitError("Unable to start daemon.\n"+err.Error(), -1)
 	}
 
 	return nil
@@ -150,7 +150,7 @@ func spawnDaemon() error {
 func startDaemon(ctx *cli.Context) error {
 	torusRoot, err := config.CreateTorusRoot()
 	if err != nil {
-		return cli.NewExitError("Failed to initialize Torus root dir: "+err.Error(), -1)
+		return cli.NewExitError("Failed to initialize Torus root dir.\n"+err.Error(), -1)
 	}
 
 	if ctx.Bool("daemonize") {
@@ -164,12 +164,12 @@ func startDaemon(ctx *cli.Context) error {
 
 	cfg, err := config.NewConfig(torusRoot)
 	if err != nil {
-		return cli.NewExitError("Failed to load config: "+err.Error(), -1)
+		return cli.NewExitError("Failed to load config.\n"+err.Error(), -1)
 	}
 
 	daemon, err := daemon.New(cfg)
 	if err != nil {
-		return cli.NewExitError("Failed to create daemon: "+err.Error(), -1)
+		return cli.NewExitError("Failed to create daemon.\n"+err.Error(), -1)
 	}
 
 	go watch(daemon)
@@ -178,7 +178,7 @@ func startDaemon(ctx *cli.Context) error {
 	log.Printf("v%s of the Daemon is now listening on %s", cfg.Version, daemon.Addr())
 	err = daemon.Run()
 	if err != nil {
-		log.Printf("Error while running daemon: %s", err)
+		log.Printf("Error while running daemon.\n%s", err)
 	}
 
 	return err
@@ -196,11 +196,11 @@ func watch(daemon *daemon.Daemon) {
 func shutdown(daemon *daemon.Daemon) {
 	err := daemon.Shutdown()
 	if err != nil {
-		log.Printf("Did not shutdown cleanly, error: %s", err)
+		log.Printf("Did not shutdown cleanly.\n%s", err)
 	}
 
 	if r := recover(); r != nil {
-		log.Printf("Failed shutting down; caught panic: %v", r)
+		log.Printf("Failed shutting down; caught panic.\n%v", r)
 		panic(r)
 	}
 }
@@ -251,7 +251,7 @@ func stopDaemon(proc *os.Process) (bool, error) {
 
 	err = proc.Kill()
 	if err != nil {
-		return false, cli.NewExitError("Could not stop daemon: "+err.Error(), -1)
+		return false, cli.NewExitError("Could not stop daemon.\n"+err.Error(), -1)
 	}
 
 	return false, nil

@@ -122,7 +122,7 @@ func teamsListCmd(ctx *cli.Context) error {
 		getMemberships.Done()
 
 		if org == nil {
-			oErr = cli.NewExitError("Org not found", -1)
+			oErr = cli.NewExitError("Org not found.", -1)
 			display.Done()
 			return
 		}
@@ -205,7 +205,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		// Identify the org supplied
 		org, oErr = client.Orgs.GetByName(c, ctx.String("org"))
 		if org == nil {
-			oErr = cli.NewExitError("Org not found", -1)
+			oErr = cli.NewExitError("Org not found.", -1)
 			getMembers.Done()
 			return
 		}
@@ -213,7 +213,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		// Retrieve the team by name supplied
 		teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
 		if len(teams) != 1 {
-			tErr = cli.NewExitError("Team not found", -1)
+			tErr = cli.NewExitError("Team not found.", -1)
 			getMembers.Done()
 			return
 		}
@@ -261,7 +261,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		return err
 	}
 	if profiles == nil {
-		return cli.NewExitError("User not found", -1)
+		return cli.NewExitError("User not found.", -1)
 	}
 
 	count := strconv.Itoa(len(memberships))
@@ -309,7 +309,7 @@ func createTeamCmd(ctx *cli.Context) error {
 	}
 	if org == nil && !newOrg {
 		fmt.Println("")
-		return cli.NewExitError("Org not found", -1)
+		return cli.NewExitError("Org not found.", -1)
 	}
 	if newOrg && oName == "" {
 		fmt.Println("")
@@ -404,7 +404,7 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 		// Identify the org supplied
 		result, err := client.Orgs.GetByName(c, ctx.String("org"))
 		if result == nil || err != nil {
-			oErr = cli.NewExitError("Org not found", -1)
+			oErr = cli.NewExitError("Org not found.", -1)
 			wait.Done()
 			return
 		}
@@ -413,7 +413,7 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 		// Retrieve the team by name supplied
 		results, err := client.Teams.GetByName(c, org.ID, teamName)
 		if len(results) != 1 || err != nil {
-			tErr = cli.NewExitError("Team not found", -1)
+			tErr = cli.NewExitError("Team not found.", -1)
 		} else {
 			team = results[0]
 		}
@@ -424,7 +424,7 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 		// Retrieve the user by name supplied
 		result, err := client.Profiles.ListByName(c, username)
 		if result == nil || err != nil {
-			uErr = cli.NewExitError("User not found", -1)
+			uErr = cli.NewExitError("User not found.", -1)
 		} else {
 			user = result
 		}
@@ -443,7 +443,7 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 	// Lookup their membership row
 	memberships, mErr := client.Memberships.List(c, org.ID, user.ID, team.ID)
 	if mErr != nil || len(memberships) < 1 {
-		return cli.NewExitError("Memberships not found", -1)
+		return cli.NewExitError("Memberships not found.", -1)
 	}
 
 	err = client.Memberships.Delete(c, memberships[0].ID)
@@ -513,7 +513,7 @@ func teamsAddCmd(ctx *cli.Context) error {
 		// Identify the org supplied
 		result, err := client.Orgs.GetByName(c, ctx.String("org"))
 		if result == nil || err != nil {
-			oErr = cli.NewExitError("Org not found", -1)
+			oErr = cli.NewExitError("Org not found.", -1)
 			wait.Done()
 			return
 		}
@@ -522,7 +522,7 @@ func teamsAddCmd(ctx *cli.Context) error {
 		// Retrieve the team by name supplied
 		results, err := client.Teams.GetByName(c, org.ID, teamName)
 		if len(results) != 1 || err != nil {
-			tErr = cli.NewExitError("Team not found", -1)
+			tErr = cli.NewExitError("Team not found.", -1)
 			wait.Done()
 			return
 		}
@@ -534,7 +534,7 @@ func teamsAddCmd(ctx *cli.Context) error {
 		// Retrieve the user by name supplied
 		result, err := client.Profiles.ListByName(c, username)
 		if result == nil || err != nil {
-			uErr = cli.NewExitError("User not found", -1)
+			uErr = cli.NewExitError("User not found.", -1)
 		} else {
 			user = result
 		}
@@ -554,17 +554,17 @@ func teamsAddCmd(ctx *cli.Context) error {
 	if err != nil {
 		msg := teamAddFailed
 		if strings.Contains(err.Error(), "member of the") {
-			msg = "Must be a member of the admin team to add members"
+			msg = "Must be a member of the admin team to add members."
 		}
 		if strings.Contains(err.Error(), "resource exists") {
-			msg = username + " is already a member of the " + teamName + " team"
+			msg = username + " is already a member of the " + teamName + " team."
 		}
 		if strings.Contains(err.Error(), "to the members team") {
-			msg = username + " cannot be added to the " + teamName + " team"
+			msg = username + " cannot be added to the " + teamName + " team."
 		}
 		return cli.NewExitError(msg, -1)
 	}
 
-	fmt.Println(username + " has been added to the " + teamName + " team")
+	fmt.Println(username + " has been added to the " + teamName + " team.")
 	return nil
 }

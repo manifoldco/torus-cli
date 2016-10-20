@@ -73,15 +73,15 @@ func createEnv(ctx *cli.Context) error {
 	// Ask the user which org they want to use
 	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
 	if err != nil {
-		return handleSelectError(err, "Org selection failed")
+		return handleSelectError(err, "Org selection failed.")
 	}
 	if org == nil && !newOrg {
 		fmt.Println("")
-		return cli.NewExitError("Org not found", -1)
+		return cli.NewExitError("Org not found.", -1)
 	}
 	if newOrg && oName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid org name", -1)
+		return cli.NewExitError("Invalid org name.", -1)
 	}
 
 	var orgID *identity.ID
@@ -92,15 +92,15 @@ func createEnv(ctx *cli.Context) error {
 	// Ask the user which project they want to use
 	project, pName, newProject, err := SelectCreateProject(c, client, orgID, ctx.String("project"))
 	if err != nil {
-		return handleSelectError(err, "Project selection failed")
+		return handleSelectError(err, "Project selection failed.")
 	}
 	if project == nil && !newProject {
 		fmt.Println("")
-		return cli.NewExitError("Project not found", -1)
+		return cli.NewExitError("Project not found.", -1)
 	}
 	if newProject && pName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid project name", -1)
+		return cli.NewExitError("Invalid project name.", -1)
 	}
 
 	label := "Environment name"
@@ -134,7 +134,7 @@ func createEnv(ctx *cli.Context) error {
 	err = client.Environments.Create(c, orgID, project.ID, environmentName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return cli.NewExitError("Environment already exists", -1)
+			return cli.NewExitError("Environment already exists.", -1)
 		}
 		return cli.NewExitError(envCreateFailed, -1)
 	}

@@ -406,7 +406,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 			log.Printf("could not find keyring membership: %s", err)
 			return nil, &apitypes.Error{
 				Type: apitypes.NotFoundError,
-				Err:  []string{"Keyring membership not found"},
+				Err:  []string{"Keyring membership not found."},
 			}
 		}
 

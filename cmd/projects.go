@@ -104,7 +104,7 @@ func createProjectCmd(ctx *cli.Context) error {
 	var orgID *identity.ID
 	if !newOrg {
 		if org == nil {
-			return cli.NewExitError("Org not found", -1)
+			return cli.NewExitError("Org not found.", -1)
 		}
 		orgID = org.ID
 	}
@@ -126,7 +126,7 @@ func createProjectCmd(ctx *cli.Context) error {
 		org, err := client.Orgs.Create(c, orgName)
 		orgID = org.ID
 		if err != nil {
-			return cli.NewExitError("Could not create org: "+err.Error(), -1)
+			return cli.NewExitError("Could not create org.\n"+err.Error(), -1)
 		}
 
 		err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
@@ -144,11 +144,11 @@ func createProjectCmd(ctx *cli.Context) error {
 func createProjectByName(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.ProjectResult, error) {
 	project, err := client.Projects.Create(c, orgID, name)
 	if orgID == nil {
-		return nil, cli.NewExitError("Unknown org", -1)
+		return nil, cli.NewExitError("Org not found.", -1)
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return nil, cli.NewExitError("Project already exists", -1)
+			return nil, cli.NewExitError("Project already exists.", -1)
 		}
 		fmt.Println(err)
 		return nil, cli.NewExitError(projectCreateFailed, -1)

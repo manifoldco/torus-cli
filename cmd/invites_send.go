@@ -42,7 +42,7 @@ func invitesSend(ctx *cli.Context) error {
 		return cli.NewExitError(orgInviteFailed, -1)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found", -1)
+		return cli.NewExitError("Org not found.", -1)
 	}
 
 	// Identify the user attempting the command

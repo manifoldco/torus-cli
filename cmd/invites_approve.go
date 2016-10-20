@@ -36,7 +36,7 @@ func invitesApprove(ctx *cli.Context) error {
 		return cli.NewExitError(approveInviteFailed, -1)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found", -1)
+		return cli.NewExitError("Org not found.", -1)
 	}
 
 	states := []string{"accepted"}
@@ -53,7 +53,7 @@ func invitesApprove(ctx *cli.Context) error {
 		}
 	}
 	if targetInvite == nil {
-		return cli.NewExitError("Invite not found", -1)
+		return cli.NewExitError("Invite not found.", -1)
 	}
 
 	err = client.Invites.Approve(context.Background(), *targetInvite, &progress)

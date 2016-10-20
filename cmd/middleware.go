@@ -73,7 +73,7 @@ func ensureDaemon(ctx *cli.Context) error {
 	}
 
 	if err != nil {
-		return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
+		return cli.NewExitError("Could not communicate with daemon.\n"+err.Error(), -1)
 	}
 
 	if v.Version == cfg.Version {
@@ -81,7 +81,7 @@ func ensureDaemon(ctx *cli.Context) error {
 	}
 
 	if spawned {
-		return cli.NewExitError("The daemon version is incorrect. Check for stale processes", -1)
+		return cli.NewExitError("The daemon version is incorrect. Check for stale processes.", -1)
 	}
 
 	fmt.Println("The daemon version is out of date and is being restarted.")
@@ -116,7 +116,7 @@ func ensureSession(ctx *cli.Context) error {
 			}
 		}
 		if hasSession {
-			return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
+			return cli.NewExitError("Could not communicate with daemon.\n"+err.Error(), -1)
 		}
 	}
 
@@ -132,7 +132,7 @@ func ensureSession(ctx *cli.Context) error {
 
 		err := client.Session.Login(context.Background(), email, password)
 		if err != nil {
-			fmt.Println("Could not log in: " + err.Error())
+			fmt.Println("Could not log in.\n" + err.Error())
 		} else {
 			return nil
 		}

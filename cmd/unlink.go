@@ -34,7 +34,7 @@ func unlinkCmd(ctx *cli.Context) error {
 
 	err = dPrefs.Remove()
 	if err != nil {
-		return cli.NewExitError("Could not remove link: "+err.Error(), -1)
+		return cli.NewExitError("Could not remove link.\n"+err.Error(), -1)
 	}
 
 	cwd, err := os.Getwd()

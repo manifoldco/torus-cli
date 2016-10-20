@@ -62,7 +62,7 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 
 	pe, err := pathexp.Parse(path)
 	if err != nil {
-		return cli.NewExitError("Error reading path expression: "+err.Error(), -1)
+		return cli.NewExitError("Invalid path expression.\n"+err.Error(), -1)
 	}
 
 	stmtAction, err := parseAction(args[0])
@@ -110,12 +110,12 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 
 	res, err := client.Policies.Create(c, &policy)
 	if err != nil {
-		return cli.NewExitError("Error creating policy: "+err.Error(), -1)
+		return cli.NewExitError("Failed to create policy.\n"+err.Error(), -1)
 	}
 
 	err = client.Policies.Attach(c, org.ID, res.ID, team.ID)
 	if err != nil {
-		return cli.NewExitError("Could not attach policy: "+err.Error(), -1)
+		return cli.NewExitError("Could not attach policy.\n"+err.Error(), -1)
 	}
 
 	fmt.Printf("Policy generated and attached to the %s team.\n", team.Body.Name)

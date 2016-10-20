@@ -139,10 +139,10 @@ func detachPolicies(ctx *cli.Context) error {
 		)
 	}
 	if team == nil {
-		return cli.NewExitError("Team "+teamName+" not found", -1)
+		return cli.NewExitError("Team "+teamName+" not found.", -1)
 	}
 	if policy == nil {
-		return cli.NewExitError("Policy "+policyName+" not found", -1)
+		return cli.NewExitError("Policy "+policyName+" not found.", -1)
 	}
 
 	attachments, err := client.Policies.AttachmentsList(c, org.ID, team.ID, policy.ID)

@@ -69,7 +69,7 @@ func statusCmd(ctx *cli.Context) error {
 
 	self, err := client.Users.Self(c)
 	if err != nil {
-		return cli.NewExitError("Error fetching user details: "+err.Error(), -1)
+		return cli.NewExitError("Error fetching user details.\n"+err.Error(), -1)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)

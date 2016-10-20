@@ -27,7 +27,7 @@ func init() {
 func unsetCmd(ctx *cli.Context) error {
 	args := ctx.Args()
 	if len(args) != 1 {
-		msg := "name or path is required.\n"
+		msg := "Name or path is required.\n"
 		if len(args) > 1 {
 			msg = "Too many arguments provided.\n"
 		}
@@ -40,12 +40,12 @@ func unsetCmd(ctx *cli.Context) error {
 	})
 
 	if err != nil {
-		return cli.NewExitError("Could not unset credential: "+err.Error(), -1)
+		return cli.NewExitError("Could not unset credential.\n"+err.Error(), -1)
 	}
 
 	name := (*cred.Body).GetName()
 	pe := (*cred.Body).GetPathExp()
-	fmt.Printf("\nCredential %s has been unset at %s/%s\n", name, pe, name)
+	fmt.Printf("\nCredential %s has been unset at %s/%s.", name, pe, name)
 
 	return nil
 }

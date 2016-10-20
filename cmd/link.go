@@ -64,15 +64,15 @@ func linkCmd(ctx *cli.Context) error {
 	// Ask the user which org they want to use
 	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
 	if err != nil {
-		return handleSelectError(err, "Org selection failed")
+		return handleSelectError(err, "Org selection failed.")
 	}
 	if org == nil && !newOrg {
 		fmt.Println("")
-		return cli.NewExitError("Org not found", -1)
+		return cli.NewExitError("Org not found.", -1)
 	}
 	if newOrg && oName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid org name", -1)
+		return cli.NewExitError("Invalid org name.", -1)
 	}
 
 	var orgID *identity.ID
@@ -83,13 +83,13 @@ func linkCmd(ctx *cli.Context) error {
 	// Ask the user which project they want to use
 	project, pName, newProject, err := SelectCreateProject(c, client, orgID, ctx.String("project"))
 	if err != nil {
-		return handleSelectError(err, "Project selection failed")
+		return handleSelectError(err, "Project selection failed.")
 	}
 	if project == nil && !newProject {
-		return cli.NewExitError("Project not found", -1)
+		return cli.NewExitError("Project not found.", -1)
 	}
 	if newProject && pName == "" {
-		return cli.NewExitError("Invalid project name", -1)
+		return cli.NewExitError("Invalid project name.", -1)
 	}
 
 	// Create the org now if needed
@@ -123,7 +123,7 @@ func linkCmd(ctx *cli.Context) error {
 		err = client.Services.Create(c, org.ID, project.ID, "default")
 		if err != nil {
 			fmt.Println("")
-			return cli.NewExitError("Service creation failed", -1)
+			return cli.NewExitError("Service creation failed.", -1)
 		}
 	}
 

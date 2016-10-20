@@ -73,7 +73,7 @@ func runCmd(ctx *cli.Context) error {
 
 	err = cmd.Start()
 	if err != nil {
-		return cli.NewExitError("Could not run command: "+err.Error(), -1)
+		return cli.NewExitError("Failed to run command.\n"+err.Error(), -1)
 	}
 
 	done := make(chan bool)

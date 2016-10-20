@@ -109,7 +109,7 @@ func generateKeypairs(ctx *cli.Context) error {
 		var orgs []api.OrgResult
 		orgs, oErr := client.Orgs.List(c)
 		if oErr != nil {
-			return cli.NewExitError("Could not retrieve orgs, please try again", -1)
+			return cli.NewExitError("Could not retrieve orgs, please try again.", -1)
 		}
 		for _, org := range orgs {
 			subjectOrgs[org.ID] = &org
@@ -121,7 +121,7 @@ func generateKeypairs(ctx *cli.Context) error {
 		orgName := ctx.String("org")
 		org, oErr := client.Orgs.GetByName(c, orgName)
 		if oErr != nil || org == nil {
-			return cli.NewExitError("Org '"+orgName+"' not found", -1)
+			return cli.NewExitError("Org '"+orgName+"' not found.", -1)
 		}
 		subjectOrgs[org.ID] = org
 		orgNames[org.ID] = org.Body.Name
@@ -147,7 +147,7 @@ func generateKeypairs(ctx *cli.Context) error {
 	}
 
 	if pErr != nil {
-		return cli.NewExitError("Error fetching required context", -1)
+		return cli.NewExitError("Error fetching required context.", -1)
 	}
 
 	// Regenerate for orgs which do not have both keys present
@@ -169,7 +169,7 @@ func generateKeypairs(ctx *cli.Context) error {
 	}
 
 	if rErr != nil {
-		return cli.NewExitError("Error while regenerating keypairs", -1)
+		return cli.NewExitError("Error while regenerating keypairs.", -1)
 	}
 
 	if len(regenOrgs) > 0 {

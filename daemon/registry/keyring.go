@@ -13,7 +13,7 @@ import (
 )
 
 // ErrMemberNotFound is returned when a keyring member find call fails.
-var ErrMemberNotFound = errors.New("Keyring membership not found")
+var ErrMemberNotFound = errors.New("Keyring membership not found.")
 
 // KeyringClient represents the `/keyrings` registry end point for accessing
 // keyrings the user or machine belong too.

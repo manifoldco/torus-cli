@@ -169,7 +169,7 @@ func orgsRemove(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	const userNotFound = "User not found"
+	const userNotFound = "User not found."
 	const orgsRemoveFailed = "Could remove user from the org. Please try again."
 
 	org, err := client.Orgs.GetByName(c, ctx.String("org"))
@@ -177,7 +177,7 @@ func orgsRemove(ctx *cli.Context) error {
 		return cli.NewExitError(orgsRemoveFailed, -1)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found", -1)
+		return cli.NewExitError("Org not found.", -1)
 	}
 
 	profile, err := client.Profiles.ListByName(c, username)
@@ -193,7 +193,7 @@ func orgsRemove(ctx *cli.Context) error {
 
 	err = client.Orgs.RemoveMember(c, *org.ID, *profile.ID)
 	if apitypes.IsNotFoundError(err) {
-		fmt.Println("User is not a member of the org")
+		fmt.Println("User is not a member of the org.")
 		return nil
 	}
 	if err != nil {
