@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/arigatomachine/cli/api"
@@ -66,7 +65,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	var inviteCode string
-	if os.Getenv("TORUS_DEBUG") == "" {
+	if subCommand {
 		inviteCode, err = InviteCodePrompt(defaultInvite)
 		if err != nil {
 			return err
@@ -120,5 +119,24 @@ func signup(ctx *cli.Context, subCommand bool) error {
 
 	fmt.Println("")
 	fmt.Println("Your account has been created!")
+
+	if !subCommand {
+		fmt.Println("")
+		fmt.Println("We have emailed you a verification code.")
+		fmt.Println("Please verify your email address by entering the code below.")
+		fmt.Println("")
+
+		code, err := VerificationPrompt()
+		if err != nil {
+			return err
+		}
+		fmt.Println("")
+
+		err = verifyEmail(ctx, &code, true)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
