@@ -161,11 +161,11 @@ func New(org, project string, envs, services, identities, instances []string) (*
 	}
 
 	if !slug.MatchString(org) {
-		return nil, errors.New("Invalid org")
+		return nil, errors.New("Invalid org name.")
 	}
 
 	if !slug.MatchString(project) {
-		return nil, errors.New("Invalid project")
+		return nil, errors.New("Invalid project name.")
 	}
 
 	var err error
@@ -199,11 +199,11 @@ func Parse(raw string) (*PathExp, error) {
 	parts := strings.Split(raw, "/")
 
 	if len(parts) != 7 {
-		return nil, errors.New("Wrong number of path segements")
+		return nil, errors.New("Wrong number of path segements.")
 	}
 
 	if parts[0] != "" {
-		return nil, errors.New("Path expressions must start with '/'")
+		return nil, errors.New("Path expressions must start with '/'.")
 	}
 	// remove leading empty section
 	parts = parts[1:]
@@ -282,7 +282,7 @@ func split(name, segment string) ([]string, error) {
 		parts = strings.Split(segment[1:len(segment)-1], "|")
 		// zero length is checked in parseMultiple
 		if len(parts) == 1 {
-			return nil, errors.New("Single item in segment alternation for " + name)
+			return nil, errors.New("Single item in segment alternation for " + name + ".")
 		}
 	}
 
@@ -292,11 +292,11 @@ func split(name, segment string) ([]string, error) {
 func parseMultiple(name string, parts []string) (segment, error) {
 	switch len(parts) {
 	case 0:
-		return nil, errors.New("Empty segment alternation for " + name)
+		return nil, errors.New("Empty segment alternation for " + name + ".")
 	case 1:
 		matches := fullglobOrGlob.FindAllStringSubmatch(parts[0], -1)
 		if len(matches) != 1 {
-			return nil, errors.New("Invalid " + name)
+			return nil, errors.New("Invalid " + name + ".")
 		}
 
 		match := matches[0]
@@ -313,7 +313,7 @@ func parseMultiple(name string, parts []string) (segment, error) {
 		for _, part := range parts {
 			matches := globRe.FindAllStringSubmatch(part, -1)
 			if len(matches) != 1 {
-				return nil, errors.New("Invalid " + name)
+				return nil, errors.New("Invalid " + name + ".")
 			}
 
 			match := matches[0]

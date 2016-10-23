@@ -13,6 +13,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 )
 
@@ -71,19 +72,12 @@ func detachPolicies(ctx *cli.Context) error {
 		return err
 	}
 
-	var text string
-	usage := usageString(ctx)
 	args := ctx.Args()
-
 	if len(args) < 2 {
-		text = "Too few arguments\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Too few arguments", ctx)
 
 	} else if len(args) > 2 {
-		text = "Too many arguments\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Too many arguments", ctx)
 	}
 
 	policyName := args[0]
@@ -96,10 +90,10 @@ func detachPolicies(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(projectListFailed, -1)
+		return errs.NewExitError(projectListFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found")
 	}
 
 	var waitPolicy sync.WaitGroup
@@ -139,26 +133,26 @@ func detachPolicies(ctx *cli.Context) error {
 		)
 	}
 	if team == nil {
-		return cli.NewExitError("Team "+teamName+" not found", -1)
+		return errs.NewExitError("Team " + teamName + " not found.")
 	}
 	if policy == nil {
-		return cli.NewExitError("Policy "+policyName+" not found", -1)
+		return errs.NewExitError("Policy " + policyName + " not found.")
 	}
 
 	attachments, err := client.Policies.AttachmentsList(c, org.ID, team.ID, policy.ID)
 	if err != nil {
-		return cli.NewExitError(policyDetachFailed, -1)
+		return errs.NewExitError(policyDetachFailed)
 	}
 	if len(attachments) < 1 {
-		return cli.NewExitError(policyName+" policy is not currently attached to "+teamName, -1)
+		return errs.NewExitError(policyName + " policy is not currently attached to " + teamName)
 	}
 
 	err = client.Policies.Detach(c, attachments[0].ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "system team") {
-			return cli.NewExitError("Cannot delete system team attachment", -1)
+			return errs.NewExitError("Cannot delete system team attachment")
 		}
-		return cli.NewExitError(policyDetachFailed, -1)
+		return errs.NewExitError(policyDetachFailed)
 	}
 
 	fmt.Println("Policy " + policyName + " has been detached from team " + teamName)
@@ -180,10 +174,10 @@ func listPolicies(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(policyListFailed, -1)
+		return errs.NewExitError(policyListFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	var getAttachments, display sync.WaitGroup
@@ -216,7 +210,7 @@ func listPolicies(ctx *cli.Context) error {
 			pErr,
 			aErr,
 			tErr,
-			cli.NewExitError(policyListFailed, -1),
+			errs.NewExitError(policyListFailed),
 		)
 	}
 
@@ -265,12 +259,11 @@ func listPolicies(ctx *cli.Context) error {
 func viewPolicyCmd(ctx *cli.Context) error {
 	args := ctx.Args()
 	if len(args) != 1 {
-		msg := "policy name is required.\n"
+		msg := "policy name is required."
 		if len(args) > 1 {
-			msg = "Too many arguments provided.\n"
+			msg = "Too many arguments provided."
 		}
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		return errs.NewUsageExitError(msg, ctx)
 	}
 
 	cfg, err := config.LoadConfig()
@@ -283,19 +276,19 @@ func viewPolicyCmd(ctx *cli.Context) error {
 
 	org, err := client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError("Unable to lookup org. Please try again.", -1)
+		return errs.NewExitError("Unable to lookup org. Please try again.")
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	policies, err := client.Policies.List(c, org.ID, args[0])
 	if err != nil {
-		return cli.NewExitError("Unable to list policies. Please try again.", -1)
+		return errs.NewExitError("Unable to list policies. Please try again.")
 	}
 
 	if len(policies) < 1 {
-		return cli.NewExitError("Policy '"+args[0]+"' not found.", -1)
+		return errs.NewExitError("Policy '" + args[0] + "' not found.")
 	}
 
 	policy := policies[0]

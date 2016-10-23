@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/prefs"
 
 	"github.com/go-ini/ini"
@@ -42,7 +43,7 @@ func init() {
 func listPref(ctx *cli.Context) error {
 	preferences, err := prefs.NewPreferences(false)
 	if err != nil {
-		return cli.NewExitError("Failed to load prefs: "+err.Error(), -1)
+		return errs.NewErrorExitError("Failed to load prefs.", err)
 	}
 
 	spacer := "    "
@@ -77,20 +78,18 @@ func listPref(ctx *cli.Context) error {
 func setPref(ctx *cli.Context) error {
 	preferencess, err := prefs.NewPreferences(false)
 	if err != nil {
-		return cli.NewExitError("Failed to load prefs: "+err.Error(), -1)
+		return errs.NewErrorExitError("Failed to load prefs.", err)
 	}
 
 	args := ctx.Args()
 	key := args.Get(0)
 	value := args.Get(1)
 	if len(key) < 1 || len(value) < 1 {
-		text := "error: must supply a key and value\n\n" + usageString(ctx)
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Must supply a key and value", ctx)
 	}
 
 	if len(strings.Split(key, ".")) < 2 {
-		text := "error: key must be have at least two dot delimited segments"
-		return cli.NewExitError(text, -1)
+		return errs.NewExitError("Key must be have at least two dot delimited segments.")
 	}
 
 	// Validate public key file
@@ -116,16 +115,14 @@ func setPref(ctx *cli.Context) error {
 	cfg := ini.Empty()
 	err = ini.ReflectFrom(cfg, &result)
 	if err != nil {
-		fmt.Println(err.Error())
-		return cli.NewExitError("error: failed to save preferences", -1)
+		return errs.NewErrorExitError("Failed to save preferences.", err)
 	}
 
 	// Save updated ini to filePath
 	rcPath, _ := prefs.RcPath()
 	err = cfg.SaveTo(rcPath)
 	if err != nil {
-		fmt.Println(err.Error())
-		return cli.NewExitError("error: failed to save preferences", -1)
+		return errs.NewErrorExitError("Failed to save preferences.", err)
 	}
 
 	fmt.Println("Preferences updated.")

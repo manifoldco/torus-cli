@@ -31,7 +31,9 @@ type Error struct {
 
 // Error implements the error interface for formatted API errors.
 func (e *Error) Error() string {
-	return e.Type + ": " + strings.Join(e.Err, " ")
+	segments := strings.Split(e.Type, "_")
+	errType := strings.Join(segments, " ")
+	return strings.Title(errType) + ": " + strings.Join(e.Err, " ")
 }
 
 // IsNotFoundError returns whether or not an error is a 404 result from the api.

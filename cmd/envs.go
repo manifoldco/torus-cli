@@ -11,8 +11,8 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/promptui"
 )
 
 func init() {
@@ -59,7 +59,7 @@ const envCreateFailed = "Could not create environment, please try again."
 func createEnv(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return cli.NewExitError(envCreateFailed, -1)
+		return errs.NewExitError(envCreateFailed)
 	}
 
 	args := ctx.Args()
@@ -74,15 +74,15 @@ func createEnv(ctx *cli.Context) error {
 	// Ask the user which org they want to use
 	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
 	if err != nil {
-		return handleSelectError(err, "Org selection failed")
+		return handleSelectError(err, "Org selection failed.")
 	}
 	if org == nil && !newOrg {
 		fmt.Println("")
-		return cli.NewExitError("Org not found", -1)
+		return errs.NewExitError("Org not found.")
 	}
 	if newOrg && oName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid org name", -1)
+		return errs.NewExitError("Invalid org name.")
 	}
 
 	var orgID *identity.ID
@@ -93,25 +93,22 @@ func createEnv(ctx *cli.Context) error {
 	// Ask the user which project they want to use
 	project, pName, newProject, err := SelectCreateProject(c, client, orgID, ctx.String("project"))
 	if err != nil {
-		return handleSelectError(err, "Project selection failed")
+		return handleSelectError(err, "Project selection failed.")
 	}
 	if project == nil && !newProject {
 		fmt.Println("")
-		return cli.NewExitError("Project not found", -1)
+		return errs.NewExitError("Project not found.")
 	}
 	if newProject && pName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid project name", -1)
+		return errs.NewExitError("Invalid project name.")
 	}
 
 	label := "Environment name"
-	if environmentName == "" {
-		environmentName, err = NamePrompt(&label, "")
-		if err != nil {
-			return handleSelectError(err, envCreateFailed)
-		}
-	} else {
-		fmt.Println(promptui.SuccessfulValue(label, environmentName))
+	autoAccept := environmentName != ""
+	environmentName, err = NamePrompt(&label, environmentName, autoAccept)
+	if err != nil {
+		return handleSelectError(err, envCreateFailed)
 	}
 
 	// Create the org now if needed
@@ -138,9 +135,9 @@ func createEnv(ctx *cli.Context) error {
 	err = client.Environments.Create(c, orgID, project.ID, environmentName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return cli.NewExitError("Environment already exists", -1)
+			return errs.NewExitError("Environment already exists.")
 		}
-		return cli.NewExitError(envCreateFailed, -1)
+		return errs.NewExitError(envCreateFailed)
 	}
 
 	fmt.Println("Environment " + environmentName + " created.")
@@ -152,9 +149,7 @@ const envListFailed = "Could not list envs, please try again."
 func listEnvs(ctx *cli.Context) error {
 	if !ctx.Bool("all") {
 		if len(ctx.String("project")) < 1 {
-			text := "Missing flags: --project\n"
-			text += usageString(ctx)
-			return cli.NewExitError(text, -1)
+			return errs.NewUsageExitError("Missing flags: --project", ctx)
 		}
 	}
 	// TODO: Error when profile flag is used with --all
@@ -171,10 +166,10 @@ func listEnvs(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(envListFailed, -1)
+		return errs.NewExitError(envListFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	// Identify which projects to list envs for
@@ -184,7 +179,7 @@ func listEnvs(ctx *cli.Context) error {
 		// Pull all projects for the given orgID
 		projects, err = client.Projects.List(c, org.ID, nil)
 		if err != nil {
-			return cli.NewExitError(envListFailed, -1)
+			return errs.NewExitError(envListFailed)
 		}
 
 	} else {
@@ -192,12 +187,12 @@ func listEnvs(ctx *cli.Context) error {
 		projectName := ctx.String("project")
 		projects, err = client.Projects.List(c, org.ID, &projectName)
 		if err != nil {
-			return cli.NewExitError(envListFailed, -1)
+			return errs.NewExitError(envListFailed)
 		}
 		if len(projects) == 1 {
 			projectID = *projects[0].ID
 		} else {
-			return cli.NewExitError("Project not found.", -1)
+			return errs.NewExitError("Project not found.")
 		}
 	}
 
@@ -205,8 +200,7 @@ func listEnvs(ctx *cli.Context) error {
 	var envs []api.EnvironmentResult
 	envs, err = client.Environments.List(c, org.ID, &projectID, nil)
 	if err != nil {
-		fmt.Printf("%v", err.Error())
-		return cli.NewExitError(envListFailed, -1)
+		return errs.NewErrorExitError(envListFailed, err)
 	}
 
 	// Build map of envs to project

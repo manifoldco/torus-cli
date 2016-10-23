@@ -9,24 +9,19 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 )
 
 const orgInviteFailed = "Could not send invitation to org, please try again."
 
 func invitesSend(ctx *cli.Context) error {
-	usage := usageString(ctx)
-
 	args := ctx.Args()
 	if len(args) < 1 || args[0] == "" {
-		text := "Missing email\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Missing email", ctx)
 	}
 	if len(args) > 1 {
-		text := "Too many arguments\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Too many arguments", ctx)
 	}
 	email := args[0]
 
@@ -39,22 +34,22 @@ func invitesSend(ctx *cli.Context) error {
 
 	org, err := client.Orgs.GetByName(context.Background(), ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(orgInviteFailed, -1)
+		return errs.NewExitError(orgInviteFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	// Identify the user attempting the command
 	user, err := client.Users.Self(context.Background())
 	if err != nil {
-		return cli.NewExitError(orgInviteFailed, -1)
+		return errs.NewExitError(orgInviteFailed)
 	}
 
 	// Retrieve teams for our target org
 	teams, err := client.Teams.GetByOrg(context.Background(), org.ID)
 	if err != nil {
-		return cli.NewExitError(orgInviteFailed, -1)
+		return errs.NewExitError(orgInviteFailed)
 	}
 
 	matchTeams := ctx.StringSlice("team")
@@ -91,18 +86,18 @@ TeamSearch:
 	// One of the supplied teams is not known to this org
 	if len(missingTeams) > 0 {
 		missingTeamNames := strings.Join(missingTeams, ", ")
-		return cli.NewExitError("Unknown team(s): "+missingTeamNames, -1)
+		return errs.NewExitError("Unknown team(s): " + missingTeamNames)
 	}
 	if len(teamIDs) < 1 {
-		return cli.NewExitError(orgInviteFailed, -1)
+		return errs.NewExitError(orgInviteFailed)
 	}
 
 	err = client.Invites.Send(context.Background(), email, *org.ID, *user.ID, teamIDs)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return cli.NewExitError(email+" has already been invited to the "+org.Body.Name+" org", -1)
+			return errs.NewExitError(email + " has already been invited to the " + org.Body.Name + " org")
 		}
-		return cli.NewExitError(orgInviteFailed, -1)
+		return errs.NewExitError(orgInviteFailed)
 	}
 
 	fmt.Println("Invitation to join the " + org.Body.Name + " organization has been sent to " + email + ".")

@@ -9,6 +9,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -37,7 +38,7 @@ func logoutCmd(ctx *cli.Context) error {
 				return nil
 			}
 		}
-		return cli.NewExitError("Logout failed. Please try again.", -1)
+		return errs.NewExitError("Logout failed. Please try again.")
 	}
 
 	fmt.Println("You have successfully logged out. o/")

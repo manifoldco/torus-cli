@@ -11,6 +11,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 )
 
@@ -66,15 +67,15 @@ func listKeypairs(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(keypairListFailed, -1)
+		return errs.NewExitError(keypairListFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	keypairs, err := client.Keypairs.List(c, org.ID)
 	if err != nil {
-		return cli.NewExitError(keypairListFailed, -1)
+		return errs.NewExitError(keypairListFailed)
 	}
 
 	fmt.Println("")
@@ -109,7 +110,7 @@ func generateKeypairs(ctx *cli.Context) error {
 		var orgs []api.OrgResult
 		orgs, oErr := client.Orgs.List(c)
 		if oErr != nil {
-			return cli.NewExitError("Could not retrieve orgs, please try again", -1)
+			return errs.NewExitError("Could not retrieve orgs, please try again.")
 		}
 		for _, org := range orgs {
 			subjectOrgs[org.ID] = &org
@@ -121,7 +122,7 @@ func generateKeypairs(ctx *cli.Context) error {
 		orgName := ctx.String("org")
 		org, oErr := client.Orgs.GetByName(c, orgName)
 		if oErr != nil || org == nil {
-			return cli.NewExitError("Org '"+orgName+"' not found", -1)
+			return errs.NewExitError("Org '" + orgName + "' not found.")
 		}
 		subjectOrgs[org.ID] = org
 		orgNames[org.ID] = org.Body.Name
@@ -147,7 +148,7 @@ func generateKeypairs(ctx *cli.Context) error {
 	}
 
 	if pErr != nil {
-		return cli.NewExitError("Error fetching required context", -1)
+		return errs.NewExitError("Error fetching required context.")
 	}
 
 	// Regenerate for orgs which do not have both keys present
@@ -169,7 +170,7 @@ func generateKeypairs(ctx *cli.Context) error {
 	}
 
 	if rErr != nil {
-		return cli.NewExitError("Error while regenerating keypairs", -1)
+		return errs.NewExitError("Error while regenerating keypairs.")
 	}
 
 	if len(regenOrgs) > 0 {
@@ -184,7 +185,7 @@ func generateKeypairsForOrg(c context.Context, ctx *cli.Context, client *api.Cli
 	var err error
 
 	msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
-	outputErr := cli.NewExitError(msg, -1)
+	outputErr := errs.NewExitError(msg)
 	if orgID == nil && !lookupOrg {
 		return outputErr
 	}

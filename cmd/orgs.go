@@ -10,7 +10,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
-	"github.com/arigatomachine/cli/promptui"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -51,11 +51,8 @@ const orgCreateFailed = "Org creation failed, please try again."
 
 func orgsCreate(ctx *cli.Context) error {
 	args := ctx.Args()
-	usage := usageString(ctx)
 	if len(args) > 1 {
-		text := "Too many arguments\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Too many arguments", ctx)
 	}
 
 	var name string
@@ -66,24 +63,17 @@ func orgsCreate(ctx *cli.Context) error {
 	}
 
 	label := "Org name"
-	if name == "" {
-		name, err = NamePrompt(&label, "")
-		if err != nil {
-			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
-				return err
-			}
-			fmt.Println("")
-			return cli.NewExitError(orgCreateFailed, -1)
-		}
-	} else {
-		fmt.Println(promptui.SuccessfulValue(label, name))
+	autoAccept := name != ""
+	name, err = NamePrompt(&label, name, autoAccept)
+	if err != nil {
+		return handleSelectError(err, orgCreateFailed)
 	}
 
 	c := context.Background()
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return cli.NewExitError(orgCreateFailed, -1)
+		return errs.NewExitError(orgCreateFailed)
 	}
 
 	client := api.NewClient(cfg)
@@ -95,13 +85,13 @@ func orgsCreate(ctx *cli.Context) error {
 func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, name string) (*api.OrgResult, error) {
 	org, err := client.Orgs.Create(c, name)
 	if err != nil {
-		return nil, cli.NewExitError(orgCreateFailed, -1)
+		return nil, errs.NewExitError(orgCreateFailed)
 	}
 
 	err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
 	if err != nil {
 		msg := fmt.Sprintf("Could not generate keypairs for org. Run '%s keypairs generate' to fix.", ctx.App.Name)
-		return nil, cli.NewExitError(msg, -1)
+		return nil, errs.NewExitError(msg)
 	}
 
 	fmt.Println("Org " + org.Body.Name + " created.")
@@ -135,7 +125,7 @@ func orgsListCmd(ctx *cli.Context) error {
 
 	wg.Wait()
 	if oErr != nil || sErr != nil {
-		return cli.NewExitError("Error fetching orgs list", -1)
+		return errs.NewExitError("Error fetching orgs list")
 	}
 
 	withoutPersonal := orgs
@@ -154,18 +144,12 @@ func orgsListCmd(ctx *cli.Context) error {
 }
 
 func orgsRemove(ctx *cli.Context) error {
-	usage := usageString(ctx)
-
 	args := ctx.Args()
 	if len(args) < 1 || args[0] == "" {
-		text := "Missing username\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Missing username", ctx)
 	}
 	if len(args) > 1 {
-		text := "Too many arguments\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Too many arguments", ctx)
 	}
 	username := args[0]
 
@@ -177,35 +161,35 @@ func orgsRemove(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	const userNotFound = "User not found"
+	const userNotFound = "User not found."
 	const orgsRemoveFailed = "Could remove user from the org. Please try again."
 
 	org, err := client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(orgsRemoveFailed, -1)
+		return errs.NewExitError(orgsRemoveFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	profile, err := client.Profiles.ListByName(c, username)
 	if apitypes.IsNotFoundError(err) {
-		return cli.NewExitError(userNotFound, -1)
+		return errs.NewExitError(userNotFound)
 	}
 	if err != nil {
-		return cli.NewExitError(orgsRemoveFailed, -1)
+		return errs.NewExitError(orgsRemoveFailed)
 	}
 	if profile == nil {
-		return cli.NewExitError(userNotFound, -1)
+		return errs.NewExitError(userNotFound)
 	}
 
 	err = client.Orgs.RemoveMember(c, *org.ID, *profile.ID)
 	if apitypes.IsNotFoundError(err) {
-		fmt.Println("User is not a member of the org")
+		fmt.Println("User is not a member of the org.")
 		return nil
 	}
 	if err != nil {
-		return cli.NewExitError(orgsRemoveFailed, -1)
+		return errs.NewExitError(orgsRemoveFailed)
 	}
 
 	fmt.Println("User has been removed from the org.")

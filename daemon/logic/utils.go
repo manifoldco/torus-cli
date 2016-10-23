@@ -9,6 +9,7 @@ import (
 
 	"golang.org/x/crypto/ed25519"
 
+	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/base64"
 	"github.com/arigatomachine/cli/envelope"
 	"github.com/arigatomachine/cli/identity"
@@ -74,7 +75,12 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	}
 
 	if len(claimTrees) != 1 {
-		return nil, fmt.Errorf("No claim tree found for org: %s", credBody.OrgID)
+		return nil, &apitypes.Error{
+			Type: apitypes.NotFoundError,
+			Err: []string{
+				fmt.Sprintf("Claim tree not found for org: %s", credBody.OrgID),
+			},
+		}
 	}
 
 	// get users in the members group of this org.
@@ -195,14 +201,18 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 		case encryptionKeyType:
 			encClaimed = keyPair
 		default:
-			err = fmt.Errorf("Unknown key type: %s", pubKey.KeyType)
-			return nil, nil, nil, err
+			return nil, nil, nil, &apitypes.Error{
+				Type: apitypes.InternalServerError,
+				Err:  []string{fmt.Sprintf("Unknown key type: %s", pubKey.KeyType)},
+			}
 		}
 	}
 
 	if sigClaimed.PublicKey == nil || encClaimed.PublicKey == nil {
-		err = fmt.Errorf("Missing encryption or signing keypairs")
-		return nil, nil, nil, err
+		return nil, nil, nil, &apitypes.Error{
+			Type: apitypes.NotFoundError,
+			Err:  []string{"Missing encryption or signing keypairs"},
+		}
 	}
 
 	sigPub := sigClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
@@ -240,8 +250,12 @@ func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *iden
 	}
 
 	if len(claimTrees) != 1 {
-		err = fmt.Errorf("No claim tree found for org: %s", orgID)
-		return nil, err
+		return nil, &apitypes.Error{
+			Type: apitypes.NotFoundError,
+			Err: []string{
+				fmt.Sprintf("Claim tree not found for org: %s", orgID),
+			},
+		}
 	}
 
 	var encryptingKey *primitive.PublicKey
@@ -252,8 +266,12 @@ func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *iden
 		}
 	}
 	if encryptingKey == nil {
-		err = fmt.Errorf("Couldn't find encrypting key %s", encryptingKeyID)
-		return nil, err
+		return nil, &apitypes.Error{
+			Type: apitypes.NotFoundError,
+			Err: []string{
+				fmt.Sprintf("Encrypting key not found: %s", encryptingKeyID),
+			},
+		}
 	}
 
 	return encryptingKey, nil
@@ -272,7 +290,10 @@ func findMembersTeam(teams []envelope.Unsigned) (*envelope.Unsigned, error) {
 	}
 
 	if team == nil {
-		return nil, fmt.Errorf("couldn't find members team")
+		return nil, &apitypes.Error{
+			Err:  []string{"Member team not found."},
+			Type: apitypes.NotFoundError,
+		}
 	}
 
 	return team, nil
@@ -337,8 +358,12 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 	}
 
 	if encKey == nil {
-		err := fmt.Errorf("No encryption pubkey found for: %s", ID.String())
-		return nil, err
+		return nil, &apitypes.Error{
+			Type: apitypes.NotFoundError,
+			Err: []string{
+				fmt.Sprintf("Encryption pubkey not found for: %s", ID.String()),
+			},
+		}
 	}
 
 	return encKey, nil

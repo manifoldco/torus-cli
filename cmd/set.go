@@ -11,6 +11,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/pathexp"
 )
 
@@ -46,12 +47,11 @@ func init() {
 func setCmd(ctx *cli.Context) error {
 	args := ctx.Args()
 	if len(args) != 2 {
-		msg := "name and value are required.\n"
+		msg := "name and value are required."
 		if len(args) > 2 {
-			msg = "Too many arguments provided.\n"
+			msg = "Too many arguments provided."
 		}
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		return errs.NewUsageExitError(msg, ctx)
 	}
 
 	cred, err := setCredential(ctx, args[0], func() *apitypes.CredentialValue {
@@ -68,7 +68,7 @@ func setCmd(ctx *cli.Context) error {
 	})
 
 	if err != nil {
-		return cli.NewExitError("Could not set credential: "+err.Error(), -1)
+		return errs.NewErrorExitError("Could not set credential.", err)
 	}
 
 	name := (*cred.Body).GetName()
@@ -92,7 +92,7 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 		path := nameOrPath[:idx]
 		pe, err = pathexp.Parse(path)
 		if err != nil {
-			return nil, cli.NewExitError("Error reading path expression: "+err.Error(), -1)
+			return nil, errs.NewExitError(err.Error())
 		}
 	} else {
 		// Falling back to flags. do the expensive population of the user flag now,
@@ -121,13 +121,13 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 
 	org, err := client.Orgs.GetByName(c, pe.Org())
 	if org == nil || err != nil {
-		return nil, cli.NewExitError("Org not found", -1)
+		return nil, errs.NewExitError("Org not found")
 	}
 
 	pName := pe.Project()
 	projects, err := client.Projects.List(c, org.ID, &pName)
 	if len(projects) != 1 || err != nil {
-		return nil, cli.NewExitError("Project not found", -1)
+		return nil, errs.NewExitError("Project not found")
 	}
 	project := projects[0]
 	value := valueMaker()

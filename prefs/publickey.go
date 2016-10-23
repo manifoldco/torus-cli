@@ -7,10 +7,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/urfave/cli"
-
 	"github.com/arigatomachine/cli/base64"
 	"github.com/arigatomachine/cli/data"
+	"github.com/arigatomachine/cli/errs"
 )
 
 const requiredPermissions = 0700
@@ -80,26 +79,23 @@ func ValidatePublicKey(filePath string) error {
 
 	src, err := os.Stat(filePath)
 	if err != nil {
-		text = "error: must be a file that exists"
-		return cli.NewExitError(text, -1)
+		return errs.NewExitError("Publick key file must exist")
 	}
 
 	fMode := src.Mode()
 	if fMode.Perm() != requiredPermissions {
-		text = fmt.Sprintf("error: file specified has permissions %d, must have permissions %d", fMode.Perm(), requiredPermissions)
-		return cli.NewExitError(text, -1)
+		text = fmt.Sprintf("File specified has permissions %d, must have permissions %d", fMode.Perm(), requiredPermissions)
+		return errs.NewExitError(text)
 	}
 
 	fd, err := readPublicKeyFile(filePath)
 	if err != nil {
-		text = "error: could not read file, permissions ok"
-		return cli.NewExitError(text, -1)
+		return errs.NewExitError("Could not read file, permissions ok")
 	}
 
 	_, err = parsePublicKeyFile(fd)
 	if err != nil {
-		text = "error: could not parse json"
-		return cli.NewExitError(text, -1)
+		return errs.NewExitError("Could not parse JSON")
 	}
 
 	return nil

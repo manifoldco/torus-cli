@@ -11,6 +11,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 )
 
@@ -24,10 +25,10 @@ func invitesList(ctx *cli.Context) error {
 
 	org, err := client.Orgs.GetByName(context.Background(), ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError("Could not retrieve org information.", -1)
+		return errs.NewExitError("Could not retrieve org information.")
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	var states []string
@@ -39,7 +40,7 @@ func invitesList(ctx *cli.Context) error {
 
 	invites, err := client.Invites.List(context.Background(), org.ID, states)
 	if err != nil {
-		return cli.NewExitError("Failed to retrieve invites, please try again.", -1)
+		return errs.NewExitError("Failed to retrieve invites, please try again.")
 	}
 
 	if len(invites) < 1 {
@@ -66,7 +67,7 @@ func invitesList(ctx *cli.Context) error {
 	// Lookup profiles of those who were invited
 	profiles, err := client.Profiles.ListByID(context.Background(), profileIDs)
 	if err != nil {
-		return cli.NewExitError("Failed to retrieve invites, please try again.", -1)
+		return errs.NewExitError("Failed to retrieve invites, please try again.")
 	}
 
 	usernameByID := make(map[string]string)

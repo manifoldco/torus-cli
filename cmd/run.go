@@ -7,6 +7,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/arigatomachine/cli/errs"
+
 	"github.com/urfave/cli"
 )
 
@@ -36,9 +38,7 @@ func runCmd(ctx *cli.Context) error {
 	args := ctx.Args()
 
 	if len(args) == 0 {
-		msg := "A command is required.\n"
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		return errs.NewUsageExitError("A command is required", ctx)
 	} else if len(args) == 1 { // only one arg? maybe it was quoted
 		args = strings.Split(args[0], " ")
 	}
@@ -73,7 +73,7 @@ func runCmd(ctx *cli.Context) error {
 
 	err = cmd.Start()
 	if err != nil {
-		return cli.NewExitError("Could not run command: "+err.Error(), -1)
+		return errs.NewErrorExitError("Failed to run command", err)
 	}
 
 	done := make(chan bool)

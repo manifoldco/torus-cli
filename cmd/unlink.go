@@ -8,6 +8,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/dirprefs"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -34,7 +35,7 @@ func unlinkCmd(ctx *cli.Context) error {
 
 	err = dPrefs.Remove()
 	if err != nil {
-		return cli.NewExitError("Could not remove link: "+err.Error(), -1)
+		return errs.NewErrorExitError("Could not remove link", err)
 	}
 
 	cwd, err := os.Getwd()

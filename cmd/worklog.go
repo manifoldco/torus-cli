@@ -11,6 +11,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -86,12 +87,11 @@ func worklogList(ctx *cli.Context) error {
 func worklogView(ctx *cli.Context) error {
 	args := ctx.Args()
 	if len(args) != 1 {
-		msg := "identity is required.\n"
+		msg := "Identity is required."
 		if len(args) > 2 {
-			msg = "Too many arguments provided.\n"
+			msg = "Too many arguments provided."
 		}
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		return errs.NewUsageExitError(msg, ctx)
 	}
 
 	cfg, err := config.LoadConfig()
@@ -109,7 +109,7 @@ func worklogView(ctx *cli.Context) error {
 
 	ident, err := apitypes.DecodeWorklogIDFromString(args[0])
 	if err != nil {
-		return cli.NewExitError("Malformed id for worklog item.", -1)
+		return errs.NewExitError("Malformed id for worklog item.")
 	}
 
 	item, err := client.Worklog.Get(c, org.ID, &ident)
@@ -146,7 +146,7 @@ func worklogResolve(ctx *cli.Context) error {
 	for _, raw := range ctx.Args() {
 		ident, err := apitypes.DecodeWorklogIDFromString(raw)
 		if err != nil {
-			return cli.NewExitError("Malformed id for worklog item.", -1)
+			return errs.NewExitError("Malformed id for worklog item.")
 		}
 
 		idents = append(idents, ident)
@@ -170,7 +170,7 @@ func worklogResolve(ctx *cli.Context) error {
 				}
 			}
 
-			return cli.NewExitError("Could not find worklog item with identity "+ident.String(), -1)
+			return errs.NewExitError("Could not find worklog item with identity " + ident.String())
 		}
 	}
 
@@ -178,7 +178,7 @@ func worklogResolve(ctx *cli.Context) error {
 	for _, item := range toResolve {
 		res, err := client.Worklog.Resolve(c, org.ID, item.ID)
 		if err != nil {
-			return cli.NewExitError("Error resolving worklog item. Please try again.", -1)
+			return errs.NewExitError("Error resolving worklog item. Please try again.")
 		}
 
 		var icon string
@@ -203,10 +203,10 @@ func worklogResolve(ctx *cli.Context) error {
 func getOrg(ctx context.Context, client *api.Client, name string) (*api.OrgResult, error) {
 	org, err := client.Orgs.GetByName(ctx, name)
 	if err != nil {
-		return nil, cli.NewExitError("Unable to lookup org. Please try again.", -1)
+		return nil, errs.NewExitError("Unable to lookup org. Please try again.")
 	}
 	if org == nil {
-		return nil, cli.NewExitError("Org not found.", -1)
+		return nil, errs.NewExitError("Org not found.")
 	}
 
 	return org, nil

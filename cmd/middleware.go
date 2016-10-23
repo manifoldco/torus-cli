@@ -15,6 +15,7 @@ import (
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/dirprefs"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/prefs"
 )
 
@@ -73,7 +74,7 @@ func ensureDaemon(ctx *cli.Context) error {
 	}
 
 	if err != nil {
-		return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
+		return errs.NewErrorExitError("Could not communicate with daemon.", err)
 	}
 
 	if v.Version == cfg.Version {
@@ -81,7 +82,7 @@ func ensureDaemon(ctx *cli.Context) error {
 	}
 
 	if spawned {
-		return cli.NewExitError("The daemon version is incorrect. Check for stale processes", -1)
+		return errs.NewExitError("The daemon version is incorrect. Check for stale processes.")
 	}
 
 	fmt.Println("The daemon version is out of date and is being restarted.")
@@ -116,7 +117,7 @@ func ensureSession(ctx *cli.Context) error {
 			}
 		}
 		if hasSession {
-			return cli.NewExitError("Error communicating with the daemon: "+err.Error(), -1)
+			return errs.NewErrorExitError("Could not communicate with daemon.", err)
 		}
 	}
 
@@ -132,7 +133,7 @@ func ensureSession(ctx *cli.Context) error {
 
 		err := client.Session.Login(context.Background(), email, password)
 		if err != nil {
-			fmt.Println("Could not log in: " + err.Error())
+			fmt.Println("Could not log in.\n" + err.Error())
 		} else {
 			return nil
 		}
@@ -140,7 +141,7 @@ func ensureSession(ctx *cli.Context) error {
 
 	msg := "You must be logged in to run '" + ctx.Command.FullName() + "'.\n" +
 		"Login using 'login' or create an account using 'signup'."
-	return cli.NewExitError(msg, -1)
+	return errs.NewExitError(msg)
 }
 
 // loadDirPrefs loads argument values from the .torus.json file
@@ -307,9 +308,8 @@ func checkRequiredFlags(ctx *cli.Context) error {
 	}
 
 	if len(missing) > 0 {
-		msg := "Missing flags: " + strings.Join(missing, ", ") + "\n"
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		msg := "Missing flags: " + strings.Join(missing, ", ")
+		return errs.NewUsageExitError(msg, ctx)
 	}
 
 	return nil

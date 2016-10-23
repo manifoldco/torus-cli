@@ -9,6 +9,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -45,14 +46,10 @@ func verifyEmail(ctx *cli.Context, code *string, subCommand bool) error {
 	if !subCommand {
 		args := ctx.Args()
 		if len(args) > 1 {
-			text := "Too many arguments.\n\n"
-			text += usageString(ctx)
-			return cli.NewExitError(text, -1)
+			return errs.NewUsageExitError("Too many arguments", ctx)
 		}
 		if len(args) != 1 {
-			text := "Missing verification code.\n\n"
-			text += usageString(ctx)
-			return cli.NewExitError(text, -1)
+			return errs.NewUsageExitError("Missing verification code", ctx)
 		}
 
 		verifyCode = args[0]
@@ -61,9 +58,9 @@ func verifyEmail(ctx *cli.Context, code *string, subCommand bool) error {
 	err = client.Users.VerifyEmail(c, verifyCode)
 	if err != nil {
 		if strings.Contains(err.Error(), "wrong user state: active") {
-			return cli.NewExitError("Email already verified :)", -1)
+			return errs.NewExitError("Email already verified :)")
 		}
-		return cli.NewExitError("Email verification failed, please try again.", -1)
+		return errs.NewExitError("Email verification failed, please try again.")
 	}
 
 	fmt.Println("Your email is now verified.")

@@ -8,19 +8,16 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 )
 
 const approveInviteFailed = "Could not approve invitation to org, please try again."
 
 func invitesApprove(ctx *cli.Context) error {
-	usage := usageString(ctx)
-
 	args := ctx.Args()
 	if len(args) < 1 {
-		text := "Missing email\n\n"
-		text += usage
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError("Missing email", ctx)
 	}
 	email := ctx.Args()[0]
 
@@ -33,16 +30,16 @@ func invitesApprove(ctx *cli.Context) error {
 
 	org, err := client.Orgs.GetByName(context.Background(), ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(approveInviteFailed, -1)
+		return errs.NewExitError(approveInviteFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	states := []string{"accepted"}
 	invites, err := client.Invites.List(context.Background(), org.ID, states)
 	if err != nil {
-		return cli.NewExitError("Failed to retrieve invites, please try again.", -1)
+		return errs.NewExitError("Failed to retrieve invites, please try again.")
 	}
 
 	// Find the target invite id
@@ -53,7 +50,7 @@ func invitesApprove(ctx *cli.Context) error {
 		}
 	}
 	if targetInvite == nil {
-		return cli.NewExitError("Invite not found", -1)
+		return errs.NewExitError("Invite not found.")
 	}
 
 	err = client.Invites.Approve(context.Background(), *targetInvite, &progress)
