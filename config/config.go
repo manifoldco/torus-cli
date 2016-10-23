@@ -10,9 +10,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/urfave/cli"
-
 	"github.com/arigatomachine/cli/data"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/prefs"
 )
 
@@ -142,12 +141,12 @@ func loadCABundle(cafile string) (*x509.CertPool, error) {
 func LoadConfig() (*Config, error) {
 	torusRoot, err := CreateTorusRoot()
 	if err != nil {
-		return nil, cli.NewExitError("Failed to initialize Torus root dir.\n"+err.Error(), -1)
+		return nil, errs.NewErrorExitError("Failed to initialize Torus root dir.", err)
 	}
 
 	cfg, err := NewConfig(torusRoot)
 	if err != nil {
-		return nil, cli.NewExitError("Failed to load config.\n"+err.Error(), -1)
+		return nil, errs.NewErrorExitError("Failed to load config.", err)
 	}
 
 	return cfg, nil

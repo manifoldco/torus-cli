@@ -9,7 +9,9 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/prefs"
+
 	"github.com/urfave/cli"
 )
 
@@ -56,7 +58,7 @@ func statusCmd(ctx *cli.Context) error {
 
 	if !preferences.Core.Context {
 		msg := fmt.Sprintf("Context is disabled. Use '%s prefs' to enable it.", ctx.App.Name)
-		return cli.NewExitError(msg, -1)
+		return errs.NewExitError(msg)
 	}
 
 	cfg, err := config.LoadConfig()
@@ -69,7 +71,7 @@ func statusCmd(ctx *cli.Context) error {
 
 	self, err := client.Users.Self(c)
 	if err != nil {
-		return cli.NewExitError("Error fetching user details.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Error fetching user details", err)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)

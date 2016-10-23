@@ -20,6 +20,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 
 	"github.com/arigatomachine/cli/daemon"
 )
@@ -85,7 +86,7 @@ func daemonStatus(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	v, err := client.Version.Get(context.Background())
 	if err != nil {
-		return cli.NewExitError("Error communicating with the daemon.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Error communicating with the daemon", err)
 	}
 
 	fmt.Printf("Daemon is running. pid: %d version: v%s\n", proc.Pid, v.Version)
@@ -121,7 +122,7 @@ func spawnDaemonCmd() error {
 func spawnDaemon() error {
 	executable, err := osext.Executable()
 	if err != nil {
-		return cli.NewExitError("Unable to find executable.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Unable to find executable.", err)
 	}
 
 	cmd := exec.Command(executable, "daemon", "start", "--foreground", "--daemonize")
@@ -141,7 +142,7 @@ func spawnDaemon() error {
 
 	err = cmd.Start()
 	if err != nil {
-		return cli.NewExitError("Unable to start daemon.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Unable to start daemon", err)
 	}
 
 	return nil
@@ -150,7 +151,7 @@ func spawnDaemon() error {
 func startDaemon(ctx *cli.Context) error {
 	torusRoot, err := config.CreateTorusRoot()
 	if err != nil {
-		return cli.NewExitError("Failed to initialize Torus root dir.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Failed to initialize Torus root dir.", err)
 	}
 
 	if ctx.Bool("daemonize") {
@@ -164,12 +165,12 @@ func startDaemon(ctx *cli.Context) error {
 
 	cfg, err := config.NewConfig(torusRoot)
 	if err != nil {
-		return cli.NewExitError("Failed to load config.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Failed to load config.", err)
 	}
 
 	daemon, err := daemon.New(cfg)
 	if err != nil {
-		return cli.NewExitError("Failed to create daemon.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Failed to create daemon.", err)
 	}
 
 	go watch(daemon)
@@ -251,7 +252,7 @@ func stopDaemon(proc *os.Process) (bool, error) {
 
 	err = proc.Kill()
 	if err != nil {
-		return false, cli.NewExitError("Could not stop daemon.\n"+err.Error(), -1)
+		return false, errs.NewErrorExitError("Could not stop daemon.", err)
 	}
 
 	return false, nil

@@ -8,6 +8,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -50,7 +51,7 @@ func login(ctx *cli.Context) error {
 func performLogin(c context.Context, client *api.Client, email, password string) error {
 	err := client.Session.Login(context.Background(), email, password)
 	if err != nil {
-		return cli.NewExitError("Login failed. Please try again.", -1)
+		return errs.NewExitError("Login failed. Please try again.")
 	}
 
 	fmt.Println("You are now authenticated.")

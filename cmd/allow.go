@@ -12,6 +12,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/pathexp"
 	"github.com/arigatomachine/cli/primitive"
 )
@@ -42,19 +43,17 @@ func allowCmd(ctx *cli.Context) error {
 func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.PolicyAction) error {
 	args := ctx.Args()
 	if len(args) != 3 {
-		msg := "permissions, path, and team are required.\n"
+		msg := "permissions, path, and team are required."
 		if len(args) > 2 {
-			msg = "Too many arguments provided.\n"
+			msg = "Too many arguments provided."
 		}
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		return errs.NewUsageExitError(msg, ctx)
 	}
 
 	idx := strings.LastIndex(args[1], "/")
 	if idx == -1 {
-		msg := "resource path format is incorrect.\n"
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		msg := "resource path format is incorrect."
+		return errs.NewUsageExitError(msg, ctx)
 	}
 
 	name := args[1][idx+1:]
@@ -62,7 +61,7 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 
 	pe, err := pathexp.Parse(path)
 	if err != nil {
-		return cli.NewExitError("Invalid path expression.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Invalid path expression", err)
 	}
 
 	stmtAction, err := parseAction(args[0])
@@ -82,18 +81,18 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 
 	org, err := client.Orgs.GetByName(c, pe.Org())
 	if err != nil {
-		return cli.NewExitError("Unable to lookup org. Please try again.", -1)
+		return errs.NewExitError("Unable to lookup org. Please try again.")
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found")
 	}
 
 	teams, err := client.Teams.GetByName(c, org.ID, args[2])
 	if err != nil {
-		return cli.NewExitError("Unable to lookup team. Please try again.", -1)
+		return errs.NewExitError("Unable to lookup team. Please try again.")
 	}
 	if len(teams) < 1 {
-		return cli.NewExitError("Team not found.", -1)
+		return errs.NewExitError("Team not found.")
 	}
 	team := &teams[0]
 
@@ -110,12 +109,12 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 
 	res, err := client.Policies.Create(c, &policy)
 	if err != nil {
-		return cli.NewExitError("Failed to create policy.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Failed to create policy", err)
 	}
 
 	err = client.Policies.Attach(c, org.ID, res.ID, team.ID)
 	if err != nil {
-		return cli.NewExitError("Could not attach policy.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Could not attach policy.", err)
 	}
 
 	fmt.Printf("Policy generated and attached to the %s team.\n", team.Body.Name)
@@ -148,11 +147,11 @@ func parseAction(raw string) (primitive.PolicyAction, error) {
 		case 'l':
 			add = primitive.PolicyActionList
 		default:
-			return action, cli.NewExitError("Unknown access character: "+string(c), -1)
+			return action, errs.NewExitError("Unknown access character: " + string(c))
 		}
 
 		if action&add > 0 {
-			return action, cli.NewExitError("Duplication permission '"+string(c)+"' given.", -1)
+			return action, errs.NewExitError("Duplication permission '" + string(c) + "' given.")
 		}
 
 		action |= add

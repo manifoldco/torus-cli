@@ -6,6 +6,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/arigatomachine/cli/apitypes"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -27,12 +28,11 @@ func init() {
 func unsetCmd(ctx *cli.Context) error {
 	args := ctx.Args()
 	if len(args) != 1 {
-		msg := "Name or path is required.\n"
+		msg := "Name or path is required."
 		if len(args) > 1 {
-			msg = "Too many arguments provided.\n"
+			msg = "Too many arguments provided."
 		}
-		msg += usageString(ctx)
-		return cli.NewExitError(msg, -1)
+		return errs.NewUsageExitError(msg, ctx)
 	}
 
 	cred, err := setCredential(ctx, args[0], func() *apitypes.CredentialValue {
@@ -40,7 +40,7 @@ func unsetCmd(ctx *cli.Context) error {
 	})
 
 	if err != nil {
-		return cli.NewExitError("Could not unset credential.\n"+err.Error(), -1)
+		return errs.NewErrorExitError("Could not unset credential", err)
 	}
 
 	name := (*cred.Body).GetName()

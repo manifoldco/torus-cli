@@ -11,6 +11,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 )
 
@@ -59,15 +60,11 @@ const serviceListFailed = "Could not list services, please try again."
 func listServices(ctx *cli.Context) error {
 	if !ctx.Bool("all") {
 		if len(ctx.String("project")) < 1 {
-			text := "Missing flags: --project\n\n"
-			text += usageString(ctx)
-			return cli.NewExitError(text, -1)
+			return errs.NewUsageExitError("Missing flags: --project", ctx)
 		}
 	} else {
 		if len(ctx.String("project")) > 0 {
-			text := "Cannot use --project flag with --all\n\n"
-			text += usageString(ctx)
-			return cli.NewExitError(text, -1)
+			return errs.NewUsageExitError("Cannot use --project flag with --all", ctx)
 		}
 	}
 
@@ -83,10 +80,10 @@ func listServices(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(serviceListFailed, -1)
+		return errs.NewExitError(serviceListFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found")
 	}
 
 	// Identify which projects to list services for
@@ -96,7 +93,7 @@ func listServices(ctx *cli.Context) error {
 		// Pull all projects for the given orgID
 		projects, err = client.Projects.List(c, org.ID, nil)
 		if err != nil {
-			return cli.NewExitError(serviceListFailed, -1)
+			return errs.NewExitError(serviceListFailed)
 		}
 
 	} else {
@@ -104,12 +101,12 @@ func listServices(ctx *cli.Context) error {
 		projectName := ctx.String("project")
 		projects, err = client.Projects.List(c, org.ID, &projectName)
 		if err != nil {
-			return cli.NewExitError(serviceListFailed, -1)
+			return errs.NewExitError(serviceListFailed)
 		}
 		if len(projects) == 1 {
 			projectID = *projects[0].ID
 		} else {
-			return cli.NewExitError("Project not found.", -1)
+			return errs.NewExitError("Project not found")
 		}
 	}
 
@@ -117,7 +114,7 @@ func listServices(ctx *cli.Context) error {
 	var services []api.ServiceResult
 	services, err = client.Services.List(c, org.ID, &projectID, nil)
 	if err != nil {
-		return cli.NewExitError(serviceListFailed, -1)
+		return errs.NewExitError(serviceListFailed)
 	}
 
 	// Build map of services to project
@@ -152,7 +149,7 @@ const serviceCreateFailed = "Could not create service. Please try again."
 func createServiceCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return cli.NewExitError(serviceCreateFailed, -1)
+		return errs.NewExitError(serviceCreateFailed)
 	}
 
 	args := ctx.Args()
@@ -171,11 +168,11 @@ func createServiceCmd(ctx *cli.Context) error {
 	}
 	if org == nil && !newOrg {
 		fmt.Println("")
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found")
 	}
 	if newOrg && oName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid org name.", -1)
+		return errs.NewExitError("Invalid org name")
 	}
 
 	var orgID *identity.ID
@@ -190,11 +187,11 @@ func createServiceCmd(ctx *cli.Context) error {
 	}
 	if project == nil && !newProject {
 		fmt.Println("")
-		return cli.NewExitError("Project not found.", -1)
+		return errs.NewExitError("Project not found")
 	}
 	if newProject && pName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid project name.", -1)
+		return errs.NewExitError("Invalid project name")
 	}
 
 	label := "Service name"
@@ -228,10 +225,9 @@ func createServiceCmd(ctx *cli.Context) error {
 	err = client.Services.Create(c, orgID, project.ID, serviceName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return cli.NewExitError("Service already exists", -1)
+			return errs.NewExitError("Service already exists")
 		}
-		fmt.Printf("%v\n", err)
-		return cli.NewExitError(serviceCreateFailed, -1)
+		return errs.NewErrorExitError(serviceCreateFailed, err)
 	}
 
 	fmt.Printf("Service %s created.\n", serviceName)

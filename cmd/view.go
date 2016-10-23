@@ -12,6 +12,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 )
 
 func init() {
@@ -77,7 +78,7 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 
 	self, err := client.Users.Self(c)
 	if err != nil {
-		return nil, "", cli.NewExitError("Error fetching user details.\n"+err.Error(), -1)
+		return nil, "", errs.NewErrorExitError("Error fetching user details", err)
 	}
 
 	parts := []string{
@@ -89,7 +90,7 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 
 	secrets, err := client.Credentials.Get(c, path)
 	if err != nil {
-		return nil, "", cli.NewExitError("Error fetching secrets.\n"+err.Error(), -1)
+		return nil, "", errs.NewErrorExitError("Error fetching secrets", err)
 	}
 
 	cset := credentialSet{}

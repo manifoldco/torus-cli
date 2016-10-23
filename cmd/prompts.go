@@ -7,9 +7,8 @@ import (
 
 	"github.com/asaskevich/govalidator"
 
-	"github.com/urfave/cli"
-
 	"github.com/arigatomachine/cli/api"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/promptui"
 )
@@ -120,7 +119,7 @@ func handleSelectError(err error, generic string) error {
 	if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
 		return err
 	}
-	return cli.NewExitError(generic, -1)
+	return errs.NewExitError(generic)
 }
 
 // SelectCreateProject prompts the user to select a project from at list of projects
@@ -139,7 +138,7 @@ func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.
 		// Get the list of projects the user has access to in the specified org
 		projects, err = client.Projects.List(c, orgID, nil)
 		if err != nil {
-			return nil, "", false, cli.NewExitError("Error fetching projects list.", -1)
+			return nil, "", false, errs.NewExitError("Error fetching projects list.")
 		}
 	}
 
@@ -160,7 +159,7 @@ func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.
 		}
 		if !found {
 			fmt.Println(promptui.FailedValue("Project name", name))
-			return nil, "", false, cli.NewExitError("Project not found.", -1)
+			return nil, "", false, errs.NewExitError("Project not found.")
 		}
 		fmt.Println(promptui.SuccessfulValue("Project name", name))
 	}
@@ -185,7 +184,7 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 	// Get the list of orgs the user has access to
 	orgs, err := client.Orgs.List(c)
 	if err != nil {
-		return nil, "", false, cli.NewExitError("Error fetching orgs list.", -1)
+		return nil, "", false, errs.NewExitError("Error fetching orgs list")
 	}
 
 	var idx int
@@ -206,7 +205,7 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 		}
 		if !found {
 			fmt.Println(promptui.FailedValue("Org name", name))
-			return nil, "", false, cli.NewExitError("Org not found.", -1)
+			return nil, "", false, errs.NewExitError("Org not found")
 		}
 		fmt.Println(promptui.SuccessfulValue("Org name", name))
 	}

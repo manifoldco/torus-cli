@@ -8,6 +8,8 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/apitypes"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
+
 	"github.com/urfave/cli"
 )
 
@@ -34,12 +36,11 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	if len(args) > 0 && len(args) != 2 {
 		var text string
 		if len(args) > 2 {
-			text = "Too many arguments supplied.\n\n"
+			text = "Too many arguments supplied."
 		} else {
-			text = "Too few arguments supplied.\n\n"
+			text = "Too few arguments supplied."
 		}
-		text += usageString(ctx)
-		return cli.NewExitError(text, -1)
+		return errs.NewUsageExitError(text, ctx)
 	}
 
 	name, err := FullNamePrompt()
@@ -100,9 +101,9 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	user, err := client.Users.Signup(c, &signup, &progress)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return cli.NewExitError("Email address in use, please try again.", -1)
+			return errs.NewExitError("Email address in use.")
 		}
-		return cli.NewExitError("Signup failed, please try again.", -1)
+		return errs.NewExitError("Signup failed, please try again.")
 	}
 
 	// Log the user in

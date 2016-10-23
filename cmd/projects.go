@@ -11,6 +11,7 @@ import (
 
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 )
 
@@ -63,16 +64,16 @@ func listProjects(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return cli.NewExitError(projectListFailed, -1)
+		return errs.NewExitError(projectListFailed)
 	}
 	if org == nil {
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found.")
 	}
 
 	// Pull all projects for the given orgID
 	projects, err := client.Projects.List(c, org.ID, nil)
 	if err != nil {
-		return cli.NewExitError(projectListFailed, -1)
+		return errs.NewExitError(projectListFailed)
 	}
 
 	fmt.Println("")
@@ -93,7 +94,7 @@ const projectCreateFailed = "Could not create project. Please try again."
 func createProjectCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return cli.NewExitError(projectCreateFailed, -1)
+		return errs.NewExitError(projectCreateFailed)
 	}
 
 	client := api.NewClient(cfg)
@@ -104,7 +105,7 @@ func createProjectCmd(ctx *cli.Context) error {
 	var orgID *identity.ID
 	if !newOrg {
 		if org == nil {
-			return cli.NewExitError("Org not found.", -1)
+			return errs.NewExitError("Org not found.")
 		}
 		orgID = org.ID
 	}
@@ -126,7 +127,7 @@ func createProjectCmd(ctx *cli.Context) error {
 		org, err := client.Orgs.Create(c, orgName)
 		orgID = org.ID
 		if err != nil {
-			return cli.NewExitError("Could not create org.\n"+err.Error(), -1)
+			return errs.NewErrorExitError("Could not create org", err)
 		}
 
 		err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
@@ -144,14 +145,13 @@ func createProjectCmd(ctx *cli.Context) error {
 func createProjectByName(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.ProjectResult, error) {
 	project, err := client.Projects.Create(c, orgID, name)
 	if orgID == nil {
-		return nil, cli.NewExitError("Org not found.", -1)
+		return nil, errs.NewExitError("Org not found")
 	}
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return nil, cli.NewExitError("Project already exists.", -1)
+			return nil, errs.NewExitError("Project already exists")
 		}
-		fmt.Println(err)
-		return nil, cli.NewExitError(projectCreateFailed, -1)
+		return nil, errs.NewErrorExitError(projectCreateFailed, err)
 	}
 	fmt.Printf("Project %s created.\n", name)
 	return project, nil

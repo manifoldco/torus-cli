@@ -7,8 +7,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/arigatomachine/cli/errs"
+
 	"github.com/go-ini/ini"
-	"github.com/urfave/cli"
 	"gopkg.in/oleiade/reflections.v1"
 )
 
@@ -69,14 +70,14 @@ func (prefs Preferences) SetValue(key string, value string) (Preferences, error)
 	// Identify field to update by ini tag name
 	values = reflect.ValueOf(&prefs).Elem().FieldByName(target)
 	if values == reflect.Zero(reflect.TypeOf(values)).Interface() {
-		return prefs, cli.NewExitError("error: unknown section `"+section+"`", -1)
+		return prefs, errs.NewExitError("error: unknown section `" + section + "`")
 	}
 	property := findElemByName(values, key)
 
 	// Ensure the field is not zero
 	field := values.Addr().Elem().FieldByName(property)
 	if field == reflect.Zero(reflect.TypeOf(field)).Interface() {
-		return prefs, cli.NewExitError("error: unknown property `"+key+"`", -1)
+		return prefs, errs.NewExitError("error: unknown property `" + key + "`")
 	}
 
 	// Set the string value

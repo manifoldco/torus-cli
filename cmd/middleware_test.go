@@ -6,6 +6,7 @@ import (
 
 	"github.com/urfave/cli"
 
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/prefs"
 )
 
@@ -14,7 +15,7 @@ func TestChain(t *testing.T) {
 		firstRan := false
 		secondRan := false
 
-		expected := cli.NewExitError("error", -1)
+		expected := errs.NewExitError("error")
 		err := chain(
 			func(ctx *cli.Context) error {
 				firstRan = true

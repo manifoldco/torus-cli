@@ -12,6 +12,7 @@ import (
 	"github.com/arigatomachine/cli/api"
 	"github.com/arigatomachine/cli/config"
 	"github.com/arigatomachine/cli/dirprefs"
+	"github.com/arigatomachine/cli/errs"
 	"github.com/arigatomachine/cli/identity"
 	"github.com/arigatomachine/cli/prefs"
 )
@@ -50,7 +51,7 @@ func linkCmd(ctx *cli.Context) error {
 			"This directory is already linked. Use '%s status' to view.",
 			ctx.App.Name,
 		)
-		return cli.NewExitError(msg, -1)
+		return errs.NewExitError(msg)
 	}
 
 	cfg, err := config.LoadConfig()
@@ -68,11 +69,11 @@ func linkCmd(ctx *cli.Context) error {
 	}
 	if org == nil && !newOrg {
 		fmt.Println("")
-		return cli.NewExitError("Org not found.", -1)
+		return errs.NewExitError("Org not found.")
 	}
 	if newOrg && oName == "" {
 		fmt.Println("")
-		return cli.NewExitError("Invalid org name.", -1)
+		return errs.NewExitError("Invalid org name.")
 	}
 
 	var orgID *identity.ID
@@ -86,10 +87,10 @@ func linkCmd(ctx *cli.Context) error {
 		return handleSelectError(err, "Project selection failed.")
 	}
 	if project == nil && !newProject {
-		return cli.NewExitError("Project not found.", -1)
+		return errs.NewExitError("Project not found.")
 	}
 	if newProject && pName == "" {
-		return cli.NewExitError("Invalid project name.", -1)
+		return errs.NewExitError("Invalid project name.")
 	}
 
 	// Create the org now if needed
@@ -123,7 +124,7 @@ func linkCmd(ctx *cli.Context) error {
 		err = client.Services.Create(c, org.ID, project.ID, "default")
 		if err != nil {
 			fmt.Println("")
-			return cli.NewExitError("Service creation failed.", -1)
+			return errs.NewExitError("Service creation failed.")
 		}
 	}
 
