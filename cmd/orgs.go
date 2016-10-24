@@ -99,9 +99,30 @@ func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, na
 }
 
 func orgsListCmd(ctx *cli.Context) error {
-	cfg, err := config.LoadConfig()
+	orgs, self, err := orgsList()
 	if err != nil {
 		return err
+	}
+
+	withoutPersonal := orgs
+	for i, o := range orgs {
+		if o.Body.Name == self.Body.Username {
+			fmt.Printf("  %s [personal]\n", o.Body.Name)
+			withoutPersonal = append(orgs[:i], orgs[i+1:]...)
+		}
+	}
+
+	for _, o := range withoutPersonal {
+		fmt.Printf("  %s\n", o.Body.Name)
+	}
+
+	return nil
+}
+
+func orgsList() ([]api.OrgResult, *api.UserResult, error) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	client := api.NewClient(cfg)
@@ -125,22 +146,10 @@ func orgsListCmd(ctx *cli.Context) error {
 
 	wg.Wait()
 	if oErr != nil || sErr != nil {
-		return errs.NewExitError("Error fetching orgs list")
+		return nil, nil, errs.NewExitError("Error fetching orgs list")
 	}
 
-	withoutPersonal := orgs
-	for i, o := range orgs {
-		if o.Body.Name == self.Body.Username {
-			fmt.Printf("  %s [personal]\n", o.Body.Name)
-			withoutPersonal = append(orgs[:i], orgs[i+1:]...)
-		}
-	}
-
-	for _, o := range withoutPersonal {
-		fmt.Printf("  %s\n", o.Body.Name)
-	}
-
-	return nil
+	return orgs, self, nil
 }
 
 func orgsRemove(ctx *cli.Context) error {

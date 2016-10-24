@@ -34,7 +34,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, listServices,
+					setUserEnv, checkRequiredFlags, listServicesCmd,
 				),
 			},
 			{
@@ -57,7 +57,7 @@ func init() {
 
 const serviceListFailed = "Could not list services, please try again."
 
-func listServices(ctx *cli.Context) error {
+func listServicesCmd(ctx *cli.Context) error {
 	if !ctx.Bool("all") {
 		if len(ctx.String("project")) < 1 {
 			return errs.NewUsageExitError("Missing flags: --project", ctx)
@@ -91,7 +91,7 @@ func listServices(ctx *cli.Context) error {
 	var projects []api.ProjectResult
 	if ctx.Bool("all") {
 		// Pull all projects for the given orgID
-		projects, err = client.Projects.List(c, org.ID, nil)
+		projects, err = listProjects(&c, client, org.ID, nil)
 		if err != nil {
 			return errs.NewExitError(serviceListFailed)
 		}
@@ -99,7 +99,7 @@ func listServices(ctx *cli.Context) error {
 	} else {
 		// Retrieve only a single project by name
 		projectName := ctx.String("project")
-		projects, err = client.Projects.List(c, org.ID, &projectName)
+		projects, err = listProjects(&c, client, org.ID, &projectName)
 		if err != nil {
 			return errs.NewExitError(serviceListFailed)
 		}
@@ -111,8 +111,7 @@ func listServices(ctx *cli.Context) error {
 	}
 
 	// Retrieve services for targeted org and project
-	var services []api.ServiceResult
-	services, err = client.Services.List(c, org.ID, &projectID, nil)
+	services, err := listServices(&c, client, org.ID, &projectID, nil)
 	if err != nil {
 		return errs.NewExitError(serviceListFailed)
 	}
@@ -142,6 +141,38 @@ func listServices(ctx *cli.Context) error {
 	}
 
 	return nil
+}
+
+func listServices(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]api.ServiceResult, error) {
+	c, client, err := NewAPIClient(ctx, client)
+	if err != nil {
+		return nil, cli.NewExitError(serviceListFailed, -1)
+	}
+
+	var orgIDs []*identity.ID
+	if orgID != nil {
+		orgIDs = []*identity.ID{orgID}
+	}
+
+	var projectIDs []*identity.ID
+	if projID != nil {
+		projectIDs = []*identity.ID{projID}
+	}
+
+	var names []string
+	if name != nil {
+		names = []string{*name}
+	}
+
+	return client.Services.List(c, &orgIDs, &projectIDs, &names)
+}
+
+func listServicesByProjectID(ctx *context.Context, client *api.Client, projectIDs []*identity.ID) ([]api.ServiceResult, error) {
+	c, client, err := NewAPIClient(ctx, client)
+	if err != nil {
+		return nil, cli.NewExitError(envListFailed, -1)
+	}
+	return client.Services.List(c, nil, &projectIDs, nil)
 }
 
 const serviceCreateFailed = "Could not create service. Please try again."

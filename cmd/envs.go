@@ -46,7 +46,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					checkRequiredFlags, listEnvs,
+					checkRequiredFlags, listEnvsCmd,
 				),
 			},
 		},
@@ -146,7 +146,7 @@ func createEnv(ctx *cli.Context) error {
 
 const envListFailed = "Could not list envs, please try again."
 
-func listEnvs(ctx *cli.Context) error {
+func listEnvsCmd(ctx *cli.Context) error {
 	if !ctx.Bool("all") {
 		if len(ctx.String("project")) < 1 {
 			return errs.NewUsageExitError("Missing flags: --project", ctx)
@@ -177,7 +177,7 @@ func listEnvs(ctx *cli.Context) error {
 	var projects []api.ProjectResult
 	if ctx.Bool("all") {
 		// Pull all projects for the given orgID
-		projects, err = client.Projects.List(c, org.ID, nil)
+		projects, err = listProjects(&c, client, org.ID, nil)
 		if err != nil {
 			return errs.NewExitError(envListFailed)
 		}
@@ -185,7 +185,7 @@ func listEnvs(ctx *cli.Context) error {
 	} else {
 		// Retrieve only a single project by name
 		projectName := ctx.String("project")
-		projects, err = client.Projects.List(c, org.ID, &projectName)
+		projects, err = listProjects(&c, client, org.ID, &projectName)
 		if err != nil {
 			return errs.NewExitError(envListFailed)
 		}
@@ -197,8 +197,7 @@ func listEnvs(ctx *cli.Context) error {
 	}
 
 	// Retrieve envs for targeted org and project
-	var envs []api.EnvironmentResult
-	envs, err = client.Environments.List(c, org.ID, &projectID, nil)
+	envs, err := listEnvs(&c, client, org.ID, &projectID, nil)
 	if err != nil {
 		return errs.NewErrorExitError(envListFailed, err)
 	}
@@ -228,4 +227,36 @@ func listEnvs(ctx *cli.Context) error {
 	}
 
 	return nil
+}
+
+func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]api.EnvironmentResult, error) {
+	c, client, err := NewAPIClient(ctx, client)
+	if err != nil {
+		return nil, cli.NewExitError(envListFailed, -1)
+	}
+
+	var orgIDs []*identity.ID
+	if orgID != nil {
+		orgIDs = []*identity.ID{orgID}
+	}
+
+	var projectIDs []*identity.ID
+	if projID != nil {
+		projectIDs = []*identity.ID{projID}
+	}
+
+	var names []string
+	if name != nil {
+		names = []string{*name}
+	}
+
+	return client.Environments.List(c, &orgIDs, &projectIDs, &names)
+}
+
+func listEnvsByProjectID(ctx *context.Context, client *api.Client, projectIDs []*identity.ID) ([]api.EnvironmentResult, error) {
+	c, client, err := NewAPIClient(ctx, client)
+	if err != nil {
+		return nil, cli.NewExitError(envListFailed, -1)
+	}
+	return client.Environments.List(c, nil, &projectIDs, nil)
 }

@@ -44,13 +44,17 @@ func (p *ProjectsClient) Create(ctx context.Context, org *identity.ID, name stri
 }
 
 // List retrieves relevant projects by name and/or orgID
-func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID, name *string) ([]ProjectResult, error) {
+func (p *ProjectsClient) List(ctx context.Context, orgIDs *[]*identity.ID, names *[]string) ([]ProjectResult, error) {
 	v := &url.Values{}
-	if orgID != nil {
-		v.Set("org_id", orgID.String())
+	if orgIDs != nil {
+		for _, id := range *orgIDs {
+			v.Add("org_id", id.String())
+		}
 	}
-	if name != nil {
-		v.Set("name", *name)
+	if names != nil {
+		for _, n := range *names {
+			v.Add("name", n)
+		}
 	}
 
 	req, _, err := p.client.NewRequest("GET", "/projects", v, nil, true)

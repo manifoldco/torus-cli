@@ -28,6 +28,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/arigatomachine/cli/errs"
 )
 
 const slugstr = `[a-z\d][-_a-z\d]{0,63}`
@@ -152,6 +154,84 @@ func segmentsEqual(a, b segment) bool {
 	}
 }
 
+// NewPartial creates a new path expression from the given path segments
+// It returns an error if any of the values fail to validate
+func NewPartial(org, project string, envs, services, identities, instances []string) (*PathExp, *int, error) {
+	orgValue := org
+	if org == "" {
+		orgValue = "*"
+	}
+	projValue := project
+	if project == "" {
+		projValue = "*"
+	}
+
+	pe := PathExp{
+		org:     literal(orgValue),
+		project: literal(projValue),
+	}
+	segmentCount := 0
+
+	if org != "" && org != "*" && !slug.MatchString(org) {
+		return nil, nil, errors.New("Invalid org")
+	} else if org != "" {
+		segmentCount++
+	}
+
+	if project != "" && project != "*" && !slug.MatchString(project) {
+		return nil, nil, errors.New("Invalid project: " + project)
+	} else if project != "" {
+		segmentCount++
+	}
+
+	var err error
+
+	pe.envs, err = parseMultiple("environment", envs)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Empty") {
+			return nil, nil, err
+		}
+		pe.envs = fullglob{}
+	} else if pe.envs.String() != "" {
+		segmentCount++
+	}
+
+	pe.services, err = parseMultiple("service", services)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Empty") {
+			return nil, nil, err
+		}
+		pe.services = fullglob{}
+	} else if pe.services.String() != "" {
+		segmentCount++
+	}
+	if pe.services.String() != "*" && pe.envs.String() != "*" {
+		pe.envs = fullglob{}
+	}
+
+	pe.identities, err = parseMultiple("identity", identities)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Empty") {
+			return nil, nil, err
+		}
+		pe.identities = fullglob{}
+	} else if pe.identities.String() != "" {
+		segmentCount++
+	}
+
+	pe.instances, err = parseMultiple("instance", instances)
+	if err != nil {
+		if !strings.Contains(err.Error(), "Empty") {
+			return nil, nil, err
+		}
+		pe.instances = fullglob{}
+	} else if pe.instances.String() != "" {
+		segmentCount++
+	}
+
+	return &pe, &segmentCount, nil
+}
+
 // New creates a new path expression from the given path segments
 // It returns an error if any of the values fail to validate
 func New(org, project string, envs, services, identities, instances []string) (*PathExp, error) {
@@ -212,7 +292,7 @@ func Parse(raw string) (*PathExp, error) {
 	splitNames := []string{"", "", "environment", "service", "identity", "instance"}
 	var err error
 	for i := 2; i < len(splitParts); i++ {
-		splitParts[i], err = split(splitNames[i], parts[i])
+		splitParts[i], err = Split(splitNames[i], parts[i])
 		if err != nil {
 			return nil, err
 		}
@@ -231,7 +311,7 @@ func Parse(raw string) (*PathExp, error) {
 //
 // XXX: this isn't really great. it would be nice to support all path types.
 func (pe *PathExp) WithInstance(instance string) (*PathExp, error) {
-	parts, err := split("instance", instance)
+	parts, err := Split("instance", instance)
 	if err != nil {
 		return nil, err
 	}
@@ -261,6 +341,26 @@ func (pe *PathExp) Project() string {
 	return string(pe.project)
 }
 
+// Envs returns the envs set for this pathexp
+func (pe *PathExp) Envs() string {
+	return pe.envs.String()
+}
+
+// Services returns the services set for this pathexp
+func (pe *PathExp) Services() string {
+	return pe.services.String()
+}
+
+// Identities returns the identities set for this pathexp
+func (pe *PathExp) Identities() string {
+	return pe.identities.String()
+}
+
+// Instances returns the instances set for this pathexp
+func (pe *PathExp) Instances() string {
+	return pe.instances.String()
+}
+
 // String returns the unparsed string representation of the path expression
 func (pe *PathExp) String() string {
 	return strings.Join([]string{"", string(pe.org), string(pe.project),
@@ -271,7 +371,8 @@ func (pe *PathExp) String() string {
 	}, "/")
 }
 
-func split(name, segment string) ([]string, error) {
+// Split separates alternation
+func Split(name, segment string) ([]string, error) {
 	parts := []string{segment}
 
 	if len(segment) == 0 {
@@ -401,4 +502,52 @@ func (pe *PathExp) UnmarshalText(b []byte) error {
 // This will be used in json encoding.
 func (pe *PathExp) MarshalText() ([]byte, error) {
 	return []byte(pe.String()), nil
+}
+
+// NewPartialFromPath creates a PathExp object from a cpath string that may be
+// an incomplete path, resulting in added asterisks
+func NewPartialFromPath(value string) (*PathExp, *int, error) {
+	segments := strings.Split(value, "/")
+	segments = segments[1:]
+	if segments[len(segments)-1] == "" {
+		segments = segments[:len(segments)-1]
+	}
+
+	org := stringAtIndex(segments, 0)
+	project := stringAtIndex(segments, 1)
+
+	envs, err := splitSliceAtIndex("environment", segments, 2)
+	if err != nil {
+		return nil, nil, errs.NewExitError(err.Error())
+	}
+	services, err := splitSliceAtIndex("service", segments, 3)
+	if err != nil {
+		return nil, nil, errs.NewExitError(err.Error())
+	}
+	users, err := splitSliceAtIndex("user", segments, 4)
+	if err != nil {
+		return nil, nil, errs.NewExitError(err.Error())
+	}
+	instances, err := splitSliceAtIndex("instance", segments, 5)
+	if err != nil {
+		return nil, nil, errs.NewExitError(err.Error())
+	}
+
+	return NewPartial(org, project, envs, services, users, instances)
+}
+
+// return string at index, or empty (prevent out of range)
+func stringAtIndex(segments []string, idx int) string {
+	if len(segments) > idx {
+		return segments[idx]
+	}
+	return ""
+}
+
+// split cpathExp segment within []string at idx
+func splitSliceAtIndex(name string, segments []string, idx int) ([]string, error) {
+	if (len(segments) - 1) < idx {
+		return []string{}, nil
+	}
+	return Split(name, segments[idx])
 }

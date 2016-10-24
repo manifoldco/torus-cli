@@ -86,6 +86,20 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ] `torus view` can display a mixture of old and new secrets (ie after a
       single new set in `projA`).
 
+### List
+
+- [ ]   `torus ls`, in an unlinked directory, list all orgs
+- [ ]   `torus ls -o [org]`, in an unlinked directory, requests project be supplied
+- [ ]   `torus ls -o [org] -p [project]`, in an unlinked directory, shows paths
+- [ ]   `torus ls` works in a linked directory, showing all paths for the context
+- [ ]   `torus ls` works with flags `-epso`
+- [ ]   `torus ls -e [env] -s [service]` overrides the env with `*`
+- [ ]   `torus ls /` lists all orgs
+- [ ]   `torus ls "/*"` lists all projects
+- [ ]   `torus ls "/*/*"` lists all environments
+- [ ]   `torus ls "/*/*/*"` lists all services
+- [ ]   `torus ls "/$org/$proj/*/*"` lists all secrets for `/$org/$proj/*/*/*`
+
 ### Critical Path
 
 - [ ]   `torus orgs create [name]` prompts you to confirm the org name, and creates it

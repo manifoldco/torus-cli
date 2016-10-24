@@ -15,6 +15,35 @@ type CredentialsClient struct {
 	client *Client
 }
 
+// Search returns all credentials at the given pathexp.
+func (c *CredentialsClient) Search(ctx context.Context, pathexp string) ([]apitypes.CredentialEnvelope, error) {
+	v := &url.Values{}
+	v.Set("pathexp", pathexp)
+
+	req, _, err := c.client.NewRequest("GET", "/credentials", v, nil, false)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := []apitypes.CredentialResp{}
+
+	_, err = c.client.Do(ctx, req, &resp, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	creds := make([]apitypes.CredentialEnvelope, len(resp))
+	for i, c := range resp {
+		v, err := createEnvelopeFromResp(c)
+		if err != nil {
+			return nil, err
+		}
+		creds[i] = *v
+	}
+
+	return creds, err
+}
+
 // Get returns all credentials at the given path.
 func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.CredentialEnvelope, error) {
 	v := &url.Values{}
