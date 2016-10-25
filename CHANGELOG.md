@@ -10,6 +10,10 @@ _2016-10-26_
 - Introduced the `torus ls` command for navigating through all of the organizations, projects, services, environments, and the secrets you have access too.
 - Improved error messages across the product, including input validation.
 
+**Fixes**
+
+- Fix for use of `--all` with `torus keypairs generate`
+
 ## v0.12.0
 
 _2016-10-18_
