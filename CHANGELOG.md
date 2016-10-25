@@ -13,7 +13,7 @@ _2016-10-26_
 **Fixes**
 
 - Fix for use of `--all` with `torus keypairs generate`
-- Changes to whitespace and help text
+- Fixed invite approval for orgs with secrets set using an or operation (e.g. `ag set -e production -e development secret mysupersecret`)
 
 ## v0.12.0
 

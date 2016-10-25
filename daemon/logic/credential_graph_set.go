@@ -19,12 +19,12 @@ import (
 // credenialGraphSet handles multiple graphs by path expression, and multiple
 // versions within each path expression.
 type credentialGraphSet struct {
-	graphs map[pathexp.PathExp][]registry.CredentialGraph
+	graphs map[string][]registry.CredentialGraph
 }
 
 func newCredentialGraphSet() *credentialGraphSet {
 	return &credentialGraphSet{
-		graphs: make(map[pathexp.PathExp][]registry.CredentialGraph),
+		graphs: make(map[string][]registry.CredentialGraph),
 	}
 }
 
@@ -42,7 +42,7 @@ func (cgs *credentialGraphSet) Add(graphs ...registry.CredentialGraph) error {
 			return errors.New("Unknown keyring version")
 		}
 
-		cgs.graphs[*pe] = append(cgs.graphs[*pe], c)
+		cgs.graphs[pe.String()] = append(cgs.graphs[pe.String()], c)
 	}
 
 	return nil
@@ -175,7 +175,7 @@ func (cgs *credentialGraphSet) Head(pe *pathexp.PathExp) (registry.CredentialGra
 		return nil, err
 	}
 
-	graphs, ok := cgs.graphs[*gpe]
+	graphs, ok := cgs.graphs[gpe.String()]
 	if !ok {
 		return nil, nil
 	}
@@ -197,7 +197,7 @@ func (cgs *credentialGraphSet) HeadCredential(pe *pathexp.PathExp, name string) 
 		return nil, err
 	}
 
-	graphs, ok := cgs.graphs[*gpe]
+	graphs, ok := cgs.graphs[gpe.String()]
 	if !ok {
 		return nil, nil
 	}
