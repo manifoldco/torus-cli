@@ -16,7 +16,7 @@ func init() {
 		Name:      "ls",
 		ArgsUsage: "[cpath]",
 		Usage:     "Explore all objects your account has access to",
-		Category:  "CONTEXT",
+		Category:  "SECRETS",
 		Flags: []cli.Flag{
 			orgFlag("Use this organization.", false),
 			projectFlag("Use this project.", false),
