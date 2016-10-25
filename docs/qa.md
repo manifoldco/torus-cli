@@ -26,8 +26,8 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `npm install -g torus-cli` installs `torus`
 - [ ]   `torus help` displays the help prompt after an `npm install -g torus-cli`
 - [ ]   `torus prefs list` displays the path to your `public_key_file`
-- [ ]   `torus signup` prompts you for an access code, username, name and email, before verifying and authenticating you
-- [ ]  A user cannot sign-up without a valid access code
+- [ ]   `torus signup` prompts you for an verification code username, name and email, before verifying and authenticating you
+- [ ]  A user cannot perform any writes without verifying their account
 - [ ]   `torus status` displays your current working context
 - [ ]   `torus logout` logs you out
 - [ ]   `torus login` prompts you for an email and password, before authenticating you
