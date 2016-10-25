@@ -36,7 +36,7 @@ func init() {
 				Name:  "generate",
 				Usage: "Generate keyparis for an organization",
 				Flags: []cli.Flag{
-					orgFlag("org to generate keypairs for", true),
+					orgFlag("org to generate keypairs for", false),
 					cli.BoolFlag{
 						Name:  "all",
 						Usage: "Perform command for all orgs without valid keypairs",
@@ -120,6 +120,9 @@ func generateKeypairs(ctx *cli.Context) error {
 		// Verify the org they've specified exists
 		var org *api.OrgResult
 		orgName := ctx.String("org")
+		if orgName == "" {
+			return errs.NewExitError("Missing flags: --org.")
+		}
 		org, oErr := client.Orgs.GetByName(c, orgName)
 		if oErr != nil || org == nil {
 			return errs.NewExitError("Org '" + orgName + "' not found.")
