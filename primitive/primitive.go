@@ -376,7 +376,7 @@ func (pe *PolicyEffect) MarshalText() ([]byte, error) {
 // UnmarshalText implements the encoding.TextUnmarshaler interface, used for
 // JSON unmarshaling.
 func (pe *PolicyEffect) UnmarshalText(b []byte) error {
-	*pe = string(b) == "allow"
+	*pe = string(b) == "allow" || string(b) == "sudo"
 	return nil
 }
 
