@@ -45,7 +45,8 @@ func unsetCmd(ctx *cli.Context) error {
 
 	name := (*cred.Body).GetName()
 	pe := (*cred.Body).GetPathExp()
-	fmt.Printf("\nCredential %s has been unset at %s/%s.", name, pe, name)
+	output := fmt.Sprintf("\nCredential %s has been unset at %s/%s.", name, pe, name)
+	fmt.Println(output)
 
 	return nil
 }
