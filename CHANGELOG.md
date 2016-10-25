@@ -13,6 +13,7 @@ _2016-10-26_
 **Fixes**
 
 - Fix for use of `--all` with `torus keypairs generate`
+- Changes to whitespace and help text
 
 ## v0.12.0
 

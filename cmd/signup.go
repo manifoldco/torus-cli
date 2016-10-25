@@ -16,7 +16,7 @@ import (
 func init() {
 	signup := cli.Command{
 		Name:      "signup",
-		Usage:     "Create a new Torus account which, while in alpha, requires an invite code",
+		Usage:     "Create a new Torus account",
 		ArgsUsage: "[email] [code]",
 		Category:  "ACCOUNT",
 		Action:    chain(ensureDaemon, signupCmd),
