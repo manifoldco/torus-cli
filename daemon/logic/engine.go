@@ -209,8 +209,19 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 		return nil, err
 	}
 
+	cgs := newCredentialGraphSet()
+	err = cgs.Add(graphs...)
+	if err != nil {
+		return nil, err
+	}
+
+	activeGraphs, err := cgs.Active()
+	if err != nil {
+		return nil, err
+	}
+
 	var steps uint = 1
-	for _, graph := range graphs {
+	for _, graph := range activeGraphs {
 		steps += uint(len(graph.GetCredentials()))
 	}
 
@@ -224,7 +235,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	// actually do real work and decrypt each of these credentials but for
 	// now we just need ot return a list of them!
 	creds := []PlaintextCredentialEnvelope{}
-	for _, graph := range graphs {
+	for _, graph := range activeGraphs {
 		var orgID *identity.ID
 		switch b := graph.GetKeyring().Body.(type) {
 		case *primitive.Keyring:

@@ -205,7 +205,9 @@ func NewPartial(org, project string, envs, services, identities, instances []str
 	} else if pe.services.String() != "" {
 		segmentCount++
 	}
+	var originalEnv segment
 	if pe.services.String() != "*" && pe.envs.String() != "*" {
+		originalEnv = pe.envs
 		pe.envs = fullglob{}
 	}
 
@@ -227,6 +229,9 @@ func NewPartial(org, project string, envs, services, identities, instances []str
 		pe.instances = fullglob{}
 	} else if pe.instances.String() != "" {
 		segmentCount++
+	}
+	if segmentCount > 3 && originalEnv != nil {
+		pe.envs = originalEnv
 	}
 
 	return &pe, &segmentCount, nil
