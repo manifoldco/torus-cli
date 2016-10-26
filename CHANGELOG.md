@@ -6,13 +6,14 @@ _2016-10-26_
 
 **Notable Changes**
 
+- License updated to BSD 3-Clause
 - The alpha waitlist has been removed, any user can now signup for their free account. We've introduced the `torus verify` command allowing users to verify their email addresses if they interrupt the signup flow
 - Introduced the `torus ls` command for navigating through all of the organizations, projects, services, environments, and the secrets you have access too.
 - Improved error messages across the product, including input validation.
 
 **Fixes**
 
-- Fix for use of `--all` with `torus keypairs generate`.
+- Fix to `torus keypairs generate` when used with `--all`
 - Fixed invite approval for orgs with secrets set using an or operation (e.g. `ag set -e production -e development secret mysupersecret`).
 - Fix to prevent display of credentials which had been unset.
 
