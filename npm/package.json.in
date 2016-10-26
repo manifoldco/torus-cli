@@ -31,7 +31,7 @@
     "James Bowes <james@manifold.co>"
   ],
   "logo": "https://s3.amazonaws.com/marketing.arigato.sh/torus_logo.png",
-  "license": "AGPL-3.0",
+  "license": "BSD-3-Clause",
   "dependencies": {
   },
   "devDependencies": {
