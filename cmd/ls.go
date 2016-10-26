@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/urfave/cli"
 
@@ -296,10 +297,16 @@ func secretPaths(cpathObj *pathexp.PathExp) ([]string, error) {
 		return nil, err
 	}
 
-	for _, cred := range creds {
+	cset := credentialSet{}
+	for _, c := range creds {
+		cset.Add(c)
+	}
+
+	for _, cred := range cset {
 		body := *cred.Body
 		paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), body.GetName()))
 	}
+	sort.Strings(paths)
 
 	return paths, nil
 }
