@@ -12,8 +12,9 @@ _2016-10-26_
 
 **Fixes**
 
-- Fix for use of `--all` with `torus keypairs generate`
-- Fixed invite approval for orgs with secrets set using an or operation (e.g. `ag set -e production -e development secret mysupersecret`)
+- Fix for use of `--all` with `torus keypairs generate`.
+- Fixed invite approval for orgs with secrets set using an or operation (e.g. `ag set -e production -e development secret mysupersecret`).
+- Fix to prevent display of credentials which had been unset.
 
 ## v0.12.0
 
