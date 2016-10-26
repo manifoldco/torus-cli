@@ -29,7 +29,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/arigatomachine/cli/errs"
+	"github.com/manifoldco/torus-cli/errs"
 )
 
 const slugstr = `[a-z\d][-_a-z\d]{0,63}`

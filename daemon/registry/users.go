@@ -7,11 +7,11 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/envelope"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/primitive"
 
-	"github.com/arigatomachine/cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/crypto"
 )
 
 // Users represents the  registry `/users` endpoints.

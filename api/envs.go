@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // EnvironmentsClient makes proxied requests to the registry's envs endpoints

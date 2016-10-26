@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/identity"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 // ProfilesClient makes proxied requests to the registry's profiles endpoints

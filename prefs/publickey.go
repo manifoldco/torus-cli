@@ -7,9 +7,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/arigatomachine/cli/base64"
-	"github.com/arigatomachine/cli/data"
-	"github.com/arigatomachine/cli/errs"
+	"github.com/manifoldco/torus-cli/base64"
+	"github.com/manifoldco/torus-cli/data"
+	"github.com/manifoldco/torus-cli/errs"
 )
 
 const requiredPermissions = 0700

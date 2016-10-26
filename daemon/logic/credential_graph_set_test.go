@@ -3,12 +3,12 @@ package logic
 import (
 	"testing"
 
-	"github.com/arigatomachine/cli/envelope"
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/pathexp"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/pathexp"
+	"github.com/manifoldco/torus-cli/primitive"
 
-	"github.com/arigatomachine/cli/daemon/registry"
+	"github.com/manifoldco/torus-cli/daemon/registry"
 )
 
 var (

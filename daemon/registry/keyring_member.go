@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/arigatomachine/cli/envelope"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // KeyringMemberClientV1 represents the `/keyring-members` registry endpoint

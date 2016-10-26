@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // ProjectsClient makes proxied requests to the registry's projects endpoints

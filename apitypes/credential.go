@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/pathexp"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/pathexp"
 )
 
 var errMistmatchedType = errors.New("Mismatched type and value in credential")

@@ -3,9 +3,9 @@ package logic
 import (
 	"context"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // Worklog holds the logic for discovering and acting on worklog items.

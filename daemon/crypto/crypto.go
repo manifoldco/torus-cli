@@ -7,9 +7,9 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 
-	base64url "github.com/arigatomachine/cli/base64"
-	"github.com/arigatomachine/cli/daemon/ctxutil"
-	"github.com/arigatomachine/cli/primitive"
+	base64url "github.com/manifoldco/torus-cli/base64"
+	"github.com/manifoldco/torus-cli/daemon/ctxutil"
+	"github.com/manifoldco/torus-cli/primitive"
 
 	"golang.org/x/crypto/scrypt"
 )

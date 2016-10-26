@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // KeypairsClient makes proxied requests to the registry's keypairs endpoints

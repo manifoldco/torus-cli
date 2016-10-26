@@ -5,7 +5,7 @@ import (
 
 	"github.com/dchest/blake2b"
 
-	"github.com/arigatomachine/cli/base32"
+	"github.com/manifoldco/torus-cli/base32"
 )
 
 // WorklogType is the enumerated byte type of WorklogItems

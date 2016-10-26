@@ -6,7 +6,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/arigatomachine/cli/apitypes"
+	"github.com/manifoldco/torus-cli/apitypes"
 )
 
 // CredentialsClient provides access to unencrypted credentials for viewing,

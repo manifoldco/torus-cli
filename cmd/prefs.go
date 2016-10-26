@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/arigatomachine/cli/errs"
-	"github.com/arigatomachine/cli/prefs"
+	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/prefs"
 
 	"github.com/go-ini/ini"
 	"github.com/kr/text"

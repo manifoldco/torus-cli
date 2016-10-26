@@ -3,8 +3,8 @@
 package envelope
 
 import (
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // Envelope is the interface implemented by objects that encapsulate 'true'

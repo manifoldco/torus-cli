@@ -10,9 +10,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/arigatomachine/cli/apitypes"
+	"github.com/manifoldco/torus-cli/apitypes"
 
-	"github.com/arigatomachine/cli/daemon/session"
+	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
 // Client exposes the registry REST API.

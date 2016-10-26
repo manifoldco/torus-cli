@@ -7,8 +7,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/api"
-	"github.com/arigatomachine/cli/config"
+	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/config"
 )
 
 // Cmds is the list of all cli commands

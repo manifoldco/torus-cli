@@ -1,4 +1,4 @@
-package: github.com/arigatomachine/cli
+package: github.com/manifoldco/torus-cli
 import:
 - package: github.com/satori/go.uuid
 - package: github.com/natefinch/lumberjack

@@ -6,10 +6,10 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/api"
-	"github.com/arigatomachine/cli/config"
-	"github.com/arigatomachine/cli/errs"
-	"github.com/arigatomachine/cli/promptui"
+	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/promptui"
 )
 
 const acceptInviteFailed = "Could not accept invitation to org, please try again."

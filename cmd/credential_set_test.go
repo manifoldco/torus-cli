@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/pathexp"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/pathexp"
 )
 
 func interfaceToCredentialValue(t *testing.T, i interface{}) (*apitypes.CredentialValue, error) {

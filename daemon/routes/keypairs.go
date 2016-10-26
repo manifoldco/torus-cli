@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/daemon/logic"
-	"github.com/arigatomachine/cli/daemon/observer"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/daemon/logic"
+	"github.com/manifoldco/torus-cli/daemon/observer"
 )
 
 func keypairsGenerateRoute(engine *logic.Engine, o *observer.Observer) http.HandlerFunc {

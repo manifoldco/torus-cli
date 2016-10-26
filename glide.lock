@@ -1,5 +1,5 @@
-hash: 233018bc780acf6598f7aba560a6a6317a92f392742c3dcda0d9913fca966a78
-updated: 2016-09-01T16:42:52.0999078-03:00
+hash: 0969b5d51be9af32da3f79fbbc4a638d79dc24bf551063399fddf2221aff9e24
+updated: 2016-10-26T21:11:14.319350703-03:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 593d64559f7600f29581a3ee42177f5dbded27a9
@@ -40,7 +40,7 @@ imports:
 - name: github.com/kr/text
   version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/natefinch/lumberjack
-  version: 514cbda263a734ae8caac038dadf05f8f3f9f738
+  version: e21e5cbec0cd0861b9dc302736ad5666c529d93f
 - name: github.com/nbutton23/zxcvbn-go
   version: a22cb81b2ecdde8b68e9ffb8824731cbf88e1de4
   subpackages:

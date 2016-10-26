@@ -6,15 +6,15 @@ import (
 
 	"github.com/go-zoo/bone"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/config"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/config"
 
-	"github.com/arigatomachine/cli/daemon/crypto"
-	"github.com/arigatomachine/cli/daemon/db"
-	"github.com/arigatomachine/cli/daemon/logic"
-	"github.com/arigatomachine/cli/daemon/observer"
-	"github.com/arigatomachine/cli/daemon/registry"
-	"github.com/arigatomachine/cli/daemon/session"
+	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/db"
+	"github.com/manifoldco/torus-cli/daemon/logic"
+	"github.com/manifoldco/torus-cli/daemon/observer"
+	"github.com/manifoldco/torus-cli/daemon/registry"
+	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
 // NewRouteMux returns a *bone.Mux responsible for handling the cli to daemon

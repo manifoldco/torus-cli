@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/arigatomachine/cli/identity"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 type memorySession struct {

@@ -9,12 +9,12 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/api"
-	"github.com/arigatomachine/cli/config"
-	"github.com/arigatomachine/cli/dirprefs"
-	"github.com/arigatomachine/cli/errs"
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/prefs"
+	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/dirprefs"
+	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/prefs"
 )
 
 func init() {
