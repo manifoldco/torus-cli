@@ -1,7 +1,7 @@
 {
   "name": "torus-cli",
   "version": "VERSION",
-  "description": "A utility for sharing and securing secrets across teams, services, and environments.",
+  "description": "A secure, shared workspace for secrets",
   "bin": {
     "torus": "bin/torus",
     "torus-cli": "bin/torus"
@@ -20,6 +20,10 @@
   "scripts": {
     "preinstall": "scripts/install.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manifoldco/torus-cli.git"
+  },
   "author": "Arigato Machine Inc.",
   "contributors": [
     "Jevon MacDonald <jevon@manifold.co>",
@@ -30,7 +34,7 @@
     "Peter Cho <peter@manifold.co>",
     "James Bowes <james@manifold.co>"
   ],
-  "logo": "https://s3.amazonaws.com/marketing.arigato.sh/torus_logo.png",
+  "logo": "https://s3.amazonaws.com/manifold.co/torus_logo.png",
   "license": "BSD-3-Clause",
   "dependencies": {
   },
