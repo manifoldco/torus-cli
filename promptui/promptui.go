@@ -10,6 +10,9 @@ var ErrEOF = errors.New("^D")
 // encountered.
 var ErrInterrupt = errors.New("^C")
 
+// ErrAbort is returned when confirm prompts are supplied "n"
+var ErrAbort = errors.New("")
+
 // ValidateFunc validates the given input. It should return a ValidationError
 // if the input is not valid.
 type ValidateFunc func(string) error

@@ -47,6 +47,7 @@ type Core struct {
 	CABundleFile  string `ini:"ca_bundle_file,omitempty"`
 	RegistryURI   string `ini:"registry_uri,omitempty"`
 	Context       bool   `ini:"context,omitempty"`
+	AutoConfirm   bool   `ini:"auto_confirm,omitempty"`
 }
 
 // Defaults contains default values for use in command argument flags

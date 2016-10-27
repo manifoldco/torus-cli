@@ -6,10 +6,12 @@ import (
 	"strings"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/prefs"
 	"github.com/manifoldco/torus-cli/promptui"
 )
 
@@ -34,6 +36,36 @@ func validateInviteCode(input string) error {
 		return nil
 	}
 	return promptui.NewValidationError("Please enter a valid invite code")
+}
+
+// ConfirmDialogue prompts the user to confirm their action
+func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string) error {
+	preferences, err := prefs.NewPreferences(true)
+	if err != nil {
+		return err
+	}
+	if ctx.Bool("yes") || preferences.Core.AutoConfirm {
+		return nil
+	}
+
+	label := "Do you wish to continue"
+	if labelOverride != nil {
+		label = *labelOverride
+	}
+
+	warning := "The action you are about to perform cannot be undone."
+	if warningOverride != nil {
+		warning = *warningOverride
+	}
+
+	prompt := promptui.Prompt{
+		Label:     label,
+		IsConfirm: true,
+		Preamble:  &warning,
+	}
+
+	_, err = prompt.Run()
+	return err
 }
 
 // NamePrompt prompts the user to input a person's name

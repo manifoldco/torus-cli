@@ -78,7 +78,7 @@ func setCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apitypes.CredentialValue) (*apitypes.CredentialEnvelope, error) {
+func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp, *string, error) {
 	// First try and use the cli args as a full path. it should override any
 	// options.
 	idx := strings.LastIndex(nameOrPath, "/")
@@ -92,14 +92,14 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 		path := nameOrPath[:idx]
 		pe, err = pathexp.Parse(path)
 		if err != nil {
-			return nil, errs.NewExitError(err.Error())
+			return nil, nil, errs.NewExitError(err.Error())
 		}
 	} else {
 		// Falling back to flags. do the expensive population of the user flag now,
 		// and see if any required flags (all of them) are missing.
 		err := chain(setUserEnv, checkRequiredFlags)(ctx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		pe, err = pathexp.New(ctx.String("org"), ctx.String("project"),
@@ -107,8 +107,21 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 			ctx.StringSlice("user"), ctx.StringSlice("instance"),
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+	}
+
+	return pe, &name, nil
+}
+
+func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apitypes.CredentialValue) (*apitypes.CredentialEnvelope, error) {
+	pe, credName, err := determineCredential(ctx, nameOrPath)
+	if err != nil {
+		return nil, err
+	}
+	var name string
+	if credName != nil {
+		name = *credName
 	}
 
 	cfg, err := config.LoadConfig()

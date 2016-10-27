@@ -15,7 +15,7 @@ func init() {
 		Usage:     "Remove a secret from a service and environment",
 		ArgsUsage: "<name|path>",
 		Category:  "SECRETS",
-		Flags:     setUnsetFlags,
+		Flags:     append(setUnsetFlags, stdAutoAcceptFlag),
 		Action: chain(
 			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 			setSliceDefaults, unsetCmd,
@@ -35,7 +35,20 @@ func unsetCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError(msg, ctx)
 	}
 
-	cred, err := setCredential(ctx, args[0], func() *apitypes.CredentialValue {
+	pathexp, cname, err := determineCredential(ctx, args[0])
+	if err != nil {
+		return errs.NewErrorExitError("Could not unset credential", err)
+	}
+
+	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", pathexp.String(), *cname)
+
+	abortErr := ConfirmDialogue(ctx, nil, &preamble)
+	if abortErr != nil {
+		return abortErr
+	}
+
+	var cred *apitypes.CredentialEnvelope
+	cred, err = setCredential(ctx, args[0], func() *apitypes.CredentialValue {
 		return apitypes.NewUnsetCredentialValue()
 	})
 
