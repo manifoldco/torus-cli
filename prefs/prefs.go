@@ -80,8 +80,17 @@ func (prefs Preferences) SetValue(key string, value string) (Preferences, error)
 		return prefs, errs.NewExitError("error: unknown property `" + key + "`")
 	}
 
-	// Set the string value
-	field.SetString(value)
+	switch field.Type() {
+	case reflect.TypeOf(true):
+		v := true
+		if value != "true" && value != "1" {
+			v = false
+		}
+		field.SetBool(v)
+	default:
+		field.SetString(value)
+	}
+
 	return prefs, nil
 }
 
