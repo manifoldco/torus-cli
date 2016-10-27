@@ -1,12 +1,18 @@
 # CHANGELOG
 
+## v0.14.0
+
+**Notable Changes**
+
+- License changed to BSD 3-Clause
+- Repository open-sourced, updated README
+
 ## v0.13.0
 
 _2016-10-26_
 
 **Notable Changes**
 
-- License updated to BSD 3-Clause
 - The alpha waitlist has been removed, any user can now signup for their free account. We've introduced the `torus verify` command allowing users to verify their email addresses if they interrupt the signup flow
 - Introduced the `torus ls` command for navigating through all of the organizations, projects, services, environments, and the secrets you have access too.
 - Improved error messages across the product, including input validation.
