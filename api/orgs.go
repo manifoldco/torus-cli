@@ -5,8 +5,8 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // OrgsClient makes proxied requests to the registry's orgs endpoints

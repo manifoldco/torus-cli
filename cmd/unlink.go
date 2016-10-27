@@ -7,8 +7,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/dirprefs"
-	"github.com/arigatomachine/cli/errs"
+	"github.com/manifoldco/torus-cli/dirprefs"
+	"github.com/manifoldco/torus-cli/errs"
 )
 
 func init() {

@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/arigatomachine/cli/apitypes"
+	"github.com/manifoldco/torus-cli/apitypes"
 )
 
 // SessionClient provides access to the daemon's user session related endpoints,

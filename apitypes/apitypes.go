@@ -4,8 +4,8 @@ package apitypes
 import (
 	"strings"
 
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // ErrorType represents the string error types that the daemon and registry can

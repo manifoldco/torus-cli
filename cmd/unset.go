@@ -5,8 +5,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/errs"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/errs"
 )
 
 func init() {

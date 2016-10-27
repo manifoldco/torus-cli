@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/arigatomachine/cli/base64"
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/pathexp"
+	"github.com/manifoldco/torus-cli/base64"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/pathexp"
 )
 
 // v1Schema embeds in other structs to indicate their schema version is 1.

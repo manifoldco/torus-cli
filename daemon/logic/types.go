@@ -1,8 +1,8 @@
 package logic
 
 import (
-	"github.com/arigatomachine/cli/identity"
-	"github.com/arigatomachine/cli/pathexp"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/pathexp"
 )
 
 // PlaintextCredentialEnvelope is an unencrypted credential object

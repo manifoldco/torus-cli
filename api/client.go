@@ -13,8 +13,8 @@ import (
 	"github.com/donovanhide/eventsource"
 	"github.com/satori/go.uuid"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/config"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/config"
 )
 
 // Client exposes the daemon API.

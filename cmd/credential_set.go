@@ -3,7 +3,7 @@ package cmd
 import (
 	"sort"
 
-	"github.com/arigatomachine/cli/apitypes"
+	"github.com/manifoldco/torus-cli/apitypes"
 )
 
 // credentialSet represents a set of credentials.

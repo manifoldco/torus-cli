@@ -5,8 +5,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/cmd"
-	"github.com/arigatomachine/cli/config"
+	"github.com/manifoldco/torus-cli/cmd"
+	"github.com/manifoldco/torus-cli/config"
 )
 
 func main() {

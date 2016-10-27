@@ -62,7 +62,7 @@ echo ""
 echo "Building Daemon"
 echo ""
 docker run --name relase-builder --rm \
-    -v $RELEASE_DIRECTORY:/go/src/github.com/arigatomachine/cli \
+    -v $RELEASE_DIRECTORY:/go/src/github.com/manifoldco/torus-cli \
     -v $RELEASE_DIRECTORY/builds:/builds \
     arigato/cli:$TARGET_SHA \
     release-all

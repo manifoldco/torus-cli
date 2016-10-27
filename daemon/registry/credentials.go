@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/arigatomachine/cli/envelope"
+	"github.com/manifoldco/torus-cli/envelope"
 )
 
 // Credentials represents the `/credentials` registry endpoint, used for

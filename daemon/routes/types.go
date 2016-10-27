@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/identity"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 type keyPairGenerate struct {

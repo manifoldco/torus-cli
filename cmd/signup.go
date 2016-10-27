@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/arigatomachine/cli/api"
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/config"
-	"github.com/arigatomachine/cli/errs"
+	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/errs"
 
 	"github.com/urfave/cli"
 )

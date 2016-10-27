@@ -6,8 +6,8 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/errs"
-	"github.com/arigatomachine/cli/prefs"
+	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/prefs"
 )
 
 func TestChain(t *testing.T) {

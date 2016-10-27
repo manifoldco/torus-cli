@@ -3,7 +3,7 @@ FROM golang:1.7.1-alpine
 RUN apk add --no-cache git make
 
 # Create work directory for the CLI and build output dest
-RUN mkdir -p /go/src/github.com/arigatomachine/cli \
+RUN mkdir -p /go/src/github.com/manifoldco/torus-cli \
         && mkdir -p /builds \
 
 ENV PATH="/usr/local/bin:$PATH"
@@ -12,10 +12,10 @@ ENV PATH="/usr/local/bin:$PATH"
 COPY Makefile /
 RUN make -f /Makefile bootstrap && rm /Makefile
 
-VOLUME /go/src/github.com/arigatomachine/cli
+VOLUME /go/src/github.com/manifoldco/torus-cli
 VOLUME /builds
 
-WORKDIR /go/src/github.com/arigatomachine/cli
+WORKDIR /go/src/github.com/manifoldco/torus-cli
 
 ENTRYPOINT ["make"]
 CMD ["ci"]

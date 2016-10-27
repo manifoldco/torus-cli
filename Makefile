@@ -1,5 +1,5 @@
 OUT=torus
-PKG=github.com/arigatomachine/cli
+PKG=github.com/manifoldco/torus-cli
 
 TARGETS=\
 	darwin-amd64 \
@@ -147,7 +147,7 @@ PWD=$(shell pwd)
 IMAGE=arigato/cli:latest
 RUN_IN_DOCKER=\
 	docker run --name cli --rm \
-		-v $(PWD):/go/src/github.com/arigatomachine/cli \
+		-v $(PWD):/go/src/github.com/manifoldco/torus-cli \
 		-v $(PWD)/builds:/builds \
 		$(IMAGE) $(1)
 

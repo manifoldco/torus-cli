@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/arigatomachine/cli/errs"
+	"github.com/manifoldco/torus-cli/errs"
 
 	"github.com/go-ini/ini"
 	"gopkg.in/oleiade/reflections.v1"

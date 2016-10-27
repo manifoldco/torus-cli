@@ -18,13 +18,13 @@ import (
 	"github.com/go-zoo/bone"
 	"github.com/satori/go.uuid"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/config"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/config"
 
-	"github.com/arigatomachine/cli/daemon/db"
-	"github.com/arigatomachine/cli/daemon/observer"
-	"github.com/arigatomachine/cli/daemon/routes"
-	"github.com/arigatomachine/cli/daemon/session"
+	"github.com/manifoldco/torus-cli/daemon/db"
+	"github.com/manifoldco/torus-cli/daemon/observer"
+	"github.com/manifoldco/torus-cli/daemon/routes"
+	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
 // AuthProxy exposes an HTTP interface over a domain socket.
@@ -152,7 +152,7 @@ func makeSocket(socketPath string) (net.Listener, error) {
 	}
 
 	// Does not guarantee security; BSD ignores file permissions for sockets
-	// see https://github.com/arigatomachine/cli/issues/76 for details
+	// see https://github.com/manifoldco/torus-cli/issues/76 for details
 	if err = os.Chmod(socketPath, 0700); err != nil {
 		return nil, err
 	}

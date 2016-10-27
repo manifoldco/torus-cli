@@ -7,7 +7,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/arigatomachine/cli/errs"
+	"github.com/manifoldco/torus-cli/errs"
 
 	"github.com/urfave/cli"
 )

@@ -10,9 +10,9 @@ import (
 	"os"
 	"path"
 
-	"github.com/arigatomachine/cli/data"
-	"github.com/arigatomachine/cli/errs"
-	"github.com/arigatomachine/cli/prefs"
+	"github.com/manifoldco/torus-cli/data"
+	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/prefs"
 )
 
 // Version is the compiled version of our binary. It is set via the Makefile.

@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/urfave/cli"
 
-	"github.com/arigatomachine/cli/primitive"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 func init() {

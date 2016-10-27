@@ -8,13 +8,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/arigatomachine/cli/apitypes"
-	"github.com/arigatomachine/cli/identity"
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/identity"
 
-	"github.com/arigatomachine/cli/daemon/crypto"
-	"github.com/arigatomachine/cli/daemon/db"
-	"github.com/arigatomachine/cli/daemon/registry"
-	"github.com/arigatomachine/cli/daemon/session"
+	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/db"
+	"github.com/manifoldco/torus-cli/daemon/registry"
+	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
 func loginRoute(client *registry.Client, s session.Session,
