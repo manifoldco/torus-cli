@@ -47,6 +47,7 @@ type Core struct {
 	CABundleFile  string `ini:"ca_bundle_file,omitempty"`
 	RegistryURI   string `ini:"registry_uri,omitempty"`
 	Context       bool   `ini:"context,omitempty"`
+	AutoConfirm   bool   `ini:"auto_confirm,omitempty"`
 }
 
 // Defaults contains default values for use in command argument flags
@@ -80,8 +81,17 @@ func (prefs Preferences) SetValue(key string, value string) (Preferences, error)
 		return prefs, errs.NewExitError("error: unknown property `" + key + "`")
 	}
 
-	// Set the string value
-	field.SetString(value)
+	switch field.Type() {
+	case reflect.TypeOf(true):
+		v := true
+		if value != "true" && value != "1" {
+			v = false
+		}
+		field.SetBool(v)
+	default:
+		field.SetString(value)
+	}
+
 	return prefs, nil
 }
 

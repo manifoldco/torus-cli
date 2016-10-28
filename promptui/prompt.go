@@ -2,6 +2,7 @@ package promptui
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -22,6 +23,9 @@ type Prompt struct {
 	// If mask is set, this value is displayed instead of the actual input
 	// characters.
 	Mask rune
+
+	IsConfirm bool
+	Preamble  *string
 
 	stdin  io.Reader
 	stdout io.Writer
@@ -48,8 +52,19 @@ func (p *Prompt) Run() (string, error) {
 		c.MaskRune = p.Mask
 	}
 
+	if p.Preamble != nil {
+		fmt.Println(*p.Preamble)
+	}
+
+	suggestedAnswer := ""
+	punctuation := ":"
+	if p.IsConfirm {
+		punctuation = "?"
+		suggestedAnswer = " " + faint("[Y/n]")
+	}
+
 	state := iconInitial
-	prompt := p.Label + ": "
+	prompt := p.Label + punctuation + suggestedAnswer + " "
 
 	c.Prompt = bold(state) + " " + bold(prompt)
 	c.HistoryLimit = -1
@@ -108,6 +123,9 @@ func (p *Prompt) Run() (string, error) {
 			}
 		} else {
 			state = iconGood
+			if p.IsConfirm {
+				state = iconInitial
+			}
 		}
 
 		rl.SetPrompt(bold(state) + " " + bold(prompt))
@@ -175,6 +193,15 @@ func (p *Prompt) Run() (string, error) {
 	echo := out
 	if p.Mask != 0 {
 		echo = strings.Repeat(string(p.Mask), len(echo))
+	}
+
+	if p.IsConfirm {
+		if strings.ToLower(echo) != "y" {
+			state = iconBad
+			err = ErrAbort
+		} else {
+			state = iconGood
+		}
 	}
 
 	rl.Write([]byte(state + " " + prompt + faint(echo) + "\n"))

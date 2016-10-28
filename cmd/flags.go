@@ -11,13 +11,22 @@ import (
 
 // Standard flags for path expression parts.
 var (
-	stdOrgFlag      = orgFlag("Use this organization.", true)
-	stdProjectFlag  = projectFlag("Use this project.", true)
-	stdEnvFlag      = envFlag("Use this environment.", true)
-	stdServiceFlag  = serviceFlag("Use this service.", "", true)
-	stdUserFlag     = userFlag("Use this user.", true)
-	stdInstanceFlag = instanceFlag("Use this instance.", true)
+	stdOrgFlag        = orgFlag("Use this organization.", true)
+	stdProjectFlag    = projectFlag("Use this project.", true)
+	stdEnvFlag        = envFlag("Use this environment.", true)
+	stdServiceFlag    = serviceFlag("Use this service.", "", true)
+	stdUserFlag       = userFlag("Use this user.", true)
+	stdInstanceFlag   = instanceFlag("Use this instance.", true)
+	stdAutoAcceptFlag = autoAcceptFlag()
 )
+
+// autoAcceptFlag creates a new --yes cli.BoolFlag
+func autoAcceptFlag() cli.Flag {
+	return cli.BoolFlag{
+		Name:  "yes, y",
+		Usage: "Automatically accept confirmation dialogues.",
+	}
+}
 
 // orgFlag creates a new --org cli.Flag with custom usage string.
 func orgFlag(usage string, required bool) cli.Flag {
