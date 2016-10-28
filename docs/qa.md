@@ -109,6 +109,10 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ] `torus machines create` supports flags (e.g. `-o, -t` etc)
 - [ ] `torus machines create` allows you to select an existing org and team
 - [ ] `torus machines create` allows you to create a new machine team
+- [ ] `torus machines list` displays all machines
+- [ ] `torus machines list --destroyed` shows only destroyed machines
+- [ ] `torus machines list --team [team]` shows machines belonging to that team
+- [ ] `torus machines list --team [team] --destroyed` shows destroyed machines belonging to that team
 
 ### Critical Path
 
