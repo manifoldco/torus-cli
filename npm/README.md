@@ -2,134 +2,21 @@
 
 A secure, shared workspace for secrets.
 
-[Site](https://torus.sh) | [Documentation](https://torus.sh/docs) | [Twitter](https://twitter.com/toruscli)
+[Homepage](https://torus.sh) | [Documentation](https://torus.sh/docs) | [Twitter](https://twitter.com/toruscli) | [Security Disclosure](https://github.com/manifoldco/torus-cli/blob/master/docs/security.md)
 
 ![](https://s3.amazonaws.com/manifold.co/torus-graphic.png)
 
 ## Installation & signup
 
-Manifold's torus-cli is released under the [BSD 3-Clause License](./LICENSE.md).
-
 ```
-$ npm install -g torus-cli && torus signup
+$ npm install -g torus-cli
+$ torus signup
 ```
 
 ### Security Disclosure
 
-If you are aware of a security bug or a potential vulnerability, you can notify
-us privately by contacting `security@torus.sh`.
-
-You can encrypt your message using PGP with the public key listed below, which
-is also available on [keybase](https://keybase.io/ianlivingstone).
-
-```
------BEGIN PGP PUBLIC KEY BLOCK-----
-Version: Keybase OpenPGP v0.1.20
-Comment: https://keybase.io/crypto
-
-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
-+5oQho4=
-=5d54
------END PGP PUBLIC KEY BLOCK-----
-```
+Please follow our security disclosure document [found here](https://github.com/manifoldco/torus-cli/blob/master/docs/security.md)
 
 ### License
 
-BSD 3-Clause License
-
-Copyright (c) 2016, Arigato Machine Inc.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+Manifold's torus-cli is released under the [BSD 3-Clause License](https://github.com/manifoldco/torus-cli/blob/master/LICENSE.md).

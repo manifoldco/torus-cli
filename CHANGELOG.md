@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## UNPUBLISHED
+
+_YYYY-MM-DD_
+
+**Notable Changes**
+
+- Added contributor guide, CLA and Code of Conduct
+
 ## v0.14.0
 
 **Notable Changes**
