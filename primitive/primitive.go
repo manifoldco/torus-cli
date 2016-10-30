@@ -507,11 +507,17 @@ type Environment struct { // type: 0x05
 	ProjectID *identity.ID `json:"project_id"`
 }
 
-// There are two types of teams: system and user. System teams are
-// managed by the Torus registry.
+// There are three types of teams: system, machine and user. System teams are
+// managed by the Torus registry while Machine teams contain only machines.
 const (
-	SystemTeam = "system"
-	UserTeam   = "user"
+	SystemTeam  = "system"
+	UserTeam    = "user"
+	MachineTeam = "machine"
+)
+
+// Team IDs for certain system teams can be derived based on their OrgID.
+const (
+	DerivableMachineTeamSymbol = 0x04
 )
 
 // Team is an entity that represents a group of users

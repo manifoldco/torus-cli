@@ -55,6 +55,14 @@ func NewMutable(body Mutable) (ID, error) {
 	return id, nil
 }
 
+// DeriveMutable returns a ID for a mutable object based on another ID.
+func DeriveMutable(body Mutable, base *ID, derivableType byte) ID {
+	id := ID{idVersion, body.Type(), derivableType}
+	copy(id[3:], base[2:17])
+
+	return id
+}
+
 // NewImmutable returns a new signed ID for an immutable object.
 //
 // sig should be a registry.Signature type
