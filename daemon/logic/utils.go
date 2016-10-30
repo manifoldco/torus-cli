@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"golang.org/x/crypto/ed25519"
@@ -16,7 +17,9 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/observer"
 	"github.com/manifoldco/torus-cli/daemon/registry"
+	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
 // public key types
@@ -214,6 +217,147 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 		Member:   member,
 		MEKShare: mekshare,
 	}, nil
+}
+
+func createKeyringMemberships(ctx context.Context, c *crypto.Engine, notifier *observer.Notifier,
+	client *registry.Client, s session.Session, orgID, ownerID *identity.ID) (
+	[]envelope.Signed, []registry.KeyringMember, error) {
+
+	n := notifier.Notifier(3)
+
+	// Get this users keypairs
+	sigID, encID, kp, err := fetchKeyPairs(ctx, client, orgID)
+	if err != nil {
+		log.Printf("could not fetch keypairs for org: %s", err)
+		return nil, nil, err
+	}
+
+	n.Notify(observer.Progress, "Keypairs retrieved", true)
+
+	claimTrees, err := client.ClaimTree.List(ctx, orgID, nil)
+	if err != nil {
+		log.Printf("could not retrieve claim tree for invite approval: %s", err)
+		return nil, nil, err
+	}
+
+	if len(claimTrees) != 1 {
+		log.Printf("incorrect number of claim trees returned: %d", len(claimTrees))
+		return nil, nil, &apitypes.Error{
+			Type: apitypes.NotFoundError,
+			Err: []string{
+				fmt.Sprintf("Claim tree not found for org: %s", orgID),
+			},
+		}
+	}
+
+	n.Notify(observer.Progress, "Claims retrieved", true)
+
+	// Get all the keyrings and memberships for the current user. This way we
+	// can decrypt the MEK for each and then create a new KeyringMember for
+	// our wonderful new org member!
+	org, err := client.Orgs.Get(ctx, orgID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	projects, err := client.Projects.List(ctx, org.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var graphs []registry.CredentialGraph
+	orgName := org.Body.(*primitive.Org).Name
+	for _, project := range projects {
+		projName := project.Body.(*primitive.Project).Name
+		projGraphs, err := client.CredentialGraph.Search(ctx,
+			"/"+orgName+"/"+projName+"/*/*/*/*", s.AuthID())
+		if err != nil {
+			log.Printf("Error retrieving credential graphs: %s", err)
+			return nil, nil, err
+		}
+
+		graphs = append(graphs, projGraphs...)
+	}
+
+	// Find encryption keys for user
+	targetPubKey, err := findEncryptionPublicKey(claimTrees, orgID, ownerID)
+	if err != nil {
+		log.Printf("could not find encryption key for owner id: %s", ownerID.String())
+		return nil, nil, err
+	}
+
+	cgs := newCredentialGraphSet()
+	err = cgs.Add(graphs...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	activeGraphs, err := cgs.Active()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	n.Notify(observer.Progress, "Keyrings retrieved", true)
+
+	v1members := []envelope.Signed{}
+	v2members := []registry.KeyringMember{}
+	for _, graph := range activeGraphs {
+		krm, mekshare, err := graph.FindMember(s.AuthID())
+		if err != nil {
+			log.Printf("could not find keyring membership: %s", err)
+			return nil, nil, &apitypes.Error{
+				Type: apitypes.NotFoundError,
+				Err:  []string{"Keyring membership not found."},
+			}
+		}
+
+		encPubKey, err := findEncryptionPublicKeyByID(claimTrees, orgID, krm.EncryptingKeyID)
+		if err != nil {
+			log.Printf("could not find encypting public key for membership: %s", err)
+			return nil, nil, err
+		}
+
+		encPKBody := encPubKey.Body.(*primitive.PublicKey)
+		targetPKBody := targetPubKey.Body.(*primitive.PublicKey)
+
+		encMek, nonce, err := c.CloneMembership(ctx, *mekshare.Key.Value,
+			*mekshare.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
+		if err != nil {
+			log.Printf("could not clone keyring membership: %s", err)
+			return nil, nil, err
+		}
+
+		key := &primitive.KeyringMemberKey{
+			Algorithm: crypto.EasyBox,
+			Nonce:     base64.NewValue(nonce),
+			Value:     base64.NewValue(encMek),
+		}
+
+		switch graph.GetKeyring().Version {
+		case 1:
+			projectID := graph.GetKeyring().Body.(*primitive.KeyringV1).ProjectID
+			member, err := newV1KeyringMember(ctx, c, krm.OrgID, projectID,
+				krm.KeyringID, ownerID, targetPubKey.ID, encID, sigID, key, kp)
+			if err != nil {
+				return nil, nil, err
+			}
+			v1members = append(v1members, *member)
+		case 2:
+			member, err := newV2KeyringMember(ctx, c, krm.OrgID, krm.KeyringID,
+				ownerID, targetPubKey.ID, encID, sigID, key, kp)
+			if err != nil {
+				return nil, nil, err
+			}
+			v2members = append(v2members, *member)
+		default:
+			return nil, nil, &apitypes.Error{
+				Type: apitypes.InternalServerError,
+				Err:  []string{"Unknown keyring schema version"},
+			}
+		}
+	}
+
+	return v1members, v2members, nil
 }
 
 // fetchKeyPairs fetches the user's signing and encryption keypairs from the
