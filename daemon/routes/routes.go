@@ -22,7 +22,7 @@ import (
 func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	t *http.Transport, o *observer.Observer) *bone.Mux {
 
-	cryptoEngine := crypto.NewEngine(s, db)
+	cryptoEngine := crypto.NewEngine(s)
 	client := registry.NewClient(c.RegistryURI.String(), c.APIVersion,
 		c.Version, s, t)
 	lEngine := logic.NewEngine(c, s, db, cryptoEngine, client)

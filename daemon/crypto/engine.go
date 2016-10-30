@@ -20,7 +20,6 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 
 	"github.com/manifoldco/torus-cli/daemon/ctxutil"
-	"github.com/manifoldco/torus-cli/daemon/db"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
@@ -60,13 +59,12 @@ type KeyPairs struct {
 // Engine exposes methods to encrypt, unencrypt and sign values, using
 // the logged in user's credentials.
 type Engine struct {
-	db   *db.DB
 	sess session.Session
 }
 
 // NewEngine returns a new Engine
-func NewEngine(sess session.Session, db *db.DB) *Engine {
-	return &Engine{db: db, sess: sess}
+func NewEngine(sess session.Session) *Engine {
+	return &Engine{sess: sess}
 }
 
 // Seal encrypts the plaintext pt bytes with triplesec-v3 using a key derrived
@@ -477,8 +475,7 @@ func (e *Engine) unsealMasterKey(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	self := envelope.Unsigned{}
-	err = e.db.Get(e.sess.ID(), &self)
+	masterKey, err := e.sess.MasterKey()
 	if err != nil {
 		return nil, err
 	}
@@ -488,7 +485,7 @@ func (e *Engine) unsealMasterKey(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	mk, err := ts.Decrypt(*(self.Body.(*primitive.User).Master.Value))
+	mk, err := ts.Decrypt(*masterKey)
 	return mk, err
 }
 
