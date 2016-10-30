@@ -337,7 +337,7 @@ func createTeamCmd(ctx *cli.Context) error {
 
 	// Create our new team
 	fmt.Println("")
-	err = client.Teams.Create(c, orgID, teamName)
+	_, err = client.Teams.Create(c, orgID, teamName, "")
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Team already exists")

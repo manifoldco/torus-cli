@@ -12,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/prefs"
+	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/promptui"
 )
 
@@ -147,6 +148,28 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 	return prompt.Run()
 }
 
+// SelectTeamPrompt prompts the user to select a team from a list or enter a
+// new name, an optional label can be provided.
+func SelectTeamPrompt(teams []api.TeamResult, label string) (int, string, error) {
+	names := make([]string, len(teams))
+	for i, t := range teams {
+		names[i] = t.Body.Name
+	}
+
+	if label == "" {
+		label = "Select Team"
+	}
+
+	prompt := promptui.SelectWithAdd{
+		Label:    label,
+		Items:    names,
+		AddLabel: "Create a new team",
+		Validate: validateSlug("team"),
+	}
+
+	return prompt.Run()
+}
+
 func handleSelectError(err error, generic string) error {
 	if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
 		return err
@@ -247,6 +270,56 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 	}
 
 	return &orgs[idx], name, false, nil
+}
+
+// SelectCreateTeam prompts the user to select a team from a list of teams for
+// the given org.
+//
+// The user may select to create a new team, or they may may preselect a team via
+// a non-empty name parameter.
+//
+// The type of team can be specified, if no team type is provided then all
+// teams exlcuding machine teams are listed.
+//
+// It returns the object of the selected team, the name of the selected team,
+// and a boolean indicating if a new team should be created.
+func SelectCreateTeam(c context.Context, client *api.Client, orgID *identity.ID, teamType, name string) (*api.TeamResult, string, bool, error) {
+
+	teams, err := client.Teams.List(c, orgID, "", teamType)
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	label := ""
+	if teamType == primitive.MachineTeam {
+		label = "Select Machine Team"
+	}
+
+	var idx int
+	if name == "" {
+		idx, name, err = SelectTeamPrompt(teams, label)
+	} else {
+		found := false
+		for i, t := range teams {
+			if t.Body.Name == name {
+				found = true
+				idx = i
+				break
+			}
+		}
+
+		if !found {
+			fmt.Println(promptui.FailedValue("Team name", name))
+			return nil, "", false, errs.NewExitError("Team not found")
+		}
+		fmt.Println(promptui.SuccessfulValue("Team name", name))
+	}
+
+	if idx == promptui.SelectedAdd {
+		return nil, name, true, nil
+	}
+
+	return &teams[idx], name, false, nil
 }
 
 // PasswordPrompt prompts the user to input a password value
