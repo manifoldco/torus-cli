@@ -34,6 +34,7 @@ type Engine struct {
 	client  *registry.Client
 
 	Worklog Worklog
+	Machine Machine
 }
 
 // NewEngine returns a new Engine
@@ -47,6 +48,7 @@ func NewEngine(c *config.Config, s session.Session, db *db.DB, e *crypto.Engine,
 		client:  client,
 	}
 	engine.Worklog = Worklog{engine: engine}
+	engine.Machine = Machine{engine: engine}
 	return engine
 }
 
@@ -344,7 +346,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n.Notify(observer.Progress, "Invite retrieved", true)
 
-	v1members, v2members, err := createKeyringMemberships(ctx, e.crypto, n,
+	v1members, v2members, err := createKeyringMemberships(ctx, e.crypto,
 		e.client, e.session, inviteBody.OrgID, inviteBody.InviteeID)
 	if err != nil {
 		return nil, err

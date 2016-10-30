@@ -11,6 +11,11 @@ type keyPairGenerate struct {
 	OrgID *identity.ID `json:"org_id"`
 }
 
+type machineCreate struct {
+	Name  string       `json:"name"`
+	OrgID *identity.ID `json:"org_id"`
+}
+
 type errorMsg struct {
 	Type  apitypes.ErrorType `json:"type"`
 	Error []string           `json:"error"`

@@ -23,6 +23,7 @@ type Client struct {
 
 	Orgs         *OrgsClient
 	Users        *UsersClient
+	Machines     *MachinesClient
 	Profiles     *ProfilesClient
 	Teams        *TeamsClient
 	Memberships  *MembershipsClient
@@ -52,6 +53,7 @@ func NewClient(cfg *config.Config) *Client {
 
 	c.Orgs = &OrgsClient{client: c}
 	c.Users = &UsersClient{client: c}
+	c.Machines = &MachinesClient{client: c}
 	c.Profiles = &ProfilesClient{client: c}
 	c.Teams = &TeamsClient{client: c}
 	c.Memberships = &MembershipsClient{client: c}

@@ -100,6 +100,16 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus ls "/*/*/*"` lists all services
 - [ ]   `torus ls "/$org/$proj/*/*"` lists all secrets for `/$org/$proj/*/*/*`
 
+### Machines
+
+- [ ] `torus teams list` displays the "machines" team for the org
+- [ ] `torus teams list` displays the "machine" teams in the org
+- [ ] Only admins and owners can create machines
+- [ ] `torus machines create` works with context
+- [ ] `torus machines create` supports flags (e.g. `-o, -t` etc)
+- [ ] `torus machines create` allows you to select an existing org and team
+- [ ] `torus machines create` allows you to create a new machine team
+
 ### Critical Path
 
 - [ ]   `torus orgs create [name]` prompts you to confirm the org name, and creates it

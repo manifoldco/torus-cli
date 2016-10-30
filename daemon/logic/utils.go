@@ -17,7 +17,6 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
-	"github.com/manifoldco/torus-cli/daemon/observer"
 	"github.com/manifoldco/torus-cli/daemon/registry"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
@@ -219,11 +218,8 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 	}, nil
 }
 
-func createKeyringMemberships(ctx context.Context, c *crypto.Engine, notifier *observer.Notifier,
-	client *registry.Client, s session.Session, orgID, ownerID *identity.ID) (
-	[]envelope.Signed, []registry.KeyringMember, error) {
-
-	n := notifier.Notifier(3)
+func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *registry.Client,
+	s session.Session, orgID, ownerID *identity.ID) ([]envelope.Signed, []registry.KeyringMember, error) {
 
 	// Get this users keypairs
 	sigID, encID, kp, err := fetchKeyPairs(ctx, client, orgID)
@@ -231,8 +227,6 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, notifier *o
 		log.Printf("could not fetch keypairs for org: %s", err)
 		return nil, nil, err
 	}
-
-	n.Notify(observer.Progress, "Keypairs retrieved", true)
 
 	claimTrees, err := client.ClaimTree.List(ctx, orgID, nil)
 	if err != nil {
@@ -249,8 +243,6 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, notifier *o
 			},
 		}
 	}
-
-	n.Notify(observer.Progress, "Claims retrieved", true)
 
 	// Get all the keyrings and memberships for the current user. This way we
 	// can decrypt the MEK for each and then create a new KeyringMember for
@@ -296,8 +288,6 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, notifier *o
 	if err != nil {
 		return nil, nil, err
 	}
-
-	n.Notify(observer.Progress, "Keyrings retrieved", true)
 
 	v1members := []envelope.Signed{}
 	v2members := []registry.KeyringMember{}
