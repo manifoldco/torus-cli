@@ -60,7 +60,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	// Ensure we have an existing keyring for this credential's pathexp
 	graphs, err := e.client.CredentialGraph.List(ctx, "", cred.Body.PathExp,
-		e.session.ID())
+		e.session.AuthID())
 	if err != nil {
 		log.Printf("Error retrieving credential graphs: %s", err)
 		return nil, err
@@ -138,7 +138,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		credBody.CredentialVersion = base.CredentialVersion + 1
 	}
 
-	krm, mekshare, err := graph.FindMember(e.session.ID())
+	krm, mekshare, err := graph.FindMember(e.session.AuthID())
 	if err != nil {
 		log.Printf("Error finding keyring membership: %s", err)
 		return nil, err
@@ -200,9 +200,9 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	var err error
 	var graphs []registry.CredentialGraph
 	if cpath != nil {
-		graphs, err = e.client.CredentialGraph.List(ctx, *cpath, nil, e.session.ID())
+		graphs, err = e.client.CredentialGraph.List(ctx, *cpath, nil, e.session.AuthID())
 	} else if cpathexp != nil {
-		graphs, err = e.client.CredentialGraph.Search(ctx, *cpathexp, e.session.ID())
+		graphs, err = e.client.CredentialGraph.Search(ctx, *cpathexp, e.session.AuthID())
 	}
 	if err != nil {
 		log.Printf("error retrieving credential graphs: %s", err)
@@ -258,7 +258,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			keypairs[*orgID] = kp
 		}
 
-		krm, mekshare, err := graph.FindMember(e.session.ID())
+		krm, mekshare, err := graph.FindMember(e.session.AuthID())
 		if err != nil {
 			log.Printf("Error finding keyring membership: %s", err)
 			return nil, err
@@ -390,7 +390,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 	for _, project := range projects {
 		projName := project.Body.(*primitive.Project).Name
 		projGraphs, err := e.client.CredentialGraph.Search(ctx,
-			"/"+orgName+"/"+projName+"/*/*/*/*", e.session.ID())
+			"/"+orgName+"/"+projName+"/*/*/*/*", e.session.AuthID())
 		if err != nil {
 			log.Printf("Error retrieving credential graphs: %s", err)
 			return nil, err
@@ -424,7 +424,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 	v1members := []envelope.Signed{}
 	v2members := []registry.KeyringMember{}
 	for _, graph := range activeGraphs {
-		krm, mekshare, err := graph.FindMember(e.session.ID())
+		krm, mekshare, err := graph.FindMember(e.session.AuthID())
 		if err != nil {
 			log.Printf("could not find keyring membership: %s", err)
 			return nil, &apitypes.Error{
@@ -523,23 +523,15 @@ func (e *Engine) GenerateKeypair(ctx context.Context, notifier *observer.Notifie
 
 	n.Notify(observer.Progress, "Keypairs generated", true)
 
-	pubsig, err := packagePublicKey(ctx, e.crypto, e.session.ID(), OrgID,
-		signingKeyType, kp.Signature.Public, nil, &kp.Signature)
+	pubsig, privsig, err := packageSigningKeypair(ctx, e.crypto, e.session.AuthID(),
+		OrgID, kp)
 	if err != nil {
-		log.Printf("Error packaging signature public key: %s", err)
-		return err
-	}
-
-	privsig, err := packagePrivateKey(ctx, e.crypto, e.session.ID(), OrgID,
-		kp.Signature.PNonce, kp.Signature.Private, pubsig.ID, pubsig.ID,
-		&kp.Signature)
-	if err != nil {
-		log.Printf("Error packaging signing private key: %s", err)
+		log.Printf("Error packaging signing keypair: %s", err)
 		return err
 	}
 
 	sigclaim, err := e.crypto.SignedEnvelope(
-		ctx, primitive.NewClaim(OrgID, e.session.ID(), pubsig.ID, pubsig.ID,
+		ctx, primitive.NewClaim(OrgID, e.session.AuthID(), pubsig.ID, pubsig.ID,
 			primitive.SignatureClaimType),
 		pubsig.ID, &kp.Signature)
 	if err != nil {
@@ -570,24 +562,14 @@ func (e *Engine) GenerateKeypair(ctx context.Context, notifier *observer.Notifie
 
 	n.Notify(observer.Progress, "Signing keys uploaded", true)
 
-	pubenc, err := packagePublicKey(ctx, e.crypto, e.session.ID(), OrgID,
-		encryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
-		&kp.Signature)
+	pubenc, privenc, err := packageEncryptionKeypair(ctx, e.crypto, e.session.AuthID(),
+		OrgID, kp, pubsig)
 	if err != nil {
-		log.Printf("Error packaging encryption public key: %s", err)
-		return err
-	}
-
-	privenc, err := packagePrivateKey(ctx, e.crypto, e.session.ID(), OrgID,
-		kp.Encryption.PNonce, kp.Encryption.Private, pubenc.ID, pubsig.ID,
-		&kp.Signature)
-	if err != nil {
-		log.Printf("Error packaging encryption private key: %s", err)
-		return err
+		log.Printf("Error packaging encryption keypair: %s", err)
 	}
 
 	encclaim, err := e.crypto.SignedEnvelope(
-		ctx, primitive.NewClaim(OrgID, e.session.ID(), pubenc.ID, pubenc.ID,
+		ctx, primitive.NewClaim(OrgID, e.session.AuthID(), pubenc.ID, pubenc.ID,
 			primitive.SignatureClaimType),
 		pubsig.ID, &kp.Signature)
 	if err != nil {

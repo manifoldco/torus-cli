@@ -25,6 +25,41 @@ const (
 	signingKeyType    = "signing"
 )
 
+func packageSigningKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
+	kp *crypto.KeyPairs) (*envelope.Signed, *envelope.Signed, error) {
+
+	pubsig, err := packagePublicKey(ctx, c, authID, orgID, signingKeyType, kp.Signature.Public, nil, &kp.Signature)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privsig, err := packagePrivateKey(ctx, c, authID, orgID, kp.Signature.PNonce,
+		kp.Signature.Private, pubsig.ID, pubsig.ID, &kp.Signature)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pubsig, privsig, nil
+}
+
+func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
+	kp *crypto.KeyPairs, pubsig *envelope.Signed) (*envelope.Signed, *envelope.Signed, error) {
+
+	pubenc, err := packagePublicKey(ctx, c, authID, orgID, encryptionKeyType,
+		kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privenc, err := packagePrivateKey(ctx, c, authID, orgID, kp.Encryption.PNonce,
+		kp.Encryption.Private, pubenc.ID, pubsig.ID, &kp.Signature)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pubenc, privenc, nil
+}
+
 // createCredentialGraph generates, signs, and posts a new CredentialGraph
 // to the registry.
 func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
