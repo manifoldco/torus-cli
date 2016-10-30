@@ -163,8 +163,8 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			Username: signup.Username,
 			Name:     signup.Name,
 			Email:    signup.Email,
-			Password: &passwordObj,
-			Master:   &masterObj,
+			Password: passwordObj,
+			Master:   masterObj,
 		}
 
 		ID, err := identity.NewMutable(&userBody)

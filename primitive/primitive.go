@@ -48,11 +48,11 @@ type User struct { // type: 0x01
 	Email    string        `json:"email"`
 	State    string        `json:"state"`
 	Password *UserPassword `json:"password"`
-	Master   *UserMaster   `json:"master"`
+	Master   *MasterKey    `json:"master"`
 }
 
-// UserMaster is the body.master object for a user
-type UserMaster struct {
+// MasterKey is the body.master object for a user and machine token
+type MasterKey struct {
 	Value *base64.Value `json:"value"`
 	Alg   string        `json:"alg"`
 }
@@ -324,6 +324,54 @@ type OrgInvite struct { // type: 0x13
 	Created      *time.Time    `json:"created_at"`
 	Accepted     *time.Time    `json:"accepted_at"`
 	Approved     *time.Time    `json:"approved_at"`
+}
+
+// Machines can be in one of two states: active or destroyed
+const (
+	MachineActiveState    = "active"
+	MachineDestroyedState = "destroyed"
+)
+
+// Machine is an entity that represents a machine object
+type Machine struct { // type: 0x17
+	v1Schema
+	mutable
+	Name        string       `json:"name"`
+	OrgID       *identity.ID `json:"org_id"`
+	CreatedBy   *identity.ID `json:"created_by"`
+	Created     time.Time    `json:"created_at"`
+	DestroyedBy *identity.ID `json:"destroyed_by"`
+	Destroyed   *time.Time   `json:"destroyed_at"`
+	State       string       `json:"state"`
+}
+
+// MachineTokens can be in one of two states: active or destroyed
+const (
+	MachineTokenActiveState    = "active"
+	MachineTokenDestroyedState = "destroyed"
+)
+
+// MachineToken is an portion of the MachineSegment object
+type MachineToken struct { // type: 0x18
+	v1Schema
+	mutable
+	OrgID       *identity.ID           `json:"org_id"`
+	MachineID   *identity.ID           `json:"machine_id"`
+	PublicKey   *MachineTokenPublicKey `json:"public_key"`
+	Master      *MasterKey             `json:"master"`
+	CreatedBy   *identity.ID           `json:"created_by"`
+	Created     time.Time              `json:"created_at"`
+	DestroyedBy *identity.ID           `json:"destroyed_by"`
+	Destroyed   *time.Time             `json:"destroyed_at"`
+	State       string                 `json:"state"`
+}
+
+// MachineTokenPublicKey represents a public used by a machine to authenticate
+// against the registry
+type MachineTokenPublicKey struct {
+	Alg   string        `json:"alg"`
+	Salt  *base64.Value `json:"salt"`
+	Value *base64.Value `json:"value"`
 }
 
 // Project is an entity that represents a group of services
