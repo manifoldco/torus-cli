@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -18,15 +19,8 @@ type ClaimTreeClient struct {
 // ClaimTree represents an organizations claim tree which contains public
 // signing and encryption keys for every member.
 type ClaimTree struct {
-	Org        *envelope.Unsigned `json:"org"`
-	PublicKeys []PublicKeySegment `json:"public_keys"`
-}
-
-// PublicKeySegment represents a sub section of a claimtree targeting a
-// specific public key and it's claims.
-type PublicKeySegment struct {
-	Key    *envelope.Signed  `json:"public_key"`
-	Claims []envelope.Signed `json:"claims"`
+	Org        *envelope.Unsigned          `json:"org"`
+	PublicKeys []apitypes.PublicKeySegment `json:"public_keys"`
 }
 
 // List returns a list of all claimtrees for a given orgID. If no orgID is
