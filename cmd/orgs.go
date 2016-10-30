@@ -11,6 +11,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 func init() {
@@ -203,4 +204,27 @@ func orgsRemove(ctx *cli.Context) error {
 
 	fmt.Println("User has been removed from the org.")
 	return nil
+}
+
+func getOrg(ctx context.Context, client *api.Client, name string) (*api.OrgResult, error) {
+	org, err := client.Orgs.GetByName(ctx, name)
+	if err != nil {
+		return nil, errs.NewExitError("Unable to lookup org. Please try again.")
+	}
+	if org == nil {
+		return nil, errs.NewExitError("Org not found.")
+	}
+
+	return org, nil
+}
+
+func getOrgTree(c context.Context, client *api.Client, orgID identity.ID) ([]api.OrgTreeSegment, error) {
+	orgTree, err := client.Orgs.GetTree(c, orgID)
+	if err != nil {
+		return nil, errs.NewExitError("Unable to lookup org tree. Please try again.")
+	}
+	if orgTree == nil {
+		return nil, errs.NewExitError("Org tree not found.")
+	}
+	return orgTree, nil
 }

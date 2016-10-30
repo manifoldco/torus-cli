@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/url"
 
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -25,6 +26,18 @@ type orgCreateRequest struct {
 	Body struct {
 		Name string `json:"name"`
 	} `json:"body"`
+}
+
+// OrgTreeSegment is the payload returns for an org tree
+type OrgTreeSegment struct {
+	Org      *primitive.Org      `json:"org"`
+	Policies []*primitive.Policy `json:"policies"`
+	Profiles []*apitypes.Profile `json:"profiles"`
+	Teams    []*struct {
+		Team              *apitypes.Team             `json:"team"`
+		Memberships       *[]*apitypes.Membership    `json:"memberships"`
+		PolicyAttachments *[]*PolicyAttachmentResult `json:"policy_attachments"`
+	} `json:"teams"`
 }
 
 // Create creates a new org with the given name. It returns the newly-created org.
@@ -91,4 +104,18 @@ func (o *OrgsClient) RemoveMember(ctx context.Context, orgID identity.ID,
 
 	_, err = o.client.Do(ctx, req, nil, nil, nil)
 	return err
+}
+
+// GetTree returns an org tree
+func (o *OrgsClient) GetTree(ctx context.Context, orgID identity.ID) ([]OrgTreeSegment, error) {
+	v := &url.Values{}
+	v.Set("org_id", orgID.String())
+	req, _, err := o.client.NewRequest("GET", "/orgtree", v, nil, true)
+	if err != nil {
+		return nil, err
+	}
+
+	segments := []OrgTreeSegment{}
+	_, err = o.client.Do(ctx, req, &segments, nil, nil)
+	return segments, err
 }

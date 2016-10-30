@@ -6,6 +6,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 // MachinesClient represents the `/machines` registry endpoint, used for
@@ -52,6 +53,24 @@ func (m *MachinesClient) Create(ctx context.Context, machine *envelope.Unsigned,
 	_, err = m.client.Do(ctx, req, resp)
 	if err != nil {
 		log.Printf("Failed to create machine: %s", err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// Get requests a single machine from the registry
+func (m *MachinesClient) Get(ctx context.Context, machineID *identity.ID) (*apitypes.MachineSegment, error) {
+	req, err := m.client.NewRequest("GET", "/machines/"+(*machineID).String(), nil, nil)
+	if err != nil {
+		log.Printf("Error building GET Machines Request: %s", err)
+		return nil, err
+	}
+
+	resp := &apitypes.MachineSegment{}
+	_, err = m.client.Do(ctx, req, resp)
+	if err != nil {
+		log.Printf("Failed to retrieve machine: %s", err)
 		return nil, err
 	}
 
