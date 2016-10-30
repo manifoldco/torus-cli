@@ -24,6 +24,10 @@ func (bv *Value) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + base64.RawURLEncoding.EncodeToString(*bv) + "\""), nil
 }
 
+func (bv *Value) String() string {
+	return base64.RawURLEncoding.EncodeToString(*bv)
+}
+
 // UnmarshalJSON sets bv to the bytes represented in the base64url encoding b.
 func (bv *Value) UnmarshalJSON(b []byte) error {
 	if len(b) < 2 || b[0] != byte('"') || b[len(b)-1] != byte('"') {
