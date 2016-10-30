@@ -174,7 +174,8 @@ func handleSelectError(err error, generic string) error {
 	if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
 		return err
 	}
-	return errs.NewExitError(generic)
+
+	return errs.NewErrorExitError(generic, err)
 }
 
 // SelectCreateProject prompts the user to select a project from at list of projects
@@ -193,7 +194,7 @@ func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.
 		// Get the list of projects the user has access to in the specified org
 		projects, err = listProjects(&c, client, orgID, nil)
 		if err != nil {
-			return nil, "", false, errs.NewExitError("Error fetching projects list.")
+			return nil, "", false, err
 		}
 	}
 
@@ -239,7 +240,7 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 	// Get the list of orgs the user has access to
 	orgs, err := client.Orgs.List(c)
 	if err != nil {
-		return nil, "", false, errs.NewExitError("Error fetching orgs list")
+		return nil, "", false, err
 	}
 
 	var idx int
