@@ -158,16 +158,23 @@ func teamsListCmd(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	for _, t := range teams {
 		isMember := ""
-		teamType := ""
-		if t.Body.TeamType == primitive.SystemTeam {
-			teamType = "[system]"
+		displayTeamType := ""
+
+		switch teamType := t.Body.TeamType; teamType {
+		case primitive.SystemTeam:
+			displayTeamType = "[system]"
+			if t.Body.Name == "machine" {
+				displayTeamType += " (machine)"
+			}
+		case primitive.MachineTeam:
+			displayTeamType = "(machine)"
 		}
 
 		if _, ok := memberOf[*t.ID]; ok {
 			isMember = "*"
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\n", isMember, t.Body.Name, teamType)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", isMember, t.Body.Name, displayTeamType)
 	}
 
 	w.Flush()
