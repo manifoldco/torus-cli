@@ -106,8 +106,9 @@ func ensureSession(ctx *cli.Context) error {
 		return err
 	}
 
+	bgCtx := context.Background()
 	client := api.NewClient(cfg)
-	_, err = client.Session.Get(context.Background())
+	_, err = client.Session.Get(bgCtx)
 
 	hasSession := true
 	if err != nil {
@@ -127,13 +128,26 @@ func ensureSession(ctx *cli.Context) error {
 
 	email, hasEmail := os.LookupEnv("TORUS_EMAIL")
 	password, hasPassword := os.LookupEnv("TORUS_PASSWORD")
+	tokenID, hasTokenID := os.LookupEnv("TORUS_TOKEN_ID")
+	tokenSecret, hasTokenSecret := os.LookupEnv("TORUS_TOKEN_SECRET")
 
 	if hasEmail && hasPassword {
 		fmt.Println("Attempting to login with email: " + email)
 
-		err := client.Session.Login(context.Background(), email, password)
+		err := client.Session.UserLogin(bgCtx, email, password)
 		if err != nil {
 			fmt.Println("Could not log in.\n" + err.Error())
+		} else {
+			return nil
+		}
+	}
+
+	if hasTokenID && hasTokenSecret {
+		fmt.Println("Attempting to login with token id: " + tokenID)
+
+		err := client.Session.MachineLogin(bgCtx, tokenID, tokenSecret)
+		if err != nil {
+			fmt.Println("Could not log in\n" + err.Error())
 		} else {
 			return nil
 		}
@@ -237,12 +251,15 @@ func setUserEnv(ctx *cli.Context) error {
 	}
 
 	client := api.NewClient(cfg)
-	u, err := client.Users.Self(context.Background())
+	session, err := client.Session.Who(context.Background())
 	if err != nil {
 		return err
 	}
 
-	ctx.Set(argName, "dev-"+u.Body.Username)
+	if session.Type() == apitypes.UserSession {
+		ctx.Set(argName, "dev-"+session.Username())
+	}
+
 	return nil
 }
 

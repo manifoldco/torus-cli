@@ -53,7 +53,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 	}
 	orgID := machineBody.OrgID
 
-	masterKey, err := crypto.CreateMasterKeyObject(ctx, secret.String())
+	masterKey, err := crypto.CreateMasterKeyObject(ctx, *secret)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 	// Create an "empty" machine session in order to create a Crypto engine on
 	// behalf of the machine for deriving and uploading these keys.
 	sess := session.NewSession()
-	err = sess.Set(session.MachineSession, machine, token, secret.String(), "asdfsdf")
+	err = sess.Set(apitypes.MachineSession, machine, token, *secret, "asdfsdf")
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,9 @@ package registry
 import (
 	"context"
 	"log"
+
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/base64"
 )
 
 // token types that can be requested from the registry
@@ -11,19 +14,29 @@ const (
 	tokenTypeAuth  = "auth"
 )
 
-type loginTokenRequest struct {
+type loginTokenUserRequest struct {
 	Type  string `json:"type"`
 	Email string `json:"email"`
 }
 
-type loginTokenResponse struct {
-	Salt  string `json:"salt"`
-	Token string `json:"login_token"`
+type loginTokenMachineRequest struct {
+	Type    string `json:"type"`
+	TokenID string `json:"machine_token_id"`
 }
 
-type authTokenRequest struct {
+type loginTokenResponse struct {
+	Salt  *base64.Value `json:"salt"`
+	Token string        `json:"login_token"`
+}
+
+type authTokenHMACRequest struct {
 	Type      string `json:"type"`
 	TokenHMAC string `json:"login_token_hmac"`
+}
+
+type authTokenPDPKARequest struct {
+	Type     string        `json:"type"`
+	TokenSig *base64.Value `json:"login_token_sig"`
 }
 
 type authTokenResponse struct {
@@ -42,14 +55,24 @@ type Tokens struct {
 
 // PostLogin requests a login token from the registry for the provided email
 // address.
-func (t *Tokens) PostLogin(ctx context.Context, email string) (string, string, error) {
+func (t *Tokens) PostLogin(ctx context.Context, creds apitypes.LoginCredential) (*base64.Value, string, error) {
 	salt := loginTokenResponse{}
 
-	req, err := t.client.NewRequest("POST", "/tokens", nil,
-		&loginTokenRequest{
+	var body interface{}
+	switch creds.Type() {
+	case apitypes.UserSession:
+		body = &loginTokenUserRequest{
 			Type:  tokenTypeLogin,
-			Email: email,
-		})
+			Email: creds.Identifier(),
+		}
+	case apitypes.MachineSession:
+		body = &loginTokenMachineRequest{
+			Type:    tokenTypeLogin,
+			TokenID: creds.Identifier(),
+		}
+	}
+
+	req, err := t.client.NewRequest("POST", "/tokens", nil, body)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return salt.Salt, salt.Token, err
@@ -71,7 +94,27 @@ func (t *Tokens) PostAuth(ctx context.Context, token, hmac string) (string, erro
 	auth := authTokenResponse{}
 
 	req, err := t.client.NewTokenRequest(token, "POST", "/tokens", nil,
-		&authTokenRequest{Type: tokenTypeAuth, TokenHMAC: hmac})
+		&authTokenHMACRequest{Type: tokenTypeAuth, TokenHMAC: hmac})
+	if err != nil {
+		log.Printf("Error building http request: %s", err)
+		return auth.Token, err
+	}
+
+	_, err = t.client.Do(ctx, req, &auth)
+	if err != nil {
+		log.Printf("Error making api request: %s", err)
+	}
+
+	return auth.Token, err
+}
+
+// PostPDPKAuth requests an auth token from the registry for the provided login
+// token value, and it's signature.
+func (t *Tokens) PostPDPKAuth(ctx context.Context, token string, sig *base64.Value) (string, error) {
+	auth := authTokenResponse{}
+
+	req, err := t.client.NewTokenRequest(token, "POST", "/tokens", nil,
+		&authTokenPDPKARequest{Type: tokenTypeAuth, TokenSig: sig})
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return auth.Token, err

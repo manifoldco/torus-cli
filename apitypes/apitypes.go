@@ -2,8 +2,11 @@
 package apitypes
 
 import (
+	"encoding/json"
 	"strings"
 
+	"github.com/manifoldco/torus-cli/base64"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -49,6 +52,20 @@ func IsNotFoundError(err error) bool {
 	return false
 }
 
+// A session can represent either a machine or a user
+const (
+	MachineSession = "machine"
+	UserSession    = "user"
+	NotLoggedIn    = "no_session"
+)
+
+// Self represents the current identity and auth combination for this session
+type Self struct {
+	Type     string             `json:"type"`
+	Identity *envelope.Unsigned `json:"identity"`
+	Auth     *envelope.Unsigned `json:"auth"`
+}
+
 // Version contains the release version of the daemon.
 type Version struct {
 	Version string `json:"version"`
@@ -60,10 +77,72 @@ type SessionStatus struct {
 	Passphrase bool `json:"passphrase"`
 }
 
-// Login contains the required details for logging in to the api and daemon.
+// Login is a wrapper around a login request from the CLI to the Daemon
 type Login struct {
-	Email      string `json:"email"`
-	Passphrase string `json:"passphrase"`
+	Type        string          `json:"type"`
+	Credentials json.RawMessage `json:"credentials"`
+}
+
+// LoginCredential represents an login credentials for a user or machine
+type LoginCredential interface {
+	Type() string
+	Valid() bool
+	Passphrase() []byte
+	Identifier() string
+}
+
+// UserLogin contains the required details for logging in to the api and daemon
+// as a user.
+type UserLogin struct {
+	Email    string `json:"email"`
+	Password string `json:"passphrase"`
+}
+
+// Type returns the type of login request
+func (u *UserLogin) Type() string {
+	return UserSession
+}
+
+// Valid returns whether or not this is a valid login request
+func (u *UserLogin) Valid() bool {
+	return u.Email != "" && u.Password != ""
+}
+
+// Passphrase returns the "secret" or "password" component of the request
+func (u *UserLogin) Passphrase() []byte {
+	return []byte(u.Password)
+}
+
+// Identifier returns the identifying piece of information of the request
+func (u *UserLogin) Identifier() string {
+	return u.Email
+}
+
+// MachineLogin contains the required details for logging into the api and
+// daemon as a machine.
+type MachineLogin struct {
+	TokenID *identity.ID  `json:"token_id"`
+	Secret  *base64.Value `json:"secret"`
+}
+
+// Type returns the type of the login request
+func (m *MachineLogin) Type() string {
+	return MachineSession
+}
+
+// Valid returns whether or not this is a valid machine login request
+func (m *MachineLogin) Valid() bool {
+	return m.TokenID != nil && m.Secret != nil && m.Secret.String() != ""
+}
+
+// Passphrase returns the "secret" component of the request
+func (m *MachineLogin) Passphrase() []byte {
+	return *m.Secret
+}
+
+// Identifier returns the identifying piece of information of the request
+func (m *MachineLogin) Identifier() string {
+	return m.TokenID.String()
 }
 
 // Profile contains the fields in the response for the profiles endpoint

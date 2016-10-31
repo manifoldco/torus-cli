@@ -8,6 +8,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
@@ -69,14 +70,21 @@ func statusCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	self, err := client.Users.Self(c)
+	session, err := client.Session.Who(c)
 	if err != nil {
 		return errs.NewErrorExitError("Error fetching user details", err)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "Identity:\t%s <%s>\n", self.Body.Name, self.Body.Email)
-	fmt.Fprintf(w, "Username:\t%s\n\n", self.Body.Username)
+	if session.Type() == apitypes.MachineSession {
+		fmt.Fprintf(w, "Machine ID:\t%s\n", session.ID())
+		fmt.Fprintf(w, "Machine Token ID:\t%s\n", session.AuthID())
+		fmt.Fprintf(w, "Machine Name:\t%s\n\n", session.Username())
+	} else {
+		fmt.Fprintf(w, "Identity:\t%s <%s>\n", session.Name(), session.Email())
+		fmt.Fprintf(w, "Username:\t%s\n\n", session.Username())
+	}
+
 	w.Flush()
 
 	err = checkRequiredFlags(ctx)
@@ -99,7 +107,7 @@ func statusCmd(ctx *cli.Context) error {
 	fmt.Fprintf(w, "Instance:\t%s\n", instance)
 	w.Flush()
 
-	parts := []string{"", org, project, env, service, self.Body.Username, instance}
+	parts := []string{"", org, project, env, service, session.Username(), instance}
 	credPath := strings.Join(parts, "/")
 	fmt.Printf("\nCredential path: %s\n", credPath)
 

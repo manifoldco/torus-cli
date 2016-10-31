@@ -20,18 +20,6 @@ type UserResult struct {
 	Body    *primitive.User `json:"body"`
 }
 
-// Self retrieves the currently logged in user
-func (u *UsersClient) Self(ctx context.Context) (*UserResult, error) {
-	req, _, err := u.client.NewRequest("GET", "/users/self", nil, nil, true)
-	if err != nil {
-		return nil, err
-	}
-
-	user := UserResult{}
-	_, err = u.client.Do(ctx, req, &user, nil, nil)
-	return &user, err
-}
-
 // Signup will have the daemon create a new user request
 func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, output *ProgressFunc) (*UserResult, error) {
 	req, _, err := u.client.NewRequest("POST", "/signup", nil, &signup, false)

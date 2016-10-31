@@ -13,8 +13,8 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
-	"github.com/manifoldco/torus-cli/primitive"
 )
 
 func init() {
@@ -72,19 +72,13 @@ func debugInfoCmd(ctx *cli.Context) error {
 	}
 
 	// User information
-	self, uErr := client.Users.Self(c)
+	session, uErr := client.Session.Who(c)
 	loggedIn := true
 	if uErr != nil {
 		if strings.Contains(uErr.Error(), "invalid login") {
 			loggedIn = false
 		} else {
-			self = &api.UserResult{
-				Body: &primitive.User{
-					Name:     "Unknown",
-					Email:    "unknown",
-					Username: "unknown",
-				},
-			}
+			return errs.NewErrorExitError("Could not retrieve user", err)
 		}
 	}
 
@@ -106,12 +100,23 @@ func debugInfoCmd(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 	fmt.Fprintf(w, "%s\t%s\n", "Timestamp", timestamp.UTC().Format(time.UnixDate))
 	fmt.Fprintf(w, "%s\t%v\n", "Debug", debug)
+
 	if !loggedIn {
 		fmt.Fprintf(w, "%s\t%v\n", "Logged In", loggedIn)
 	} else {
-		fmt.Fprintf(w, "%s\t%s <%s>\n", "Identity", self.Body.Name, self.Body.Email)
-		fmt.Fprintf(w, "%s\t%s\n", "Username", self.Body.Username)
+		fmt.Fprintf(w, "%s\t%s\n", "Session Type", session.Type())
+
+		if session.Type() == apitypes.MachineSession {
+			fmt.Fprintf(w, "%s\t%s\n", "Machine ID", session.ID())
+			fmt.Fprintf(w, "%s\t%s\n", "Machine Token ID", session.AuthID())
+			fmt.Fprintf(w, "%s\t%s\n", "Machine Name", session.Username())
+		} else {
+			fmt.Fprintf(w, "%s\t%s\n", "User ID", session.ID())
+			fmt.Fprintf(w, "%s\t%s <%s>\n", "Identity", session.Name(), session.Email())
+			fmt.Fprintf(w, "%s\t%s\n", "Username", session.Username())
+		}
 	}
+
 	fmt.Fprintf(w, " \t \n")
 	fmt.Fprintf(w, "%s\t%s\n", "CLI", cfg.Version)
 	fmt.Fprintf(w, "%s\t%s\n", "Daemon", daemonVersion.Version)

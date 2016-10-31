@@ -100,16 +100,19 @@ func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, na
 }
 
 func orgsListCmd(ctx *cli.Context) error {
-	orgs, self, err := orgsList()
+	orgs, session, err := orgsList()
 	if err != nil {
 		return err
 	}
 
 	withoutPersonal := orgs
-	for i, o := range orgs {
-		if o.Body.Name == self.Body.Username {
-			fmt.Printf("  %s [personal]\n", o.Body.Name)
-			withoutPersonal = append(orgs[:i], orgs[i+1:]...)
+
+	if session.Type() == apitypes.UserSession {
+		for i, o := range orgs {
+			if o.Body.Name == session.Username() {
+				fmt.Printf("  %s [personal]\n", o.Body.Name)
+				withoutPersonal = append(orgs[:i], orgs[i+1:]...)
+			}
 		}
 	}
 
@@ -120,7 +123,7 @@ func orgsListCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func orgsList() ([]api.OrgResult, *api.UserResult, error) {
+func orgsList() ([]api.OrgResult, *api.Session, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, nil, err
@@ -132,7 +135,7 @@ func orgsList() ([]api.OrgResult, *api.UserResult, error) {
 	wg.Add(2)
 
 	var orgs []api.OrgResult
-	var self *api.UserResult
+	var session *api.Session
 	var oErr, sErr error
 
 	go func() {
@@ -141,7 +144,7 @@ func orgsList() ([]api.OrgResult, *api.UserResult, error) {
 	}()
 
 	go func() {
-		self, sErr = client.Users.Self(context.Background())
+		session, sErr = client.Session.Who(context.Background())
 		wg.Done()
 	}()
 
@@ -150,7 +153,7 @@ func orgsList() ([]api.OrgResult, *api.UserResult, error) {
 		return nil, nil, errs.NewExitError("Error fetching orgs list")
 	}
 
-	return orgs, self, nil
+	return orgs, session, nil
 }
 
 func orgsRemove(ctx *cli.Context) error {

@@ -106,7 +106,7 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	var teams []api.TeamResult
 	var org *api.OrgResult
-	var self *api.UserResult
+	var session *api.Session
 	var oErr, sErr, tErr error
 
 	memberOf := make(map[identity.ID]bool)
@@ -114,7 +114,7 @@ func teamsListCmd(ctx *cli.Context) error {
 	c := context.Background()
 
 	go func() {
-		self, sErr = client.Users.Self(c)
+		session, sErr = client.Session.Who(c)
 		getMemberships.Done()
 	}()
 
@@ -136,7 +136,7 @@ func teamsListCmd(ctx *cli.Context) error {
 		getMemberships.Wait()
 		var memberships []api.MembershipResult
 		if oErr == nil && sErr == nil {
-			memberships, sErr = client.Memberships.List(c, org.ID, self.ID, nil)
+			memberships, sErr = client.Memberships.List(c, org.ID, session.ID(), nil)
 		}
 
 		for _, m := range memberships {
@@ -228,10 +228,10 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		getMembers.Done()
 	}()
 
-	var self *api.UserResult
+	var session *api.Session
 	go func() {
 		// Who am I
-		self, sErr = client.Users.Self(c)
+		session, sErr = client.Session.Who(c)
 		getMembers.Done()
 	}()
 
@@ -278,7 +278,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	for _, profile := range *profiles {
 		me := ""
-		if self.Body.Username == profile.Body.Username {
+		if session.Username() == profile.Body.Username {
 			me = "*"
 		}
 		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, profile.Body.Username)
