@@ -37,6 +37,7 @@ type Client struct {
 	ClaimTree       *ClaimTreeClient
 	CredentialGraph *CredentialGraphClient
 	Machines        *MachinesClient
+	Self            *SelfClient
 }
 
 // NewClient returns a new Client.
@@ -64,6 +65,7 @@ func NewClient(prefix string, apiVersion string, version string, sess session.Se
 	c.KeyringMember = &KeyringMemberClientV1{client: c}
 	c.CredentialGraph = &CredentialGraphClient{client: c}
 	c.Machines = &MachinesClient{client: c}
+	c.Self = &SelfClient{client: c}
 
 	return c
 }

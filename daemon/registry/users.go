@@ -19,30 +19,6 @@ type Users struct {
 	client *Client
 }
 
-// GetSelf returns the logged in user.
-func (u *Users) GetSelf(ctx context.Context, token string) (*envelope.Unsigned, error) {
-	req, err := u.client.NewTokenRequest(token, "GET", "/users/self", nil, nil)
-	if err != nil {
-		log.Printf("Error making api request: %s", err)
-		return nil, err
-	}
-
-	self := envelope.Unsigned{}
-	_, err = u.client.Do(ctx, req, &self)
-	if err != nil {
-		log.Printf("Error making api request: %s", err)
-		return nil, err
-	}
-
-	err = validateSelf(&self)
-	if err != nil {
-		log.Printf("Invalid user self: %s", err)
-		return nil, err
-	}
-
-	return &self, nil
-}
-
 // Create attempts to register a new user
 func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Signup) (*envelope.Unsigned, error) {
 	v := &url.Values{}

@@ -67,13 +67,17 @@ func attemptLogin(ctx context.Context, client *registry.Client, s session.Sessio
 		return err
 	}
 
-	self, err := client.Users.GetSelf(ctx, authToken)
+	self, err := client.Self.Get(ctx, authToken)
 	if err != nil {
 		return err
 	}
 
-	db.Set(self)
-	return s.Set("user", self, self, creds.Passphrase, authToken)
+	db.Set(self.Identity)
+	if self.Type == apitypes.UserSession {
+		db.Set(self.Auth)
+	}
+
+	return s.Set(self.Type, self.Identity, self.Auth, creds.Passphrase, authToken)
 }
 
 func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {
