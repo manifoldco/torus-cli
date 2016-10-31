@@ -88,6 +88,18 @@ func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *st
 	return results, nil
 }
 
+// Destroy machine by ID
+func (m *MachinesClient) Destroy(ctx context.Context, machineID *identity.ID) error {
+	req, reqID, err := m.client.NewRequest("DELETE", "/machines/"+machineID.String(), nil, nil, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = m.client.Do(ctx, req, nil, &reqID, nil)
+
+	return err
+}
+
 // Get machine by ID
 func (m *MachinesClient) Get(ctx context.Context, machineID *identity.ID) (*apitypes.MachineSegment, error) {
 	req, reqID, err := m.client.NewRequest("GET", "/machines/"+machineID.String(), nil, nil, true)
