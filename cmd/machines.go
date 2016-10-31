@@ -28,9 +28,10 @@ const (
 
 func init() {
 	machines := cli.Command{
-		Name:     "machines",
-		Usage:    "Manage machine for an organization",
-		Category: "ORGANIZATIONS",
+		Name:      "machines",
+		Usage:     "Manage machine for an organization",
+		ArgsUsage: "<identity>",
+		Category:  "MACHINES",
 		Subcommands: []cli.Command{
 			{
 				Name:  "create",
@@ -42,6 +43,18 @@ func init() {
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, createMachine,
+				),
+			},
+			{
+				Name:      "view",
+				Usage:     "Show the details of a machine",
+				ArgsUsage: "<identity>",
+				Flags: []cli.Flag{
+					orgFlag("org to the machine will belongs to", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, viewMachineCmd,
 				),
 			},
 			{
@@ -60,6 +73,135 @@ func init() {
 		},
 	}
 	Cmds = append(Cmds, machines)
+}
+
+func viewMachineCmd(ctx *cli.Context) error {
+	args := ctx.Args()
+	if len(args) > 1 {
+		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
+	}
+	if len(args) < 1 {
+		return errs.NewUsageExitError("Identity is required", ctx)
+	}
+	if ctx.String("org") == "" {
+		return errs.NewUsageExitError("Missing flags: --org", ctx)
+	}
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	// Look up the target org
+	org, err := getOrg(c, client, ctx.String("org"))
+	if err != nil {
+		return errs.NewErrorExitError("Machine view failed", err)
+	}
+	if org == nil {
+		return errs.NewExitError("Org not found.")
+	}
+
+	machineID, err := identity.DecodeFromString(args[0])
+	if err != nil {
+		name := args[0]
+		machines, lErr := client.Machines.List(c, org.ID, nil, &name, nil)
+		if lErr != nil {
+			return errs.NewErrorExitError("Failed to retrieve machine", err)
+		}
+		if len(machines) < 1 {
+			return errs.NewExitError("Machine not found")
+		}
+		machineID = *machines[0].Machine.ID
+	}
+
+	// TODO: Get should take an orgID and send as query param
+	machineSegment, err := client.Machines.Get(c, &machineID)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve machine", err)
+	}
+	if machineSegment == nil {
+		return errs.NewExitError("Machine not found.")
+	}
+
+	orgTrees, err := client.Orgs.GetTree(c, *org.ID)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve machine", err)
+	}
+	if len(orgTrees) < 1 {
+		return errs.NewExitError("Machine metadata not found.")
+	}
+	orgTree := orgTrees[0]
+
+	profileMap := make(map[identity.ID]apitypes.Profile, len(orgTree.Profiles))
+	for _, p := range orgTree.Profiles {
+		profileMap[*p.ID] = *p
+	}
+
+	teamMap := make(map[identity.ID]apitypes.Team, len(orgTree.Teams))
+	for _, t := range orgTree.Teams {
+		teamMap[*t.Team.ID] = *t.Team
+	}
+
+	machine := machineSegment.Machine
+	machineBody := machine.Body
+
+	// Created profile
+	creator := profileMap[*machineBody.CreatedBy]
+	createdBy := creator.Body.Username + " (" + creator.Body.Name + ")"
+	createdOn := machineBody.Created.Format(time.RFC3339)
+
+	// Destroyed profile
+	destroyedOn := "-"
+	destroyedBy := "-"
+	if machineBody.State == primitive.MachineDestroyedState {
+		destroyer := profileMap[*machineBody.DestroyedBy]
+		destroyedOn = machineBody.Destroyed.Format(time.RFC3339)
+		destroyedBy = destroyer.Body.Username + " (" + destroyer.Body.Name + ")"
+	}
+
+	// Membership info
+	var teamNames []string
+	for _, m := range machineSegment.Memberships {
+		team := teamMap[*m.Body.TeamID]
+		teamNames = append(teamNames, team.Body.Name)
+	}
+	teamOutput := strings.Join(teamNames, ", ")
+	if teamOutput == "" {
+		teamOutput = "-"
+	}
+
+	fmt.Println("")
+	w1 := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	fmt.Fprintf(w1, "ID:\t%s\n", machine.ID)
+	fmt.Fprintf(w1, "Name:\t%s\n", machineBody.Name)
+	fmt.Fprintf(w1, "Team(s):\t%s\n", teamOutput)
+	fmt.Fprintf(w1, "State:\t%s\n", machineBody.State)
+	fmt.Fprintf(w1, "Created By:\t%s\n", createdBy)
+	fmt.Fprintf(w1, "Created On:\t%s\n", createdOn)
+	fmt.Fprintf(w1, "Destroyed By:\t%s\n", destroyedBy)
+	fmt.Fprintf(w1, "Destroyed On:\t%s\n", destroyedOn)
+	w1.Flush()
+	fmt.Println("")
+
+	w2 := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	fmt.Fprintf(w2, "TOKEN ID\tSTATE\tCREATED BY\tCREATED ON\n")
+	fmt.Fprintln(w2, " \t \t \t ")
+	for _, token := range machineSegment.Tokens {
+		tokenID := token.Token.ID
+		state := token.Token.Body.State
+		creator := profileMap[*token.Token.Body.CreatedBy]
+		createdBy := creator.Body.Username + " (" + creator.Body.Name + ")"
+		createdOn := token.Token.Body.Created.Format(time.RFC3339)
+		fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", tokenID, state, createdBy, createdOn)
+	}
+
+	w2.Flush()
+	fmt.Println("")
+
+	return nil
 }
 
 func listMachinesCmd(ctx *cli.Context) error {

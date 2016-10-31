@@ -7,7 +7,7 @@ _YYYY-MM-DD_
 **Notable Changes**
 
 - Added contributor guide, CLA and Code of Conduct
-- Introduced concept of machines (with commands create, list)
+- Introduced concept of machines (with commands create, list, view)
 
 ## v0.14.0
 

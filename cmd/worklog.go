@@ -199,15 +199,3 @@ func worklogResolve(ctx *cli.Context) error {
 
 	return nil
 }
-
-func getOrg(ctx context.Context, client *api.Client, name string) (*api.OrgResult, error) {
-	org, err := client.Orgs.GetByName(ctx, name)
-	if err != nil {
-		return nil, errs.NewExitError("Unable to lookup org. Please try again.")
-	}
-	if org == nil {
-		return nil, errs.NewExitError("Org not found.")
-	}
-
-	return org, nil
-}

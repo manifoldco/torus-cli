@@ -113,6 +113,8 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ] `torus machines list --destroyed` shows only destroyed machines
 - [ ] `torus machines list --team [team]` shows machines belonging to that team
 - [ ] `torus machines list --team [team] --destroyed` shows destroyed machines belonging to that team
+- [ ] `torus machines view [identity]` shows a single machine's details by id
+- [ ] `torus machines view [name]` shows a single machine's details by name
 
 ### Critical Path
 
