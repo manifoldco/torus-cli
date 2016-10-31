@@ -48,13 +48,26 @@ func init() {
 			{
 				Name:      "view",
 				Usage:     "Show the details of a machine",
-				ArgsUsage: "<identity>",
+				ArgsUsage: "<id|name>",
 				Flags: []cli.Flag{
 					orgFlag("org to the machine will belongs to", true),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, viewMachineCmd,
+				),
+			},
+			{
+				Name:      "destroy",
+				Usage:     "Destroy a machine in the specified organization",
+				ArgsUsage: "<id|name>",
+				Flags: []cli.Flag{
+					orgFlag("org to the machine will belongs to", true),
+					stdAutoAcceptFlag,
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, destroyMachineCmd,
 				),
 			},
 			{
@@ -75,13 +88,70 @@ func init() {
 	Cmds = append(Cmds, machines)
 }
 
+func destroyMachineCmd(ctx *cli.Context) error {
+	args := ctx.Args()
+	if len(args) > 1 {
+		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
+	}
+	if len(args) < 1 {
+		return errs.NewUsageExitError("Name or ID is required", ctx)
+	}
+	if ctx.String("org") == "" {
+		return errs.NewUsageExitError("Missing flags: --org", ctx)
+	}
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	// Look up the target org
+	org, err := getOrg(c, client, ctx.String("org"))
+	if err != nil {
+		return errs.NewErrorExitError("Machine destroy failed", err)
+	}
+	if org == nil {
+		return errs.NewExitError("Org not found.")
+	}
+
+	machineID, err := identity.DecodeFromString(args[0])
+	if err != nil {
+		name := args[0]
+		machines, lErr := client.Machines.List(c, org.ID, nil, &name, nil)
+		if lErr != nil {
+			return errs.NewErrorExitError("Failed to retrieve machine", err)
+		}
+		if len(machines) < 1 {
+			return errs.NewExitError("Machine not found")
+		}
+		machineID = *machines[0].Machine.ID
+	}
+
+	preamble := "You are about to destroy a machine. This cannot be undone."
+	abortErr := ConfirmDialogue(ctx, nil, &preamble)
+	if abortErr != nil {
+		return abortErr
+	}
+
+	err = client.Machines.Destroy(c, &machineID)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to destroy machine", err)
+	}
+
+	fmt.Println("Machine destroyed.")
+	return nil
+}
+
 func viewMachineCmd(ctx *cli.Context) error {
 	args := ctx.Args()
 	if len(args) > 1 {
 		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
 	}
 	if len(args) < 1 {
-		return errs.NewUsageExitError("Identity is required", ctx)
+		return errs.NewUsageExitError("Name or ID is required", ctx)
 	}
 	if ctx.String("org") == "" {
 		return errs.NewUsageExitError("Missing flags: --org", ctx)
@@ -117,7 +187,6 @@ func viewMachineCmd(ctx *cli.Context) error {
 		machineID = *machines[0].Machine.ID
 	}
 
-	// TODO: Get should take an orgID and send as query param
 	machineSegment, err := client.Machines.Get(c, &machineID)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to retrieve machine", err)
