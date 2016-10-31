@@ -158,16 +158,23 @@ func teamsListCmd(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	for _, t := range teams {
 		isMember := ""
-		teamType := ""
-		if t.Body.TeamType == primitive.SystemTeam {
-			teamType = "[system]"
+		displayTeamType := ""
+
+		switch teamType := t.Body.TeamType; teamType {
+		case primitive.SystemTeam:
+			displayTeamType = "[system]"
+			if t.Body.Name == "machine" {
+				displayTeamType += " (machine)"
+			}
+		case primitive.MachineTeam:
+			displayTeamType = "(machine)"
 		}
 
 		if _, ok := memberOf[*t.ID]; ok {
 			isMember = "*"
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\n", isMember, t.Body.Name, teamType)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", isMember, t.Body.Name, displayTeamType)
 	}
 
 	w.Flush()
@@ -337,7 +344,7 @@ func createTeamCmd(ctx *cli.Context) error {
 
 	// Create our new team
 	fmt.Println("")
-	err = client.Teams.Create(c, orgID, teamName)
+	_, err = client.Teams.Create(c, orgID, teamName, "")
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Team already exists")

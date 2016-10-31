@@ -73,8 +73,7 @@ func attemptLogin(ctx context.Context, client *registry.Client, s session.Sessio
 	}
 
 	db.Set(self)
-	s.Set(self.ID, creds.Passphrase, authToken)
-	return nil
+	return s.Set("user", self, self, creds.Passphrase, authToken)
 }
 
 func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {
@@ -102,11 +101,23 @@ func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {
 				// In any case, the daemon has gotten out of sync with the
 				// server. Remove our local copy of the auth token.
 				log.Printf("Got 4XX removing auth token. Treating as success")
-				s.Logout()
+				logoutErr := s.Logout()
+				if logoutErr != nil {
+					log.Printf("Error while attempting to destroy session: %s", logoutErr)
+					encodeResponseErr(w, logoutErr)
+					break
+				}
+
 				w.WriteHeader(http.StatusNoContent)
 			}
 		case nil:
-			s.Logout()
+			logoutErr := s.Logout()
+			if logoutErr != nil {
+				log.Printf("Error while attempting to destroy session: %s", logoutErr)
+				encodeResponseErr(w, logoutErr)
+				break
+			}
+
 			w.WriteHeader(http.StatusNoContent)
 		default:
 			encodeResponseErr(w, err)
@@ -163,8 +174,8 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			Username: signup.Username,
 			Name:     signup.Name,
 			Email:    signup.Email,
-			Password: &passwordObj,
-			Master:   &masterObj,
+			Password: passwordObj,
+			Master:   masterObj,
 		}
 
 		ID, err := identity.NewMutable(&userBody)

@@ -58,6 +58,11 @@ func instanceFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "TORUS_INSTANCE", required)
 }
 
+// teamFlag creates a new --team cli.Flag with custom usage string.
+func teamFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("team, t", "TEAM", usage, "", "TORUS_TEAM", required)
+}
+
 // placeHolderStringSliceFlag is a StringSliceFlag that has been extended to use a
 // specific placedholder value in the usage, without parsing it out of the
 // usage string.

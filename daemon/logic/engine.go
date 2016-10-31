@@ -5,7 +5,6 @@ package logic
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -35,6 +34,7 @@ type Engine struct {
 	client  *registry.Client
 
 	Worklog Worklog
+	Machine Machine
 }
 
 // NewEngine returns a new Engine
@@ -48,6 +48,7 @@ func NewEngine(c *config.Config, s session.Session, db *db.DB, e *crypto.Engine,
 		client:  client,
 	}
 	engine.Worklog = Worklog{engine: engine}
+	engine.Machine = Machine{engine: engine}
 	return engine
 }
 
@@ -60,7 +61,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	// Ensure we have an existing keyring for this credential's pathexp
 	graphs, err := e.client.CredentialGraph.List(ctx, "", cred.Body.PathExp,
-		e.session.ID())
+		e.session.AuthID())
 	if err != nil {
 		log.Printf("Error retrieving credential graphs: %s", err)
 		return nil, err
@@ -138,7 +139,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		credBody.CredentialVersion = base.CredentialVersion + 1
 	}
 
-	krm, mekshare, err := graph.FindMember(e.session.ID())
+	krm, mekshare, err := graph.FindMember(e.session.AuthID())
 	if err != nil {
 		log.Printf("Error finding keyring membership: %s", err)
 		return nil, err
@@ -200,9 +201,9 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	var err error
 	var graphs []registry.CredentialGraph
 	if cpath != nil {
-		graphs, err = e.client.CredentialGraph.List(ctx, *cpath, nil, e.session.ID())
+		graphs, err = e.client.CredentialGraph.List(ctx, *cpath, nil, e.session.AuthID())
 	} else if cpathexp != nil {
-		graphs, err = e.client.CredentialGraph.Search(ctx, *cpathexp, e.session.ID())
+		graphs, err = e.client.CredentialGraph.Search(ctx, *cpathexp, e.session.AuthID())
 	}
 	if err != nil {
 		log.Printf("error retrieving credential graphs: %s", err)
@@ -258,7 +259,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			keypairs[*orgID] = kp
 		}
 
-		krm, mekshare, err := graph.FindMember(e.session.ID())
+		krm, mekshare, err := graph.FindMember(e.session.AuthID())
 		if err != nil {
 			log.Printf("Error finding keyring membership: %s", err)
 			return nil, err
@@ -325,7 +326,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 	InviteID *identity.ID) (*envelope.Unsigned, error) {
 
-	n := notifier.Notifier(6)
+	n := notifier.Notifier(3)
 
 	invite, err := e.client.OrgInvite.Get(ctx, InviteID)
 	if err != nil {
@@ -345,138 +346,10 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n.Notify(observer.Progress, "Invite retrieved", true)
 
-	// Get this users keypairs
-	sigID, encID, kp, err := fetchKeyPairs(ctx, e.client, inviteBody.OrgID)
-	if err != nil {
-		log.Printf("could not fetch keypairs for org: %s", err)
-		return nil, err
-	}
-
-	n.Notify(observer.Progress, "Keypairs retrieved", true)
-
-	claimTrees, err := e.client.ClaimTree.List(ctx, inviteBody.OrgID, nil)
-	if err != nil {
-		log.Printf("could not retrieve claim tree for invite approval: %s", err)
-		return nil, err
-	}
-
-	if len(claimTrees) != 1 {
-		log.Printf("incorrect number of claim trees returned: %d", len(claimTrees))
-		return nil, &apitypes.Error{
-			Type: apitypes.NotFoundError,
-			Err: []string{
-				fmt.Sprintf("Claim tree not found for org: %s", inviteBody.OrgID),
-			},
-		}
-	}
-
-	n.Notify(observer.Progress, "Claims retrieved", true)
-
-	// Get all the keyrings and memberships for the current user. This way we
-	// can decrypt the MEK for each and then create a new KeyringMember for
-	// our wonderful new org member!
-	org, err := e.client.Orgs.Get(ctx, inviteBody.OrgID)
+	v1members, v2members, err := createKeyringMemberships(ctx, e.crypto,
+		e.client, e.session, inviteBody.OrgID, inviteBody.InviteeID)
 	if err != nil {
 		return nil, err
-	}
-
-	projects, err := e.client.Projects.List(ctx, org.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	var graphs []registry.CredentialGraph
-	orgName := org.Body.(*primitive.Org).Name
-	for _, project := range projects {
-		projName := project.Body.(*primitive.Project).Name
-		projGraphs, err := e.client.CredentialGraph.Search(ctx,
-			"/"+orgName+"/"+projName+"/*/*/*/*", e.session.ID())
-		if err != nil {
-			log.Printf("Error retrieving credential graphs: %s", err)
-			return nil, err
-		}
-
-		graphs = append(graphs, projGraphs...)
-	}
-
-	// Find encryption keys for user
-	targetPubKey, err := findEncryptionPublicKey(claimTrees,
-		inviteBody.OrgID, inviteBody.InviteeID)
-	if err != nil {
-		log.Printf("could not find encryption key for invitee: %s",
-			inviteBody.InviteeID.String())
-		return nil, err
-	}
-
-	cgs := newCredentialGraphSet()
-	err = cgs.Add(graphs...)
-	if err != nil {
-		return nil, err
-	}
-
-	activeGraphs, err := cgs.Active()
-	if err != nil {
-		return nil, err
-	}
-
-	n.Notify(observer.Progress, "Keyrings retrieved", true)
-
-	v1members := []envelope.Signed{}
-	v2members := []registry.KeyringMember{}
-	for _, graph := range activeGraphs {
-		krm, mekshare, err := graph.FindMember(e.session.ID())
-		if err != nil {
-			log.Printf("could not find keyring membership: %s", err)
-			return nil, &apitypes.Error{
-				Type: apitypes.NotFoundError,
-				Err:  []string{"Keyring membership not found."},
-			}
-		}
-
-		encPubKey, err := findEncryptionPublicKeyByID(claimTrees, inviteBody.OrgID, krm.EncryptingKeyID)
-		if err != nil {
-			log.Printf("could not find encypting public key for membership: %s", err)
-			return nil, err
-		}
-
-		encPKBody := encPubKey.Body.(*primitive.PublicKey)
-		targetPKBody := targetPubKey.Body.(*primitive.PublicKey)
-
-		encMek, nonce, err := e.crypto.CloneMembership(ctx, *mekshare.Key.Value,
-			*mekshare.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
-		if err != nil {
-			log.Printf("could not clone keyring membership: %s", err)
-			return nil, err
-		}
-
-		key := &primitive.KeyringMemberKey{
-			Algorithm: crypto.EasyBox,
-			Nonce:     base64.NewValue(nonce),
-			Value:     base64.NewValue(encMek),
-		}
-
-		switch graph.GetKeyring().Version {
-		case 1:
-			projectID := graph.GetKeyring().Body.(*primitive.KeyringV1).ProjectID
-			member, err := newV1KeyringMember(ctx, e.crypto, krm.OrgID, projectID,
-				krm.KeyringID, inviteBody.InviteeID, targetPubKey.ID, encID, sigID, key, kp)
-			if err != nil {
-				return nil, err
-			}
-			v1members = append(v1members, *member)
-		case 2:
-			member, err := newV2KeyringMember(ctx, e.crypto, krm.OrgID, krm.KeyringID,
-				inviteBody.InviteeID, targetPubKey.ID, encID, sigID, key, kp)
-			if err != nil {
-				return nil, err
-			}
-			v2members = append(v2members, *member)
-		default:
-			return nil, &apitypes.Error{
-				Type: apitypes.InternalServerError,
-				Err:  []string{"Unknown keyring schema version"},
-			}
-		}
 	}
 
 	n.Notify(observer.Progress, "Keyring memberships created", true)
@@ -523,23 +396,15 @@ func (e *Engine) GenerateKeypair(ctx context.Context, notifier *observer.Notifie
 
 	n.Notify(observer.Progress, "Keypairs generated", true)
 
-	pubsig, err := packagePublicKey(ctx, e.crypto, e.session.ID(), OrgID,
-		signingKeyType, kp.Signature.Public, nil, &kp.Signature)
+	pubsig, privsig, err := packageSigningKeypair(ctx, e.crypto, e.session.AuthID(),
+		OrgID, kp)
 	if err != nil {
-		log.Printf("Error packaging signature public key: %s", err)
-		return err
-	}
-
-	privsig, err := packagePrivateKey(ctx, e.crypto, e.session.ID(), OrgID,
-		kp.Signature.PNonce, kp.Signature.Private, pubsig.ID, pubsig.ID,
-		&kp.Signature)
-	if err != nil {
-		log.Printf("Error packaging signing private key: %s", err)
+		log.Printf("Error packaging signing keypair: %s", err)
 		return err
 	}
 
 	sigclaim, err := e.crypto.SignedEnvelope(
-		ctx, primitive.NewClaim(OrgID, e.session.ID(), pubsig.ID, pubsig.ID,
+		ctx, primitive.NewClaim(OrgID, e.session.AuthID(), pubsig.ID, pubsig.ID,
 			primitive.SignatureClaimType),
 		pubsig.ID, &kp.Signature)
 	if err != nil {
@@ -570,24 +435,14 @@ func (e *Engine) GenerateKeypair(ctx context.Context, notifier *observer.Notifie
 
 	n.Notify(observer.Progress, "Signing keys uploaded", true)
 
-	pubenc, err := packagePublicKey(ctx, e.crypto, e.session.ID(), OrgID,
-		encryptionKeyType, kp.Encryption.Public[:], pubsig.ID,
-		&kp.Signature)
+	pubenc, privenc, err := packageEncryptionKeypair(ctx, e.crypto, e.session.AuthID(),
+		OrgID, kp, pubsig)
 	if err != nil {
-		log.Printf("Error packaging encryption public key: %s", err)
-		return err
-	}
-
-	privenc, err := packagePrivateKey(ctx, e.crypto, e.session.ID(), OrgID,
-		kp.Encryption.PNonce, kp.Encryption.Private, pubenc.ID, pubsig.ID,
-		&kp.Signature)
-	if err != nil {
-		log.Printf("Error packaging encryption private key: %s", err)
-		return err
+		log.Printf("Error packaging encryption keypair: %s", err)
 	}
 
 	encclaim, err := e.crypto.SignedEnvelope(
-		ctx, primitive.NewClaim(OrgID, e.session.ID(), pubenc.ID, pubenc.ID,
+		ctx, primitive.NewClaim(OrgID, e.session.AuthID(), pubenc.ID, pubenc.ID,
 			primitive.SignatureClaimType),
 		pubsig.ID, &kp.Signature)
 	if err != nil {

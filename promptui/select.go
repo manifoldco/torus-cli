@@ -178,7 +178,7 @@ func (sa *SelectWithAdd) Run() (int, string, error) {
 	}
 
 	p := Prompt{
-		Label:    sa.Label,
+		Label:    sa.AddLabel,
 		Validate: sa.Validate,
 	}
 	value, err := p.Run()

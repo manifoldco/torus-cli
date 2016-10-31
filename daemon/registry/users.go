@@ -122,7 +122,7 @@ type SignupBody struct {
 	Email    string `json:"email"`
 	// State is not a field because the server determines it, client cannot
 	Password *primitive.UserPassword `json:"password"`
-	Master   *primitive.UserMaster   `json:"master"`
+	Master   *primitive.MasterKey    `json:"master"`
 }
 
 // Version returns the object version

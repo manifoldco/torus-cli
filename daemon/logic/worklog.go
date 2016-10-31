@@ -39,7 +39,7 @@ func (w *Worklog) List(ctx context.Context, orgID *identity.ID) ([]apitypes.Work
 	for _, project := range projects {
 		projName := project.Body.(*primitive.Project).Name
 		graphs, err := w.engine.client.CredentialGraph.Search(ctx,
-			"/"+orgName+"/"+projName+"/*/*/*/*", w.engine.session.ID())
+			"/"+orgName+"/"+projName+"/*/*/*/*", w.engine.session.AuthID())
 		if err != nil {
 			return nil, err
 		}
