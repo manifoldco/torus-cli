@@ -63,6 +63,14 @@ func teamFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("team, t", "TEAM", usage, "", "TORUS_TEAM", required)
 }
 
+// destroyedFlag creates a new --destroyed cli.Flag with custom usage string.
+func destroyedFlag() cli.Flag {
+	return cli.BoolFlag{
+		Name:  "destroyed, d",
+		Usage: "Display only destroyed",
+	}
+}
+
 // placeHolderStringSliceFlag is a StringSliceFlag that has been extended to use a
 // specific placedholder value in the usage, without parsing it out of the
 // usage string.

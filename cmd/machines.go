@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/urfave/cli"
 
@@ -35,17 +36,106 @@ func init() {
 				Name:  "create",
 				Usage: "Create a machine for an organization",
 				Flags: []cli.Flag{
-					orgFlag("the org the machine will belong to", false),
-					teamFlag("the team the machine will belong to", false),
+					orgFlag("Org the machine will belong to", false),
+					teamFlag("Team the machine will belong to", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, createMachine,
 				),
 			},
+			{
+				Name:  "list",
+				Usage: "List machines for an organization",
+				Flags: []cli.Flag{
+					orgFlag("Org to the machine belongs to", true),
+					teamFlag("Team the machine belongs to", false),
+					destroyedFlag(),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, listMachinesCmd,
+				),
+			},
 		},
 	}
 	Cmds = append(Cmds, machines)
+}
+
+func listMachinesCmd(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	args := ctx.Args()
+	if len(args) > 0 {
+		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
+	}
+
+	// Look up the target org
+	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return errs.NewExitError(envListFailed)
+	}
+	if org == nil {
+		return errs.NewExitError("Org not found.")
+	}
+	orgID := org.ID
+
+	state := primitive.MachineActiveState
+	if ctx.Bool("destroyed") {
+		state = primitive.MachineDestroyedState
+	}
+
+	teams, err := client.Teams.List(c, org.ID, ctx.String("team"), "machine")
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve metadata", err)
+	}
+	if len(teams) < 1 {
+		return errs.NewExitError("Machine teams not found")
+	}
+
+	var teamID *identity.ID
+	if ctx.String("team") != "" {
+		teamID = teams[0].ID
+	}
+
+	machines, err := client.Machines.List(c, orgID, &state, nil, teamID)
+	if err != nil {
+		return err
+	}
+
+	teamMap := make(map[identity.ID]primitive.Team, len(teams))
+	for _, t := range teams {
+		if t.Body.TeamType == primitive.MachineTeam {
+			teamMap[*t.ID] = *t.Body
+		}
+	}
+
+	fmt.Println("")
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	fmt.Fprintln(w, "ID\tNAME\tSTATE\tTEAM\tCREATION DATE")
+	fmt.Fprintln(w, " \t \t \t \t ")
+	for _, machine := range machines {
+		mID := machine.Machine.ID.String()
+		m := machine.Machine.Body
+		teamName := "-"
+		for _, m := range machine.Memberships {
+			team, ok := teamMap[*m.Body.TeamID]
+			if ok {
+				teamName = team.Name
+			}
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, m.State, teamName, m.Created.Format(time.RFC3339))
+	}
+	w.Flush()
+	fmt.Println("")
+
+	return nil
 }
 
 func createMachine(ctx *cli.Context) error {
