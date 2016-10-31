@@ -97,8 +97,8 @@ func attemptPDPKALogin(ctx context.Context, client *registry.Client, s session.S
 	}
 
 	pw := base64.NewValue([]byte(creds.Passphrase()))
-	salt64 := base64.NewValue([]byte(salt))
-	keypair, err := crypto.DeriveLoginKeypair(ctx, pw, salt64)
+	log.Print(pw, salt)
+	keypair, err := crypto.DeriveLoginKeypair(ctx, pw, salt)
 	if err != nil {
 		return "", err
 	}
@@ -114,7 +114,7 @@ func attemptHMACLogin(ctx context.Context, client *registry.Client, s session.Se
 		return "", err
 	}
 
-	hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase(), salt, loginToken)
+	hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase(), salt.String(), loginToken)
 	if err != nil {
 		return "", err
 	}

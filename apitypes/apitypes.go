@@ -87,7 +87,7 @@ type Login struct {
 type LoginCredential interface {
 	Type() string
 	Valid() bool
-	Passphrase() string
+	Passphrase() []byte
 	Identifier() string
 }
 
@@ -109,8 +109,8 @@ func (u *UserLogin) Valid() bool {
 }
 
 // Passphrase returns the "secret" or "password" component of the request
-func (u *UserLogin) Passphrase() string {
-	return u.Password
+func (u *UserLogin) Passphrase() []byte {
+	return []byte(u.Password)
 }
 
 // Identifier returns the identifying piece of information of the request
@@ -136,8 +136,8 @@ func (m *MachineLogin) Valid() bool {
 }
 
 // Passphrase returns the "secret" component of the request
-func (m *MachineLogin) Passphrase() string {
-	return m.Secret.String()
+func (m *MachineLogin) Passphrase() []byte {
+	return *m.Secret
 }
 
 // Identifier returns the identifying piece of information of the request

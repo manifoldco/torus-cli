@@ -23,17 +23,17 @@ type session struct {
 
 	// sensitive values
 	token      string
-	passphrase string
+	passphrase []byte
 }
 
 // Session is the interface for access to secure session details.
 type Session interface {
 	Type() string
-	Set(string, *envelope.Unsigned, *envelope.Unsigned, string, string) error
+	Set(string, *envelope.Unsigned, *envelope.Unsigned, []byte, string) error
 	ID() *identity.ID
 	AuthID() *identity.ID
 	Token() string
-	Passphrase() string
+	Passphrase() []byte
 	MasterKey() (*base64.Value, error)
 	HasToken() bool
 	HasPassphrase() bool
@@ -89,7 +89,7 @@ func (s *session) Token() string {
 }
 
 // Passphrase returns the user's passphrase.
-func (s *session) Passphrase() string {
+func (s *session) Passphrase() []byte {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -117,7 +117,7 @@ func (s *session) String() string {
 //
 // It returns an error if any values are empty.
 func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
-	passphrase, token string) error {
+	passphrase []byte, token string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -212,6 +212,6 @@ func (s *session) Logout() error {
 	s.identity = nil
 	s.auth = nil
 	s.token = ""
-	s.passphrase = ""
+	s.passphrase = []byte{}
 	return nil
 }

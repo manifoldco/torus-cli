@@ -19,6 +19,16 @@ func NewValue(b []byte) *Value {
 	return &v
 }
 
+// NewValueFromString returns a Value containing the decoded data in encoded.
+func NewValueFromString(encoded string) (*Value, error) {
+	out, err := base64.RawURLEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewValue(out), nil
+}
+
 // MarshalJSON returns the ba64url encoding of bv for JSON representation.
 func (bv *Value) MarshalJSON() ([]byte, error) {
 	return []byte("\"" + base64.RawURLEncoding.EncodeToString(*bv) + "\""), nil

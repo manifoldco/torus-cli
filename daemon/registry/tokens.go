@@ -25,8 +25,8 @@ type loginTokenMachineRequest struct {
 }
 
 type loginTokenResponse struct {
-	Salt  string `json:"salt"`
-	Token string `json:"login_token"`
+	Salt  *base64.Value `json:"salt"`
+	Token string        `json:"login_token"`
 }
 
 type authTokenHMACRequest struct {
@@ -55,7 +55,7 @@ type Tokens struct {
 
 // PostLogin requests a login token from the registry for the provided email
 // address.
-func (t *Tokens) PostLogin(ctx context.Context, creds apitypes.LoginCredential) (string, string, error) {
+func (t *Tokens) PostLogin(ctx context.Context, creds apitypes.LoginCredential) (*base64.Value, string, error) {
 	salt := loginTokenResponse{}
 
 	var body interface{}

@@ -154,9 +154,14 @@ func (s *SessionClient) MachineLogin(ctx context.Context, tokenID, tokenSecret s
 		return err
 	}
 
+	secret, err := base64.NewValueFromString(tokenSecret)
+	if err != nil {
+		return err
+	}
+
 	login := apitypes.MachineLogin{
 		TokenID: &ID,
-		Secret:  base64.NewValue([]byte(tokenSecret)),
+		Secret:  secret,
 	}
 
 	rawLogin, err := json.Marshal(login)

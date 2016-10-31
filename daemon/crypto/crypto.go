@@ -63,7 +63,7 @@ func (k *LoginKeypair) Sign(token []byte) *base64url.Value {
 
 // DeriveLoginHMAC HMACs the provided token with a key derived from password
 // and the provided base64 encoded salt.
-func DeriveLoginHMAC(ctx context.Context, password, salt, token string) (string, error) {
+func DeriveLoginHMAC(ctx context.Context, password []byte, salt, token string) (string, error) {
 	key, err := derivePassword(ctx, password, salt)
 	if err != nil {
 		return "", err
@@ -77,7 +77,7 @@ func DeriveLoginHMAC(ctx context.Context, password, salt, token string) (string,
 	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil)), nil
 }
 
-func deriveHash(ctx context.Context, password, salt string) ([]byte, error) {
+func deriveHash(ctx context.Context, password []byte, salt string) ([]byte, error) {
 	s := make([]byte, base64.RawURLEncoding.DecodedLen(len(salt)))
 	l, err := base64.RawURLEncoding.Decode(s, []byte(salt))
 	if err != nil {
@@ -89,11 +89,11 @@ func deriveHash(ctx context.Context, password, salt string) ([]byte, error) {
 		return nil, err
 	}
 
-	key, err := scrypt.Key([]byte(password), s[:l], n, r, p, keyLen)
+	key, err := scrypt.Key(password, s[:l], n, r, p, keyLen)
 	return key, err
 }
 
-func derivePassword(ctx context.Context, password, salt string) ([]byte, error) {
+func derivePassword(ctx context.Context, password []byte, salt string) ([]byte, error) {
 	key, err := deriveHash(ctx, password, salt)
 	if err != nil {
 		return nil, err
@@ -143,7 +143,7 @@ func EncryptPasswordObject(ctx context.Context, password string) (*primitive.Use
 	pw.Salt = base64.RawURLEncoding.EncodeToString(salt)
 
 	// Create password hash bytes
-	pwh, err := derivePassword(ctx, password, pw.Salt)
+	pwh, err := derivePassword(ctx, []byte(password), pw.Salt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -151,7 +151,7 @@ func EncryptPasswordObject(ctx context.Context, password string) (*primitive.Use
 	// Encode password value to base64url
 	pw.Value = base64url.NewValue(pwh)
 
-	m, err := CreateMasterKeyObject(ctx, password)
+	m, err := CreateMasterKeyObject(ctx, []byte(password))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -161,7 +161,7 @@ func EncryptPasswordObject(ctx context.Context, password string) (*primitive.Use
 
 // CreateMasterKeyObject generates a 256 byte master key which is then
 // encrypted using TripleSec-v3 using the given password.
-func CreateMasterKeyObject(ctx context.Context, password string) (*primitive.MasterKey, error) {
+func CreateMasterKeyObject(ctx context.Context, password []byte) (*primitive.MasterKey, error) {
 	m := &primitive.MasterKey{
 		Alg: Triplesec,
 	}
@@ -178,7 +178,7 @@ func CreateMasterKeyObject(ctx context.Context, password string) (*primitive.Mas
 		return nil, err
 	}
 
-	ts, err := newTriplesec(ctx, []byte(password))
+	ts, err := newTriplesec(ctx, password)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func CreateMasterKeyObject(ctx context.Context, password string) (*primitive.Mas
 func DeriveLoginKeypair(ctx context.Context, secret, salt *base64url.Value) (
 	*LoginKeypair, error) {
 
-	key, err := deriveHash(ctx, secret.String(), salt.String())
+	key, err := deriveHash(ctx, *secret, salt.String())
 	if err != nil {
 		return nil, err
 	}
