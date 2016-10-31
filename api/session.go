@@ -2,44 +2,41 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
 
-type session struct {
+// Session represents the current logged in entities identity and
+// authentication objects which could be a Machine or User
+type Session struct {
 	sessionType string
 	identity    *envelope.Unsigned
 	auth        *envelope.Unsigned
 }
 
-// Session represents the current logged in entities identity and
-// authentication objects which could be a Machine or User
-type Session interface {
-	Type() string
-	ID() *identity.ID
-	AuthID() *identity.ID
-	Username() string
-	Name() string
-	Email() string
-}
-
-func (s *session) Type() string {
+// Type returns the type of the session (machine or user)
+func (s *Session) Type() string {
 	return s.sessionType
 }
 
-func (s *session) ID() *identity.ID {
+// ID returns the identity ID (e.g. user or machine id)
+func (s *Session) ID() *identity.ID {
 	return s.identity.ID
 }
 
-func (s *session) AuthID() *identity.ID {
+// AuthID returns the auth id (e.g. user or machine token id)
+func (s *Session) AuthID() *identity.ID {
 	return s.auth.ID
 }
 
-func (s *session) Username() string {
+// Username returns the username or machine name depending on the session type
+func (s *Session) Username() string {
 	if s.sessionType == apitypes.MachineSession {
 		return s.identity.Body.(*primitive.Machine).Name
 	}
@@ -47,7 +44,8 @@ func (s *session) Username() string {
 	return s.identity.Body.(*primitive.User).Username
 }
 
-func (s *session) Name() string {
+// Name returns the fullname of the user or the machine name
+func (s *Session) Name() string {
 	if s.sessionType == apitypes.MachineSession {
 		return s.identity.Body.(*primitive.Machine).Name
 	}
@@ -55,7 +53,8 @@ func (s *session) Name() string {
 	return s.identity.Body.(*primitive.User).Name
 }
 
-func (s *session) Email() string {
+// Email returns none for a machine or the users email address
+func (s *Session) Email() string {
 	if s.sessionType == apitypes.MachineSession {
 		return "none"
 	}
@@ -65,7 +64,7 @@ func (s *session) Email() string {
 
 // NewSession returns a new session constructed from the payload of the current
 // identity as returned from the Daemon
-func NewSession(resp *apitypes.Self) (Session, error) {
+func NewSession(resp *apitypes.Self) (*Session, error) {
 	switch resp.Type {
 	case apitypes.UserSession:
 		if _, ok := resp.Identity.Body.(*primitive.User); !ok {
@@ -86,7 +85,7 @@ func NewSession(resp *apitypes.Self) (Session, error) {
 		return nil, errors.New("did not recognize session type")
 	}
 
-	return &session{
+	return &Session{
 		sessionType: resp.Type,
 		identity:    resp.Identity,
 		auth:        resp.Auth,
@@ -100,7 +99,7 @@ type SessionClient struct {
 }
 
 // Who returns the Session object for the current authenticated user or machine
-func (s *SessionClient) Who(ctx context.Context) (Session, error) {
+func (s *SessionClient) Who(ctx context.Context) (*Session, error) {
 	req, _, err := s.client.NewRequest("GET", "/self", nil, nil, false)
 	if err != nil {
 		return nil, err
@@ -131,13 +130,46 @@ func (s *SessionClient) Get(ctx context.Context) (*apitypes.SessionStatus, error
 	return resp, nil
 }
 
-// Login logs the user in using the provided email and passphrase
-func (s *SessionClient) Login(ctx context.Context, email, passphrase string) error {
-	login := apitypes.Login{
-		Email:      email,
-		Passphrase: passphrase,
+// UserLogin logs the user in using the provided email and passphrase
+func (s *SessionClient) UserLogin(ctx context.Context, email, passphrase string) error {
+	// Package up login credentials for the user
+	login := apitypes.UserLogin{
+		Email:    email,
+		Password: passphrase,
 	}
-	req, _, err := s.client.NewRequest("POST", "/login", nil, &login, false)
+
+	rawLogin, err := json.Marshal(login)
+	if err != nil {
+		return err
+	}
+
+	return performLogin(ctx, s, "user", rawLogin)
+}
+
+// MachineLogin logs the user in using the provided token id and secret
+func (s *SessionClient) MachineLogin(ctx context.Context, tokenID, tokenSecret string) error {
+
+	ID, err := identity.DecodeFromString(tokenID)
+	if err != nil {
+		return err
+	}
+
+	login := apitypes.MachineLogin{
+		TokenID: &ID,
+		Secret:  base64.NewValue([]byte(tokenSecret)),
+	}
+
+	rawLogin, err := json.Marshal(login)
+	return performLogin(ctx, s, "machine", rawLogin)
+}
+
+func performLogin(ctx context.Context, s *SessionClient, loginType string, rawLogin json.RawMessage) error {
+	wrapper := apitypes.Login{
+		Type:        loginType,
+		Credentials: rawLogin,
+	}
+
+	req, _, err := s.client.NewRequest("POST", "/login", nil, &wrapper, false)
 	if err != nil {
 		return err
 	}
@@ -148,7 +180,6 @@ func (s *SessionClient) Login(ctx context.Context, email, passphrase string) err
 	}
 
 	return nil
-
 }
 
 // Logout logs the user out of their session

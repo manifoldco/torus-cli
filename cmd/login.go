@@ -49,7 +49,7 @@ func login(ctx *cli.Context) error {
 }
 
 func performLogin(c context.Context, client *api.Client, email, password string) error {
-	err := client.Session.Login(context.Background(), email, password)
+	err := client.Session.UserLogin(context.Background(), email, password)
 	if err != nil {
 		return errs.NewExitError("Login failed. Please try again.")
 	}

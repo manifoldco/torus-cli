@@ -123,7 +123,7 @@ func orgsListCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func orgsList() ([]api.OrgResult, api.Session, error) {
+func orgsList() ([]api.OrgResult, *api.Session, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, nil, err
@@ -135,7 +135,7 @@ func orgsList() ([]api.OrgResult, api.Session, error) {
 	wg.Add(2)
 
 	var orgs []api.OrgResult
-	var session api.Session
+	var session *api.Session
 	var oErr, sErr error
 
 	go func() {

@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/identity"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
@@ -24,24 +25,62 @@ func loginRoute(client *registry.Client, s session.Session,
 		ctx := r.Context()
 		dec := json.NewDecoder(r.Body)
 
-		creds := apitypes.Login{}
-		err := dec.Decode(&creds)
+		req := apitypes.Login{}
+		err := dec.Decode(&req)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
 		}
 
-		if creds.Email == "" || creds.Passphrase == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			enc := json.NewEncoder(w)
-			enc.Encode(&errorMsg{
-				Type:  apitypes.BadRequestError,
-				Error: []string{"email and passphrase required"},
+		var creds apitypes.LoginCredential
+		switch req.Type {
+		case apitypes.UserSession:
+			creds = &apitypes.UserLogin{}
+		case apitypes.MachineSession:
+			creds = &apitypes.MachineLogin{}
+		default:
+			encodeResponseErr(w, &apitypes.Error{
+				Type: apitypes.BadRequestError,
+				Err:  []string{"unrecognized login request type"},
 			})
 			return
 		}
 
-		err = attemptLogin(ctx, client, s, db, creds)
+		err = json.Unmarshal(req.Credentials, creds)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		if !creds.Valid() {
+			encodeResponseErr(w, &apitypes.Error{
+				Type: apitypes.BadRequestError,
+				Err:  []string{"invalid login credentials provided"},
+			})
+			return
+		}
+
+		var authToken string
+		switch creds.Type() {
+		case apitypes.UserSession:
+			authToken, err = attemptHMACLogin(ctx, client, s, db, creds)
+		case apitypes.MachineSession:
+			authToken, err = attemptPDPKALogin(ctx, client, s, db, creds)
+		}
+
+		self, err := client.Self.Get(ctx, authToken)
+		if err != nil {
+			log.Printf("Could not retrieve self: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		db.Set(self.Identity)
+		if self.Type == apitypes.UserSession {
+			db.Set(self.Auth)
+		}
+
+		err = s.Set(self.Type, self.Identity, self.Auth, creds.Passphrase(), authToken)
 		if err != nil {
 			encodeResponseErr(w, err)
 			return
@@ -51,33 +90,36 @@ func loginRoute(client *registry.Client, s session.Session,
 	}
 }
 
-func attemptLogin(ctx context.Context, client *registry.Client, s session.Session, db *db.DB, creds apitypes.Login) error {
-	salt, loginToken, err := client.Tokens.PostLogin(ctx, creds.Email)
+func attemptPDPKALogin(ctx context.Context, client *registry.Client, s session.Session, db *db.DB, creds apitypes.LoginCredential) (string, error) {
+	salt, loginToken, err := client.Tokens.PostLogin(ctx, creds)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase, salt, loginToken)
+	pw := base64.NewValue([]byte(creds.Passphrase()))
+	salt64 := base64.NewValue([]byte(salt))
+	keypair, err := crypto.DeriveLoginKeypair(ctx, pw, salt64)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	authToken, err := client.Tokens.PostAuth(ctx, loginToken, hmac)
+	log.Printf("Public Key %s", keypair.PublicKey())
+	loginTokenSig := keypair.Sign([]byte(loginToken))
+	return client.Tokens.PostPDPKAuth(ctx, loginToken, loginTokenSig)
+}
+
+func attemptHMACLogin(ctx context.Context, client *registry.Client, s session.Session, db *db.DB, creds apitypes.LoginCredential) (string, error) {
+	salt, loginToken, err := client.Tokens.PostLogin(ctx, creds)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	self, err := client.Self.Get(ctx, authToken)
+	hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase(), salt, loginToken)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	db.Set(self.Identity)
-	if self.Type == apitypes.UserSession {
-		db.Set(self.Auth)
-	}
-
-	return s.Set(self.Type, self.Identity, self.Auth, creds.Passphrase, authToken)
+	return client.Tokens.PostAuth(ctx, loginToken, hmac)
 }
 
 func logoutRoute(client *registry.Client, s session.Session) http.HandlerFunc {

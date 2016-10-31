@@ -79,11 +79,12 @@ func statusCmd(ctx *cli.Context) error {
 	if session.Type() == apitypes.MachineSession {
 		fmt.Fprintf(w, "Machine ID:\t%s\n", session.ID())
 		fmt.Fprintf(w, "Machine Token ID:\t%s\n", session.AuthID())
+		fmt.Fprintf(w, "Machine Name:\t%s\n\n", session.Username())
 	} else {
 		fmt.Fprintf(w, "Identity:\t%s <%s>\n", session.Name(), session.Email())
+		fmt.Fprintf(w, "Username:\t%s\n\n", session.Username())
 	}
 
-	fmt.Fprintf(w, "Username:\t%s\n\n", session.Username())
 	w.Flush()
 
 	err = checkRequiredFlags(ctx)

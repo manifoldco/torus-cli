@@ -109,6 +109,8 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ] `torus machines create` supports flags (e.g. `-o, -t` etc)
 - [ ] `torus machines create` allows you to select an existing org and team
 - [ ] `torus machines create` allows you to create a new machine team
+- [ ] You can login using `TORUS_TOKEN_ID` and `TORUS_TOKEN_SECRET` environment variables
+- [ ] A machine can read but not write (e.g. `view, run, ls, envs list, services list, projects list, orgs list, status`)
 - [ ] `torus machines list` displays all machines
 - [ ] `torus machines list --team [team]` shows machines belonging to that team
 - [ ] `torus machines list --team [team] --destroyed` shows destroyed machines belonging to that team

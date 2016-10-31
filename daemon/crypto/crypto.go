@@ -55,6 +55,12 @@ func (k *LoginKeypair) Salt() *base64url.Value {
 	return k.salt
 }
 
+// Sign returns a signature of the given token as a base64 string
+func (k *LoginKeypair) Sign(token []byte) *base64url.Value {
+	sig := ed25519.Sign(k.private, token)
+	return base64url.NewValue(sig)
+}
+
 // DeriveLoginHMAC HMACs the provided token with a key derived from password
 // and the provided base64 encoded salt.
 func DeriveLoginHMAC(ctx context.Context, password, salt, token string) (string, error) {

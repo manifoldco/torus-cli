@@ -106,7 +106,7 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	var teams []api.TeamResult
 	var org *api.OrgResult
-	var session api.Session
+	var session *api.Session
 	var oErr, sErr, tErr error
 
 	memberOf := make(map[identity.ID]bool)
@@ -228,7 +228,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		getMembers.Done()
 	}()
 
-	var session api.Session
+	var session *api.Session
 	go func() {
 		// Who am I
 		session, sErr = client.Session.Who(c)

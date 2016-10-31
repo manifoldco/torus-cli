@@ -100,6 +100,7 @@ func debugInfoCmd(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
 	fmt.Fprintf(w, "%s\t%s\n", "Timestamp", timestamp.UTC().Format(time.UnixDate))
 	fmt.Fprintf(w, "%s\t%v\n", "Debug", debug)
+
 	if !loggedIn {
 		fmt.Fprintf(w, "%s\t%v\n", "Logged In", loggedIn)
 	} else {
@@ -108,13 +109,14 @@ func debugInfoCmd(ctx *cli.Context) error {
 		if session.Type() == apitypes.MachineSession {
 			fmt.Fprintf(w, "%s\t%s\n", "Machine ID", session.ID())
 			fmt.Fprintf(w, "%s\t%s\n", "Machine Token ID", session.AuthID())
+			fmt.Fprintf(w, "%s\t%s\n", "Machine Name", session.Username())
 		} else {
 			fmt.Fprintf(w, "%s\t%s\n", "User ID", session.ID())
 			fmt.Fprintf(w, "%s\t%s <%s>\n", "Identity", session.Name(), session.Email())
+			fmt.Fprintf(w, "%s\t%s\n", "Username", session.Username())
 		}
-
-		fmt.Fprintf(w, "%s\t%s\n", "Username", session.Username())
 	}
+
 	fmt.Fprintf(w, " \t \n")
 	fmt.Fprintf(w, "%s\t%s\n", "CLI", cfg.Version)
 	fmt.Fprintf(w, "%s\t%s\n", "Daemon", daemonVersion.Version)
