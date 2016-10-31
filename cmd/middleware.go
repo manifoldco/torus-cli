@@ -237,12 +237,15 @@ func setUserEnv(ctx *cli.Context) error {
 	}
 
 	client := api.NewClient(cfg)
-	u, err := client.Users.Self(context.Background())
+	session, err := client.Session.Who(context.Background())
 	if err != nil {
 		return err
 	}
 
-	ctx.Set(argName, "dev-"+u.Body.Username)
+	if session.Type() == apitypes.UserSession {
+		ctx.Set(argName, "dev-"+session.Username())
+	}
+
 	return nil
 }
 

@@ -35,6 +35,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.PostFunc("/login", loginRoute(client, s, db))
 	mux.PostFunc("/logout", logoutRoute(client, s))
 	mux.GetFunc("/session", sessionRoute(s))
+	mux.GetFunc("/self", selfRoute(s))
 
 	mux.PostFunc("/machines", machinesCreateRoute(client, s, lEngine, o))
 	mux.PostFunc("/keypairs/generate", keypairsGenerateRoute(lEngine, o))

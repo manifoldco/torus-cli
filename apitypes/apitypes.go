@@ -4,6 +4,7 @@ package apitypes
 import (
 	"strings"
 
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -47,6 +48,20 @@ func IsNotFoundError(err error) bool {
 	}
 
 	return false
+}
+
+// A session can represent either a machine or a user
+const (
+	MachineSession = "machine"
+	UserSession    = "user"
+	NotLoggedIn    = "no_session"
+)
+
+// Self represents the current identity and auth combination for this session
+type Self struct {
+	Type     string             `json:"type"`
+	Identity *envelope.Unsigned `json:"identity"`
+	Auth     *envelope.Unsigned `json:"auth"`
 }
 
 // Version contains the release version of the daemon.

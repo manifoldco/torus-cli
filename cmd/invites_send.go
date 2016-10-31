@@ -41,7 +41,7 @@ func invitesSend(ctx *cli.Context) error {
 	}
 
 	// Identify the user attempting the command
-	user, err := client.Users.Self(context.Background())
+	session, err := client.Session.Who(context.Background())
 	if err != nil {
 		return errs.NewExitError(orgInviteFailed)
 	}
@@ -92,7 +92,7 @@ TeamSearch:
 		return errs.NewExitError(orgInviteFailed)
 	}
 
-	err = client.Invites.Send(context.Background(), email, *org.ID, *user.ID, teamIDs)
+	err = client.Invites.Send(context.Background(), email, *org.ID, *session.ID(), teamIDs)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError(email + " has already been invited to the " + org.Body.Name + " org")

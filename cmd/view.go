@@ -76,14 +76,14 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	self, err := client.Users.Self(c)
+	session, err := client.Session.Who(c)
 	if err != nil {
 		return nil, "", errs.NewErrorExitError("Error fetching user details", err)
 	}
 
 	parts := []string{
 		"", ctx.String("org"), ctx.String("project"), ctx.String("environment"),
-		ctx.String("service"), self.Body.Username, ctx.String("instance"),
+		ctx.String("service"), session.Username(), ctx.String("instance"),
 	}
 
 	path := strings.Join(parts, "/")

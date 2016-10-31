@@ -151,6 +151,26 @@ func sessionRoute(s session.Session) http.HandlerFunc {
 	}
 }
 
+func selfRoute(s session.Session) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		enc := json.NewEncoder(w)
+
+		if s.Type() == apitypes.NotLoggedIn {
+			encodeResponseErr(w, &apitypes.Error{
+				Type: apitypes.UnauthorizedError,
+				Err:  []string{"invalid login"},
+			})
+			return
+		}
+
+		resp := s.Self()
+		err := enc.Encode(resp)
+		if err != nil {
+			encodeResponseErr(w, err)
+		}
+	}
+}
+
 func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
