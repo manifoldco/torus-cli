@@ -32,8 +32,8 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.Get("/observe", o)
 
 	mux.PostFunc("/signup", signupRoute(client, s, db))
-	mux.PostFunc("/login", loginRoute(client, s, db))
-	mux.PostFunc("/logout", logoutRoute(client, s))
+	mux.PostFunc("/login", loginRoute(lEngine))
+	mux.PostFunc("/logout", logoutRoute(lEngine))
 	mux.GetFunc("/session", sessionRoute(s))
 	mux.GetFunc("/self", selfRoute(s))
 

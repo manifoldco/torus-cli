@@ -35,6 +35,7 @@ type Engine struct {
 
 	Worklog Worklog
 	Machine Machine
+	Session Session
 }
 
 // NewEngine returns a new Engine
@@ -49,6 +50,7 @@ func NewEngine(c *config.Config, s session.Session, db *db.DB, e *crypto.Engine,
 	}
 	engine.Worklog = Worklog{engine: engine}
 	engine.Machine = Machine{engine: engine}
+	engine.Session = Session{engine: engine}
 	return engine
 }
 
