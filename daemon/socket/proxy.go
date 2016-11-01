@@ -22,7 +22,9 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 
 	"github.com/manifoldco/torus-cli/daemon/db"
+	"github.com/manifoldco/torus-cli/daemon/logic"
 	"github.com/manifoldco/torus-cli/daemon/observer"
+	"github.com/manifoldco/torus-cli/daemon/registry"
 	"github.com/manifoldco/torus-cli/daemon/routes"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
@@ -32,19 +34,22 @@ import (
 // directly proxy requests from the cli to the registry, and exposes an
 // interface over `/v1` for secure and composite operations.
 type AuthProxy struct {
-	u    *url.URL
-	l    net.Listener
-	s    httpdown.Server
-	c    *config.Config
-	db   *db.DB
-	sess session.Session
-	o    *observer.Observer
+	u      *url.URL
+	l      net.Listener
+	s      httpdown.Server
+	c      *config.Config
+	db     *db.DB
+	sess   session.Session
+	o      *observer.Observer
+	t      *http.Transport
+	client *registry.Client
+	logic  *logic.Engine
 }
 
 // NewAuthProxy returns a new AuthProxy. It will return an error if creation
 // of the domain socket fails, or the upstream registry URL is misconfigured.
-func NewAuthProxy(c *config.Config, sess session.Session,
-	db *db.DB) (*AuthProxy, error) {
+func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB,
+	t *http.Transport, client *registry.Client, logic *logic.Engine) (*AuthProxy, error) {
 
 	l, err := makeSocket(c.SocketPath)
 	if err != nil {
@@ -52,26 +57,32 @@ func NewAuthProxy(c *config.Config, sess session.Session,
 	}
 
 	return &AuthProxy{
-		u:    c.RegistryURI,
-		l:    l,
-		c:    c,
-		db:   db,
-		sess: sess,
-		o:    observer.New(),
+		u:      c.RegistryURI,
+		l:      l,
+		c:      c,
+		db:     db,
+		sess:   sess,
+		o:      observer.New(),
+		t:      t,
+		client: client,
+		logic:  logic,
 	}, nil
+}
+
+// CreateHTTPTransport creates and configures the
+func CreateHTTPTransport(cfg *config.Config) *http.Transport {
+	return &http.Transport{TLSClientConfig: &tls.Config{
+		ServerName: strings.Split(cfg.RegistryURI.Host, ":")[0],
+		RootCAs:    cfg.CABundle,
+	}}
 }
 
 // Listen starts the main loop of the AuthProxy. It returns on error, or when
 // the AuthProxy is closed.
 func (p *AuthProxy) Listen() error {
 	mux := bone.New()
-	t := &http.Transport{TLSClientConfig: &tls.Config{
-		ServerName: strings.Split(p.c.RegistryURI.Host, ":")[0],
-		RootCAs:    p.c.CABundle,
-	}}
-
 	proxy := &httputil.ReverseProxy{
-		Transport: t,
+		Transport: p.t,
 		Director: func(r *http.Request) {
 			r.URL.Scheme = p.u.Scheme
 			r.URL.Host = p.u.Host
@@ -91,7 +102,7 @@ func (p *AuthProxy) Listen() error {
 	go p.o.Start()
 
 	mux.HandleFunc("/proxy/", proxyCanceler(proxy))
-	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, t, p.o))
+	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, p.t, p.o, p.client, p.logic))
 
 	h := httpdown.HTTP{}
 	p.s = h.Serve(&http.Server{Handler: requestIDHandler(loggingHandler(mux))}, p.l)

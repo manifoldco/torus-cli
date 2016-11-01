@@ -9,7 +9,6 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 
-	"github.com/manifoldco/torus-cli/daemon/crypto"
 	"github.com/manifoldco/torus-cli/daemon/db"
 	"github.com/manifoldco/torus-cli/daemon/logic"
 	"github.com/manifoldco/torus-cli/daemon/observer"
@@ -20,20 +19,15 @@ import (
 // NewRouteMux returns a *bone.Mux responsible for handling the cli to daemon
 // http api.
 func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
-	t *http.Transport, o *observer.Observer) *bone.Mux {
-
-	cryptoEngine := crypto.NewEngine(s)
-	client := registry.NewClient(c.RegistryURI.String(), c.APIVersion,
-		c.Version, s, t)
-	lEngine := logic.NewEngine(c, s, db, cryptoEngine, client)
+	t *http.Transport, o *observer.Observer, client *registry.Client, lEngine *logic.Engine) *bone.Mux {
 
 	mux := bone.New()
 
 	mux.Get("/observe", o)
 
 	mux.PostFunc("/signup", signupRoute(client, s, db))
-	mux.PostFunc("/login", loginRoute(client, s, db))
-	mux.PostFunc("/logout", logoutRoute(client, s))
+	mux.PostFunc("/login", loginRoute(lEngine))
+	mux.PostFunc("/logout", logoutRoute(lEngine))
 	mux.GetFunc("/session", sessionRoute(s))
 	mux.GetFunc("/self", selfRoute(s))
 
