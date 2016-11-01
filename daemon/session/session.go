@@ -121,10 +121,6 @@ func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	if s.Type() != apitypes.NotLoggedIn {
-		return errors.New("Cannot overwrite existing session")
-	}
-
 	if identity == nil || auth == nil {
 		return errors.New("identity and auth cannot be null")
 	}
