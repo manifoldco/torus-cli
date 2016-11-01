@@ -1,13 +1,17 @@
 # CHANGELOG
 
-## UNPUBLISHED
+## v0.15.0
 
-_YYYY-MM-DD_
+_2016-11-01_
 
 **Notable Changes**
 
-- Added contributor guide, CLA and Code of Conduct
-- Introduced concept of machines (with commands create, list, view, destroy)
+- Added Contributor Guide, CLA and Code of Conduct as a part of our open sourcing effort
+- Introducing the ability to create, list, view, and destroy machines to support secret access in automated environments (e.g. continuous integration or production).
+
+**Fixes**
+
+- Errors encountered during an interactive prompt are no longer hidden, they are surfaced to the user.
 
 ## v0.14.0
 
