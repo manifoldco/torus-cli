@@ -53,15 +53,7 @@ func runCmd(ctx *cli.Context) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	cmd.Env = []string{}
-	// Clone the existing environment, without sensitve TORUS values.
-	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "TORUS_EMAIL=") || strings.HasPrefix(e, "TORUS_PASSWORD=") {
-			continue
-		}
-		cmd.Env = append(cmd.Env, e)
-	}
+	cmd.Env = filterEnv()
 
 	// Add the secrets into the env
 	for _, secret := range secrets {
@@ -103,4 +95,17 @@ func runCmd(ctx *cli.Context) error {
 	}
 
 	return nil
+}
+
+func filterEnv() []string {
+	env := []string{}
+	for _, e := range os.Environ() {
+		if strings.HasPrefix(e, "TORUS_EMAIL=") || strings.HasPrefix(e, "TORUS_PASSWORD=") ||
+			strings.HasPrefix(e, "TORUS_TOKEN_ID=") || strings.HasPrefix(e, "TORUS_TOKEN_SECRET=") {
+			continue
+		}
+		env = append(env, e)
+	}
+
+	return env
 }

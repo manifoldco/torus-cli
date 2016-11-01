@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"path"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
@@ -132,13 +131,7 @@ func spawnDaemon() error {
 
 	// Clone the current env, removing email and password if they exist.
 	// no need to keep those hanging around in a long lived-process!
-	cmd.Env = []string{}
-	for _, e := range os.Environ() {
-		if strings.HasPrefix(e, "TORUS_EMAIL=") || strings.HasPrefix(e, "TORUS_PASSWORD=") {
-			continue
-		}
-		cmd.Env = append(cmd.Env, e)
-	}
+	cmd.Env = filterEnv()
 
 	err = cmd.Start()
 	if err != nil {
