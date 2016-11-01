@@ -81,9 +81,14 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 		return nil, "", errs.NewErrorExitError("Error fetching user details", err)
 	}
 
+	identity := session.Username()
+	if session.Type() == "machine" {
+		identity = "machine-" + identity
+	}
+
 	parts := []string{
 		"", ctx.String("org"), ctx.String("project"), ctx.String("environment"),
-		ctx.String("service"), session.Username(), ctx.String("instance"),
+		ctx.String("service"), identity, ctx.String("instance"),
 	}
 
 	path := strings.Join(parts, "/")
