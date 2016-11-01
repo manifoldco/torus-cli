@@ -96,12 +96,17 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		return nil, err
 	}
 
-	team, err := findMembersTeam(teams)
+	membersTeam, machinesTeam, err := findSystemTeams(teams)
 	if err != nil {
 		return nil, err
 	}
 
-	memberships, err := client.Memberships.List(ctx, credBody.OrgID, team.ID, nil)
+	userMembers, err := client.Memberships.List(ctx, credBody.OrgID, membersTeam.ID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	machineMembers, err := client.Memberships.List(ctx, credBody.OrgID, machinesTeam.ID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -121,14 +126,32 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	}
 
 	// get users in the members group of this org.
-	// use their public key to encrypt the mek with a random nonce.
-	// XXX: we need to filter this down
-	members := []registry.KeyringMember{}
-	for _, membership := range memberships {
-		mBody := membership.Body.(*primitive.Membership)
+	// XXX: we need to filter this down based on ACL
+	var subjects []identity.ID
+	for _, membership := range userMembers {
+		subjects = append(subjects, *membership.Body.(*primitive.Membership).OwnerID)
+	}
 
+	for _, membership := range machineMembers {
+		machineID := membership.Body.(*primitive.Membership).OwnerID
+		segment, err := client.Machines.Get(ctx, machineID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, token := range segment.Tokens {
+			if token.Token.Body.State == primitive.MachineTokenActiveState {
+				subjects = append(subjects, *token.Token.ID)
+				break
+			}
+		}
+	}
+
+	// use their public key to encrypt the mek with a random nonce.
+	members := []registry.KeyringMember{}
+	for _, subject := range subjects {
 		// For this user, find their public encryption key
-		encPubKey, err := findEncryptionPublicKey(claimTrees, credBody.OrgID, mBody.OwnerID)
+		encPubKey, err := findEncryptionPublicKey(claimTrees, credBody.OrgID, &subject)
 		if err != nil {
 			return nil, err
 		}
@@ -446,26 +469,44 @@ func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *iden
 	return encryptingKey, nil
 }
 
-// findMembersTeam takes in a list of team objects and returns the members team.
-func findMembersTeam(teams []envelope.Unsigned) (*envelope.Unsigned, error) {
-	var team *envelope.Unsigned
+// findSystemTeams takes in a list of team objects and returns the members and machines
+// teams.
+func findSystemTeams(teams []envelope.Unsigned) (*envelope.Unsigned, *envelope.Unsigned, error) {
+	var members, machines *envelope.Unsigned
 	for _, t := range teams {
+		var team = t
 		tBody := t.Body.(*primitive.Team)
 
-		if tBody.Name == "member" && tBody.TeamType == primitive.SystemTeam {
-			team = &t
+		if tBody.TeamType == primitive.SystemTeam {
+			switch tBody.Name {
+			case "member":
+				members = &team
+			case "machine":
+				machines = &team
+			}
+		}
+
+		if members != nil && machines != nil {
 			break
 		}
 	}
 
-	if team == nil {
-		return nil, &apitypes.Error{
-			Err:  []string{"Member team not found."},
+	var errs []string
+	if members == nil {
+		errs = append(errs, "Member team not found.")
+	}
+	if machines == nil {
+		errs = append(errs, "Machine team not found.")
+	}
+
+	if len(errs) > 0 {
+		return nil, nil, &apitypes.Error{
+			Err:  errs,
 			Type: apitypes.NotFoundError,
 		}
 	}
 
-	return team, nil
+	return members, machines, nil
 }
 
 func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
