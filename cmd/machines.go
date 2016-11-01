@@ -179,7 +179,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 		name := args[0]
 		machines, lErr := client.Machines.List(c, org.ID, nil, &name, nil)
 		if lErr != nil {
-			return errs.NewErrorExitError("Failed to retrieve machine", err)
+			return errs.NewErrorExitError("Failed to retrieve machine", lErr)
 		}
 		if len(machines) < 1 {
 			return errs.NewExitError("Machine not found")
