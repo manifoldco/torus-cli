@@ -7,7 +7,10 @@ import (
 
 	"github.com/manifoldco/torus-cli/config"
 
+	"github.com/manifoldco/torus-cli/daemon/crypto"
 	"github.com/manifoldco/torus-cli/daemon/db"
+	"github.com/manifoldco/torus-cli/daemon/logic"
+	"github.com/manifoldco/torus-cli/daemon/registry"
 	"github.com/manifoldco/torus-cli/daemon/session"
 	"github.com/manifoldco/torus-cli/daemon/socket"
 )
@@ -44,14 +47,19 @@ func New(cfg *config.Config) (*Daemon, error) {
 		}
 	}()
 
-	session := session.NewSession()
-
 	db, err := db.NewDB(cfg.DBPath)
 	if err != nil {
 		return nil, err
 	}
 
-	proxy, err := socket.NewAuthProxy(cfg, session, db)
+	session := session.NewSession()
+	cryptoEngine := crypto.NewEngine(session)
+	transport := socket.CreateHTTPTransport(cfg)
+	client := registry.NewClient(cfg.RegistryURI.String(), cfg.APIVersion,
+		cfg.Version, session, transport)
+	logic := logic.NewEngine(cfg, session, db, cryptoEngine, client)
+
+	proxy, err := socket.NewAuthProxy(cfg, session, db, transport, client, logic)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create auth proxy: %s", err)
 	}
