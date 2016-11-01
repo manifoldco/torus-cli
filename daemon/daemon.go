@@ -1,11 +1,17 @@
 package daemon
 
 import (
+	"context"
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/nightlyone/lockfile"
 
+	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/identity"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
 	"github.com/manifoldco/torus-cli/daemon/db"
@@ -23,6 +29,7 @@ type Daemon struct {
 	session     session.Session
 	config      *config.Config
 	db          *db.DB
+	logic       *logic.Engine
 	hasShutdown bool
 }
 
@@ -70,6 +77,7 @@ func New(cfg *config.Config) (*Daemon, error) {
 		session:     session,
 		config:      cfg,
 		db:          db,
+		logic:       logic,
 		hasShutdown: false,
 	}
 
@@ -84,6 +92,50 @@ func (d *Daemon) Addr() string {
 // Run starts the daemon main loop. It returns on failure, or when the daemon
 // has been gracefully shut down.
 func (d *Daemon) Run() error {
+	email, hasEmail := os.LookupEnv("TORUS_EMAIL")
+	password, hasPassword := os.LookupEnv("TORUS_PASSWORD")
+	tokenID, hasTokenID := os.LookupEnv("TORUS_TOKEN_ID")
+	tokenSecret, hasTokenSecret := os.LookupEnv("TORUS_TOKEN_SECRET")
+
+	if hasEmail && hasPassword {
+		log.Printf("Attempting to login as: %s", email)
+		userLogin := &apitypes.UserLogin{
+			Email:    email,
+			Password: password,
+		}
+
+		err := d.logic.Session.Login(context.Background(), userLogin)
+		if err != nil {
+			return err
+		}
+	}
+
+	if hasTokenID && hasTokenSecret {
+		log.Printf("Attempting to login as machine token id: %s", tokenID)
+
+		ID, err := identity.DecodeFromString(tokenID)
+		if err != nil {
+			log.Printf("Could not parse TORUS_TOKEN_ID")
+			return err
+		}
+
+		secret, err := base64.NewValueFromString(tokenSecret)
+		if err != nil {
+			log.Printf("Could not parse TORUS_TOKEN_SECRET")
+			return err
+		}
+
+		machineLogin := &apitypes.MachineLogin{
+			TokenID: &ID,
+			Secret:  secret,
+		}
+
+		err = d.logic.Session.Login(context.Background(), machineLogin)
+		if err != nil {
+			return err
+		}
+	}
+
 	return d.proxy.Listen()
 }
 
