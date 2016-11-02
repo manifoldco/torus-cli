@@ -154,7 +154,7 @@ ineffassign:
 #################################################
 
 PWD=$(shell pwd)
-IMAGE=arigato/cli:latest
+IMAGE=manifoldco/torus-cli:latest
 RUN_IN_DOCKER=\
 	docker run --name cli --rm \
 		-v $(PWD):/go/src/github.com/manifoldco/torus-cli \
@@ -171,7 +171,7 @@ docker-release-all:
 	$(call RUN_IN_DOCKER,release-all)
 
 container:
-	docker build -t arigato/cli:latest .
+	docker build -t $(IMAGE) .
 
 .PHONY: docker-build docker-test container
 
