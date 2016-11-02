@@ -463,7 +463,7 @@ func promptForMachineName(providedName, teamName string) (string, error) {
 		return "", errs.NewErrorExitError("Could not derive machine name", err)
 	}
 
-	name := ""
+	var name string
 	if providedName == "" {
 		name = defaultName
 	} else {

@@ -109,7 +109,7 @@ func listObjects(ctx *cli.Context) error {
 	var paths []string
 	var pathErr error
 
-	showing := "Listing objects for path"
+	var showing string
 	switch count {
 	case 0:
 		showing = "Listing orgs:"
@@ -214,6 +214,9 @@ func projectPaths(cpathObj *pathexp.PathExp) ([]string, error) {
 func envPaths(cpathObj *pathexp.PathExp) ([]string, error) {
 	var paths []string
 	c, client, err := NewAPIClient(nil, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	orgs, _, err := orgsList()
 	if err != nil {
@@ -253,6 +256,9 @@ func envPaths(cpathObj *pathexp.PathExp) ([]string, error) {
 func servicePaths(cpathObj *pathexp.PathExp) ([]string, error) {
 	var paths []string
 	c, client, err := NewAPIClient(nil, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	orgs, _, err := orgsList()
 	if err != nil {
@@ -291,6 +297,9 @@ func servicePaths(cpathObj *pathexp.PathExp) ([]string, error) {
 func secretPaths(cpathObj *pathexp.PathExp) ([]string, error) {
 	var paths []string
 	c, client, err := NewAPIClient(nil, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	creds, err := client.Credentials.Search(c, cpathObj.String())
 	if err != nil {

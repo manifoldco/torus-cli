@@ -280,7 +280,7 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 // a non-empty name parameter.
 //
 // The type of team can be specified, if no team type is provided then all
-// teams exlcuding machine teams are listed.
+// teams excluding machine teams are listed.
 //
 // It returns the object of the selected team, the name of the selected team,
 // and a boolean indicating if a new team should be created.
@@ -299,6 +299,9 @@ func SelectCreateTeam(c context.Context, client *api.Client, orgID *identity.ID,
 	var idx int
 	if name == "" {
 		idx, name, err = SelectTeamPrompt(teams, label)
+		if err != nil {
+			return nil, "", false, err
+		}
 	} else {
 		found := false
 		for i, t := range teams {

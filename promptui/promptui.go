@@ -3,7 +3,7 @@ package promptui
 
 import "errors"
 
-// ErrEOF is returned from prompts when EOF is encounterd.
+// ErrEOF is returned from prompts when EOF is encountered.
 var ErrEOF = errors.New("^D")
 
 // ErrInterrupt is returned from prompts when an interrupt (ctrl-c) is

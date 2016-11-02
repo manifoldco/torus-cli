@@ -46,6 +46,10 @@ func linkCmd(ctx *cli.Context) error {
 	}
 
 	dPrefs, err := dirprefs.Load(false)
+	if err != nil {
+		return err
+	}
+
 	if dPrefs != nil && dPrefs.Path != "" && !ctx.Bool("force") {
 		msg := fmt.Sprintf(
 			"This directory is already linked. Use '%s status' to view.",

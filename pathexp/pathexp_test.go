@@ -231,15 +231,18 @@ func TestEqual(t *testing.T) {
 func TestWithInstance(t *testing.T) {
 	a, err := Parse("/o/p/e/s/u/i")
 	if err != nil {
-		t.Fatalf("Failed to parse test item")
+		t.Fatal("Failed to parse test item")
 	}
 
 	expected, err := Parse("/o/p/e/s/u/*")
 	if err != nil {
-		t.Fatalf("Failed to parse test item")
+		t.Fatal("Failed to parse test item")
 	}
 
 	replaced, err := a.WithInstance("*")
+	if err != nil {
+		t.Fatal("Failed to replace instance")
+	}
 
 	res := replaced.Equal(expected)
 	if !res {

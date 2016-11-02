@@ -165,6 +165,9 @@ func (s *SessionClient) MachineLogin(ctx context.Context, tokenID, tokenSecret s
 	}
 
 	rawLogin, err := json.Marshal(login)
+	if err != nil {
+		return err
+	}
 	return performLogin(ctx, s, "machine", rawLogin)
 }
 

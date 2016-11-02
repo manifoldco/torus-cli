@@ -43,7 +43,7 @@ type notification struct {
 	Increment bool
 }
 
-// Observer recieves events via Notify, and publishes them as SSEs via its
+// Observer receives events via Notify, and publishes them as SSEs via its
 // ServeHTTP function.
 type Observer struct {
 	notify chan *event

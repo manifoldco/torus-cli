@@ -35,6 +35,9 @@ func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) err
 	case apitypes.MachineSession:
 		authToken, err = attemptPDPKALogin(ctx, s.engine.client, s.engine.session, creds)
 	}
+	if err != nil {
+		return err
+	}
 
 	self, err := s.engine.client.Self.Get(ctx, authToken)
 	if err != nil {
