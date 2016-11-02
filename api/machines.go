@@ -13,7 +13,7 @@ import (
 const tokenSecretSize = 18
 
 // MachinesClient makes requests to the Daemon on behalf of the user to
-// manipualte Machine resources.
+// manipulate Machine resources.
 type MachinesClient struct {
 	client *Client
 }

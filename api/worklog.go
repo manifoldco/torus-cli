@@ -64,5 +64,5 @@ func (w *WorklogClient) Resolve(ctx context.Context, orgID *identity.ID, ident *
 	var res apitypes.WorklogResult
 
 	_, err = w.client.Do(ctx, req, &res, nil, nil)
-	return &res, nil
+	return &res, err
 }

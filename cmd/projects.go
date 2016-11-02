@@ -137,6 +137,9 @@ func createProjectCmd(ctx *cli.Context) error {
 	c := context.Background()
 
 	org, orgName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	if err != nil {
+		return errs.NewExitError(projectCreateFailed)
+	}
 
 	var orgID *identity.ID
 	if !newOrg {

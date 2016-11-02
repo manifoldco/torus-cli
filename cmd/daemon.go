@@ -235,11 +235,13 @@ func stopDaemonCmd(ctx *cli.Context) error {
 func stopDaemon(proc *os.Process) (bool, error) {
 	err := proc.Signal(syscall.Signal(syscall.SIGTERM))
 
-	increment := 50 * time.Millisecond
-	for d := increment; d < 3*time.Second; d += increment {
-		time.Sleep(d)
-		if _, err := findProcess(proc.Pid); err != nil {
-			return true, nil
+	if err == nil { // no need to wait for the SIGTERM if the signal failed
+		increment := 50 * time.Millisecond
+		for d := increment; d < 3*time.Second; d += increment {
+			time.Sleep(d)
+			if _, err := findProcess(proc.Pid); err != nil {
+				return true, nil
+			}
 		}
 	}
 

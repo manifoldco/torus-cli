@@ -161,6 +161,10 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	cekNonce, ctNonce, ct, err := e.crypto.BoxCredential(
 		ctx, []byte(cred.Body.Value), *mekshare.Key.Value, *mekshare.Key.Nonce,
 		&kp.Encryption, *encryptingKey.Key.Value)
+	if err != nil {
+		log.Printf("Error encrypting credential: %s", err)
+		return nil, err
+	}
 
 	credBody.Nonce = base64.NewValue(cekNonce)
 

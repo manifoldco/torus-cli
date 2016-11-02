@@ -41,9 +41,10 @@ func init() {
 }
 
 func listPref(ctx *cli.Context) error {
+	const loadErr = "Failed to load prefs."
 	preferences, err := prefs.NewPreferences(false)
 	if err != nil {
-		return errs.NewErrorExitError("Failed to load prefs.", err)
+		return errs.NewErrorExitError(loadErr, err)
 	}
 
 	spacer := "    "
@@ -57,6 +58,9 @@ func listPref(ctx *cli.Context) error {
 		fmt.Println("[core]")
 		fc := ini.Empty()
 		err = ini.ReflectFrom(fc, &preferences.Core)
+		if err != nil {
+			return errs.NewErrorExitError(loadErr, err)
+		}
 		fc.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
 	}
 
@@ -64,6 +68,9 @@ func listPref(ctx *cli.Context) error {
 		fmt.Println("[defaults]")
 		fd := ini.Empty()
 		err = ini.ReflectFrom(fd, &preferences.Defaults)
+		if err != nil {
+			return errs.NewErrorExitError(loadErr, err)
+		}
 		fd.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
 	}
 
