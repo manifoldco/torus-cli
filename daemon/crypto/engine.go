@@ -67,7 +67,7 @@ func NewEngine(sess session.Session) *Engine {
 	return &Engine{sess: sess}
 }
 
-// Seal encrypts the plaintext pt bytes with triplesec-v3 using a key derrived
+// Seal encrypts the plaintext pt bytes with triplesec-v3 using a key derived
 // via blake2b from the user's master key and a nonce (returned).
 func (e *Engine) Seal(ctx context.Context, pt []byte) ([]byte, []byte, error) {
 	mk, err := e.unsealMasterKey(ctx)
@@ -107,7 +107,7 @@ func (e *Engine) Seal(ctx context.Context, pt []byte) ([]byte, []byte, error) {
 }
 
 // Unseal decrypts the ciphertext ct, encrypted with triplesec-v3, using the
-// a key derrived via blake2b from the user's master key and the provided nonce.
+// a key derived via blake2b from the user's master key and the provided nonce.
 func (e *Engine) Unseal(ctx context.Context, ct, nonce []byte) ([]byte, error) {
 	mk, err := e.unsealMasterKey(ctx)
 	if err != nil {
