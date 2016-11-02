@@ -9,7 +9,7 @@ GO_REQUIRED_VERSION=1.7.1
 VERSION=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 all: binary
-ci: binary vet fmtcheck simple lint test
+ci: binary vet fmtcheck simple lint misspell ineffassign test
 
 .PHONY: all ci
 
@@ -21,7 +21,10 @@ BOOTSTRAP=\
 	github.com/Masterminds/glide \
 	github.com/golang/lint/golint \
 	honnef.co/go/simple/cmd/gosimple \
-	github.com/jteeuwen/go-bindata/...
+	github.com/jteeuwen/go-bindata/... \
+	github.com/client9/misspell/cmd/misspell \
+	github.com/gordonklaus/ineffassign \
+	github.com/alecthomas/gometalinter
 
 $(BOOTSTRAP):
 	go get -u $@
@@ -137,7 +140,14 @@ simple:
 lint:
 	$(call EACH_FILE,golint,golint)
 
-.PHONY: vet fmtcheck simple lint test
+misspell:
+	@gometalinter --disable-all --vendor --enable=misspell ./...
+
+ineffassign:
+	@gometalinter --disable-all --vendor --enable=ineffassign ./...
+
+
+.PHONY: vet fmtcheck simple lint misspell ineffassign test
 
 #################################################
 # Docker targets
