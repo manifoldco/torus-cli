@@ -39,6 +39,42 @@ func (e *Error) Error() string {
 	return strings.Title(errType) + ": " + strings.Join(e.Err, " ")
 }
 
+// FormatError updates an error to contain more context
+func FormatError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if apiErr, ok := err.(*Error); ok {
+		if apiErr.Type == UnauthorizedError {
+			for _, m := range apiErr.Err {
+				if strings.Contains(m, "wrong identity state: unverified") {
+					return NewUnverifiedError()
+				}
+			}
+
+			return &Error{
+				StatusCode: 401,
+				Type:       UnauthorizedError,
+				Err:        []string{"You are unauthorized to perform this action."},
+			}
+		}
+	}
+
+	return err
+}
+
+// NewUnverifiedError returns a message telling the user to verify their account before continuing
+func NewUnverifiedError() *Error {
+	return &Error{
+		StatusCode: 401,
+		Type:       UnauthorizedError,
+		Err: []string{"Your account has not yet been verified.\n\n" +
+			"Please check your email for your verification code and follow the enclosed instructions.\n" +
+			"Once you have verified your account you may retry this operation."},
+	}
+}
+
 // IsNotFoundError returns whether or not an error is a 404 result from the api.
 func IsNotFoundError(err error) bool {
 	if err == nil {

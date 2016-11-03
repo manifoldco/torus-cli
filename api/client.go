@@ -195,7 +195,7 @@ func checkResponseCode(r *http.Response) error {
 			return errors.New("Malformed error response from daemon.")
 		}
 
-		return rErr
+		return apitypes.FormatError(rErr)
 	}
 
 	return errors.New("Error from daemon. Check status code.")

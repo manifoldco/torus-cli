@@ -178,7 +178,7 @@ func worklogResolve(ctx *cli.Context) error {
 	for _, item := range toResolve {
 		res, err := client.Worklog.Resolve(c, org.ID, item.ID)
 		if err != nil {
-			return errs.NewExitError("Error resolving worklog item. Please try again.")
+			return errs.NewErrorExitError("Error resolving worklog item.", err)
 		}
 
 		var icon string

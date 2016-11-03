@@ -55,7 +55,7 @@ func init() {
 	Cmds = append(Cmds, services)
 }
 
-const serviceListFailed = "Could not list services, please try again."
+const serviceListFailed = "Could not list services."
 
 func listServicesCmd(ctx *cli.Context) error {
 	if !ctx.Bool("all") {
@@ -80,7 +80,7 @@ func listServicesCmd(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError(serviceListFailed)
+		return errs.NewErrorExitError(serviceListFailed, err)
 	}
 	if org == nil {
 		return errs.NewExitError("Org not found")
@@ -93,7 +93,7 @@ func listServicesCmd(ctx *cli.Context) error {
 		// Pull all projects for the given orgID
 		projects, err = listProjects(&c, client, org.ID, nil)
 		if err != nil {
-			return errs.NewExitError(serviceListFailed)
+			return errs.NewErrorExitError(serviceListFailed, err)
 		}
 
 	} else {
@@ -101,7 +101,7 @@ func listServicesCmd(ctx *cli.Context) error {
 		projectName := ctx.String("project")
 		projects, err = listProjects(&c, client, org.ID, &projectName)
 		if err != nil {
-			return errs.NewExitError(serviceListFailed)
+			return errs.NewErrorExitError(serviceListFailed, err)
 		}
 		if len(projects) == 1 {
 			projectID = *projects[0].ID
@@ -113,7 +113,7 @@ func listServicesCmd(ctx *cli.Context) error {
 	// Retrieve services for targeted org and project
 	services, err := listServices(&c, client, org.ID, &projectID, nil)
 	if err != nil {
-		return errs.NewExitError(serviceListFailed)
+		return errs.NewErrorExitError(serviceListFailed, err)
 	}
 
 	// Build map of services to project
@@ -175,7 +175,7 @@ func listServicesByProjectID(ctx *context.Context, client *api.Client, projectID
 	return client.Services.List(c, nil, &projectIDs, nil)
 }
 
-const serviceCreateFailed = "Could not create service. Please try again."
+const serviceCreateFailed = "Could not create service."
 
 func createServiceCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
