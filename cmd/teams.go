@@ -289,12 +289,12 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	return nil
 }
 
-const teamCreateFailed = "Could not create team. Please try again."
+const teamCreateFailed = "Could not create team."
 
 func createTeamCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return errs.NewExitError(teamCreateFailed)
+		return errs.NewErrorExitError(teamCreateFailed, err)
 	}
 
 	args := ctx.Args()
@@ -356,7 +356,7 @@ func createTeamCmd(ctx *cli.Context) error {
 	return nil
 }
 
-const teamRemoveFailed = "Failed to remove team member, please try again"
+const teamRemoveFailed = "Failed to remove team member."
 
 func teamsRemoveCmd(ctx *cli.Context) error {
 	args := ctx.Args()

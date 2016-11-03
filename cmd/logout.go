@@ -38,7 +38,7 @@ func logoutCmd(ctx *cli.Context) error {
 				return nil
 			}
 		}
-		return errs.NewExitError("Logout failed. Please try again.")
+		return errs.NewErrorExitError("Logout failed.", err)
 	}
 
 	fmt.Println("You have successfully logged out. o/")

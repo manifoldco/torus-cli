@@ -51,7 +51,7 @@ func login(ctx *cli.Context) error {
 func performLogin(c context.Context, client *api.Client, email, password string) error {
 	err := client.Session.UserLogin(context.Background(), email, password)
 	if err != nil {
-		return errs.NewExitError("Login failed. Please try again.")
+		return errs.NewErrorExitError("Login failed.", err)
 	}
 
 	fmt.Println("You are now authenticated.")

@@ -64,7 +64,7 @@ func init() {
 	Cmds = append(Cmds, policies)
 }
 
-const policyDetachFailed = "Could not detach policy, please try again."
+const policyDetachFailed = "Could not detach policy."
 
 func detachPolicies(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
@@ -90,7 +90,7 @@ func detachPolicies(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError(projectListFailed)
+		return errs.NewErrorExitError(policyDetachFailed, err)
 	}
 	if org == nil {
 		return errs.NewExitError("Org not found")
@@ -141,7 +141,7 @@ func detachPolicies(ctx *cli.Context) error {
 
 	attachments, err := client.Policies.AttachmentsList(c, org.ID, team.ID, policy.ID)
 	if err != nil {
-		return errs.NewExitError(policyDetachFailed)
+		return errs.NewErrorExitError(policyDetachFailed, err)
 	}
 	if len(attachments) < 1 {
 		return errs.NewExitError(policyName + " policy is not currently attached to " + teamName)
@@ -152,14 +152,14 @@ func detachPolicies(ctx *cli.Context) error {
 		if strings.Contains(err.Error(), "system team") {
 			return errs.NewExitError("Cannot delete system team attachment")
 		}
-		return errs.NewExitError(policyDetachFailed)
+		return errs.NewErrorExitError(policyDetachFailed, err)
 	}
 
 	fmt.Println("Policy " + policyName + " has been detached from team " + teamName)
 	return nil
 }
 
-const policyListFailed = "Could not list policies, please try again."
+const policyListFailed = "Could not list policies."
 
 func listPolicies(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
@@ -174,7 +174,7 @@ func listPolicies(ctx *cli.Context) error {
 	var org *api.OrgResult
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError(policyListFailed)
+		return errs.NewErrorExitError(policyListFailed, err)
 	}
 	if org == nil {
 		return errs.NewExitError("Org not found.")
@@ -276,7 +276,7 @@ func viewPolicyCmd(ctx *cli.Context) error {
 
 	org, err := client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError("Unable to lookup org. Please try again.")
+		return errs.NewErrorExitError("Unable to lookup org.", err)
 	}
 	if org == nil {
 		return errs.NewExitError("Org not found.")
@@ -284,7 +284,7 @@ func viewPolicyCmd(ctx *cli.Context) error {
 
 	policies, err := client.Policies.List(c, org.ID, args[0])
 	if err != nil {
-		return errs.NewExitError("Unable to list policies. Please try again.")
+		return errs.NewExitError("Unable to list policies.")
 	}
 
 	if len(policies) < 1 {

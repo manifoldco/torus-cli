@@ -81,7 +81,7 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 
 	org, err := client.Orgs.GetByName(c, pe.Org())
 	if err != nil {
-		return errs.NewExitError("Unable to lookup org. Please try again.")
+		return errs.NewErrorExitError("Unable to lookup org.", err)
 	}
 	if org == nil {
 		return errs.NewExitError("Org not found")
@@ -89,7 +89,7 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 
 	teams, err := client.Teams.GetByName(c, org.ID, args[2])
 	if err != nil {
-		return errs.NewExitError("Unable to lookup team. Please try again.")
+		return errs.NewErrorExitError("Unable to lookup team.", err)
 	}
 	if len(teams) < 1 {
 		return errs.NewExitError("Team not found.")

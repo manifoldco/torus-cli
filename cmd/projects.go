@@ -125,7 +125,7 @@ func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName str
 	return projects, nil
 }
 
-const projectCreateFailed = "Could not create project. Please try again."
+const projectCreateFailed = "Could not create project."
 
 func createProjectCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
@@ -138,7 +138,7 @@ func createProjectCmd(ctx *cli.Context) error {
 
 	org, orgName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError(projectCreateFailed)
+		return errs.NewErrorExitError(projectCreateFailed, err)
 	}
 
 	var orgID *identity.ID

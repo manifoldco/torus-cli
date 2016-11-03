@@ -48,7 +48,7 @@ func init() {
 	Cmds = append(Cmds, orgs)
 }
 
-const orgCreateFailed = "Org creation failed, please try again."
+const orgCreateFailed = "Org creation failed."
 
 func orgsCreate(ctx *cli.Context) error {
 	args := ctx.Args()
@@ -74,7 +74,7 @@ func orgsCreate(ctx *cli.Context) error {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return errs.NewExitError(orgCreateFailed)
+		return errs.NewErrorExitError(orgCreateFailed, err)
 	}
 
 	client := api.NewClient(cfg)
@@ -86,7 +86,7 @@ func orgsCreate(ctx *cli.Context) error {
 func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, name string) (*api.OrgResult, error) {
 	org, err := client.Orgs.Create(c, name)
 	if err != nil {
-		return nil, errs.NewExitError(orgCreateFailed)
+		return nil, errs.NewErrorExitError(orgCreateFailed, err)
 	}
 
 	err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
@@ -175,11 +175,11 @@ func orgsRemove(ctx *cli.Context) error {
 	c := context.Background()
 
 	const userNotFound = "User not found."
-	const orgsRemoveFailed = "Could remove user from the org. Please try again."
+	const orgsRemoveFailed = "Could remove user from the org."
 
 	org, err := client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError(orgsRemoveFailed)
+		return errs.NewErrorExitError(orgsRemoveFailed, err)
 	}
 	if org == nil {
 		return errs.NewExitError("Org not found.")
@@ -190,7 +190,7 @@ func orgsRemove(ctx *cli.Context) error {
 		return errs.NewExitError(userNotFound)
 	}
 	if err != nil {
-		return errs.NewExitError(orgsRemoveFailed)
+		return errs.NewErrorExitError(orgsRemoveFailed, err)
 	}
 	if profile == nil {
 		return errs.NewExitError(userNotFound)
@@ -202,7 +202,7 @@ func orgsRemove(ctx *cli.Context) error {
 		return nil
 	}
 	if err != nil {
-		return errs.NewExitError(orgsRemoveFailed)
+		return errs.NewErrorExitError(orgsRemoveFailed, err)
 	}
 
 	fmt.Println("User has been removed from the org.")
@@ -212,7 +212,7 @@ func orgsRemove(ctx *cli.Context) error {
 func getOrg(ctx context.Context, client *api.Client, name string) (*api.OrgResult, error) {
 	org, err := client.Orgs.GetByName(ctx, name)
 	if err != nil {
-		return nil, errs.NewExitError("Unable to lookup org. Please try again.")
+		return nil, errs.NewErrorExitError("Unable to lookup org.", err)
 	}
 	if org == nil {
 		return nil, errs.NewExitError("Org not found.")
@@ -224,7 +224,7 @@ func getOrg(ctx context.Context, client *api.Client, name string) (*api.OrgResul
 func getOrgTree(c context.Context, client *api.Client, orgID identity.ID) ([]api.OrgTreeSegment, error) {
 	orgTree, err := client.Orgs.GetTree(c, orgID)
 	if err != nil {
-		return nil, errs.NewExitError("Unable to lookup org tree. Please try again.")
+		return nil, errs.NewErrorExitError("Unable to lookup org tree.", err)
 	}
 	if orgTree == nil {
 		return nil, errs.NewExitError("Org tree not found.")
