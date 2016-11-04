@@ -2,7 +2,12 @@
 
 A secure, shared workspace for secrets.
 
-[Homepage](https://torus.sh) | [Documentation](https://torus.sh/docs) | [Twitter](https://twitter.com/toruscli) | [Security Disclosure](https://github.com/manifoldco/torus-cli/blob/master/docs/security.md)
+[Homepage](https://torus.sh) |
+[Documentation](https://torus.sh/docs) |
+[Twitter](https://twitter.com/toruscli) |
+[Security Disclosure](https://github.com/manifoldco/torus-cli/blob/master/docs/security.md) |
+[Code of Conduct](./.github/CONDUCT.md) |
+[Contribution Guidelines](./.github/CONTRIBUTING.md)
 
 [![Travis](https://img.shields.io/travis/manifoldco/torus-cli/master.svg)](https://travis-ci.org/manifoldco/torus-cli)
 [![Go Report Card](https://goreportcard.com/badge/github.com/manifoldco/torus-cli)](https://goreportcard.com/report/github.com/manifoldco/torus-cli)
