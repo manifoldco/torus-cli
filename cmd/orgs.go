@@ -175,7 +175,7 @@ func orgsRemove(ctx *cli.Context) error {
 	c := context.Background()
 
 	const userNotFound = "User not found."
-	const orgsRemoveFailed = "Could remove user from the org."
+	const orgsRemoveFailed = "Could not remove user from the org."
 
 	org, err := client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
