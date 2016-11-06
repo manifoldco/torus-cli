@@ -47,7 +47,10 @@ static: generated vendor
 	$(GO_BUILD) -o ${OUT}-v${VERSION} \
 		-ldflags='$(STATIC_FLAGS) $(VERSION_FLAG)' ${PKG}
 
-.PHONY: binary static
+test-expect: vendor
+	$(GO_BUILD) -o test-expect ${PKG}/tools/expect
+
+.PHONY: binary static test-expect
 
 #################################################
 # Build targets for releasing

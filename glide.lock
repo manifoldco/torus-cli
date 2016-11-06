@@ -1,5 +1,5 @@
-hash: 0969b5d51be9af32da3f79fbbc4a638d79dc24bf551063399fddf2221aff9e24
-updated: 2016-10-26T21:11:14.319350703-03:00
+hash: e292811b4bdfc92cf2cf7437f90eca4c424541de785a99716d7ad68532c31b3d
+updated: 2016-11-06T11:31:42.353311407-04:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 593d64559f7600f29581a3ee42177f5dbded27a9
@@ -31,6 +31,8 @@ imports:
   version: d8ff598a019f2c7bad0980917a588193cf26666e
 - name: github.com/kardianos/osext
   version: c2c54e542fb797ad986b31721e1baedf214ca413
+- name: github.com/kballard/go-shellquote
+  version: d8ec1a69a250a17bb0e419c386eac1f3711dc142
 - name: github.com/keybase/go-triplesec
   version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
   subpackages:
@@ -40,7 +42,7 @@ imports:
 - name: github.com/kr/text
   version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/natefinch/lumberjack
-  version: e21e5cbec0cd0861b9dc302736ad5666c529d93f
+  version: dd45e6a67c53f673bb49ca8a001fd3a63ceb640e
 - name: github.com/nbutton23/zxcvbn-go
   version: a22cb81b2ecdde8b68e9ffb8824731cbf88e1de4
   subpackages:
@@ -53,6 +55,8 @@ imports:
   version: 3d299f51e376213fcdcfd213a76afce6b290bf9d
 - name: github.com/satori/go.uuid
   version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+- name: github.com/ThomasRooney/gexpect
+  version: 8e96656e8fb794d716ee75b5a8cecbc15cde4393
 - name: github.com/urfave/cli
   version: 207bb6185291cfced4895a7768cad642e08a68d8
 - name: golang.org/x/crypto
