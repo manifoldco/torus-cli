@@ -193,11 +193,8 @@ builds/npm builds/npm/bin builds/npm/scripts:
 builds/npm/package.json: npm/package.json.in builds/npm
 	sed 's/VERSION/$(VERSION)/' < $< > $@
 
-builds/npm/README.md: npm/README.md builds/npm
-	cp $< $@
-
-builds/npm/LICENSE.md: LICENSE.md builds/npm
-	cp $< $@
+builds/npm/README.md builds/npm/LICENSE.md: builds/npm/%: builds/npm
+	cp $* $@
 
 builds/npm/scripts/install.js: npm/install.js builds/npm/scripts
 	cp $< $@
