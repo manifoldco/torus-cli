@@ -20,8 +20,8 @@ import (
 func init() {
 	allow := cli.Command{
 		Name:      "allow",
-		Usage:     "Grant a team permission to access specific resources",
-		ArgsUsage: "<crudl> <path> <team>",
+		Usage:     "Grant a team or machine role permission to access specific resources",
+		ArgsUsage: "<crudl> <path> <team|machine-role>",
 		Category:  "ACCESS CONTROL",
 		Action:    chain(ensureDaemon, ensureSession, allowCmd),
 	}

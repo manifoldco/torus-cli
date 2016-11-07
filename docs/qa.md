@@ -119,6 +119,8 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ] `torus machines destroy [identity]` destroys a machine by id after confirming
 - [ ] `torus machines destroy [name]` destroys a machine by name after confirming
 - [ ] `torus machines list --destroyed` shows only destroyed machines
+- [ ] `torus machines roles create` creates a machine role
+- [ ] `torus machines roles lists` lists all machine roles (including the machine team)
 
 ### Critical Path
 

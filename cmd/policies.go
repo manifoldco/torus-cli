@@ -49,8 +49,8 @@ func init() {
 
 			{
 				Name:      "detach",
-				Usage:     "Detach a policy from a team, does not delete the policy",
-				ArgsUsage: "<name> <team>",
+				Usage:     "Detach a policy from a team or machine role, does not delete the policy",
+				ArgsUsage: "<name> <team|role>",
 				Flags: []cli.Flag{
 					orgFlag("org to detach policy from", true),
 				},

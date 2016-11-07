@@ -29,20 +29,20 @@ const (
 func init() {
 	machines := cli.Command{
 		Name:      "machines",
-		Usage:     "Manage machine for an organization",
-		ArgsUsage: "<identity>",
-		Category:  "MACHINES",
+		Usage:     "View and create machines within an organization",
+		ArgsUsage: "<machine>",
+		Category:  "ORGANIZATIONS",
 		Subcommands: []cli.Command{
 			{
 				Name:  "create",
 				Usage: "Create a machine for an organization",
 				Flags: []cli.Flag{
 					orgFlag("Org the machine will belong to", false),
-					teamFlag("Team the machine will belong to", false),
+					roleFlag("Role the machine will belong to", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, createMachine,
+					checkRequiredFlags, createMachine,
 				),
 			},
 			{
@@ -50,11 +50,11 @@ func init() {
 				Usage:     "Show the details of a machine",
 				ArgsUsage: "<id|name>",
 				Flags: []cli.Flag{
-					orgFlag("org to the machine will belongs to", true),
+					orgFlag("Org the machine will belongs to", true),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, viewMachineCmd,
+					checkRequiredFlags, viewMachineCmd,
 				),
 			},
 			{
@@ -62,26 +62,56 @@ func init() {
 				Usage:     "Destroy a machine in the specified organization",
 				ArgsUsage: "<id|name>",
 				Flags: []cli.Flag{
-					orgFlag("org to the machine will belongs to", true),
+					orgFlag("Org the machine will belongs to", true),
 					stdAutoAcceptFlag,
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, destroyMachineCmd,
+					checkRequiredFlags, destroyMachineCmd,
 				),
 			},
 			{
 				Name:  "list",
 				Usage: "List machines for an organization",
 				Flags: []cli.Flag{
-					orgFlag("Org to the machine belongs to", true),
-					teamFlag("Team the machine belongs to", false),
+					orgFlag("Org the machine belongs to", true),
+					roleFlag("List machines of this role", false),
 					destroyedFlag(),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, listMachinesCmd,
+					checkRequiredFlags, listMachinesCmd,
 				),
+			},
+			{
+				Name:      "roles",
+				Usage:     "Lists and create machine roles for an organization",
+				ArgsUsage: "<machine-role>",
+				Subcommands: []cli.Command{
+					{
+						Name:  "list",
+						Usage: "List all machine roles for an organization",
+						Flags: []cli.Flag{
+							orgFlag("Org the machine roles belongs to", true),
+						},
+						Action: chain(
+							ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+							checkRequiredFlags, listMachineRoles,
+						),
+					},
+					{
+						Name:      "create",
+						Usage:     "Create a machine role for an organization",
+						ArgsUsage: "<name>",
+						Flags: []cli.Flag{
+							orgFlag("Org the machine role will belong to", true),
+						},
+						Action: chain(
+							ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+							checkRequiredFlags, createMachineRole,
+						),
+					},
+				},
 			},
 		},
 	}
@@ -235,18 +265,20 @@ func viewMachineCmd(ctx *cli.Context) error {
 	var teamNames []string
 	for _, m := range machineSegment.Memberships {
 		team := teamMap[*m.Body.TeamID]
-		teamNames = append(teamNames, team.Body.Name)
+		if team.Body.TeamType == primitive.MachineTeam {
+			teamNames = append(teamNames, team.Body.Name)
+		}
 	}
-	teamOutput := strings.Join(teamNames, ", ")
-	if teamOutput == "" {
-		teamOutput = "-"
+	roleOutput := strings.Join(teamNames, ", ")
+	if roleOutput == "" {
+		roleOutput = "-"
 	}
 
 	fmt.Println("")
 	w1 := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
 	fmt.Fprintf(w1, "ID:\t%s\n", machine.ID)
 	fmt.Fprintf(w1, "Name:\t%s\n", machineBody.Name)
-	fmt.Fprintf(w1, "Team(s):\t%s\n", teamOutput)
+	fmt.Fprintf(w1, "Role:\t%s\n", roleOutput)
 	fmt.Fprintf(w1, "State:\t%s\n", machineBody.State)
 	fmt.Fprintf(w1, "Created By:\t%s\n", createdBy)
 	fmt.Fprintf(w1, "Created On:\t%s\n", createdOn)
@@ -290,7 +322,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 	// Look up the target org
 	org, err := client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError(envListFailed)
+		return errs.NewErrorExitError("Failed to retrieve org", err)
 	}
 	if org == nil {
 		return errs.NewExitError("Org not found.")
@@ -302,16 +334,21 @@ func listMachinesCmd(ctx *cli.Context) error {
 		state = primitive.MachineDestroyedState
 	}
 
-	teams, err := client.Teams.List(c, org.ID, ctx.String("team"), "machine")
+	if ctx.String("role") != "" && ctx.Bool("destroyed") {
+		return errs.NewExitError(
+			"Cannot specify --destroyed and --role at the same time")
+	}
+
+	teams, err := client.Teams.List(c, org.ID, ctx.String("role"), primitive.MachineTeam)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to retrieve metadata", err)
 	}
 	if len(teams) < 1 {
-		return errs.NewExitError("Machine teams not found")
+		return errs.NewExitError("Machine roles not found")
 	}
 
 	var teamID *identity.ID
-	if ctx.String("team") != "" {
+	if ctx.String("role") != "" {
 		teamID = teams[0].ID
 	}
 
@@ -329,7 +366,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tSTATE\tTEAM\tCREATION DATE")
+	fmt.Fprintln(w, "ID\tNAME\tSTATE\tROLE\tCREATION DATE")
 	fmt.Fprintln(w, " \t \t \t \t ")
 	for _, machine := range machines {
 		mID := machine.Machine.ID.String()
@@ -346,6 +383,116 @@ func listMachinesCmd(ctx *cli.Context) error {
 	w.Flush()
 	fmt.Println("")
 
+	return nil
+}
+
+func listMachineRoles(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	args := ctx.Args()
+	if len(args) > 0 {
+		return errs.NewUsageExitError("Too many arguments supplied", ctx)
+	}
+
+	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve org", err)
+	}
+	if org == nil {
+		return errs.NewExitError("Org not found.")
+	}
+
+	teams, err := client.Teams.List(c, org.ID, "", "")
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve roles", err)
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 20, 0, 1, ' ', 0)
+	for _, t := range teams {
+		if !isMachineTeam(t.Body) {
+			continue
+		}
+
+		displayTeamType := ""
+		if t.Body.TeamType == primitive.SystemTeam && t.Body.Name == primitive.MachineTeamName {
+			displayTeamType = "[system]"
+		}
+
+		fmt.Fprintf(w, "%s\t%s\n", t.Body.Name, displayTeamType)
+	}
+
+	w.Flush()
+	fmt.Println("\nAll machines belong to the \"machine\" role.")
+	return nil
+}
+
+func createMachineRole(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	args := ctx.Args()
+	teamName := ""
+	if len(args) > 0 {
+		teamName = args[0]
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	if err != nil {
+		return handleSelectError(err, "Org selection failed")
+	}
+	if org == nil && !newOrg {
+		fmt.Println("")
+		return errs.NewExitError("Org not found.")
+	}
+	if newOrg && oName == "" {
+		fmt.Println("")
+		return errs.NewExitError("Invalid org name.")
+	}
+
+	var orgID *identity.ID
+	if org != nil {
+		orgID = org.ID
+	}
+
+	label := "Role name"
+	autoAccept := teamName != ""
+	teamName, err = NamePrompt(&label, teamName, autoAccept)
+	if err != nil {
+		return handleSelectError(err, "Role creation failed.")
+	}
+
+	if org == nil && newOrg {
+		org, err = createOrgByName(c, ctx, client, oName)
+		if err != nil {
+			fmt.Println("")
+			return err
+		}
+
+		orgID = org.ID
+	}
+
+	fmt.Println("")
+	_, err = client.Teams.Create(c, orgID, teamName, primitive.MachineTeam)
+	if err != nil {
+		if strings.Contains(err.Error(), "resource exists") {
+			return errs.NewExitError("Role already exists")
+		}
+
+		return errs.NewErrorExitError("Role creation failed.", err)
+	}
+
+	fmt.Printf("Role %s created.\n", teamName)
 	return nil
 }
 
@@ -371,16 +518,15 @@ func createMachine(ctx *cli.Context) error {
 		orgID = org.ID
 	}
 
-	team, teamName, newTeam, err := SelectCreateTeam(
-		c, client, orgID, primitive.MachineTeam, ctx.String("team"))
+	team, teamName, newTeam, err := SelectCreateRole(c, client, orgID, ctx.String("role"))
 	if err != nil {
-		return handleSelectError(err, "Team selection failed.")
+		return handleSelectError(err, "Role selection failed.")
 	}
 
 	var teamID *identity.ID
 	if !newTeam {
 		if org == nil {
-			return errs.NewExitError("Team not found.")
+			return errs.NewExitError("Role not found.")
 		}
 		teamID = team.ID
 	}
@@ -415,11 +561,11 @@ func createMachine(ctx *cli.Context) error {
 	if newTeam {
 		team, err := client.Teams.Create(c, orgID, teamName, primitive.MachineTeam)
 		if err != nil {
-			return errs.NewErrorExitError("Could not create machine team", err)
+			return errs.NewErrorExitError("Could not create machine role", err)
 		}
 
 		teamID = team.ID
-		fmt.Printf("Machine team %s created for org %s.\n\n", teamName, orgName)
+		fmt.Printf("Machine role %s created for org %s.\n\n", teamName, orgName)
 	}
 
 	machine, tokenSecret, err := createMachineByName(c, client, orgID, teamID, name)

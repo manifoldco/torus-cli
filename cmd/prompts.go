@@ -273,29 +273,22 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 	return &orgs[idx], name, false, nil
 }
 
-// SelectCreateTeam prompts the user to select a team from a list of teams for
-// the given org.
+// SelectCreateRole prompts the user to select a machine team from a list of
+// teams for the given org.
 //
 // The user may select to create a new team, or they may may preselect a team via
 // a non-empty name parameter.
 //
-// The type of team can be specified, if no team type is provided then all
-// teams excluding machine teams are listed.
-//
 // It returns the object of the selected team, the name of the selected team,
 // and a boolean indicating if a new team should be created.
-func SelectCreateTeam(c context.Context, client *api.Client, orgID *identity.ID, teamType, name string) (*api.TeamResult, string, bool, error) {
+func SelectCreateRole(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.TeamResult, string, bool, error) {
 
-	teams, err := client.Teams.List(c, orgID, "", teamType)
+	teams, err := client.Teams.List(c, orgID, "", primitive.MachineTeam)
 	if err != nil {
 		return nil, "", false, err
 	}
 
-	label := ""
-	if teamType == primitive.MachineTeam {
-		label = "Select Machine Team"
-	}
-
+	label := "Select Machine Role"
 	var idx int
 	if name == "" {
 		idx, name, err = SelectTeamPrompt(teams, label)
@@ -313,10 +306,10 @@ func SelectCreateTeam(c context.Context, client *api.Client, orgID *identity.ID,
 		}
 
 		if !found {
-			fmt.Println(promptui.FailedValue("Team name", name))
-			return nil, "", false, errs.NewExitError("Team not found")
+			fmt.Println(promptui.FailedValue("Machine Role", name))
+			return nil, "", false, errs.NewExitError("Role not found")
 		}
-		fmt.Println(promptui.SuccessfulValue("Team name", name))
+		fmt.Println(promptui.SuccessfulValue("Machine Role", name))
 	}
 
 	if idx == promptui.SelectedAdd {
