@@ -120,13 +120,14 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	go func() {
 		org, oErr = client.Orgs.GetByName(c, orgName)
-		getMemberships.Done()
-
 		if org == nil {
 			oErr = errs.NewExitError("Org not found.")
+			getMemberships.Done()
 			display.Done()
 			return
 		}
+
+		getMemberships.Done()
 
 		teams, tErr = client.Teams.GetByOrg(c, org.ID)
 		display.Done()
