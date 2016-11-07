@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
@@ -94,6 +95,62 @@ func sessionRoute(s session.Session) http.HandlerFunc {
 			Passphrase: s.HasPassphrase(),
 		})
 
+		if err != nil {
+			encodeResponseErr(w, err)
+		}
+	}
+}
+
+type updateName struct {
+	Name string `json:"name"`
+}
+
+type updateEmail struct {
+	Email string `json:"email"`
+}
+
+func updateSelfRoute(client *registry.Client, s session.Session) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c := r.Context()
+		dec := json.NewDecoder(r.Body)
+
+		if s.Type() == apitypes.NotLoggedIn {
+			encodeResponseErr(w, &apitypes.Error{
+				Type: apitypes.UnauthorizedError,
+				Err:  []string{"invalid login"},
+			})
+			return
+		}
+
+		req := apitypes.ProfileUpdate{}
+		err := dec.Decode(&req)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		var result *envelope.Unsigned
+		if req.Email != "" {
+			envelope, err := client.Users.Update(c, updateEmail{Email: req.Email})
+			if err != nil {
+				encodeResponseErr(w, err)
+				return
+			}
+			result = envelope
+		}
+		if req.Name != "" {
+			envelope, err := client.Users.Update(c, updateName{Name: req.Name})
+			if err != nil {
+				encodeResponseErr(w, err)
+				return
+			}
+			result = envelope
+		}
+
+		s.SetIdentity(apitypes.UserSession, result, result)
+
+		enc := json.NewEncoder(w)
+		err = enc.Encode(result)
 		if err != nil {
 			encodeResponseErr(w, err)
 		}
