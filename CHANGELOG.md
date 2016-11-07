@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## UNPUBLISHED
+
+_Unpublished_
+
+**Notable Changes**
+
+- Introduced `--user, -u` and `--machine, -m` flags to `torus set`, `torus
+  unset`, `torus view`, `torus run`, and `torus ls` for specifying machine or
+  user identity
+
 ## v0.15.0
 
 _2016-11-01_

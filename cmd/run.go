@@ -22,6 +22,8 @@ func init() {
 			stdOrgFlag,
 			stdProjectFlag,
 			stdEnvFlag,
+			stdUserFlag,
+			stdMachineFlag,
 			serviceFlag("Use this service.", "default", true),
 			stdInstanceFlag,
 		},

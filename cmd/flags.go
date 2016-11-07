@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/urfave/cli"
+
+	"github.com/manifoldco/torus-cli/errs"
 )
 
 // Standard flags for path expression parts.
@@ -16,6 +18,7 @@ var (
 	stdEnvFlag        = envFlag("Use this environment.", true)
 	stdServiceFlag    = serviceFlag("Use this service.", "", true)
 	stdUserFlag       = userFlag("Use this user.", true)
+	stdMachineFlag    = machineFlag("Use this machine.", true)
 	stdInstanceFlag   = instanceFlag("Use this instance.", true)
 	stdAutoAcceptFlag = autoAcceptFlag()
 )
@@ -51,6 +54,11 @@ func serviceFlag(usage, value string, required bool) cli.Flag {
 // userFlag creates a new --user cli.Flag with custom usage string.
 func userFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("user, u", "USER", usage, "", "TORUS_USER", required)
+}
+
+// machineFlag creates a new --machine cli.Flag with custom usage string.
+func machineFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("machine, m", "MACHINE", usage, "", "TORUS_MACHINE", required)
 }
 
 // instanceFlag creates a new --instance cli.Flag with custom usage string.
@@ -169,4 +177,52 @@ func prefixFor(name string) (prefix string) {
 	}
 
 	return
+}
+
+func identityString(identityType, identity string) (string, error) {
+	if identityType == "user" {
+		return identity, nil
+	}
+
+	if strings.Contains(identity, "machine-") {
+		return "", errs.NewExitError(
+			"Do not prepend 'machine-' when using --machine")
+	}
+
+	return "machine-" + identity, nil
+}
+
+// Derives a slice of identity segments for us in building a PathExp object.
+func deriveIdentitySlice(ctx *cli.Context) ([]string, error) {
+	users := ctx.StringSlice("user")
+	machines := ctx.StringSlice("machine")
+
+	identities := make([]string, 0)
+	for _, u := range users {
+		identity, err := identityString("user", u)
+		if err != nil {
+			return identities, err
+		}
+
+		if identity == "*" {
+			return []string{"*"}, nil
+		}
+
+		identities = append(identities, identity)
+	}
+
+	for _, m := range machines {
+		identity, err := identityString("machine", m)
+		if err != nil {
+			return identities, err
+		}
+
+		if identity == "*" {
+			return []string{"*"}, nil
+		}
+
+		identities = append(identities, identity)
+	}
+
+	return identities, nil
 }
