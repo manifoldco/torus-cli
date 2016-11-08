@@ -214,7 +214,11 @@ release-binary: $(addprefix zip-,$(TARGETS))
 
 $(addprefix rpm-,$(LINUX)): rpm-%: binary-% builds/dist/rpm rpm-container
 	docker run -v $(PWD):/torus manifoldco/torus-rpm /bin/bash -c " \
-		rpmbuild -D '_sourcedir /torus' -D 'VERSION $(VERSION)' -D 'ARCH $(ARCH)' -bb packaging/rpm/torus.spec && \
+		rpmbuild -D '_sourcedir /torus' \
+			-D 'VERSION $(subst -,_,$(VERSION))' \
+			-D 'REAL_VERSION $(VERSION)' \
+			-D 'ARCH $(ARCH)' \
+			-bb packaging/rpm/torus.spec && \
 		cp -R ~/rpmbuild/RPMS/* /torus/builds/dist/rpm/ \
 	"
 
