@@ -34,7 +34,7 @@ class Torus < Formula
         system "make", "binary-darwin-#{arch}", "VERSION={{VERSION}}", "BYPASS_GO_CHECK=yes"
       end
 
-      bin.install "builds/bin/VERSION/darwin/#{arch}/torus"
+      bin.install "builds/bin/{{VERSION}}/darwin/#{arch}/torus"
     end
   end
 end
