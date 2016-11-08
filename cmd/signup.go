@@ -104,7 +104,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	user, err := client.Users.Signup(c, &signup, &progress)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
-			return errs.NewExitError("Email address in use.")
+			return errs.NewExitError("Username or email address in use.")
 		}
 		return errs.NewExitError("Signup failed, please try again.")
 	}
