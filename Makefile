@@ -1,12 +1,14 @@
 OUT=torus
 PKG=github.com/manifoldco/torus-cli
 
+GO_REQUIRED_VERSION=1.7.1
+LINUX=\
+	linux-amd64
 TARGETS=\
 	darwin-amd64 \
-	linux-amd64
-GO_REQUIRED_VERSION=1.7.1
+	$(LINUX)
 
-VERSION=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
+VERSION?=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 all: binary
 ci: binary vet fmtcheck simple lint misspell ineffassign test
@@ -30,45 +32,23 @@ $(BOOTSTRAP):
 	go get -u $@
 bootstrap: $(BOOTSTRAP)
 
-.PHONY: bootstrap
+.PHONY: bootstrap $(BOOTSTRAP)
 
 #################################################
-# Build targets
+# Build targets for local usage
 #################################################
 
 VERSION_FLAG=-X $(PKG)/config.Version=$(VERSION)
-STATIC_FLAGS=-w -s
+STATIC_FLAGS=-w -s $(VERSION_FLAG)
 GO_BUILD=CGO_ENABLED=0 go build -i -v
 
 binary: generated vendor
 	$(GO_BUILD) -o ${OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
 
 static: generated vendor
-	$(GO_BUILD) -o ${OUT}-v${VERSION} \
-		-ldflags='$(STATIC_FLAGS) $(VERSION_FLAG)' ${PKG}
+	$(GO_BUILD) -o ${OUT}-v${VERSION} -ldflags='$(STATIC_FLAGS)' ${PKG}
 
 .PHONY: binary static
-
-#################################################
-# Build targets for releasing
-#################################################
-
-GO_VERSION=$(shell go version)
-gocheck:
-ifeq (,$(findstring $(GO_REQUIRED_VERSION),$(GO_VERSION)))
-	$(error "Go Version $(GO_REQUIRED_VERSION) is required.")
-endif
-
-OS=$(word 1, $(subst -, ,$*))
-ARCH=$(word 2, $(subst -, ,$*))
-BINARY=-o builds/$(OUT)-$(OS)-$(ARCH)
-$(addprefix release-,$(TARGETS)): release-%: gocheck generated vendor
-	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
-		-ldflags='$(STATIC_FLAGS) $(VERSION_FLAG)' ${PKG}
-
-release-all: $(addprefix release-,$(TARGETS))
-
-.PHONY: gocheck $(addprefix release-,$(TARGETS)) release-all
 
 #################################################
 # Code generation and dependency grabbing
@@ -91,8 +71,9 @@ primitive/zz_generated_primitive.go envelope/zz_generated_envelope.go: $(TOOLS)/
 vendor: glide.lock
 	glide install
 
-$(TOOLS)/primitive-boilerplate: $(wildcard tools/primitive-boilerplate/*.go) $(wildcard tools/primitive-boilerplate/*.tmpl)
-	$(GO_BUILD) -o $@ ./tools/primitive-boilerplate
+PRIMITIVE_BOILERPLATE=tools/primitive-boilerplate
+$(TOOLS)/primitive-boilerplate: $(wildcard $(PRIMITIVE_BOILERPLATE)/*.go) $(wildcard $(PRIMITIVE_BOILERPLATE)/*.tmpl)
+	$(GO_BUILD) -o $@ ./$(PRIMITIVE_BOILERPLATE)
 
 .PHONY: generated
 
@@ -173,7 +154,119 @@ docker-release-all:
 container:
 	docker build -t $(IMAGE) .
 
+rpm-container:
+	docker build -t manifoldco/torus-rpm packaging/rpm
+
 .PHONY: docker-build docker-test container
+
+#################################################
+# Build targets for releasing
+#################################################
+
+RELEASE_ENV?=stage
+ifeq (stage,$(RELEASE_ENV))
+	TORUS_S3_BUCKET=s3://releases.arigato.sh
+else ifeq (prod,$(RELEASE_ENV))
+	TORUS_S3_BUCKET=s3://get.torus.sh
+endif
+
+tagcheck:
+ifneq (v$(VERSION),$(shell git describe --tags --dirty))
+	$(error "VERSION $(VERSION) is not git HEAD")
+endif
+
+envcheck:
+ifeq (,$(TORUS_S3_BUCKET))
+	$(error "Unknown RELEASE_ENV $(RELEASE_ENV)")
+endif
+ifeq (prod,$(RELEASE_ENV))
+ifneq (,$(findstring -rc,$(VERSION)))
+	$(error "You can't release an rc version to prod")
+endif
+endif
+ifneq (yes,$(RELEASE_CONFIRM))
+	$(error "Set RELEASE_CONFIRM=yes to really release")
+endif
+
+gocheck:
+ifeq (,$(findstring $(GO_REQUIRED_VERSION),$(shell go version)))
+	$(error "Go Version $(GO_REQUIRED_VERSION) is required.")
+endif
+
+OS=$(word 1, $(subst -, ,$*))
+ARCH=$(word 2, $(subst -, ,$*))
+BUILD_DIR=builds/bin/$(VERSION)/$(OS)/$(ARCH)
+BINARY=-o $(BUILD_DIR)/$(OUT)
+$(addprefix binary-,$(TARGETS)): binary-%: gocheck generated vendor
+	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
+		-ldflags='$(STATIC_FLAGS)' ${PKG}
+
+builds/dist/$(VERSION) builds/dist/rpm:
+	@mkdir -p $@
+
+$(addprefix zip-,$(TARGETS)): zip-%: binary-% builds/dist/$(VERSION)
+	zip -j builds/dist/$(VERSION)/$(OUT)_$(VERSION)_$(OS)_$(ARCH).zip \
+		$(BUILD_DIR)/$(OUT)
+
+release-binary: $(addprefix zip-,$(TARGETS))
+	pushd builds/dist/$(VERSION) && \
+		shasum -a 256 *.zip > $(OUT)_$(VERSION)_SHA256SUMS
+
+$(addprefix rpm-,$(LINUX)): rpm-%: binary-% builds/dist/rpm rpm-container
+	docker run -v $(PWD):/torus manifoldco/torus-rpm /bin/bash -c " \
+		rpmbuild -D '_sourcedir /torus' -D 'VERSION $(VERSION)' -D 'ARCH $(ARCH)' -bb packaging/rpm/torus.spec && \
+		cp -R ~/rpmbuild/RPMS/* /torus/builds/dist/rpm/ \
+	"
+
+$(addprefix yum-,$(LINUX)): yum-%: rpm-%
+	docker run -v $(PWD):/torus manifoldco/torus-rpm /bin/bash -c " \
+		cd builds/dist/rpm/x86_64/ && \
+		createrepo_c . \
+	"
+
+GIT_SHA=$(shell curl -L https://github.com/manifoldco/torus-cli/archive/v$(VERSION).tar.gz | shasum -a 256 | cut -d" " -f1)
+builds/torus-$(VERSION).rb: packaging/homebrew/torus.rb.in
+	sed 's/{{VERSION}}/$(VERSION)/' < packaging/homebrew/torus.rb.in | \
+		sed 's/{{SHA256}}/$(GIT_SHA)/' > $@
+
+release-homebrew: envcheck tagcheck release-homebrew-$(RELEASE_ENV)
+
+release-homebrew-stage: builds/torus-$(VERSION).rb
+	pushd $(<D) && aws s3 cp $(<F) $(TORUS_S3_BUCKET)/brew
+
+builds/homebrew-git:
+	git clone --depth=1 git@github.com:manifoldco/homebrew-brew.git \
+		builds/homebrew-git
+homebrew-git: builds/homebrew-git
+	cd builds/homebrew-git && git pull
+
+release-homebrew-prod: builds/torus-$(VERSION).rb homebrew-git
+	cp $< builds/homebrew-git/Formula/torus.rb
+	pushd builds/homebrew-git && \
+		git add Formula/torus.rb && \
+		git commit -m "Update torus to v$(VERSION)" && \
+		git push origin master
+
+release-npm: envcheck tagcheck release-npm-$(RELEASE_ENV)
+
+release-npm-stage: builds/torus-npm-$(VERSION).tar.gz
+	pushd $(<D) && aws s3 cp $(<F) $(TORUS_S3_BUCKET)/npm
+
+release-npm-prod: builds/torus-npm-$(VERSION).tar.gz
+	npm publish $<
+
+RELEASE_TARGETS=\
+	release-binary \
+	release-npm \
+	release-homebrew \
+	$(addprefix yum-,$(LINUX))
+release-all: envcheck tagcheck $(RELEASE_TARGETS)
+	pushd builds/dist && aws s3 cp --recursive . $(TORUS_S3_BUCKET)
+
+.PHONY: envcheck tagcheck gocheck release-all release-binary
+.PHONY: $(addprefix binary-,$(TARGETS)) $(addprefix zip-,$(TARGETS))
+.PHONY: $(addprefix yum-,$(TARGETS)) $(addprefix rpm-,$(TARGETS))
+.PHONY: release-npm-stage release-npm-prod
 
 #################################################
 # Distribution via npm
@@ -190,16 +283,24 @@ npm: $(NPM_DEPS)
 builds/npm builds/npm/bin builds/npm/scripts:
 	mkdir -p $@
 
-builds/npm/package.json: npm/package.json.in builds/npm
-	sed 's/VERSION/$(VERSION)/' < $< > $@
-
 builds/npm/README.md builds/npm/LICENSE.md: builds/npm/%: builds/npm
 	cp $* $@
 
-builds/npm/scripts/install.js: npm/install.js builds/npm/scripts
+builds/npm/package.json: packaging/npm/package.json.in builds/npm
+	sed 's/VERSION/$(VERSION)/' < $< > $@
+
+builds/npm/scripts/install.js: packaging/npm/install.js builds/npm/scripts
 	cp $< $@
 
-npm-bin: builds/npm/bin builds/torus-*
-	cp builds/torus-* builds/npm/bin/
+builds/npm/bin/torus-darwin-amd64: builds/bin/$(VERSION)/darwin/amd64/torus
+	cp $< $@
+
+builds/npm/bin/torus-linux-amd64: builds/bin/$(VERSION)/linux/amd64/torus
+	cp $< $@
+
+npm-bin: builds/npm/bin binary-darwin-amd64 binary-linux-amd64
+
+builds/torus-$(VERSION)-npm.tar.gz: npm
+	tar czf $@ -C builds npm/
 
 .PHONY: npm npm-bin
