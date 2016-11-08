@@ -281,7 +281,8 @@ NPM_DEPS=\
 	builds/npm/README.md \
 	builds/npm/LICENSE.md \
 	builds/npm/scripts/install.js \
-	npm-bin
+	builds/npm/bin/torus-darwin-amd64 \
+	builds/npm/bin/torus-linux-amd64
 npm: $(NPM_DEPS)
 
 builds/npm builds/npm/bin builds/npm/scripts:
@@ -296,15 +297,13 @@ builds/npm/package.json: packaging/npm/package.json.in builds/npm
 builds/npm/scripts/install.js: packaging/npm/install.js builds/npm/scripts
 	cp $< $@
 
-builds/npm/bin/torus-darwin-amd64: builds/bin/$(VERSION)/darwin/amd64/torus
+builds/npm/bin/torus-darwin-amd64: builds/bin/$(VERSION)/darwin/amd64/torus builds/npm/bin
 	cp $< $@
 
-builds/npm/bin/torus-linux-amd64: builds/bin/$(VERSION)/linux/amd64/torus
+builds/npm/bin/torus-linux-amd64: builds/bin/$(VERSION)/linux/amd64/torus builds/npm/bin
 	cp $< $@
-
-npm-bin: builds/npm/bin binary-darwin-amd64 binary-linux-amd64
 
 builds/torus-npm-$(VERSION).tar.gz: npm
 	tar czf $@ -C builds npm/
 
-.PHONY: npm npm-bin
+.PHONY: npm
