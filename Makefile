@@ -300,7 +300,7 @@ builds/npm/bin/torus-linux-amd64: builds/bin/$(VERSION)/linux/amd64/torus
 
 npm-bin: builds/npm/bin binary-darwin-amd64 binary-linux-amd64
 
-builds/torus-$(VERSION)-npm.tar.gz: npm
+builds/torus-npm-$(VERSION).tar.gz: npm
 	tar czf $@ -C builds npm/
 
 .PHONY: npm npm-bin
