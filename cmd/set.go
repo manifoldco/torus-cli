@@ -22,8 +22,8 @@ var setUnsetFlags = []cli.Flag{
 		"", "TORUS_ENVIRONMENT", true),
 	newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
 		"default", "TORUS_SERVICE", true),
-	newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
-		"*", "TORUS_USER", true),
+	newSlicePlaceholder("user, u", "USER", "Use this user.", "*", "TORUS_USER", false),
+	newSlicePlaceholder("machine, m", "MACHINE", "Use this machine.", "*", "TORUS_MACHINE", false),
 	newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
 		"*", "TORUS_INSTANCE", true),
 }
@@ -102,9 +102,14 @@ func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp,
 			return nil, nil, err
 		}
 
+		identity, err := deriveIdentitySlice(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		pe, err = pathexp.New(ctx.String("org"), ctx.String("project"),
 			ctx.StringSlice("environment"), ctx.StringSlice("service"),
-			ctx.StringSlice("user"), ctx.StringSlice("instance"),
+			identity, ctx.StringSlice("instance"),
 		)
 		if err != nil {
 			return nil, nil, err
@@ -115,6 +120,14 @@ func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp,
 }
 
 func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apitypes.CredentialValue) (*apitypes.CredentialEnvelope, error) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
 	pe, credName, err := determineCredential(ctx, nameOrPath)
 	if err != nil {
 		return nil, err
@@ -123,14 +136,6 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 	if credName != nil {
 		name = *credName
 	}
-
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	client := api.NewClient(cfg)
-	c := context.Background()
 
 	org, err := client.Orgs.GetByName(c, pe.Org())
 	if org == nil || err != nil {

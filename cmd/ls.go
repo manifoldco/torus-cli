@@ -27,6 +27,8 @@ func init() {
 				"default", "TORUS_SERVICE", false),
 			newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
 				"*", "TORUS_USER", false),
+			newSlicePlaceholder("machine, m", "MACHINE", "Use this machine.",
+				"*", "TORUS_MACHINE", false),
 			newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
 				"*", "TORUS_INSTANCE", false),
 		},
@@ -52,6 +54,11 @@ func listObjects(ctx *cli.Context) error {
 	var cpathObj *pathexp.PathExp
 	var count int
 	var err error
+
+	identitySlice, err := deriveIdentitySlice(ctx)
+	if err != nil {
+		return err
+	}
 
 	hasPath := len(args) > 0
 	emptyOrg := ctx.String("org") == ""
@@ -82,7 +89,7 @@ func listObjects(ctx *cli.Context) error {
 		// Construct the target path through flags
 		obj, _, err := pathexp.NewPartial(ctx.String("org"), ctx.String("project"),
 			ctx.StringSlice("environment"), ctx.StringSlice("service"),
-			ctx.StringSlice("user"), ctx.StringSlice("instance"),
+			identitySlice, ctx.StringSlice("instance"),
 		)
 		cpathObj = obj
 		count = 6

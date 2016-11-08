@@ -25,6 +25,8 @@ func init() {
 			stdProjectFlag,
 			stdEnvFlag,
 			serviceFlag("Use this service.", "default", true),
+			userFlag("Use this user.", false),
+			machineFlag("Use this machine.", false),
 			stdInstanceFlag,
 			cli.BoolFlag{
 				Name:  "verbose, v",
@@ -67,6 +69,40 @@ func viewCmd(ctx *cli.Context) error {
 	return nil
 }
 
+func deriveCurrentIdentity(c context.Context, ctx *cli.Context, client *api.Client) (string, error) {
+	if ctx.String("user") != "" && ctx.String("machine") != "" {
+		return "", errs.NewExitError(
+			"You can only supply --user or --machine, not both.")
+	}
+
+	identity := ""
+	if ctx.String("user") != "" {
+		identity = ctx.String("user")
+	}
+
+	var err error
+	if ctx.String("machine") != "" {
+		identity, err = identityString("machine", ctx.String("machine"))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if identity == "" {
+		session, err := client.Session.Who(c)
+		if err != nil {
+			return "", err
+		}
+
+		identity = session.Username()
+		if session.Type() == "machine" {
+			identity = "machine-" + identity
+		}
+	}
+
+	return identity, nil
+}
+
 func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -76,14 +112,9 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	session, err := client.Session.Who(c)
+	identity, err := deriveCurrentIdentity(c, ctx, client)
 	if err != nil {
-		return nil, "", errs.NewErrorExitError("Error fetching user details", err)
-	}
-
-	identity := session.Username()
-	if session.Type() == "machine" {
-		identity = "machine-" + identity
+		return nil, "", err
 	}
 
 	parts := []string{
