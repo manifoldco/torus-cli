@@ -120,13 +120,14 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	go func() {
 		org, oErr = client.Orgs.GetByName(c, orgName)
-		getMemberships.Done()
-
 		if org == nil {
 			oErr = errs.NewExitError("Org not found.")
+			getMemberships.Done()
 			display.Done()
 			return
 		}
+
+		getMemberships.Done()
 
 		teams, tErr = client.Teams.GetByOrg(c, org.ID)
 		display.Done()
@@ -157,17 +158,16 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	for _, t := range teams {
+		if isMachineTeam(t.Body) {
+			continue
+		}
+
 		isMember := ""
 		displayTeamType := ""
 
 		switch teamType := t.Body.TeamType; teamType {
 		case primitive.SystemTeam:
 			displayTeamType = "[system]"
-			if t.Body.Name == "machine" {
-				displayTeamType += " (machine)"
-			}
-		case primitive.MachineTeam:
-			displayTeamType = "(machine)"
 		}
 
 		if _, ok := memberOf[*t.ID]; ok {
@@ -222,6 +222,14 @@ func teamMembersListCmd(ctx *cli.Context) error {
 			return
 		}
 		team = teams[0]
+
+		// Hide machine teams from the teams list; as we use them to represent
+		// machine roles in the system.
+		if isMachineTeam(team.Body) {
+			tErr = errs.NewExitError("Team not found.")
+			getMembers.Done()
+			return
+		}
 
 		// Pull all memberships for supplied org/team
 		memberships, mErr = client.Memberships.List(c, org.ID, nil, team.ID)
@@ -550,4 +558,10 @@ func teamsAddCmd(ctx *cli.Context) error {
 
 	fmt.Println(username + " has been added to the " + teamName + " team.")
 	return nil
+}
+
+// isMachineTeam returns whether or not the given team represents a machine
+// role (which uses the Team primitive)
+func isMachineTeam(team *primitive.Team) bool {
+	return team.TeamType == primitive.MachineTeam || (team.TeamType == primitive.SystemTeam && team.Name == primitive.MachineTeamName)
 }

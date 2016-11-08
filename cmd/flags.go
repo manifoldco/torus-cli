@@ -71,6 +71,11 @@ func teamFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("team, t", "TEAM", usage, "", "TORUS_TEAM", required)
 }
 
+// roleFlag creates a new --role cli.Flag with custom usage string.
+func roleFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("role, r", "ROLE", usage, "", "TORUS_ROLE", required)
+}
+
 // destroyedFlag creates a new --destroyed cli.Flag with custom usage string.
 func destroyedFlag() cli.Flag {
 	return cli.BoolFlag{

@@ -9,6 +9,16 @@ _Unpublished_
 - Introduced `--user, -u` and `--machine, -m` flags to `torus set`, `torus
   unset`, `torus view`, `torus run`, and `torus ls` for specifying machine or
   user identity
+- Introduce `machines roles list` and `machines roles create` commands for
+  viewing and creating machine roles.
+- Machine teams no longer appear under `teams list` nor can you view machine
+  teams through `teams members`.
+- The `machines` command now appears under the `ORGANIZATIONS` category when
+  listing commands with `torus help`.
+
+**Fixes**
+
+- Listing teams no longer results in a panic when an unknown org is specified.
 
 ## v0.15.0
 

@@ -563,6 +563,15 @@ const (
 	MachineTeam = "machine"
 )
 
+// Teams are used to represent a group of identities and their associated
+// access control policies
+const (
+	AdminTeamName   = "admin"
+	OwnerTeamName   = "owner"
+	MemberTeamName  = "member"
+	MachineTeamName = "machine"
+)
+
 // Team IDs for certain system teams can be derived based on their OrgID.
 const (
 	DerivableMachineTeamSymbol = 0x04

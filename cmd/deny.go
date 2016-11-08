@@ -9,8 +9,8 @@ import (
 func init() {
 	deny := cli.Command{
 		Name:      "deny",
-		Usage:     "Deny a team permission to access specific resources",
-		ArgsUsage: "<crudl> <path> <team>",
+		Usage:     "Deny a team or machine role permission to access specific resources",
+		ArgsUsage: "<crudl> <path> <team|machine-role>",
 		Category:  "ACCESS CONTROL",
 		Action:    chain(ensureDaemon, ensureSession, denyCmd),
 	}
