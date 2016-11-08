@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## UNPUBLISHED
+## v0.16.0
 
 _Unpublished_
 
@@ -15,10 +15,13 @@ _Unpublished_
   teams through `teams members`.
 - The `machines` command now appears under the `ORGANIZATIONS` category when
   listing commands with `torus help`.
+- Introduce more release formats: npm, binary/zip, rpm/yum, & homebrew
+- Provide more detailed error messages.
 
 **Fixes**
 
 - Listing teams no longer results in a panic when an unknown org is specified.
+- Various typo fixes.
 
 ## v0.15.0
 
