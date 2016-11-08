@@ -201,7 +201,7 @@ $(addprefix binary-,$(TARGETS)): binary-%: gocheck generated vendor
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
 		-ldflags='$(STATIC_FLAGS)' ${PKG}
 
-builds/dist/$(VERSION) builds/dist/rpm:
+builds/dist/$(VERSION) builds/dist/rpm builds/dist/brew builds/dist/npm:
 	@mkdir -p $@
 
 $(addprefix zip-,$(TARGETS)): zip-%: binary-% builds/dist/$(VERSION)
@@ -235,8 +235,8 @@ builds/torus-$(VERSION).rb: packaging/homebrew/torus.rb.in
 
 release-homebrew: envcheck tagcheck release-homebrew-$(RELEASE_ENV)
 
-release-homebrew-stage: builds/torus-$(VERSION).rb
-	pushd $(<D) && aws s3 cp $(<F) $(TORUS_S3_BUCKET)/brew
+release-homebrew-stage: builds/torus-$(VERSION).rb builds/dist/brew
+	cp $< builds/dist/brew/
 
 builds/homebrew-git:
 	git clone --depth=1 git@github.com:manifoldco/homebrew-brew.git \
@@ -253,8 +253,8 @@ release-homebrew-prod: builds/torus-$(VERSION).rb homebrew-git
 
 release-npm: envcheck tagcheck release-npm-$(RELEASE_ENV)
 
-release-npm-stage: builds/torus-npm-$(VERSION).tar.gz
-	pushd $(<D) && aws s3 cp $(<F) $(TORUS_S3_BUCKET)/npm
+release-npm-stage: builds/torus-npm-$(VERSION).tar.gz builds/dist/npm
+	cp $< builds/dist/npm/
 
 release-npm-prod: builds/torus-npm-$(VERSION).tar.gz
 	npm publish $<
