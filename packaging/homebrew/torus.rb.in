@@ -19,7 +19,7 @@ class Torus < Formula
     ENV["GOPATH"] = buildpath
     ENV["GLIDE_HOME"] = buildpath/"glide_home"
 
-    toruspath = buildpath/"src/github.com/manifoldco/torus"
+    toruspath = buildpath/"src/github.com/manifoldco/torus-cli"
     toruspath.install Dir["*"]
     Language::Go.stage_deps resources, buildpath/"src"
 
