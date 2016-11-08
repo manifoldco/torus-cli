@@ -150,7 +150,7 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 
 // SelectTeamPrompt prompts the user to select a team from a list or enter a
 // new name, an optional label can be provided.
-func SelectTeamPrompt(teams []api.TeamResult, label string) (int, string, error) {
+func SelectTeamPrompt(teams []api.TeamResult, label, addLabel string) (int, string, error) {
 	names := make([]string, len(teams))
 	for i, t := range teams {
 		names[i] = t.Body.Name
@@ -160,10 +160,14 @@ func SelectTeamPrompt(teams []api.TeamResult, label string) (int, string, error)
 		label = "Select Team"
 	}
 
+	if addLabel == "" {
+		label = "Create a new team"
+	}
+
 	prompt := promptui.SelectWithAdd{
 		Label:    label,
 		Items:    names,
-		AddLabel: "Create a new team",
+		AddLabel: addLabel,
 		Validate: validateSlug("team"),
 	}
 
@@ -289,9 +293,10 @@ func SelectCreateRole(c context.Context, client *api.Client, orgID *identity.ID,
 	}
 
 	label := "Select Machine Role"
+	addLabel := "Create a new role"
 	var idx int
 	if name == "" {
-		idx, name, err = SelectTeamPrompt(teams, label)
+		idx, name, err = SelectTeamPrompt(teams, label, addLabel)
 		if err != nil {
 			return nil, "", false, err
 		}
