@@ -2,7 +2,7 @@
 
 ## v0.16.0
 
-_Unpublished_
+_2016-11-09_
 
 **Notable Changes**
 
