@@ -166,8 +166,10 @@ rpm-container:
 RELEASE_ENV?=stage
 ifeq (stage,$(RELEASE_ENV))
 	TORUS_S3_BUCKET=s3://releases.arigato.sh
+	BOTTLE_URL=https://s3.amazonaws.com/releases.arigato.sh
 else ifeq (prod,$(RELEASE_ENV))
 	TORUS_S3_BUCKET=s3://get.torus.sh
+	BOTTLE_URL=https://get.torus.sh
 endif
 
 tagcheck:
@@ -203,7 +205,7 @@ $(addprefix binary-,$(TARGETS)): binary-%: gocheck generated vendor
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
 		-ldflags='$(STATIC_FLAGS)' ${PKG}
 
-builds/dist/$(VERSION) builds/dist/rpm builds/dist/brew/$(VERSION) builds/dist/npm/$(VERSION):
+builds/dist/$(VERSION) builds/dist/rpm builds/dist/brew/$(VERSION) builds/dist/npm/$(VERSION) builds/dist/brew/bottles:
 	@mkdir -p $@
 
 $(addprefix zip-,$(TARGETS)): zip-%: binary-% builds/dist/$(VERSION)
@@ -231,11 +233,31 @@ $(addprefix yum-,$(LINUX)): yum-%: rpm-%
 	"
 
 GIT_SHA=$(shell curl -L https://github.com/manifoldco/torus-cli/archive/v$(VERSION).tar.gz | shasum -a 256 | cut -d" " -f1)
-builds/torus-$(VERSION).rb: packaging/homebrew/torus.rb.in
-	sed 's/{{VERSION}}/$(VERSION)/' < packaging/homebrew/torus.rb.in | \
-		sed 's/{{SHA256}}/$(GIT_SHA)/' > $@
+BOTTLE_SHA=$(shell shasum -a 256 builds/torus-$(VERSION).sierra.bottle.tar.gz | cut -d" " -f 1)
+builds/torus-$(VERSION).rb: packaging/homebrew/torus.rb.in builds/torus-$(VERSION).sierra.bottle.tar.gz
+	sed 's/{{VERSION}}/$(VERSION)/' < $< | \
+		sed 's/{{SHA256}}/$(GIT_SHA)/' | \
+		sed 's/{{BOTTLE_SHA256}}/$(BOTTLE_SHA)/' | \
+		sed 's|{{BOTTLE_URL}}|$(BOTTLE_URL)/brew/bottles|' > $@
 
-release-homebrew: envcheck tagcheck release-homebrew-$(RELEASE_ENV)
+builds/bottle/torus/$(VERSION)/INSTALL_RECEIPT.json: packaging/homebrew/INSTALL_RECEIPT.json.in
+	mkdir -p builds/bottle/torus/$(VERSION)
+	sed 's/{{VERSION}}/$(VERSION)/' < $< | \
+		sed 's/{{GO_VERSION}}/$(GO_REQUIRED_VERSION)/' | \
+		sed 's/{{MTIME}}/$(shell git log -n1 --format=%at v$(VERSION))/' > $@
+
+builds/torus-$(VERSION).sierra.bottle.tar.gz: binary-darwin-amd64 builds/bottle/torus/$(VERSION)/INSTALL_RECEIPT.json
+	mkdir -p builds/bottle/torus/$(VERSION)/bin
+	cp builds/bin/0.16.0/darwin/amd64/torus builds/bottle/torus/$(VERSION)/bin
+	tar zcf $@ -C builds/bottle torus
+
+release-homebrew: envcheck tagcheck release-homebrew-bottle release-homebrew-$(RELEASE_ENV)
+
+BOTTLE_VERSIONS=$(foreach release,sierra el_capitan yosemite,builds/dist/brew/bottles/torus-$(VERSION).$(release).bottle.tar.gz)
+$(BOTTLE_VERSIONS): builds/torus-$(VERSION).sierra.bottle.tar.gz builds/dist/brew/bottles
+	cp $< $@
+
+release-homebrew-bottle: $(BOTTLE_VERSIONS)
 
 release-homebrew-stage: builds/torus-$(VERSION).rb builds/dist/brew/$(VERSION)
 	cp $< builds/dist/brew/$(VERSION)/torus.rb
