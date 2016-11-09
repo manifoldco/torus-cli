@@ -21,6 +21,7 @@ _Unpublished_
 **Fixes**
 
 - Listing teams no longer results in a panic when an unknown org is specified.
+- `torus status` properly displays the identity segment for a machine in the credential path.
 - Various typo fixes.
 
 ## v0.15.0

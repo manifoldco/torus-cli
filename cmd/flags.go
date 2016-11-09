@@ -8,6 +8,7 @@ import (
 
 	"github.com/urfave/cli"
 
+	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/errs"
 )
 
@@ -195,6 +196,35 @@ func identityString(identityType, identity string) (string, error) {
 	}
 
 	return "machine-" + identity, nil
+}
+
+func deriveIdentity(ctx *cli.Context, session *api.Session) (string, error) {
+	if ctx.String("user") != "" && ctx.String("machine") != "" {
+		return "", errs.NewExitError(
+			"You can only supply --user or --machine, not both.")
+	}
+
+	identity := ""
+	if ctx.String("user") != "" {
+		identity = ctx.String("user")
+	}
+
+	var err error
+	if ctx.String("machine") != "" {
+		identity, err = identityString("machine", ctx.String("machine"))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if identity == "" {
+		identity, err = identityString(session.Type(), session.Username())
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return identity, nil
 }
 
 // Derives a slice of identity segments for us in building a PathExp object.
