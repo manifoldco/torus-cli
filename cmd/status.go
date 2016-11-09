@@ -107,7 +107,12 @@ func statusCmd(ctx *cli.Context) error {
 	fmt.Fprintf(w, "Instance:\t%s\n", instance)
 	w.Flush()
 
-	parts := []string{"", org, project, env, service, session.Username(), instance}
+	identity, err := deriveIdentity(ctx, session)
+	if err != nil {
+		return err
+	}
+
+	parts := []string{"", org, project, env, service, identity, instance}
 	credPath := strings.Join(parts, "/")
 	fmt.Printf("\nCredential path: %s\n", credPath)
 

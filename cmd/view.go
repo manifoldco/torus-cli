@@ -69,40 +69,6 @@ func viewCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func deriveCurrentIdentity(c context.Context, ctx *cli.Context, client *api.Client) (string, error) {
-	if ctx.String("user") != "" && ctx.String("machine") != "" {
-		return "", errs.NewExitError(
-			"You can only supply --user or --machine, not both.")
-	}
-
-	identity := ""
-	if ctx.String("user") != "" {
-		identity = ctx.String("user")
-	}
-
-	var err error
-	if ctx.String("machine") != "" {
-		identity, err = identityString("machine", ctx.String("machine"))
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if identity == "" {
-		session, err := client.Session.Who(c)
-		if err != nil {
-			return "", err
-		}
-
-		identity = session.Username()
-		if session.Type() == "machine" {
-			identity = "machine-" + identity
-		}
-	}
-
-	return identity, nil
-}
-
 func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -112,7 +78,12 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	identity, err := deriveCurrentIdentity(c, ctx, client)
+	session, err := client.Session.Who(c)
+	if err != nil {
+		return nil, "", err
+	}
+
+	identity, err := deriveIdentity(ctx, session)
 	if err != nil {
 		return nil, "", err
 	}
