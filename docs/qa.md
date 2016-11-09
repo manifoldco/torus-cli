@@ -7,18 +7,6 @@ may be skipped.
 Copy it into the body of a comment in the release issue. Check the boxes and
 note any failures by linking the appropriate bug.
 
-### Waitlist QA Flow
-
-- [ ]   [https://arigato-www-staging.herokuapp.com](https://arigato-www-staging.herokuapp.com) loads
-- [ ]  The disclaimer expands and collapses
-- [ ]   **Every ** link on the page works as you would expect it to
-- [ ]  If you enter an (email@arigato.sh) email address and click `Add me to the alpha` , you are added to the waitlist
-- [ ]  By default, `video-1` is selected
-- [ ]  All three videos play
-- [ ]  You can leave emoji feedback
-- [ ]  You can initiate an intercom session using the intercom 'bubble'
-- [ ]  You can initiate an intercom session by click `Send us your feedback`
-
 ### Installation and Signup
 
 If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
