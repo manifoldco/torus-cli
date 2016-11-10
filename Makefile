@@ -157,7 +157,10 @@ container:
 rpm-container:
 	docker build -t manifoldco/torus-rpm packaging/rpm
 
-.PHONY: docker-build docker-test container
+deb-container:
+	docker build -t manifoldco/torus-deb packaging/deb
+
+.PHONY: docker-build docker-test container rpm-container deb-container
 
 #################################################
 # Build targets for releasing
@@ -205,7 +208,16 @@ $(addprefix binary-,$(TARGETS)): binary-%: gocheck generated vendor
 	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
 		-ldflags='$(STATIC_FLAGS)' ${PKG}
 
-builds/dist/$(VERSION) builds/dist/rpm builds/dist/brew/$(VERSION) builds/dist/npm/$(VERSION) builds/dist/brew/bottles:
+BUILD_DIRS=\
+	builds/dist/$(VERSION) \
+	builds/dist/rpm \
+	builds/deb \
+	builds/dist/ubuntu \
+	builds/dist/debian \
+	builds/dist/brew/$(VERSION) \
+	builds/dist/npm/$(VERSION) \
+	builds/dist/brew/bottles
+$(BUILD_DIRS):
 	@mkdir -p $@
 
 $(addprefix zip-,$(TARGETS)): zip-%: binary-% builds/dist/$(VERSION)
@@ -230,6 +242,36 @@ $(addprefix yum-,$(LINUX)): yum-%: rpm-%
 	docker run -v $(PWD):/torus manifoldco/torus-rpm /bin/bash -c " \
 		cd builds/dist/rpm/x86_64/ && \
 		createrepo_c . \
+	"
+
+$(addprefix deb-,$(LINUX)): deb-%: binary-% builds/deb deb-container
+	docker run -v $(PWD):/torus manifoldco/torus-deb /bin/bash -c " \
+		mkdir -p deb-tmp/torus/DEBIAN && \
+		mkdir -p deb-tmp/torus/usr/bin && \
+		cp /torus/builds/bin/$(VERSION)/$(OS)/$(ARCH)/torus \
+			deb-tmp/torus/usr/bin/ && \
+		sed 's/VERSION/$(VERSION)/' < /torus/packaging/deb/control.in | \
+			sed 's/ARCH/$(ARCH)/' > deb-tmp/torus/DEBIAN/control && \
+		cd deb-tmp && \
+		dpkg-deb -b torus && \
+		cp torus.deb /torus/builds/deb/torus_$(VERSION)_$(ARCH).deb \
+	"
+
+builds/dist/debian/conf/distributions: packaging/deb/distributions.debian
+	mkdir -p $(@D)
+	cp $< $@
+
+builds/dist/ubuntu/conf/distributions: packaging/deb/distributions.ubuntu
+	mkdir -p $(@D)
+	cp $< $@
+
+apt-repo: $(addprefix deb-,$(LINUX)) builds/dist/debian/conf/distributions builds/dist/ubuntu/conf/distributions
+	docker run -v $(PWD):/torus manifoldco/torus-deb /bin/bash -c " \
+		cd /torus/builds/dist/debian && \
+		reprepro includedeb jessie /torus/builds/deb/*.deb && \
+		cd /torus/builds/dist/ubuntu && \
+		reprepro includedeb xenial /torus/builds/deb/*.deb && \
+		reprepro includedeb trusty /torus/builds/deb/*.deb \
 	"
 
 GIT_SHA=$(shell curl -L https://github.com/manifoldco/torus-cli/archive/v$(VERSION).tar.gz | shasum -a 256 | cut -d" " -f1)
@@ -287,6 +329,7 @@ RELEASE_TARGETS=\
 	release-binary \
 	release-npm \
 	release-homebrew \
+	apt-repo \
 	$(addprefix yum-,$(LINUX))
 release-all: envcheck tagcheck $(RELEASE_TARGETS)
 	pushd builds/dist && aws s3 cp --recursive . $(TORUS_S3_BUCKET)

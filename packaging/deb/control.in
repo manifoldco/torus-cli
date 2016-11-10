@@ -1,0 +1,7 @@
+Package: torus
+Version: VERSION
+Maintainer: Manifold <hello@manifold.co>
+Section: devel
+Priority: optional
+Architecture: ARCH
+Description: Torus is a secure, shared workspace for secrets.
