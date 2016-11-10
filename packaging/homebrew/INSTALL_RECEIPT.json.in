@@ -1,0 +1,31 @@
+{
+   "runtime_dependencies" : [
+      {
+         "version" : "{{GO_VERSION}}",
+         "full_name" : "go"
+      }
+   ],
+   "poured_from_bottle" : false,
+   "HEAD" : null,
+   "source" : {
+      "tap" : "manifoldco/brew",
+      "path" : "@@HOMEBREW_REPOSITORY@@/Library/Taps/manifoldco/homebrew-brew/Formula/torus.rb",
+      "versions" : {
+         "devel" : null,
+         "stable" : "{{VERSION}}",
+         "version_scheme" : 0,
+         "head" : "HEAD"
+      },
+      "spec" : "stable"
+   },
+   "time" : null,
+   "built_as_bottle" : true,
+   "used_options" : [],
+   "compiler" : "clang",
+   "stdlib" : null,
+   "unused_options" : [],
+   "changed_files" : [
+      "INSTALL_RECEIPT.json"
+   ],
+   "source_modified_time" : {{MTIME}}
+}

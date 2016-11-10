@@ -10,6 +10,14 @@ class Torus < Formula
   depends_on "glide" => :build
   depends_on "go" => :build
 
+  bottle do
+    root_url "{{BOTTLE_URL}}"
+    cellar :any_skip_relocation
+    sha256 "{{BOTTLE_SHA256}}" => :sierra
+    sha256 "{{BOTTLE_SHA256}}" => :el_capitan
+    sha256 "{{BOTTLE_SHA256}}" => :yosemite
+  end
+
   go_resource "github.com/jteeuwen/go-bindata" do
     url "https://github.com/jteeuwen/go-bindata.git",
         :revision => "a0ff2567cfb70903282db057e799fd826784d41d"
