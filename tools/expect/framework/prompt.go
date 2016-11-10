@@ -7,7 +7,6 @@ import (
 
 	"github.com/ThomasRooney/gexpect"
 
-	"github.com/manifoldco/torus-cli/tools/expect/output"
 	"github.com/manifoldco/torus-cli/tools/expect/utils"
 )
 
@@ -22,7 +21,7 @@ type Prompt struct {
 }
 
 // Execute runs the prompt
-func (p Prompt) Execute(child *gexpect.ExpectSubprocess) error {
+func (p Prompt) Execute(child *gexpect.ExpectSubprocess, output *Output) error {
 	for _, f := range p.Fields {
 		var timeout time.Duration
 		if f.Timeout != nil {
@@ -39,7 +38,7 @@ func (p Prompt) Execute(child *gexpect.ExpectSubprocess) error {
 		}
 		if f.RequestInput {
 			output.Separator(3)
-			readIn := makeReader()
+			readIn := makeReader(output)
 			text := readIn("? Please enter value:\t", 3)
 			output.LogChild(inputChar+text, 4)
 			child.Send(text)
@@ -51,7 +50,7 @@ func (p Prompt) Execute(child *gexpect.ExpectSubprocess) error {
 			output.LogChild(inputChar+"\\n", 3)
 		}
 		child.Send("\n")
-		err = expectValues(child, f.Expect, timeout, 1)
+		err = expectValues(child, output, f.Expect, timeout, 1)
 		if err != nil {
 			return err
 		}
@@ -68,7 +67,7 @@ type Field struct {
 	Timeout      *time.Duration
 }
 
-func makeReader() func(string, int) string {
+func makeReader(output *Output) func(string, int) string {
 	reader := bufio.NewReader(os.Stdin)
 
 	return func(s string, tabLevel int) string {

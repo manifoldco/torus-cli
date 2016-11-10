@@ -1,4 +1,4 @@
-package output
+package framework
 
 import (
 	"fmt"
@@ -9,30 +9,35 @@ import (
 
 const tab = "  "
 
+// Output is a context-aware stdout printer
+type Output struct {
+	Context *ExpectContext
+}
+
 // Title outputs a title section
-func Title(title string) {
+func (o *Output) Title(title string) {
 	fmt.Println("")
 	fmt.Println(title)
 }
 
 // Log outputs a string
-func Log(text string) {
+func (o *Output) Log(text string) {
 	fmt.Println(text)
 }
 
 // Separator outputs a 20 char line at a depth
-func Separator(depth int) {
-	LogChild(strings.Repeat("-", 20), depth)
+func (o *Output) Separator(depth int) {
+	o.LogChild(strings.Repeat("-", 20), depth)
 }
 
 // LogChild outputs a value at a tab depth
-func LogChild(text string, depth int) {
+func (o *Output) LogChild(text string, depth int) {
 	tabs := strings.Repeat(tab, depth)
 	fmt.Println(tabs + text)
 }
 
 // CreateTabWriter wraps TabWriter.Init for ease of use
-func CreateTabWriter(mw, tw, padding int, char byte, flags uint) TabWriter {
+func (o *Output) CreateTabWriter(mw, tw, padding int, char byte, flags uint) TabWriter {
 	t := TabWriter{}
 	return t.Init(mw, tw, padding, char, flags)
 }

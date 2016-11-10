@@ -5,7 +5,6 @@ import (
 
 	"github.com/ThomasRooney/gexpect"
 
-	"github.com/manifoldco/torus-cli/tools/expect/output"
 	"github.com/manifoldco/torus-cli/tools/expect/utils"
 )
 
@@ -16,17 +15,19 @@ type Command struct {
 	Expect   []string
 	Timeout  *time.Duration
 	Prompt   *Prompt
+	Context  *ExpectContext
 	Callback func(data interface{})
 }
 
 // Execute spawns the command and runs through the expectations
 func (c Command) Execute(executable string) error {
+	output := Output{Context: c.Context}
 	output.Title(c.Spawn)
 	command := executable + " " + c.Spawn
 	child, err := gexpect.Spawn(command)
 	defer child.Close()
 	if err != nil {
-		output.Log("Spawn errored")
+		output.Log(c.Context.Namespace + ") Spawn errored")
 		output.Log(err.Error())
 		return err
 	}
@@ -34,7 +35,7 @@ func (c Command) Execute(executable string) error {
 	// Fullfil the specified prompt
 	if c.Prompt != nil {
 		output.LogChild("Executing prompt", 1)
-		err = c.Prompt.Execute(child)
+		err = c.Prompt.Execute(child, &output)
 		if err != nil {
 			output.LogChild("Prompt failed", 2)
 			return err
@@ -49,10 +50,10 @@ func (c Command) Execute(executable string) error {
 	}
 
 	// Final output from the command
-	return expectValues(child, c.Expect, timeout, 1)
+	return expectValues(child, &output, c.Expect, timeout, 1)
 }
 
-func expectValues(child *gexpect.ExpectSubprocess, values []string, timeout time.Duration, tabLevel int) error {
+func expectValues(child *gexpect.ExpectSubprocess, output *Output, values []string, timeout time.Duration, tabLevel int) error {
 	if len(values) < 1 {
 		return nil
 	}

@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/manifoldco/torus-cli/tools/expect/framework"
-	"github.com/manifoldco/torus-cli/tools/expect/output"
+	"github.com/manifoldco/torus-cli/tools/expect/utils"
 )
 
 // AvailableSuites is a compilation of the suites available
@@ -28,15 +28,31 @@ func (a AvailableSuites) getByAlias(alias string) []framework.Command {
 }
 
 // Init returns all available test suites
-func Init() AvailableSuites {
+func Init() (*AvailableSuites, error) {
+	if utils.GlobalNonce == "" {
+		panic("empty nonce")
+	}
+
+	signupA := framework.SignupData{
+		Name:     "John Smith",
+		Username: "user-a-" + utils.GlobalNonce,
+		Email:    "johnsmith+" + utils.GlobalNonce + "@example.com",
+		Password: "password",
+	}
+
+	userA, err := framework.NewUserContext("a", &signupA)
+	if err != nil {
+		return nil, err
+	}
+
 	testSuites := AvailableSuites{
 		Default: []framework.Command{
-			prefsList(),
+			prefsList(&userA),
 			version(),
 			daemonStatus(),
 			daemonStop(),
 			daemonStart(),
-			signup(),
+			signup(&userA),
 			projectCreate(),
 			link(),
 			keypairsList(),
@@ -69,11 +85,12 @@ func Init() AvailableSuites {
 			unlink(),
 		},
 	}
-	return testSuites
+	return &testSuites, nil
 }
 
 // Execute spawns a test suite to run
 func Execute(suites AvailableSuites, target, executable string) error {
+	output := framework.Output{}
 	commands := suites.getByAlias(target)
 	if len(commands) < 1 {
 		return errors.New("Commands not found.")
@@ -91,7 +108,7 @@ func Execute(suites AvailableSuites, target, executable string) error {
 }
 
 // Teardown is ran when the suite finishes (successful or not)
-func Teardown(executable string) error {
+func Teardown(executable string, output *framework.Output) error {
 	output.Title("Teardown")
 	unlinkCmd := unlink()
 	err := unlinkCmd.Execute(executable)

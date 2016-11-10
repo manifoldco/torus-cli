@@ -1,56 +1,42 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/manifoldco/torus-cli/tools/expect/framework"
-	"github.com/manifoldco/torus-cli/tools/expect/utils"
 )
 
-type signupData struct {
-	Name     string
-	Email    string
-	Username string
-	Password string
-}
-
-func signup() framework.Command {
-	if utils.GlobalNonce == "" {
-		panic("empty nonce")
-	}
-	user := signupData{
-		Name:     "John Smith",
-		Username: "username-" + utils.GlobalNonce,
-		Email:    "email+" + utils.GlobalNonce + "@arigato.sh",
-		Password: "password",
-	}
-	timeout := utils.Duration(30)
+func signup(c *context.Context) framework.Command {
+	ctx := framework.ContextValue(c)
 
 	return framework.Command{
-		Spawn: "signup",
+		Context: &ctx,
+		Spawn:   "signup",
 		Expect: []string{
 			"Your email is now verified.",
 		},
-		Timeout: &timeout,
+		Timeout: ctx.Timeout,
 		Prompt: &framework.Prompt{
 			Fields: []framework.Field{
 				{
 					Label:    "Name",
-					SendLine: user.Name,
+					SendLine: ctx.User.Name,
 				},
 				{
 					Label:    "Username",
-					SendLine: user.Username,
+					SendLine: ctx.User.Username,
 				},
 				{
 					Label:    "Email",
-					SendLine: user.Email,
+					SendLine: ctx.User.Email,
 				},
 				{
 					Label:    "Password",
-					SendLine: user.Password,
+					SendLine: ctx.User.Password,
 				},
 				{
 					Label:    "Confirm Password",
-					SendLine: user.Password,
+					SendLine: ctx.User.Password,
 					Expect: []string{
 						"You are now authenticated.",
 						"Keypairs generated",
