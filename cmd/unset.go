@@ -42,7 +42,7 @@ func unsetCmd(ctx *cli.Context) error {
 
 	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", pathexp.String(), *cname)
 
-	abortErr := ConfirmDialogue(ctx, nil, &preamble)
+	abortErr := ConfirmDialogue(ctx, nil, &preamble, true)
 	if abortErr != nil {
 		return abortErr
 	}

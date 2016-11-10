@@ -203,8 +203,9 @@ type Signup struct {
 
 // ProfileUpdate contains the fields a user can change on their user object
 type ProfileUpdate struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // OrgInvite contains information for sending an Org invite

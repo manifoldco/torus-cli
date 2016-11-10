@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -85,7 +86,7 @@ func profileEdit(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Error fetching user details", err)
 	}
 	if session.Type() == apitypes.MachineSession {
-		return errs.NewExitError("Machines cannot update profile")
+		return errs.NewExitError("Machines cannot update profiles")
 	}
 
 	ogName := session.Name()
@@ -100,21 +101,23 @@ func profileEdit(ctx *cli.Context) error {
 		return err
 	}
 
-	warning := "\nYou are about to update your profile to the values above."
-	if email != ogEmail {
-		warning = "\nYou will be required to re-verify your email address before taking any further actions within Torus."
+	var newPassword string
+	err = AskPerform(ctx, "Would you like to change your password?")
+	if err == nil {
+		password, err := changePassword(&c, client, session)
+		if err != nil {
+			return err
+		}
+		newPassword = password
 	}
 
-	if ogEmail == email && ogName == name {
+	// Don't perform any action if no changes occurred
+	if ogEmail == email && ogName == name && newPassword == "" {
 		fmt.Println("\nNo changes made :)")
 		return nil
 	}
 
-	err = ConfirmDialogue(ctx, nil, &warning)
-	if err != nil {
-		return err
-	}
-
+	// Construct the update payload
 	delta := apitypes.ProfileUpdate{}
 	if ogEmail != email {
 		delta.Email = email
@@ -122,11 +125,34 @@ func profileEdit(ctx *cli.Context) error {
 	if ogName != name {
 		delta.Name = name
 	}
+	if newPassword != "" {
+		delta.Password = newPassword
+	}
 
+	preamble := "\nYou are about to update your profile to the values entered above."
+	if email != ogEmail {
+		preamble = "\nYou will be required to re-verify your email address before taking any further actions within Torus."
+	}
+	abortErr := ConfirmDialogue(ctx, nil, &preamble, false)
+	if abortErr != nil {
+		return abortErr
+	}
+
+	// Update the profile
 	_, err = client.Users.Update(c, delta)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to update profile.", err)
 	}
+
+	// If the password has changed, log the user in again
+	if newPassword != "" {
+		err = performLogin(c, client, session.Email(), newPassword, false)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Output the final session details
 	updatedSession, err := client.Session.Who(c)
 	if err != nil {
 		return errs.NewErrorExitError("Error fetching user details", err)
@@ -136,8 +162,28 @@ func profileEdit(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	fmt.Fprintf(w, "Name:\t%s\n", updatedSession.Name())
 	fmt.Fprintf(w, "Email:\t%s\n", updatedSession.Email())
-	fmt.Fprintf(w, "Username:\t%s\n\n", updatedSession.Username())
+	fmt.Fprintf(w, "Username:\t%s\n", updatedSession.Username())
+	fmt.Fprintf(w, "Password:\t%s\n\n", strings.Repeat(string(PasswordMask), 10))
 	w.Flush()
 
 	return nil
+}
+
+func changePassword(c *context.Context, client *api.Client, session *api.Session) (string, error) {
+	// Retrieve current password value
+	oldLabel := "Current Password"
+	currentPassword, err := PasswordPrompt(false, &oldLabel)
+	if err != nil {
+		return "", err
+	}
+
+	// Test the user's current password
+	err = testLogin(*c, client, session.Email(), currentPassword)
+	if err != nil {
+		return "", errs.NewExitError("Invalid password.")
+	}
+
+	// Obtain new value for password
+	newLabel := "New Password"
+	return PasswordPrompt(true, &newLabel)
 }

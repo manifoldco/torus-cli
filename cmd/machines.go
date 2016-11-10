@@ -161,7 +161,7 @@ func destroyMachineCmd(ctx *cli.Context) error {
 	}
 
 	preamble := "You are about to destroy a machine. This cannot be undone."
-	abortErr := ConfirmDialogue(ctx, nil, &preamble)
+	abortErr := ConfirmDialogue(ctx, nil, &preamble, true)
 	if abortErr != nil {
 		return abortErr
 	}

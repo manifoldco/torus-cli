@@ -503,6 +503,17 @@ func newTriplesec(ctx context.Context, k []byte) (*triplesec.Cipher, error) {
 	return ts, nil
 }
 
+// ChangePassword creates a password object and re-encrypts the master key
+func (e *Engine) ChangePassword(ctx context.Context, newPassword string) (*primitive.UserPassword, *primitive.MasterKey, error) {
+	// We need to re-use the master key
+	currentMasterKey, err := e.unsealMasterKey(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	// Encrypt the new password and re-encrypt the original master key
+	return EncryptPasswordObject(ctx, newPassword, &currentMasterKey)
+}
+
 // deriveKey Derives a single use key from the given master key via blake2b
 // and a nonce.
 func deriveKey(ctx context.Context, mk, nonce []byte, size uint8) ([]byte, error) {

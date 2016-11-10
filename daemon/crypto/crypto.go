@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/base64"
+	"log"
 
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/scrypt"
@@ -125,9 +126,9 @@ func GenerateSalt(ctx context.Context) (*base64url.Value, error) {
 	return base64url.NewValue(salt), nil
 }
 
-// EncryptPasswordObject derives the master key and password hash from password
-// and salt, returning the master and password objects
-func EncryptPasswordObject(ctx context.Context, password string) (*primitive.UserPassword, *primitive.MasterKey, error) {
+// EncryptPasswordObject derives the master key (if necessary) and password hash
+// from password and salt, returning the master and password objects
+func EncryptPasswordObject(ctx context.Context, password string, currentMasterKey *[]byte) (*primitive.UserPassword, *primitive.MasterKey, error) {
 	pw := &primitive.UserPassword{
 		Alg: Scrypt,
 	}
@@ -151,7 +152,7 @@ func EncryptPasswordObject(ctx context.Context, password string) (*primitive.Use
 	// Encode password value to base64url
 	pw.Value = base64url.NewValue(pwh)
 
-	m, err := CreateMasterKeyObject(ctx, []byte(password))
+	m, err := CreateMasterKeyObject(ctx, []byte(password), currentMasterKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -161,19 +162,28 @@ func EncryptPasswordObject(ctx context.Context, password string) (*primitive.Use
 
 // CreateMasterKeyObject generates a 256 byte master key which is then
 // encrypted using TripleSec-v3 using the given password.
-func CreateMasterKeyObject(ctx context.Context, password []byte) (*primitive.MasterKey, error) {
+func CreateMasterKeyObject(ctx context.Context, password []byte, masterKey *[]byte) (*primitive.MasterKey, error) {
 	m := &primitive.MasterKey{
 		Alg: Triplesec,
 	}
 
-	// Generate a master key of 256 bytes
+	// We either need to generate a new key, or will use the existing
+	// key during a password change scenario
 	key := make([]byte, masterKeyBytes)
-	_, err := rand.Read(key)
-	if err != nil {
-		return nil, err
+	if masterKey == nil {
+		// Generate a master key of 256 bytes
+		_, err := rand.Read(key)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Use the provided key
+		key = *masterKey
 	}
 
-	err = ctxutil.ErrIfDone(ctx)
+	log.Print("length:" + string(len(key)))
+
+	err := ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return nil, err
 	}
