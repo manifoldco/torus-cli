@@ -1,49 +1,41 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
+	"github.com/manifoldco/expect"
+
 	"github.com/manifoldco/torus-cli/tools/expect/cmd"
-	"github.com/manifoldco/torus-cli/tools/expect/framework"
-	"github.com/manifoldco/torus-cli/tools/expect/utils"
 )
 
-const executable = "torus"
-
-var testSuiteFlag = flag.String("suite", "default", "group of tests to run")
+// Suites is a map of test suites
+var Suites map[string]expect.Suite
 
 func main() {
-	flag.Parse()
-
-	output := framework.Output{}
-	output.Log("Running tests for executable: " + executable)
-
-	utils.Init()
-	suites, err := cmd.Init()
+	err := BootstrapContext()
 	if err != nil {
-		teardownAndExit(err, &output)
-		return
-	}
-	err = cmd.Execute(*suites, *testSuiteFlag, executable)
-	if err != nil {
-		teardownAndExit(err, &output)
+		exitError(err)
 		return
 	}
 
-	output.Title("Complete.")
-}
+	// Test runner
+	runner := expect.NewRunner()
 
-func teardownAndExit(err error, output *framework.Output) {
-	if err.Error() != "Commands not found." {
-		cmd.Teardown(executable, output)
-	}
+	// Default test suite
+	runner.NewSuite("default", []*expect.Command{
+		cmd.Signup("userA"),
+		cmd.Signup("userB"),
+	})
+
+	// Run based on flags
+	err = runner.Execute()
 	exitError(err)
 }
 
 func exitError(err error) {
-	fmt.Println("")
-	fmt.Println(err.Error())
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	os.Exit(1)
 }

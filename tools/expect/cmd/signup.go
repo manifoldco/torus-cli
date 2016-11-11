@@ -1,56 +1,55 @@
 package cmd
 
 import (
-	"context"
-
-	"github.com/manifoldco/torus-cli/tools/expect/framework"
+	"github.com/manifoldco/expect"
 )
 
-func signup(c *context.Context) framework.Command {
-	ctx := framework.ContextValue(c)
-
-	return framework.Command{
-		Context: &ctx,
-		Spawn:   "signup",
-		Expect: []string{
-			"Your email is now verified.",
-		},
-		Timeout: ctx.Timeout,
-		Prompt: &framework.Prompt{
-			Fields: []framework.Field{
-				{
-					Label:    "Name",
-					SendLine: ctx.User.Name,
+// Signup is a test for torus signup
+func Signup(namespace string) *expect.Command {
+	ctx := expect.GetContext(namespace)
+	c := expect.Command{
+		Spawn:   "torus signup",
+		Context: ctx,
+		Actions: []expect.Expect{
+			expect.Expect{
+				Output: "Name",
+				Input:  ctx.GetValue("Name"),
+			},
+			expect.Expect{
+				Output: "Username",
+				Input:  ctx.GetValue("Username"),
+			},
+			expect.Expect{
+				Output: "Email",
+				Input:  ctx.GetValue("Email"),
+			},
+			expect.Expect{
+				Output: "Password",
+				Input:  ctx.GetValue("Password"),
+			},
+			expect.Expect{
+				Output: "Confirm Password",
+				Input:  ctx.GetValue("Password"),
+			},
+			expect.Expect{
+				OutputList: []string{
+					"You are now authenticated.",
+					"Keypairs generated",
+					"Signing keys signed",
+					"Signing keys uploaded",
+					"Encryption keys signed",
+					"Your account has been created!",
 				},
-				{
-					Label:    "Username",
-					SendLine: ctx.User.Username,
-				},
-				{
-					Label:    "Email",
-					SendLine: ctx.User.Email,
-				},
-				{
-					Label:    "Password",
-					SendLine: ctx.User.Password,
-				},
-				{
-					Label:    "Confirm Password",
-					SendLine: ctx.User.Password,
-					Expect: []string{
-						"You are now authenticated.",
-						"Keypairs generated",
-						"Signing keys signed",
-						"Signing keys uploaded",
-						"Encryption keys signed",
-						"Your account has been created!",
-					},
-				},
-				{
-					Label:        "Verification code",
-					RequestInput: true,
-				},
+			},
+			expect.Expect{
+				Output:       "Verification code",
+				RequestInput: true,
+				Timeout:      expect.NewDuration(20),
+			},
+			expect.Expect{
+				Output: "Your email is now verified.",
 			},
 		},
 	}
+	return &c
 }
