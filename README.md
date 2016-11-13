@@ -18,15 +18,38 @@ A secure, shared workspace for secrets.
 
 ## Installation & signup
 
+[Manifold](https://www.manifold.co) provides binaries of `torus-cli` for OS X and Linux on `amd64`.
+
+After installing, create an account with:
 ```
-npm install -g torus-cli
 torus signup
 ```
 
-### Security Disclosure
+### OS X
+
+- [homebrew](http://brew.sh): `brew install manifoldco/brew/torus`
+- [npm](https://www.npmjs.com): `npm install -g torus-cli`
+- bare zip archives per release version are available on https://get.torus.sh/
+
+### Linux
+
+- RPM based distributions: Use the following repository configuration:
+```
+$ sudo tee /etc/yum.repos.d/torus.repo <<-'EOF'
+[torus]
+name=torus-cli repository
+baseurl=https://get.torus.sh/rpm/$basearch/
+enabled=1
+gpgcheck=0
+EOF
+```
+- [npm](https://www.npmjs.com): `npm install -g torus-cli`
+- bare zip archives per release version are available on https://get.torus.sh/
+
+## Security Disclosure
 
 Please follow our security disclosure document [found here](./docs/security.md).
 
-### License
+## License
 
 Manifold's torus-cli is released under the [BSD 3-Clause License](./LICENSE.md).
