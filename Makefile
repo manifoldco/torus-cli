@@ -325,14 +325,19 @@ release-npm-stage: builds/torus-npm-$(VERSION).tar.gz builds/dist/npm/$(VERSION)
 release-npm-prod: builds/torus-npm-$(VERSION).tar.gz
 	npm publish $<
 
+CDN_INDEXER=tools/cdn-indexer
+$(TOOLS)/cdn-indexer: $(wildcard $(CDN_INDEXER)/*.go) $(wildcard $(CDN_INDEXER)/*.tmpl)
+	$(GO_BUILD) -o $@ ./$(CDN_INDEXER)
+
 RELEASE_TARGETS=\
 	release-binary \
 	release-npm \
 	release-homebrew \
 	apt-repo \
 	$(addprefix yum-,$(LINUX))
-release-all: envcheck tagcheck $(RELEASE_TARGETS)
+release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer
 	pushd builds/dist && aws s3 cp --recursive . $(TORUS_S3_BUCKET)
+	$(TOOLS)/cdn-indexer -bucket $(TORUS_S3_BUCKET)
 
 .PHONY: envcheck tagcheck gocheck release-all release-binary
 .PHONY: $(addprefix binary-,$(TARGETS)) $(addprefix zip-,$(TARGETS))
