@@ -53,14 +53,18 @@ func profileView(ctx *cli.Context) error {
 	if err != nil {
 		return errs.NewErrorExitError("Error fetching user details", err)
 	}
-	if session.Type() == apitypes.MachineSession {
-		return errs.NewExitError("Machines do not have profiles")
-	}
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "Name:\t%s\n", session.Name())
-	fmt.Fprintf(w, "Email:\t%s\n", session.Email())
-	fmt.Fprintf(w, "Username:\t%s\n\n", session.Username())
+	if session.Type() == apitypes.MachineSession {
+		fmt.Fprintf(w, "Machine ID:\t%s\n", session.ID())
+		fmt.Fprintf(w, "Machine Token ID:\t%s\n", session.AuthID())
+		fmt.Fprintf(w, "Machine Name:\t%s\n\n", session.Username())
+	} else {
+		fmt.Fprintf(w, "Name:\t%s\n", session.Name())
+		fmt.Fprintf(w, "Email:\t%s\n", session.Email())
+		fmt.Fprintf(w, "Username:\t%s\n\n", session.Username())
+	}
+
 	w.Flush()
 
 	return nil
@@ -81,7 +85,7 @@ func profileEdit(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Error fetching user details", err)
 	}
 	if session.Type() == apitypes.MachineSession {
-		return errs.NewExitError("Machines do not have profiles")
+		return errs.NewExitError("Machines cannot update profile")
 	}
 
 	ogName := session.Name()
