@@ -86,7 +86,7 @@ func torusRootPath() string {
 }
 
 // CreateTorusRoot creates the root directory for the Torus daemon.
-func CreateTorusRoot() (string, error) {
+func CreateTorusRoot(checkPermissions bool) (string, error) {
 	torusRoot := torusRootPath()
 	src, err := os.Stat(torusRoot)
 	if err != nil && !os.IsNotExist(err) {
@@ -110,7 +110,7 @@ func CreateTorusRoot() (string, error) {
 	}
 
 	fMode := src.Mode()
-	if fMode.Perm() != requiredPermissions {
+	if checkPermissions && fMode.Perm() != requiredPermissions {
 		return "", fmt.Errorf("%s has permissions %d requires %d",
 			torusRoot, fMode.Perm(), requiredPermissions)
 	}
