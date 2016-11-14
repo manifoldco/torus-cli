@@ -1,0 +1,11 @@
+Origin: get.torus.sh
+Label: apt repository
+Architectures: amd64
+Components: main
+Codename: xenial
+
+Origin: get.torus.sh
+Label: apt repository
+Architectures: amd64
+Components: main
+Codename: trusty
