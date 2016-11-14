@@ -1,0 +1,14 @@
+[Unit]
+Description=Torus daemon
+Documentation=https://www.torus.sh/docs/
+After=network.target
+
+[Service]
+Type=simple
+User=torus
+Environment="TORUS_ROOT=/var/run/torus"
+EnvironmentFile=/etc/torus/token.environment
+ExecStart=/usr/bin/torus daemon start --foreground --no-permission-check
+
+[Install]
+WantedBy=multi-user.target

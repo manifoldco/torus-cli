@@ -8,6 +8,10 @@ _Unpublished_
 
 - Introduced `--format, -f` to `torus view` for specifying the format of out the output (env, json, verbose).
 - Updated the `--verbose, -v` option for `torus view` to be a shortcut to `--format verbose`.
+- Include a systemd service unit with the rpm packaging, to run the torus daemon
+  in a system wide machine mode. When the unit is running, users in the `torus`
+  group can access it. To run the unit, both `TORUS_TOKEN_ID` and
+  `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`.
 
 ## v0.16.0
 

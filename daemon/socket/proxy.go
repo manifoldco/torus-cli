@@ -48,6 +48,11 @@ type AuthProxy struct {
 
 // NewAuthProxy returns a new AuthProxy. It will return an error if creation
 // of the domain socket fails, or the upstream registry URL is misconfigured.
+//
+// If groupShared is true, the domain socket will be readable and writable by
+// both the user and the user's group (so daemon can be accessed by multiple
+// users). If false, the socket will only be readable and writable by the user
+// running the daemon.
 func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB, t *http.Transport,
 	client *registry.Client, logic *logic.Engine, groupShared bool) (*AuthProxy, error) {
 
