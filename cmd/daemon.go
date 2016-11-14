@@ -48,6 +48,11 @@ func init() {
 						Usage:  "Run as a background session daemon",
 						Hidden: true, // not displayed in help; used internally
 					},
+					cli.BoolFlag{
+						Name:   "no-permission-check",
+						Usage:  "Skip Torus root dir permission checks",
+						Hidden: true, // Just for system daemon use
+					},
 				},
 				Action: func(ctx *cli.Context) error {
 					if ctx.Bool("foreground") {
@@ -142,7 +147,8 @@ func spawnDaemon() error {
 }
 
 func startDaemon(ctx *cli.Context) error {
-	torusRoot, err := config.CreateTorusRoot()
+	noPermissionCheck := ctx.Bool("no-permission-check")
+	torusRoot, err := config.CreateTorusRoot(!noPermissionCheck)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to initialize Torus root dir.", err)
 	}
