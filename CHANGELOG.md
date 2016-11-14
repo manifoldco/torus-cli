@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## Unpublished
+
+_Unpublished_
+
+**Notable Changes**
+
+- Introduced `--format, -f` to `torus view` for specifying the format of out the output (env, json, verbose).
+- Updated the `--verbose, -v` option for `torus view` to be a shortcut to `--format verbose`.
+
 ## v0.16.0
 
 _2016-11-09_
