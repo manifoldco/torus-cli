@@ -31,7 +31,7 @@ func init() {
 				Name:  "update",
 				Usage: "Update your profile",
 				Action: chain(
-					ensureDaemon, ensureSession, setUserEnv, profileView,
+					ensureDaemon, ensureSession, setUserEnv, profileEdit,
 				),
 			},
 		},
