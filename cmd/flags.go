@@ -232,7 +232,7 @@ func deriveIdentitySlice(ctx *cli.Context) ([]string, error) {
 	users := ctx.StringSlice("user")
 	machines := ctx.StringSlice("machine")
 
-	identities := make([]string, 0)
+	var identities []string
 	for _, u := range users {
 		identity, err := identityString("user", u)
 		if err != nil {

@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>get.torus.sh directory listing</title>
+        <style>
+            .listing {
+                min-height: calc(100vh - 7em);
+            }
+            .footer {
+                margin: 1em 0 0 0;
+                padding: 2em 1em 1em 1em;
+                background-color: #f7f7f8;
+            }
+            .footer .copyright {
+                float: right;
+            }
+
+        </style>
+    </head>
+    <body>
+        <div class="listing">
+        <h4>{{ .Dir }}</h4>
+        <table>
+            {{ if ne .Dir "/" }}
+            <tr class="parent directory">
+                <td><a href="../">parent directory</a></td>
+                <td></td>
+                <td></td>
+            </tr>
+            {{ end }}
+            {{ range .Files }}
+            <tr class="{{ .Type }}">
+                <td class="name"><a href="{{ .Name }}">{{ .Name }}</a></td>
+                <td class="size">{{ if ne .Size 0 }}{{ .Size }}{{ end }}</td>
+                <td class="modified">{{ .Modified }}</td>
+            </tr>
+            {{ end }}
+        </table>
+        </div>
+        <div class="footer">
+            <span class="copyright">© 2016 Manifold</span>
+            <span class="timestamp">Index generated at {{ .Timestamp }}</span>
+        </div>
+    </body>
+</html>
