@@ -130,6 +130,15 @@ type credentialImpl struct {
 	} `json:"body"`
 }
 
+// Raw returns the underlying typed value for this Credential.
+func (c *CredentialValue) Raw() (interface{}, error) {
+	if c.IsUnset() {
+		return nil, errors.New("Cannot return raw value of an unset Credential")
+	}
+
+	return c.raw, nil
+}
+
 // MarshalJSON implements the json.Marshaler interface.
 func (c *CredentialValue) MarshalJSON() ([]byte, error) {
 	impl := credentialImpl{Version: 1}

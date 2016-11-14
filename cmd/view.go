@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -14,6 +15,9 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 )
+
+var formatFlag = newPlaceholder("format, f", "FORMAT", "Format used to display data (json, env, verbose)",
+	"env", "TORUS_FORMAT", false)
 
 func init() {
 	view := cli.Command{
@@ -28,9 +32,10 @@ func init() {
 			userFlag("Use this user.", false),
 			machineFlag("Use this machine.", false),
 			stdInstanceFlag,
+			formatFlag,
 			cli.BoolFlag{
 				Name:  "verbose, v",
-				Usage: "list the sources of the values",
+				Usage: "Lists the sources of the secrets (shortcut for --format verbose)",
 			},
 		},
 		Action: chain(
@@ -48,24 +53,79 @@ func viewCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	verbose := ctx.Bool("verbose")
-	if verbose {
-		fmt.Printf("Credential path: %s\n\n", path)
+	if ctx.Bool("verbose") && ctx.IsSet("format") {
+		return errs.NewUsageExitError(
+			"Cannot specify --format and --verbose at the same time", ctx)
 	}
+
+	format := ctx.String("format")
+	if ctx.Bool("verbose") {
+		format = "verbose"
+	}
+
+	switch format {
+	case "env":
+		return printEnvFormat(secrets, path)
+	case "verbose":
+		return printVerboseFormat(secrets, path)
+	case "json":
+		return printJSONFormat(secrets, path)
+	default:
+		return errs.NewUsageExitError("Unknown format: "+format, ctx)
+	}
+}
+
+func printEnvFormat(secrets []apitypes.CredentialEnvelope, path string) error {
+	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
+
+	for _, secret := range secrets {
+		value := (*secret.Body).GetValue()
+		name := (*secret.Body).GetName()
+		key := strings.ToUpper(name)
+		fmt.Fprintf(w, "%s=%s\n", key, value.String())
+	}
+	w.Flush()
+
+	return nil
+}
+
+func printVerboseFormat(secrets []apitypes.CredentialEnvelope, path string) error {
+	fmt.Printf("Credential path: %s\n\n", path)
+
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
 	for _, secret := range secrets {
 		value := (*secret.Body).GetValue()
 		name := (*secret.Body).GetName()
 		key := strings.ToUpper(name)
-		if verbose {
-			spath := (*secret.Body).GetPathExp().String() + "/" + name
-			fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)
-		} else {
-			fmt.Fprintf(w, "%s=%s\n", key, value.String())
-
-		}
+		spath := (*secret.Body).GetPathExp().String() + "/" + name
+		fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)
 	}
 	w.Flush()
+
+	return nil
+
+}
+
+func printJSONFormat(secrets []apitypes.CredentialEnvelope, path string) error {
+	keyMap := make(map[string]interface{})
+
+	for _, secret := range secrets {
+		value := (*secret.Body).GetValue()
+		name := (*secret.Body).GetName()
+		v, err := value.Raw()
+		if err != nil {
+			return err
+		}
+
+		keyMap[name] = v
+	}
+
+	str, err := json.MarshalIndent(keyMap, "", "  ")
+	if err != nil {
+		return errs.NewErrorExitError("Could not marshal to json", err)
+	}
+
+	fmt.Printf("%s\n", str)
 	return nil
 }
 
