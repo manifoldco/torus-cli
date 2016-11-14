@@ -76,7 +76,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 		}
 	}
 
-	password, err := PasswordPrompt(true)
+	password, err := PasswordPrompt(true, nil)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	// Log the user in
-	err = performLogin(c, client, user.Body.Email, password)
+	err = performLogin(c, client, user.Body.Email, password, true)
 	if err != nil {
 		return err
 	}

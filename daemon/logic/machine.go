@@ -53,7 +53,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 	}
 	orgID := machineBody.OrgID
 
-	masterKey, err := crypto.CreateMasterKeyObject(ctx, *secret)
+	masterKey, err := crypto.CreateMasterKeyObject(ctx, *secret, nil)
 	if err != nil {
 		return nil, err
 	}

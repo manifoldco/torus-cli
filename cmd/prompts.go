@@ -39,13 +39,24 @@ func validateInviteCode(input string) error {
 	return promptui.NewValidationError("Please enter a valid invite code")
 }
 
+// AskPerform prompts the user if they want to do a specified action
+func AskPerform(ctx *cli.Context, label string) error {
+	prompt := promptui.Prompt{
+		Label:     label,
+		IsConfirm: true,
+		Preamble:  nil,
+	}
+	_, err := prompt.Run()
+	return err
+}
+
 // ConfirmDialogue prompts the user to confirm their action
-func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string) error {
+func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, allowSkip bool) error {
 	preferences, err := prefs.NewPreferences(true)
 	if err != nil {
 		return err
 	}
-	if ctx.Bool("yes") || preferences.Core.AutoConfirm {
+	if allowSkip && (ctx.Bool("yes") || preferences.Core.AutoConfirm) {
 		return nil
 	}
 
@@ -324,11 +335,19 @@ func SelectCreateRole(c context.Context, client *api.Client, orgID *identity.ID,
 	return &teams[idx], name, false, nil
 }
 
+// PasswordMask is the character used to mask password inputs
+const PasswordMask = '●'
+
 // PasswordPrompt prompts the user to input a password value
-func PasswordPrompt(shouldConfirm bool) (string, error) {
+func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
+	label := "Password"
+	if labelOverride != nil {
+		label = *labelOverride
+	}
+
 	prompt := promptui.Prompt{
-		Label: "Password",
-		Mask:  '●',
+		Label: label,
+		Mask:  PasswordMask,
 		Validate: func(input string) error {
 			length := len(input)
 			if length >= 8 {
@@ -351,7 +370,7 @@ func PasswordPrompt(shouldConfirm bool) (string, error) {
 	}
 
 	prompt = promptui.Prompt{
-		Label: "Confirm Password",
+		Label: "Confirm " + label,
 		Mask:  '●',
 		Validate: func(input string) error {
 			if len(input) > 0 {
@@ -448,6 +467,22 @@ func SelectAcceptAction() (int, string, error) {
 	// Get the user's org selection
 	prompt := promptui.Select{
 		Label: "Do you want to login or create an account?",
+		Items: names,
+	}
+
+	return prompt.Run()
+}
+
+// SelectProfileAction prompts the user to select an option from a list
+func SelectProfileAction() (int, string, error) {
+	names := []string{
+		"Name or email",
+		"Change password",
+	}
+
+	// Get the user's org selection
+	prompt := promptui.Select{
+		Label: "What would you like to update?",
 		Items: names,
 	}
 

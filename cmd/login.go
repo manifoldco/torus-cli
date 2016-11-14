@@ -27,7 +27,7 @@ func login(ctx *cli.Context) error {
 		return err
 	}
 
-	password, err := PasswordPrompt(false)
+	password, err := PasswordPrompt(false, nil)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func login(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 
 	c := context.Background()
-	err = performLogin(c, client, email, password)
+	err = performLogin(c, client, email, password, true)
 	if err != nil {
 		return err
 	}
@@ -48,12 +48,18 @@ func login(ctx *cli.Context) error {
 	return nil
 }
 
-func performLogin(c context.Context, client *api.Client, email, password string) error {
+func performLogin(c context.Context, client *api.Client, email, password string, shouldPrint bool) error {
 	err := client.Session.UserLogin(context.Background(), email, password)
 	if err != nil {
 		return errs.NewErrorExitError("Login failed.", err)
 	}
 
-	fmt.Println("You are now authenticated.")
+	if shouldPrint {
+		fmt.Println("You are now authenticated.")
+	}
 	return nil
+}
+
+func testLogin(c context.Context, client *api.Client, email, password string) error {
+	return performLogin(c, client, email, password, false)
 }

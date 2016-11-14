@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
 	"github.com/manifoldco/torus-cli/daemon/db"
@@ -109,7 +110,12 @@ type updateEmail struct {
 	Email string `json:"email"`
 }
 
-func updateSelfRoute(client *registry.Client, s session.Session) http.HandlerFunc {
+type updatePassword struct {
+	Password *primitive.UserPassword `json:"password"`
+	Master   *primitive.MasterKey    `json:"master"`
+}
+
+func updateSelfRoute(client *registry.Client, s session.Session, e *logic.Engine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := r.Context()
 		dec := json.NewDecoder(r.Body)
@@ -128,8 +134,18 @@ func updateSelfRoute(client *registry.Client, s session.Session) http.HandlerFun
 			encodeResponseErr(w, err)
 			return
 		}
+		log.Printf("%+v\n", req)
+		if req.Name == "" && req.Email == "" && req.Password == "" {
+			encodeResponseErr(w, &apitypes.Error{
+				Type: apitypes.BadRequestError,
+				Err:  []string{"missing profile fields"},
+			})
+			return
+		}
 
+		// The fresh user object
 		var result *envelope.Unsigned
+
 		if req.Email != "" {
 			envelope, err := client.Users.Update(c, updateEmail{Email: req.Email})
 			if err != nil {
@@ -138,6 +154,7 @@ func updateSelfRoute(client *registry.Client, s session.Session) http.HandlerFun
 			}
 			result = envelope
 		}
+
 		if req.Name != "" {
 			envelope, err := client.Users.Update(c, updateName{Name: req.Name})
 			if err != nil {
@@ -147,6 +164,23 @@ func updateSelfRoute(client *registry.Client, s session.Session) http.HandlerFun
 			result = envelope
 		}
 
+		if req.Password != "" {
+			// Encrypt the new password and re-encrypt the original master key
+			passwordObj, masterObj, err := e.ChangePassword(c, req.Password)
+			if err != nil {
+				log.Printf("Error generating password object: %s", err)
+				encodeResponseErr(w, err)
+				return
+			}
+			envelope, err := client.Users.Update(c, updatePassword{Password: passwordObj, Master: masterObj})
+			if err != nil {
+				encodeResponseErr(w, err)
+				return
+			}
+			result = envelope
+		}
+
+		// Update the local session to have the new user details
 		s.SetIdentity(apitypes.UserSession, result, result)
 
 		enc := json.NewEncoder(w)
@@ -189,7 +223,7 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			return
 		}
 
-		passwordObj, masterObj, err := crypto.EncryptPasswordObject(ctx, signup.Passphrase)
+		passwordObj, masterObj, err := crypto.EncryptPasswordObject(ctx, signup.Passphrase, nil)
 		if err != nil {
 			log.Printf("Error generating password object: %s", err)
 			encodeResponseErr(w, err)
