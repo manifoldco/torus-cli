@@ -49,3 +49,15 @@ func (u *UsersClient) VerifyEmail(ctx context.Context, verifyCode string) error 
 
 	return nil
 }
+
+// Update performs a profile update to the user object
+func (u *UsersClient) Update(ctx context.Context, delta apitypes.ProfileUpdate) (*UserResult, error) {
+	req, _, err := u.client.NewRequest("PATCH", "/self", nil, &delta, false)
+	if err != nil {
+		return nil, err
+	}
+
+	user := UserResult{}
+	_, err = u.client.Do(ctx, req, &user, nil, nil)
+	return &user, err
+}

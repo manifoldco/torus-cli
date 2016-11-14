@@ -392,7 +392,7 @@ func EmailPrompt(defaultValue string) (string, error) {
 }
 
 // UsernamePrompt prompts the user to input a person's name
-func UsernamePrompt() (string, error) {
+func UsernamePrompt(un string) (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Username",
 		Validate: func(input string) error {
@@ -402,12 +402,15 @@ func UsernamePrompt() (string, error) {
 			return promptui.NewValidationError("Please enter a valid username")
 		},
 	}
+	if un != "" {
+		prompt.Default = un
+	}
 
 	return prompt.Run()
 }
 
 // FullNamePrompt prompts the user to input a person's name
-func FullNamePrompt() (string, error) {
+func FullNamePrompt(name string) (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Name",
 		Validate: func(input string) error {
@@ -416,6 +419,9 @@ func FullNamePrompt() (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid name")
 		},
+	}
+	if name != "" {
+		prompt.Default = name
 	}
 
 	return prompt.Run()

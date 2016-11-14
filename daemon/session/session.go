@@ -30,6 +30,7 @@ type session struct {
 type Session interface {
 	Type() string
 	Set(string, *envelope.Unsigned, *envelope.Unsigned, []byte, string) error
+	SetIdentity(string, *envelope.Unsigned, *envelope.Unsigned) error
 	ID() *identity.ID
 	AuthID() *identity.ID
 	Token() string
@@ -113,14 +114,7 @@ func (s *session) String() string {
 		s.Type(), s.HasToken(), s.HasPassphrase())
 }
 
-// Set atomically sets all relevant session details.
-//
-// It returns an error if any values are empty.
-func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
-	passphrase []byte, token string) error {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
+func checkSessionType(sessionType string, identity, auth *envelope.Unsigned) error {
 	if identity == nil || auth == nil {
 		return errors.New("identity and auth cannot be null")
 	}
@@ -145,6 +139,21 @@ func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
 	default:
 		panic("did not recognize session type")
 	}
+	return nil
+}
+
+// Set atomically sets all relevant session details.
+//
+// It returns an error if any values are empty.
+func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
+	passphrase []byte, token string) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	err := checkSessionType(sessionType, identity, auth)
+	if err != nil {
+		return err
+	}
 
 	if len(passphrase) == 0 {
 		return errors.New("Passphrase must not be empty")
@@ -157,6 +166,22 @@ func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
 	s.sessionType = sessionType
 	s.passphrase = passphrase
 	s.token = token
+	s.identity = identity
+	s.auth = auth
+
+	return nil
+}
+
+// SetIdentity updates the session identity
+func (s *session) SetIdentity(sessionType string, identity, auth *envelope.Unsigned) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	err := checkSessionType(sessionType, identity, auth)
+	if err != nil {
+		return err
+	}
+
 	s.identity = identity
 	s.auth = auth
 

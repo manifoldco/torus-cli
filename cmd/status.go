@@ -8,7 +8,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/manifoldco/torus-cli/api"
-	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
@@ -75,18 +74,6 @@ func statusCmd(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Error fetching user details", err)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	if session.Type() == apitypes.MachineSession {
-		fmt.Fprintf(w, "Machine ID:\t%s\n", session.ID())
-		fmt.Fprintf(w, "Machine Token ID:\t%s\n", session.AuthID())
-		fmt.Fprintf(w, "Machine Name:\t%s\n\n", session.Username())
-	} else {
-		fmt.Fprintf(w, "Identity:\t%s <%s>\n", session.Name(), session.Email())
-		fmt.Fprintf(w, "Username:\t%s\n\n", session.Username())
-	}
-
-	w.Flush()
-
 	err = checkRequiredFlags(ctx)
 	if err != nil {
 		fmt.Printf("You are not inside a linked working directory. "+
@@ -100,6 +87,7 @@ func statusCmd(ctx *cli.Context) error {
 	service := ctx.String("service")
 	instance := ctx.String("instance")
 
+	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	fmt.Fprintf(w, "Org:\t%s\n", org)
 	fmt.Fprintf(w, "Project:\t%s\n", project)
 	fmt.Fprintf(w, "Environment:\t%s\n", env)

@@ -46,12 +46,12 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	fmt.Println("By completing sign up, you agree to our terms of use (found at https://torus.sh/terms)\nand our privacy policy (found at https://torus.sh/privacy)")
 	fmt.Println("")
 
-	name, err := FullNamePrompt()
+	name, err := FullNamePrompt("")
 	if err != nil {
 		return err
 	}
 
-	username, err := UsernamePrompt()
+	username, err := UsernamePrompt("")
 	if err != nil {
 		return err
 	}

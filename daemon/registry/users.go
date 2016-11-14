@@ -53,6 +53,30 @@ func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Sign
 	return &user, nil
 }
 
+// Update patches the user object with whitelisted fields
+func (u *Users) Update(ctx context.Context, userObj interface{}) (*envelope.Unsigned, error) {
+	req, err := u.client.NewRequest("PATCH", "/users/self", nil, userObj)
+	if err != nil {
+		log.Printf("Error making api request: %s", err)
+		return nil, err
+	}
+
+	user := envelope.Unsigned{}
+	_, err = u.client.Do(ctx, req, &user)
+	if err != nil {
+		log.Printf("Error making api request: %s", err)
+		return nil, err
+	}
+
+	err = validateSelf(&user)
+	if err != nil {
+		log.Printf("Invalid user object: %s", err)
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func validateSelf(s *envelope.Unsigned) error {
 	if s.Version != 1 {
 		return errors.New("version must be 1")
