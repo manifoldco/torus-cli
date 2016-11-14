@@ -76,13 +76,18 @@ func NewConfig(torusRoot string) (*Config, error) {
 	return cfg, nil
 }
 
-// CreateTorusRoot creates the root directory for the Torus daemon.
-func CreateTorusRoot() (string, error) {
+func torusRootPath() string {
 	torusRoot := os.Getenv("TORUS_ROOT")
 	if len(torusRoot) == 0 {
 		torusRoot = path.Join(os.Getenv("HOME"), ".torus")
 	}
 
+	return torusRoot
+}
+
+// CreateTorusRoot creates the root directory for the Torus daemon.
+func CreateTorusRoot() (string, error) {
+	torusRoot := torusRootPath()
 	src, err := os.Stat(torusRoot)
 	if err != nil && !os.IsNotExist(err) {
 		return "", err
@@ -139,12 +144,7 @@ func loadCABundle(cafile string) (*x509.CertPool, error) {
 
 // LoadConfig loads the config, standardizing cli errors on failure.
 func LoadConfig() (*Config, error) {
-	torusRoot, err := CreateTorusRoot()
-	if err != nil {
-		return nil, errs.NewErrorExitError("Failed to initialize Torus root dir.", err)
-	}
-
-	cfg, err := NewConfig(torusRoot)
+	cfg, err := NewConfig(torusRootPath())
 	if err != nil {
 		return nil, errs.NewErrorExitError("Failed to load config.", err)
 	}
