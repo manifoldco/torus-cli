@@ -1,6 +1,6 @@
 # Things we get while testing/developing
-ag
 torus
+test-expect
 *.arigato.json
 *.torus.json
 

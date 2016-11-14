@@ -48,7 +48,10 @@ binary: generated vendor
 static: generated vendor
 	$(GO_BUILD) -o ${OUT}-v${VERSION} -ldflags='$(STATIC_FLAGS)' ${PKG}
 
-.PHONY: binary static
+test-expect: vendor
+	$(GO_BUILD) -o test-expect ${PKG}/tools/expect
+
+.PHONY: binary static test-expect
 
 #################################################
 # Code generation and dependency grabbing
