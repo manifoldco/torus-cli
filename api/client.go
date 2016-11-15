@@ -192,11 +192,11 @@ func checkResponseCode(r *http.Response) error {
 		dec := json.NewDecoder(r.Body)
 		err := dec.Decode(rErr)
 		if err != nil {
-			return errors.New("Malformed error response from daemon.")
+			return errors.New("malformed error response from daemon")
 		}
 
 		return apitypes.FormatError(rErr)
 	}
 
-	return errors.New("Error from daemon. Check status code.")
+	return errors.New("error from daemon. Check status code")
 }

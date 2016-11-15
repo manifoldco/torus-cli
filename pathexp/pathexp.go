@@ -246,11 +246,11 @@ func New(org, project string, envs, services, identities, instances []string) (*
 	}
 
 	if !slug.MatchString(org) {
-		return nil, errors.New("Invalid org name.")
+		return nil, errors.New("invalid org name")
 	}
 
 	if !slug.MatchString(project) {
-		return nil, errors.New("Invalid project name.")
+		return nil, errors.New("invalid project name")
 	}
 
 	var err error
@@ -284,11 +284,11 @@ func Parse(raw string) (*PathExp, error) {
 	parts := strings.Split(raw, "/")
 
 	if len(parts) != 7 {
-		return nil, errors.New("Wrong number of path segements.")
+		return nil, errors.New("wrong number of path segements")
 	}
 
 	if parts[0] != "" {
-		return nil, errors.New("Path expressions must start with '/'.")
+		return nil, errors.New("path expressions must start with '/'")
 	}
 	// remove leading empty section
 	parts = parts[1:]
