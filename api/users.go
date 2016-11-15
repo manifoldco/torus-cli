@@ -43,11 +43,7 @@ func (u *UsersClient) VerifyEmail(ctx context.Context, verifyCode string) error 
 	}
 
 	_, err = u.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Update performs a profile update to the user object

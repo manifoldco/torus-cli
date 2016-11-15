@@ -40,12 +40,7 @@ func login(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 
 	c := context.Background()
-	err = performLogin(c, client, email, password, true)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return performLogin(c, client, email, password, true)
 }
 
 func performLogin(c context.Context, client *api.Client, email, password string, shouldPrint bool) error {

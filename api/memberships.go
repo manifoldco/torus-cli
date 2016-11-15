@@ -91,9 +91,5 @@ func (m *MembershipsClient) Delete(ctx context.Context, membership *identity.ID)
 	}
 
 	_, err = m.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

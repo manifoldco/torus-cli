@@ -106,11 +106,7 @@ func (p *PoliciesClient) Detach(ctx context.Context, attachmentID *identity.ID) 
 		return err
 	}
 	_, err = p.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // AttachmentsList retrieves all policy attachments for an org

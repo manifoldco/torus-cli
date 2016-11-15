@@ -183,11 +183,7 @@ func performLogin(ctx context.Context, s *SessionClient, loginType string, rawLo
 	}
 
 	_, err = s.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Logout logs the user out of their session
@@ -198,9 +194,5 @@ func (s *SessionClient) Logout(ctx context.Context) error {
 	}
 
 	_, err = s.client.Do(ctx, req, nil, nil, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
