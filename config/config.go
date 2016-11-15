@@ -46,7 +46,7 @@ func NewConfig(torusRoot string) (*Config, error) {
 
 	publicKey, err := prefs.LoadPublicKey(preferences)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load public key.")
+		return nil, fmt.Errorf("failed to load public key")
 	}
 
 	caBundle, err := loadCABundle(preferences.Core.CABundleFile)
@@ -56,7 +56,7 @@ func NewConfig(torusRoot string) (*Config, error) {
 
 	registryURI, err := url.Parse(preferences.Core.RegistryURI)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid registry_uri.")
+		return nil, fmt.Errorf("invalid registry_uri")
 	}
 
 	cfg := &Config{
@@ -130,13 +130,13 @@ func loadCABundle(cafile string) (*x509.CertPool, error) {
 
 	}
 	if err != nil {
-		return nil, fmt.Errorf("Unable to find CA bundle.")
+		return nil, fmt.Errorf("unable to find CA bundle")
 	}
 
 	c := x509.NewCertPool()
 	ok := c.AppendCertsFromPEM(pem)
 	if !ok {
-		return nil, fmt.Errorf("Unable to load CA bundle from %s.", cafile)
+		return nil, fmt.Errorf("unable to load CA bundle from %s", cafile)
 	}
 
 	return c, nil
