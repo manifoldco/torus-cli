@@ -1,19 +1,17 @@
 # CHANGELOG
 
-## Unpublished
+## v0.17.0
 
-_Unpublished_
+_2016-11-15_
 
 **Notable Changes**
 
 - Introduced `--format, -f` to `torus view` for specifying the format of out the output (env, json, verbose).
 - Updated the `--verbose, -v` option for `torus view` to be a shortcut to `--format verbose`.
-- Include a systemd service unit with the rpm packaging, to run the torus daemon
-  in a system wide machine mode. When the unit is running, users in the `torus`
-  group can access it. To run the unit, both `TORUS_TOKEN_ID` and
-  `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`.
-- Add `torus profile update` for name, email and password change.
-- Add `torus profile view` for displaying current identity, removing such information from `torus status`
+- Include a systemd service unit with the rpm packaging, to run the torus daemon in a system wide machine mode. When the unit is running, users in the `torus` group can access it. To run the unit, both `TORUS_TOKEN_ID` and `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`.
+- Introduced `torus profile update` for changing the current users name, email, or password.
+- Introduced `torus profile view` for displaying current identity, removing such information from `torus status`
+- Began publishing deb, rpm, brew, and binary releases at [get.torus.sh](https://get.torus.sh) increasing the number of ways you can download and install `torus`.
 
 ## v0.16.0
 
