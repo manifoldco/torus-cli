@@ -10,8 +10,13 @@ TARGETS=\
 
 VERSION?=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
+LINTERS=\
+	gosimple \
+	misspell \
+	ineffassign
+
 all: binary
-ci: binary vet fmtcheck simple lint misspell ineffassign test
+ci: binary vet fmtcheck lint $(LINTERS) test
 
 .PHONY: all ci
 
@@ -19,11 +24,13 @@ ci: binary vet fmtcheck simple lint misspell ineffassign test
 # Bootstrapping for base golang package deps
 #################################################
 
+# XXX: switch back to upstream go-bindata when it passes gosimple
+
 BOOTSTRAP=\
 	github.com/Masterminds/glide \
 	github.com/golang/lint/golint \
 	honnef.co/go/simple/cmd/gosimple \
-	github.com/jteeuwen/go-bindata/... \
+	github.com/manifoldco/go-bindata/... \
 	github.com/client9/misspell/cmd/misspell \
 	github.com/gordonklaus/ineffassign \
 	github.com/alecthomas/gometalinter
@@ -115,20 +122,22 @@ vet:
 fmtcheck:
 	$(call EACH_FILE,gofmt,gofmt -l -s)
 
-simple:
-	$(call EACH_FILE,gosimple,gosimple)
+
+METALINT=gometalinter --tests --disable-all --vendor --deadline=5m ./... --enable
+
+LINTERS=\
+	gosimple \
+	misspell \
+	ineffassign
+
+$(LINTERS):
+	$(METALINT) $@
 
 lint:
 	$(call EACH_FILE,golint,golint)
 
-misspell:
-	@gometalinter --disable-all --vendor --enable=misspell ./...
 
-ineffassign:
-	@gometalinter --disable-all --vendor --enable=ineffassign ./...
-
-
-.PHONY: vet fmtcheck simple lint misspell ineffassign test
+.PHONY: vet fmtcheck lint $(LINTERS) test
 
 #################################################
 # Docker targets

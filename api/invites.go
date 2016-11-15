@@ -91,11 +91,7 @@ func (i *InvitesClient) Accept(ctx context.Context, org, email, code string) err
 	}
 
 	_, err = i.client.Do(ctx, req, nil, &reqID, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Associate executes the associate invite request
@@ -125,9 +121,5 @@ func (i *InvitesClient) Approve(ctx context.Context, inviteID identity.ID, outpu
 	}
 
 	_, err = i.client.Do(ctx, req, nil, &reqID, output)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
