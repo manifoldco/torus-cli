@@ -44,7 +44,6 @@ You will need the following:
 - Docker
 - AWS SDK installed locally (e.g. `aws-cli/1.10.56 Python/2.7.10 Darwin/15.6.0 botocore/1.4.46`)
 - Correct AWS environment variables set (`aws iam get-user` is successful)
-  - Note: this includes `AWS_DEFAULT_REGION=us-east-1`
 - You belong to the CLIDevelopers group on AWS
 
 The steps for packaging the CLI:
