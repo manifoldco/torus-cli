@@ -21,6 +21,13 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus login` prompts you for an email and password, before authenticating you
 - [ ]  You can login using environment variables (`TORUS_EMAIL` and `TORUS_PASSWORD`)
 
+### Account
+
+- [ ]   `torus profile view` displays your current identity
+- [ ]   `torus profile update` allows you to change your name, email and password.
+- [ ]   Changing email generates a new verification code
+- [ ]   A user cannot perform any writes without verifying their account
+
 ### Teams
 
 - [ ]   `torus teams list --org [username]` displays `owner` `admin` and `member` teams, and you are a member of each
@@ -40,7 +47,7 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus status` will not display a context outside of a linked directory
 - [ ]   `torus link` prompts you to select or create an org, and project
 - [ ]   `torus link -f` will over-write a previous `torus link`
-- [ ]   `torus status` now displays a valid: Identity, username, org, project, environment, service, instance and path
+- [ ]   `torus status` now displays a valid: org, project, environment, service, instance and path
 - [ ]  Commands can now be executed without the `—org` and `--project` flags
 
 ### Access Controls
