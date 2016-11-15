@@ -201,6 +201,8 @@ endif
 ifneq (yes,$(RELEASE_CONFIRM))
 	$(error "Set RELEASE_CONFIRM=yes to really release")
 endif
+	@aws iam get-user > /dev/null 2>&1 || \
+		(echo "You must have valid aws credentials set" && exit 1)
 
 gocheck:
 ifeq (,$(findstring $(GO_REQUIRED_VERSION),$(shell go version)))
@@ -346,7 +348,7 @@ RELEASE_TARGETS=\
 	$(addprefix yum-,$(LINUX))
 release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer
 	pushd builds/dist && aws s3 cp --recursive . $(TORUS_S3_BUCKET)
-	$(TOOLS)/cdn-indexer -bucket $(TORUS_S3_BUCKET)
+	AWS_REGION=us-east-1 $(TOOLS)/cdn-indexer -bucket $(TORUS_S3_BUCKET)
 
 .PHONY: envcheck tagcheck gocheck release-all release-binary
 .PHONY: $(addprefix binary-,$(TARGETS)) $(addprefix zip-,$(TARGETS))
