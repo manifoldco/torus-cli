@@ -299,7 +299,7 @@ builds/bottle/torus/$(VERSION)/INSTALL_RECEIPT.json: packaging/homebrew/INSTALL_
 
 builds/torus-$(VERSION).sierra.bottle.tar.gz: binary-darwin-amd64 builds/bottle/torus/$(VERSION)/INSTALL_RECEIPT.json
 	mkdir -p builds/bottle/torus/$(VERSION)/bin
-	cp builds/bin/0.16.0/darwin/amd64/torus builds/bottle/torus/$(VERSION)/bin
+	cp builds/bin/$(VERSION)/darwin/amd64/torus builds/bottle/torus/$(VERSION)/bin
 	tar zcf $@ -C builds/bottle torus
 
 release-homebrew: envcheck tagcheck release-homebrew-bottle release-homebrew-$(RELEASE_ENV)
