@@ -12,6 +12,8 @@ _Unpublished_
   in a system wide machine mode. When the unit is running, users in the `torus`
   group can access it. To run the unit, both `TORUS_TOKEN_ID` and
   `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`.
+- Add `torus profile update` for name, email and password change.
+- Add `torus profile view` for displaying current identity, removing such information from `torus status`
 
 ## v0.16.0
 
