@@ -30,22 +30,21 @@ The release manager role rotates on a per-release basis.
 
 **Releasing the CLI**
 
-The CLI and Daemon are packaged together using the
-`$CLI_REPO/scripts/release.sh` into the `cli` folder.
+TL;DR:
 
-Example:
-
-The following command will build the v0.2.0 tag for production. You will be
-prompted to upload the release to s3 or npm.
+The following command will build the v0.2.0 tag for production.
 
 ```
-./scripts/release.sh v0.2.0 production
+git checkout v0.2.0
+make clean release-all RELEASE_CONFIRM=yes RELEASE_ENV=prod
 ```
 
 You will need the following:
 
+- Docker
 - AWS SDK installed locally (e.g. `aws-cli/1.10.56 Python/2.7.10 Darwin/15.6.0 botocore/1.4.46`)
 - Correct AWS environment variables set (`aws iam get-user` is successful)
+  - Note: this includes `AWS_DEFAULT_REGION=us-east-1`
 - You belong to the CLIDevelopers group on AWS
 
 The steps for packaging the CLI:
@@ -53,6 +52,10 @@ The steps for packaging the CLI:
 - Make sure you've pulled latest master
 - Tag master (e.g. `git tag v0.5.0-rc`)
 - Push master and the tag to github (`git push --tags origin maser`)
-- Run `$CLI_REPO/scripts/release.sh v0.5.0-rc [environment]` where
-  environment is the targeted stack this build of the CLI will be used against.
-- Only publish to NPM if the tag is a full release.
+- Checkout the ref you want to release `git checkout v0.17.0-rc`
+- Run `make release-all RELEASE_CONFIRM=yes RELEASE_ENV=[stage|prod]`
+- Release artifacts publish to s3:
+  - the releases.arigato.sh for prerelease/stage
+  - get.torus.sh (with cloudfront cdn) for prod
+- NPM and brew only publish to *real* NPM/our brew repo in prod. For stage they
+  are stored on the CDN.
