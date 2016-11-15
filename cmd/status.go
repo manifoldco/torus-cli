@@ -71,7 +71,7 @@ func statusCmd(ctx *cli.Context) error {
 
 	session, err := client.Session.Who(c)
 	if err != nil {
-		return errs.NewErrorExitError("Error fetching user details", err)
+		return errs.NewErrorExitError("Error fetching identity", err)
 	}
 
 	err = checkRequiredFlags(ctx)
@@ -79,6 +79,11 @@ func statusCmd(ctx *cli.Context) error {
 		fmt.Printf("You are not inside a linked working directory. "+
 			"Use '%s link' to link your project.\n", ctx.App.Name)
 		return nil
+	}
+
+	identity, err := deriveIdentity(ctx, session)
+	if err != nil {
+		return err
 	}
 
 	org := ctx.String("org")
@@ -92,13 +97,9 @@ func statusCmd(ctx *cli.Context) error {
 	fmt.Fprintf(w, "Project:\t%s\n", project)
 	fmt.Fprintf(w, "Environment:\t%s\n", env)
 	fmt.Fprintf(w, "Service:\t%s\n", service)
+	fmt.Fprintf(w, "Identity:\t%s\n", identity)
 	fmt.Fprintf(w, "Instance:\t%s\n", instance)
 	w.Flush()
-
-	identity, err := deriveIdentity(ctx, session)
-	if err != nil {
-		return err
-	}
 
 	parts := []string{"", org, project, env, service, identity, instance}
 	credPath := strings.Join(parts, "/")
