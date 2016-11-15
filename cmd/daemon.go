@@ -167,7 +167,7 @@ func startDaemon(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Failed to load config.", err)
 	}
 
-	daemon, err := daemon.New(cfg)
+	daemon, err := daemon.New(cfg, noPermissionCheck)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to create daemon.", err)
 	}

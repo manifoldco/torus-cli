@@ -48,10 +48,15 @@ type AuthProxy struct {
 
 // NewAuthProxy returns a new AuthProxy. It will return an error if creation
 // of the domain socket fails, or the upstream registry URL is misconfigured.
-func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB,
-	t *http.Transport, client *registry.Client, logic *logic.Engine) (*AuthProxy, error) {
+//
+// If groupShared is true, the domain socket will be readable and writable by
+// both the user and the user's group (so daemon can be accessed by multiple
+// users). If false, the socket will only be readable and writable by the user
+// running the daemon.
+func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB, t *http.Transport,
+	client *registry.Client, logic *logic.Engine, groupShared bool) (*AuthProxy, error) {
 
-	l, err := makeSocket(c.SocketPath)
+	l, err := makeSocket(c.SocketPath, groupShared)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +148,7 @@ func requestIDHandler(next http.Handler) http.Handler {
 	})
 }
 
-func makeSocket(socketPath string) (net.Listener, error) {
+func makeSocket(socketPath string, groupShared bool) (net.Listener, error) {
 	absPath, err := filepath.Abs(socketPath)
 	if err != nil {
 		return nil, err
@@ -162,9 +167,14 @@ func makeSocket(socketPath string) (net.Listener, error) {
 		return nil, err
 	}
 
+	mode := os.FileMode(0700)
+	if groupShared {
+		mode = 0760
+	}
+
 	// Does not guarantee security; BSD ignores file permissions for sockets
 	// see https://github.com/manifoldco/torus-cli/issues/76 for details
-	if err = os.Chmod(socketPath, 0700); err != nil {
+	if err = os.Chmod(socketPath, mode); err != nil {
 		return nil, err
 	}
 

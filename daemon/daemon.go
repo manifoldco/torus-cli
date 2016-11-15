@@ -34,7 +34,7 @@ type Daemon struct {
 }
 
 // New creates a new Daemon.
-func New(cfg *config.Config) (*Daemon, error) {
+func New(cfg *config.Config, groupShared bool) (*Daemon, error) {
 	lock, err := lockfile.New(cfg.PidPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create lockfile object: %s", err)
@@ -54,6 +54,12 @@ func New(cfg *config.Config) (*Daemon, error) {
 		}
 	}()
 
+	if groupShared {
+		if err = os.Chmod(string(lock), 0640); err != nil {
+			return nil, err
+		}
+	}
+
 	db, err := db.NewDB(cfg.DBPath)
 	if err != nil {
 		return nil, err
@@ -66,7 +72,7 @@ func New(cfg *config.Config) (*Daemon, error) {
 		cfg.Version, session, transport)
 	logic := logic.NewEngine(cfg, session, db, cryptoEngine, client)
 
-	proxy, err := socket.NewAuthProxy(cfg, session, db, transport, client, logic)
+	proxy, err := socket.NewAuthProxy(cfg, session, db, transport, client, logic, groupShared)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create auth proxy: %s", err)
 	}
