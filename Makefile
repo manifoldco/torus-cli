@@ -313,15 +313,25 @@ CDN_INDEXER=tools/cdn-indexer
 $(TOOLS)/cdn-indexer: $(wildcard $(CDN_INDEXER)/*.go) $(wildcard $(CDN_INDEXER)/*.tmpl)
 	$(GO_BUILD) -o $@ ./$(CDN_INDEXER)
 
-COLS=$(shell tput cols)
 RELEASE_TARGETS=\
 	release-binary \
 	release-npm \
 	release-homebrew \
 	apt-repo \
 	$(addprefix yum-,$(LINUX))
+COLS=$(shell tput cols)
+S3_CACHE=--cache-control "public, max-age=604800"
+S3_FAST_CACHE=--cache-control "public, max-age=300"
+S3_CP=pushd builds/dist && aws s3 cp --recursive . s3://$(TORUS_S3_BUCKET)
 release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer
-	pushd builds/dist && aws s3 cp --recursive . s3://$(TORUS_S3_BUCKET)
+	$(S3_CP) $(S3_CACHE) --content-type="text/plain" --exclude "*" \
+		--include "*SHA256SUMS*"
+	$(S3_CP) $(S3_FAST_CACHE) --exclude "*" \
+		--include "*/repomd.xml" \
+		$(foreach distro,debian ubuntu,$(foreach dir,conf db dists,--include "$(distro)/$(dir)/*"))
+	$(S3_CP) $(S3_CACHE) --exclude "*SHA256SUMS*" \
+		--exclude "*/repomd.xml" \
+		$(foreach distro,debian ubuntu,$(foreach dir,conf db dists,--exclude "$(distro)/$(dir)/*"))
 	AWS_REGION=us-east-1 $(TOOLS)/cdn-indexer -bucket s3://$(TORUS_S3_BUCKET)
 
 	@echo
