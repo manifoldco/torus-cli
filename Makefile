@@ -125,11 +125,6 @@ fmtcheck:
 
 METALINT=gometalinter --tests --disable-all --vendor --deadline=5m ./... --enable
 
-LINTERS=\
-	gosimple \
-	misspell \
-	ineffassign
-
 $(LINTERS):
 	$(METALINT) $@
 
