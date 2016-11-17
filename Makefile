@@ -11,12 +11,15 @@ TARGETS=\
 VERSION?=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
 LINTERS=\
+	gofmt \
+	golint \
 	gosimple \
+	vet \
 	misspell \
 	ineffassign
 
 all: binary
-ci: binary vet fmtcheck lint $(LINTERS) test
+ci: binary $(LINTERS) test
 
 .PHONY: all ci
 
@@ -30,7 +33,7 @@ BOOTSTRAP=\
 	github.com/Masterminds/glide \
 	github.com/golang/lint/golint \
 	honnef.co/go/simple/cmd/gosimple \
-	github.com/manifoldco/go-bindata/... \
+	github.com/jteeuwen/go-bindata/... \
 	github.com/client9/misspell/cmd/misspell \
 	github.com/gordonklaus/ineffassign \
 	github.com/alecthomas/gometalinter
@@ -100,39 +103,16 @@ clean:
 # Test and linting
 #################################################
 
-GO_FILES=$(shell find . -name '*.go' | grep -v /vendor/ | \
-		grep -v /data/zz_generated_bindata.go)
-
-EACH_FILE=\
-	@RES=$$(for file in ${GO_FILES} ;  do \
-		$(2) $$file ; \
-	done) ; \
-	if test -n "$$RES"; then \
-		echo "$(1) problems:" ; \
-		echo "$$RES" ; \
-		exit 1 ; \
-	fi ;
-
 test: generated vendor
 	@CGO_ENABLED=0 go test -short $$(glide nv)
 
-vet:
-	@go vet $$(glide nv)
-
-fmtcheck:
-	$(call EACH_FILE,gofmt,gofmt -l -s)
-
-
-METALINT=gometalinter --tests --disable-all --vendor --deadline=5m ./... --enable
+METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
+	 ./... --enable
 
 $(LINTERS):
 	$(METALINT) $@
 
-lint:
-	$(call EACH_FILE,golint,golint)
-
-
-.PHONY: vet fmtcheck lint $(LINTERS) test
+.PHONY: $(LINTERS) test
 
 #################################################
 # Docker targets
