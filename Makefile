@@ -193,6 +193,7 @@ $(addprefix binary-,$(TARGETS)): binary-%: gocheck generated vendor
 		-ldflags='$(STATIC_FLAGS)' ${PKG}
 
 BUILD_DIRS=\
+	builds/dist \
 	builds/dist/$(VERSION) \
 	builds/dist/rpm \
 	builds/deb \
@@ -309,19 +310,38 @@ release-npm-stage: builds/torus-npm-$(VERSION).tar.gz builds/dist/npm/$(VERSION)
 release-npm-prod: builds/torus-npm-$(VERSION).tar.gz
 	npm publish $<
 
+builds/dist/manifest.json: builds/dist
+	@echo '{' > $@
+	@echo '  "version": "$(VERSION)"' >> $@
+	@echo '  "released": "$(shell git log -n1 --format=%cI v$(VERSION))"' >> $@
+	@echo '}' >> $@
+
 CDN_INDEXER=tools/cdn-indexer
 $(TOOLS)/cdn-indexer: $(wildcard $(CDN_INDEXER)/*.go) $(wildcard $(CDN_INDEXER)/*.tmpl)
 	$(GO_BUILD) -o $@ ./$(CDN_INDEXER)
 
-COLS=$(shell tput cols)
 RELEASE_TARGETS=\
+	builds/dist/manifest.json \
 	release-binary \
 	release-npm \
 	release-homebrew \
 	apt-repo \
 	$(addprefix yum-,$(LINUX))
+COLS=$(shell tput cols)
+S3_CACHE=--cache-control "public, max-age=604800"
+S3_FAST_CACHE=--cache-control "public, max-age=300"
+S3_CP=pushd builds/dist && aws s3 cp --recursive . s3://$(TORUS_S3_BUCKET)
 release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer
-	pushd builds/dist && aws s3 cp --recursive . s3://$(TORUS_S3_BUCKET)
+	$(S3_CP) $(S3_CACHE) --content-type="text/plain" --exclude "*" \
+		--include "*SHA256SUMS*"
+	$(S3_CP) $(S3_FAST_CACHE) --exclude "*" \
+		--include "manifest.json" \
+		--include "*/repomd.xml" \
+		$(foreach distro,debian ubuntu,$(foreach dir,conf db dists,--include "$(distro)/$(dir)/*"))
+	$(S3_CP) $(S3_CACHE) --exclude "manifest.json" \
+		--exclude "*SHA256SUMS*" \
+		--exclude "*/repomd.xml" \
+		$(foreach distro,debian ubuntu,$(foreach dir,conf db dists,--exclude "$(distro)/$(dir)/*"))
 	AWS_REGION=us-east-1 $(TOOLS)/cdn-indexer -bucket s3://$(TORUS_S3_BUCKET)
 
 	@echo
@@ -365,7 +385,7 @@ endif
 .PHONY: envcheck tagcheck gocheck release-all release-binary
 .PHONY: $(addprefix binary-,$(TARGETS)) $(addprefix zip-,$(TARGETS))
 .PHONY: $(addprefix yum-,$(TARGETS)) $(addprefix rpm-,$(TARGETS))
-.PHONY: release-npm-stage release-npm-prod
+.PHONY: release-npm-stage release-npm-prod builds/dist/manifest.json
 
 #################################################
 # Distribution via npm
