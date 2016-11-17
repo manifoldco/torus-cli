@@ -43,6 +43,12 @@ enabled=1
 gpgcheck=0
 EOF
 ```
+- DEB based distributions: Use the following repository configuration:
+```
+DISTRO=$(lsb_release -i | awk ‘{print tolower($3)}’)
+CODENAME=$(lsb_release -c | awk ‘{print $2}’
+sudo tee /etc/apt/sources.list.d/torus.list <<< "deb https://get.torus.sh/$DISTRO/ $CODENAME main"
+```
 - [npm](https://www.npmjs.com): `npm install -g torus-cli`
 - bare zip archives per release version are available on https://get.torus.sh/
 

@@ -177,11 +177,9 @@ deb-container:
 
 RELEASE_ENV?=stage
 ifeq (stage,$(RELEASE_ENV))
-	TORUS_S3_BUCKET=s3://releases.arigato.sh
-	BOTTLE_URL=https://s3.amazonaws.com/releases.arigato.sh
+	TORUS_S3_BUCKET=prerelease.torus.sh
 else ifeq (prod,$(RELEASE_ENV))
-	TORUS_S3_BUCKET=s3://get.torus.sh
-	BOTTLE_URL=https://get.torus.sh
+	TORUS_S3_BUCKET=get.torus.sh
 endif
 
 tagcheck:
@@ -291,7 +289,7 @@ builds/torus-$(VERSION).rb: packaging/homebrew/torus.rb.in builds/torus-$(VERSIO
 	sed 's/{{VERSION}}/$(VERSION)/' < $< | \
 		sed 's/{{SHA256}}/$(GIT_SHA)/' | \
 		sed 's/{{BOTTLE_SHA256}}/$(BOTTLE_SHA)/' | \
-		sed 's|{{BOTTLE_URL}}|$(BOTTLE_URL)/brew/bottles|' > $@
+		sed 's|{{BOTTLE_URL}}|https://$(TORUS_S3_BUCKET)/brew/bottles|' > $@
 
 builds/bottle/torus/$(VERSION)/INSTALL_RECEIPT.json: packaging/homebrew/INSTALL_RECEIPT.json.in
 	mkdir -p builds/bottle/torus/$(VERSION)
@@ -340,6 +338,7 @@ CDN_INDEXER=tools/cdn-indexer
 $(TOOLS)/cdn-indexer: $(wildcard $(CDN_INDEXER)/*.go) $(wildcard $(CDN_INDEXER)/*.tmpl)
 	$(GO_BUILD) -o $@ ./$(CDN_INDEXER)
 
+COLS=$(shell tput cols)
 RELEASE_TARGETS=\
 	release-binary \
 	release-npm \
@@ -347,8 +346,46 @@ RELEASE_TARGETS=\
 	apt-repo \
 	$(addprefix yum-,$(LINUX))
 release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer
-	pushd builds/dist && aws s3 cp --recursive . $(TORUS_S3_BUCKET)
-	AWS_REGION=us-east-1 $(TOOLS)/cdn-indexer -bucket $(TORUS_S3_BUCKET)
+	pushd builds/dist && aws s3 cp --recursive . s3://$(TORUS_S3_BUCKET)
+	AWS_REGION=us-east-1 $(TOOLS)/cdn-indexer -bucket s3://$(TORUS_S3_BUCKET)
+
+	@echo
+	@printf "=%.0s" {1..$(COLS)}
+	@echo
+	@echo "Release $(VERSION) is ready for $(RELEASE_ENV)"
+	@echo
+	@echo "zips: https://$(TORUS_S3_BUCKET)/$(VERSION)/"
+	@echo
+
+ifeq (stage,$(RELEASE_ENV))
+	@echo "npm:  npm install -g https://$(TORUS_S3_BUCKET)/npm/$(VERSION)/torus.tar.gz"
+	@echo "brew: brew install https://$(TORUS_S3_BUCKET)/brew/$(VERSION)/torus.rb"
+else
+	@echo "npm:  npm install -g torus-cli"
+	@echo "brew: brew install manifoldco/brew/torus"
+endif
+
+	@echo
+	@echo "yum:"
+	@echo "sudo tee /etc/yum.repos.d/torus.repo <<-'EOF'"
+	@echo "[torus]"
+	@echo "name=torus-cli repository"
+	@echo "baseurl=https://$(TORUS_S3_BUCKET)/rpm/$$basearch/"
+	@echo "enabled=1"
+	@echo "gpgcheck=0"
+	@echo "EOF"
+	@echo "sudo yum install torus # or dnf"
+	@echo
+	@echo "deb:"
+	@echo "DISTRO=\$$(lsb_release -i | awk '{print tolower(\$$3)}')"
+	@echo "CODENAME=\$$(lsb_release -c | awk ‘{print \$$2})’"
+	@echo 'sudo tee /etc/apt/sources.list.d/torus.list \'
+	@echo '    <<< "deb https://$(TORUS_S3_BUCKET)/$$DISTRO/ $$CODENAME main"'
+	@echo "sudo apt-get update"
+	@echo "sudo apt-get install torus"
+	@echo
+	@printf "=%.0s" {1..$(COLS)}
+	@echo
 
 .PHONY: envcheck tagcheck gocheck release-all release-binary
 .PHONY: $(addprefix binary-,$(TARGETS)) $(addprefix zip-,$(TARGETS))
