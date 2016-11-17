@@ -15,11 +15,10 @@ import (
 
 func init() {
 	signup := cli.Command{
-		Name:      "signup",
-		Usage:     "Create a new Torus account",
-		ArgsUsage: "[email] [code]",
-		Category:  "ACCOUNT",
-		Action:    chain(ensureDaemon, signupCmd),
+		Name:     "signup",
+		Usage:    "Create a new Torus account",
+		Category: "ACCOUNT",
+		Action:   chain(ensureDaemon, signupCmd),
 	}
 	Cmds = append(Cmds, signup)
 }
@@ -33,7 +32,8 @@ func signupCmd(ctx *cli.Context) error {
 // and not as a generic signup
 func signup(ctx *cli.Context, subCommand bool) error {
 	args := ctx.Args()
-	if len(args) > 0 && len(args) != 2 {
+	// Arguments are only used as a subcommand
+	if subCommand && (len(args) > 0 && len(args) != 2) {
 		var text string
 		if len(args) > 2 {
 			text = "Too many arguments supplied."
