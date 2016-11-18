@@ -1,10 +1,10 @@
-hash: 0969b5d51be9af32da3f79fbbc4a638d79dc24bf551063399fddf2221aff9e24
-updated: 2016-10-26T21:11:14.319350703-03:00
+hash: 9ad7d18509e0cfcbf8512a207250a813d46712390483a4f264b6f20aaa3c55af
+updated: 2016-11-18T15:41:29.109385779-04:00
 imports:
 - name: github.com/asaskevich/govalidator
-  version: 593d64559f7600f29581a3ee42177f5dbded27a9
+  version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: 45d21707a58c6bfdf7cf12197d054769d88f7d13
+  version: 96b4ffc754cd7047fb910d74ef9f951cbcb09b4d
   subpackages:
   - aws
   - aws/awserr
@@ -31,12 +31,16 @@ imports:
   - private/waiter
   - service/s3
   - service/sts
+- name: github.com/aymerick/raymond
+  version: a2232af10b53ef1ae5a767f5178db3a6c1dab655
+  subpackages:
+  - ast
+  - lexer
+  - parser
 - name: github.com/boltdb/bolt
-  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
-- name: github.com/BurntSushi/toml
-  version: 99064174e013895bbd9b025c31100bd1d9b590ca
+  version: 315c65d4cf4f5278c73477a35fb1f9b08365d340
 - name: github.com/chzyer/readline
-  version: bc5c91eb5bc99e662b22bfaa6b84ddc56b70eccc
+  version: c914be64f07d9998f52bf0d598ec26d457168c0f
 - name: github.com/dchest/blake2b
   version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/donovanhide/eventsource
@@ -48,66 +52,45 @@ imports:
 - name: github.com/facebookgo/stats
   version: 1b76add642e42c6ffba7211ad7b3939ce654526e
 - name: github.com/go-ini/ini
-  version: 3e15c6754352225de49767249c3680a2fa2201f5
+  version: 6e4869b434bd001f6983749881c7ead3545887d8
 - name: github.com/go-zoo/bone
-  version: 0237f0c5455f175a6513e21afe050e128902dc7f
-- name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
-- name: github.com/gorilla/mux
-  version: cf79e51a62d8219d52060dfc1b4e810414ba2d15
-- name: github.com/julienschmidt/httprouter
-  version: d8ff598a019f2c7bad0980917a588193cf26666e
+  version: 34232a072007f7a1d1e7b5a286cc559ed6a29964
+- name: github.com/jmespath/go-jmespath
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/kardianos/osext
   version: c2c54e542fb797ad986b31721e1baedf214ca413
 - name: github.com/keybase/go-triplesec
   version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
   subpackages:
   - sha3
-- name: github.com/kr/pty
-  version: ce7fa45920dc37a92de8377972e52bc55ffa8d57
 - name: github.com/kr/text
   version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/natefinch/lumberjack
-  version: e21e5cbec0cd0861b9dc302736ad5666c529d93f
-- name: github.com/nbutton23/zxcvbn-go
-  version: a22cb81b2ecdde8b68e9ffb8824731cbf88e1de4
-  subpackages:
-  - matching
-  - scoring
-  - utils/math
-  - data
-  - match
+  version: dd45e6a67c53f673bb49ca8a001fd3a63ceb640e
 - name: github.com/nightlyone/lockfile
-  version: 3d299f51e376213fcdcfd213a76afce6b290bf9d
+  version: 1d49c987357a327b5b03aa84cbddd582c328615d
 - name: github.com/satori/go.uuid
-  version: 0aa62d5ddceb50dbcb909d790b5345affd3669b6
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/urfave/cli
-  version: 207bb6185291cfced4895a7768cad642e08a68d8
+  version: b4f4786f378c0c1d3336b5bb798094b166edf5a9
 - name: golang.org/x/crypto
-  version: b35ccbc95a0eaae49fb65c5d627cb7149ed8d1ab
+  version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
   subpackages:
-  - acme/internal/acme
-  - blowfish
+  - curve25519
+  - ed25519
   - ed25519/internal/edwards25519
+  - nacl/box
   - nacl/secretbox
-  - salsa20/salsa
+  - pbkdf2
   - poly1305
-  - openpgp/armor
-  - openpgp/errors
-  - openpgp/packet
-  - openpgp/s2k
-  - pkcs12/internal/rc2
-- name: golang.org/x/net
-  version: 7394c112eae4dba7e96bfcfe738e6373d61772b4
-  subpackages:
-  - context
-  - context/ctxhttp
+  - salsa20
+  - salsa20/salsa
+  - scrypt
+  - twofish
 - name: golang.org/x/sys
-  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  version: b699b7032584f0953262cb2788a0ca19bb494703
   subpackages:
   - unix
 - name: gopkg.in/oleiade/reflections.v1
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
-- name: gopkg.in/yaml.v2
-  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+testImports: []
