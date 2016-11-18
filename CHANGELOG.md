@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Unpublished
+
+_Unpublished_
+
+**Notable Changes**
+
+- Introduced `torus template [flags] <template-file> [output-file]` for generating a configuration file from a template. The underlying templating engine is [handlebars](https://github.com/aymerick/raymond) allowing Torus to be used in any file based configuration flow.
+
 ## v0.17.0
 
 _2016-11-15_

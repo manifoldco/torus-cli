@@ -25,7 +25,7 @@ func (s *Select) Run() (int, string, error) {
 }
 
 func (s *Select) innerRun(starting int, top rune) (int, string, error) {
-	stdin := readline.NewCancelableStdin()
+	stdin := readline.NewCancelableStdin(os.Stdin)
 	c := &readline.Config{}
 	err := c.Init()
 	if err != nil {
