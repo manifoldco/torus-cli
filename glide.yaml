@@ -19,3 +19,4 @@ import:
 - package: gopkg.in/oleiade/reflections.v1
 - package: github.com/donovanhide/eventsource
 - package: github.com/aws/aws-sdk-go
+- package: github.com/aymerick/raymond

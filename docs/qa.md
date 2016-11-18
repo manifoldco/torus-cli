@@ -132,3 +132,4 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus run <command> —service [service]` will inject secrets and execute the command
 - [ ]   `torus run <command>` without a service defaults to "default" service
 - [ ]   `torus unset [key] —service [service]` will unset the variable
+- [ ] `torus template` can be used to derive a configuration file

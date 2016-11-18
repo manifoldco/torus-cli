@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## v0.18.0
+
 _Unreleased_
 
 **Notable Changes**
@@ -11,6 +12,10 @@ _Unreleased_
   group can access it. To run the unit, both `TORUS_TOKEN_ID` and
   `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`. See v0.17.0
   for the matching rpm change.
+- Introduced `torus template [flags] <template-file> [output-file]` for
+  generating a configuration file from a template. The underlying templating
+  engine is [handlebars](https://github.com/aymerick/raymond) allowing Torus to
+  be used in any file based configuration flow.
 
 **Fixes**
 
