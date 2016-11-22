@@ -15,7 +15,7 @@ func init() {
 	unlink := cli.Command{
 		Name:     "unlink",
 		Usage:    "Remove the link between this project and Torus",
-		Category: "CONTEXT",
+		Category: "PROJECT STRUCTURE",
 		Action:   unlinkCmd,
 	}
 

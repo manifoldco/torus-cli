@@ -16,7 +16,7 @@ func init() {
 	version := cli.Command{
 		Name:      "verify",
 		ArgsUsage: "<code>",
-		Usage:     "Verify the email address for your account",
+		Usage:     "Verify an email address for your account",
 		Category:  "ACCOUNT",
 		Action: chain(
 			ensureDaemon, ensureSession, verifyEmailCmd,

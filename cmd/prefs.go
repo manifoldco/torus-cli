@@ -17,8 +17,8 @@ import (
 func init() {
 	prefs := cli.Command{
 		Name:     "prefs",
-		Usage:    "View and set preferences",
-		Category: "ACCOUNT",
+		Usage:    "Manage tool preferences",
+		Category: "SYSTEM",
 		Subcommands: []cli.Command{
 			{
 				Name:      "set",

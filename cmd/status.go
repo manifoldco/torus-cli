@@ -19,7 +19,7 @@ func init() {
 	status := cli.Command{
 		Name:     "status",
 		Usage:    "Show the current Torus status associated with your account and project",
-		Category: "CONTEXT",
+		Category: "PROJECT STRUCTURE",
 		Flags: []cli.Flag{
 			stdEnvFlag,
 			serviceFlag("Use this service.", "default", true),

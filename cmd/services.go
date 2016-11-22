@@ -18,9 +18,22 @@ import (
 func init() {
 	services := cli.Command{
 		Name:     "services",
-		Usage:    "View and manipulate services within an organization",
-		Category: "ORGANIZATIONS",
+		Usage:    "Manage services within an organization",
+		Category: "PROJECT STRUCTURE",
 		Subcommands: []cli.Command{
+			{
+				Name:      "create",
+				Usage:     "Create a service in an organization",
+				ArgsUsage: "[name]",
+				Flags: []cli.Flag{
+					orgFlag("Create the project in this org", false),
+					projectFlag("project to create services for", false),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					createServiceCmd,
+				),
+			},
 			{
 				Name:  "list",
 				Usage: "List services for an organization",
@@ -35,19 +48,6 @@ func init() {
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, listServicesCmd,
-				),
-			},
-			{
-				Name:      "create",
-				Usage:     "Create a service in an organization",
-				ArgsUsage: "[name]",
-				Flags: []cli.Flag{
-					orgFlag("Create the project in this org", false),
-					projectFlag("project to create services for", false),
-				},
-				Action: chain(
-					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					createServiceCmd,
 				),
 			},
 		},

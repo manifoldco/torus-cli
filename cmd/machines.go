@@ -58,19 +58,6 @@ func init() {
 				),
 			},
 			{
-				Name:      "destroy",
-				Usage:     "Destroy a machine in the specified organization",
-				ArgsUsage: "<id|name>",
-				Flags: []cli.Flag{
-					orgFlag("Org the machine will belongs to", true),
-					stdAutoAcceptFlag,
-				},
-				Action: chain(
-					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					checkRequiredFlags, destroyMachineCmd,
-				),
-			},
-			{
 				Name:  "list",
 				Usage: "List machines for an organization",
 				Flags: []cli.Flag{
@@ -84,21 +71,23 @@ func init() {
 				),
 			},
 			{
+				Name:      "destroy",
+				Usage:     "Destroy a machine in the specified organization",
+				ArgsUsage: "<id|name>",
+				Flags: []cli.Flag{
+					orgFlag("Org the machine will belongs to", true),
+					stdAutoAcceptFlag,
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					checkRequiredFlags, destroyMachineCmd,
+				),
+			},
+			{
 				Name:      "roles",
 				Usage:     "Lists and create machine roles for an organization",
 				ArgsUsage: "<machine-role>",
 				Subcommands: []cli.Command{
-					{
-						Name:  "list",
-						Usage: "List all machine roles for an organization",
-						Flags: []cli.Flag{
-							orgFlag("Org the machine roles belongs to", true),
-						},
-						Action: chain(
-							ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-							checkRequiredFlags, listMachineRoles,
-						),
-					},
 					{
 						Name:      "create",
 						Usage:     "Create a machine role for an organization",
@@ -109,6 +98,17 @@ func init() {
 						Action: chain(
 							ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 							checkRequiredFlags, createMachineRole,
+						),
+					},
+					{
+						Name:  "list",
+						Usage: "List all machine roles for an organization",
+						Flags: []cli.Flag{
+							orgFlag("Org the machine roles belongs to", true),
+						},
+						Action: chain(
+							ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+							checkRequiredFlags, listMachineRoles,
 						),
 					},
 				},

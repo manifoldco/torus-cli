@@ -23,19 +23,19 @@ import (
 func init() {
 	teams := cli.Command{
 		Name:     "teams",
-		Usage:    "View and manipulate teams within an organization",
-		Category: "ORGANIZATIONS",
+		Usage:    "Manage teams and their members",
+		Category: "ACCESS CONTROL",
 		Subcommands: []cli.Command{
 			{
-				Name:      "members",
-				Usage:     "List members of a particular team in and organization",
-				ArgsUsage: "<team>",
+				Name:      "create",
+				Usage:     "Create a team in an organization",
+				ArgsUsage: "[name]",
 				Flags: []cli.Flag{
-					stdOrgFlag,
+					orgFlag("Create the team in this org", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, teamMembersListCmd,
+					createTeamCmd,
 				),
 			},
 			{
@@ -50,27 +50,15 @@ func init() {
 				),
 			},
 			{
-				Name:      "create",
-				Usage:     "Create a team in an organization",
-				ArgsUsage: "[name]",
-				Flags: []cli.Flag{
-					orgFlag("Create the team in this org", false),
-				},
-				Action: chain(
-					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					createTeamCmd,
-				),
-			},
-			{
-				Name:      "remove",
-				Usage:     "Remove user from a specified team in an organization you administer",
-				ArgsUsage: "<username> <team>",
+				Name:      "members",
+				Usage:     "List members of a particular team in and organization",
+				ArgsUsage: "<team>",
 				Flags: []cli.Flag{
 					stdOrgFlag,
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, teamsRemoveCmd,
+					setUserEnv, checkRequiredFlags, teamMembersListCmd,
 				),
 			},
 			{
@@ -83,6 +71,18 @@ func init() {
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, teamsAddCmd,
+				),
+			},
+			{
+				Name:      "remove",
+				Usage:     "Remove user from a specified team in an organization you administer",
+				ArgsUsage: "<username> <team>",
+				Flags: []cli.Flag{
+					stdOrgFlag,
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, teamsRemoveCmd,
 				),
 			},
 		},

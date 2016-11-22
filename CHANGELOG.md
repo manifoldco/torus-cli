@@ -1,5 +1,11 @@
 # CHANGELOG
 
+_Unreleased_
+
+**Notable Changes**
+
+- Re-organization of commands and editing of help output.
+
 ## v0.18.0
 
 **Fixes**
