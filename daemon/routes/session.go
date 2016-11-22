@@ -134,7 +134,6 @@ func updateSelfRoute(client *registry.Client, s session.Session, e *logic.Engine
 			encodeResponseErr(w, err)
 			return
 		}
-		log.Printf("%+v\n", req)
 		if req.Name == "" && req.Email == "" && req.Password == "" {
 			encodeResponseErr(w, &apitypes.Error{
 				Type: apitypes.BadRequestError,

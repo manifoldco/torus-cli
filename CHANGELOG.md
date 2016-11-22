@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v0.18.0
+
+**Fixes**
+
+- Fixed "unauthorized" error which occurred while updating email and password at same time.
+
 ## v0.17.0
 
 _2016-11-15_

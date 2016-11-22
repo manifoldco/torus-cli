@@ -59,11 +59,11 @@ func profileView(ctx *cli.Context) error {
 	if session.Type() == apitypes.MachineSession {
 		fmt.Fprintf(w, "Machine ID:\t%s\n", session.ID())
 		fmt.Fprintf(w, "Machine Token ID:\t%s\n", session.AuthID())
-		fmt.Fprintf(w, "Machine Name:\t%s\n\n", session.Username())
+		fmt.Fprintf(w, "Machine Name:\t%s\n", session.Username())
 	} else {
 		fmt.Fprintf(w, "Name:\t%s\n", session.Name())
 		fmt.Fprintf(w, "Email:\t%s\n", session.Email())
-		fmt.Fprintf(w, "Username:\t%s\n\n", session.Username())
+		fmt.Fprintf(w, "Username:\t%s\n", session.Username())
 	}
 
 	w.Flush()
@@ -139,14 +139,15 @@ func profileEdit(ctx *cli.Context) error {
 	}
 
 	// Update the profile
-	_, err = client.Users.Update(c, delta)
+	result, err := client.Users.Update(c, delta)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to update profile.", err)
 	}
+	currentEmail := result.Body.Email
 
 	// If the password has changed, log the user in again
 	if newPassword != "" {
-		err = performLogin(c, client, session.Email(), newPassword, false)
+		err = performLogin(c, client, currentEmail, newPassword, false)
 		if err != nil {
 			return err
 		}
@@ -163,7 +164,7 @@ func profileEdit(ctx *cli.Context) error {
 	fmt.Fprintf(w, "Name:\t%s\n", updatedSession.Name())
 	fmt.Fprintf(w, "Email:\t%s\n", updatedSession.Email())
 	fmt.Fprintf(w, "Username:\t%s\n", updatedSession.Username())
-	fmt.Fprintf(w, "Password:\t%s\n\n", strings.Repeat(string(PasswordMask), 10))
+	fmt.Fprintf(w, "Password:\t%s\n", strings.Repeat(string(PasswordMask), 10))
 	w.Flush()
 
 	return nil
