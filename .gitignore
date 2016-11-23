@@ -3,7 +3,6 @@ ag
 torus
 *.arigato.json
 *.torus.json
-*.plist
 
 travis/id_rsa*
 builds/*
