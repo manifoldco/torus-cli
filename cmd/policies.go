@@ -20,7 +20,7 @@ import (
 func init() {
 	policies := cli.Command{
 		Name:     "policies",
-		Usage:    "View and manipulate access control list policies",
+		Usage:    "Manage which resources machines and users can access",
 		Category: "ACCESS CONTROL",
 		Subcommands: []cli.Command{
 			{
@@ -36,7 +36,7 @@ func init() {
 			},
 			{
 				Name:      "view",
-				Usage:     "Display the contents of an ACL policy",
+				Usage:     "Display the contents of a policy",
 				ArgsUsage: "<policy>",
 				Flags: []cli.Flag{
 					orgFlag("org to show policies for", true),
@@ -49,7 +49,7 @@ func init() {
 
 			{
 				Name:      "detach",
-				Usage:     "Detach a policy from a team or machine role, does not delete the policy",
+				Usage:     "Detach (but not delete) a policy from a team or role",
 				ArgsUsage: "<name> <team|role>",
 				Flags: []cli.Flag{
 					orgFlag("org to detach policy from", true),

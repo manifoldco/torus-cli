@@ -21,7 +21,7 @@ func init() {
 	link := cli.Command{
 		Name:     "link",
 		Usage:    "Link your current directory to Torus",
-		Category: "CONTEXT",
+		Category: "PROJECT STRUCTURE",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "force, f",

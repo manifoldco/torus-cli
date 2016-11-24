@@ -18,8 +18,8 @@ import (
 func init() {
 	envs := cli.Command{
 		Name:     "envs",
-		Usage:    "View and manipulate environments within an organization",
-		Category: "ORGANIZATIONS",
+		Usage:    "Manage environments within an organization",
+		Category: "PROJECT STRUCTURE",
 		Subcommands: []cli.Command{
 			{
 				Name:  "create",

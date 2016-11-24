@@ -14,7 +14,7 @@ import (
 func init() {
 	login := cli.Command{
 		Name:     "login",
-		Usage:    "Log in to your Torus account",
+		Usage:    "Log in to a user account, authenticating the CLI",
 		Category: "ACCOUNT",
 		Action:   chain(ensureDaemon, login),
 	}
