@@ -339,28 +339,36 @@ func listMachinesCmd(ctx *cli.Context) error {
 			"Cannot specify --destroyed and --role at the same time")
 	}
 
-	teams, err := client.Teams.List(c, org.ID, ctx.String("role"), primitive.MachineTeam)
+	roles, err := client.Teams.List(c, org.ID, ctx.String("role"), primitive.MachineTeam)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to retrieve metadata", err)
 	}
-	if len(teams) < 1 {
-		return errs.NewExitError("Machine roles not found")
+
+	// If no role is given, we don't want to error for role not found when there
+	// are no roles at all. instead we want to error with no machines found.
+	if len(roles) < 1 && ctx.String("role") != "" {
+		return errs.NewExitError("Machine role not found.")
 	}
 
-	var teamID *identity.ID
+	var roleID *identity.ID
 	if ctx.String("role") != "" {
-		teamID = teams[0].ID
+		roleID = roles[0].ID
 	}
 
-	machines, err := client.Machines.List(c, orgID, &state, nil, teamID)
+	machines, err := client.Machines.List(c, orgID, &state, nil, roleID)
 	if err != nil {
 		return err
 	}
 
-	teamMap := make(map[identity.ID]primitive.Team, len(teams))
-	for _, t := range teams {
+	if len(machines) == 0 {
+		fmt.Println("No machines found.")
+		return nil
+	}
+
+	roleMap := make(map[identity.ID]primitive.Team, len(roles))
+	for _, t := range roles {
 		if t.Body.TeamType == primitive.MachineTeam {
-			teamMap[*t.ID] = *t.Body
+			roleMap[*t.ID] = *t.Body
 		}
 	}
 
@@ -371,14 +379,14 @@ func listMachinesCmd(ctx *cli.Context) error {
 	for _, machine := range machines {
 		mID := machine.Machine.ID.String()
 		m := machine.Machine.Body
-		teamName := "-"
+		roleName := "-"
 		for _, m := range machine.Memberships {
-			team, ok := teamMap[*m.Body.TeamID]
+			role, ok := roleMap[*m.Body.TeamID]
 			if ok {
-				teamName = team.Name
+				roleName = role.Name
 			}
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, m.State, teamName, m.Created.Format(time.RFC3339))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, m.State, roleName, m.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")
