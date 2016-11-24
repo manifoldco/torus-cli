@@ -233,10 +233,18 @@ $(addprefix deb-,$(LINUX)): deb-%: binary-% builds/deb deb-container
 	docker run -v $(PWD):/torus manifoldco/torus-deb /bin/bash -c " \
 		mkdir -p deb-tmp/torus/DEBIAN && \
 		mkdir -p deb-tmp/torus/usr/bin && \
+		mkdir -p deb-tmp/torus/etc/torus && \
+		mkdir -p deb-tmp/torus/lib/systemd/system && \
 		cp /torus/builds/bin/$(VERSION)/$(OS)/$(ARCH)/torus \
 			deb-tmp/torus/usr/bin/ && \
+		cp /torus/contrib/systemd/torus.service \
+			deb-tmp/torus/lib/systemd/system && \
+		cp /torus/contrib/systemd/token.environment \
+			deb-tmp/torus/etc/torus && \
 		sed 's/VERSION/$(VERSION)/' < /torus/packaging/deb/control.in | \
 			sed 's/ARCH/$(ARCH)/' > deb-tmp/torus/DEBIAN/control && \
+		cp /torus/packaging/deb/postinst \
+			deb-tmp/torus/DEBIAN/postinst && \
 		cd deb-tmp && \
 		dpkg-deb -b torus && \
 		cp torus.deb /torus/builds/deb/torus_$(VERSION)_$(ARCH).deb \

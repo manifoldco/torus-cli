@@ -1,0 +1,13 @@
+#!/bin/sh
+
+addgroup --quiet --system torus
+adduser --quiet --system --group --no-create-home --home /etc/torus \
+	--gecos "Torus daemon user" torus
+
+if [ "$1" = "configure" ]; then
+	chown torus:torus /etc/torus
+	chmod 700 /etc/torus
+	chmod 600 /etc/torus/token.environment
+	mkdir -p -m 770 /var/run/torus
+	chown torus:torus /var/run/torus
+fi

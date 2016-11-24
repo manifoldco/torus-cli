@@ -1,16 +1,21 @@
 # CHANGELOG
 
+## v0.18.0
 _Unreleased_
 
 **Notable Changes**
 
 - Re-organization of commands and editing of help output.
-
-## v0.18.0
+- Include a systemd service unit with deb packaging, to run the torus daemon in
+  a system wide machine mode. When the unit is running, users in the `torus`
+  group can access it. To run the unit, both `TORUS_TOKEN_ID` and
+  `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`. See v0.17.0
+  for the matching rpm change.
 
 **Fixes**
 
-- Fixed "unauthorized" error which occurred while updating email and password at same time.
+- Fixed "unauthorized" error which occurred while updating email and password at
+  same time.
 
 ## v0.17.0
 
