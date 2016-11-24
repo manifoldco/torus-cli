@@ -19,7 +19,7 @@ LINTERS=\
 	ineffassign
 
 all: binary
-ci: binary $(LINTERS) test
+ci: binary $(LINTERS) cmdlint test
 
 .PHONY: all ci
 
@@ -112,7 +112,13 @@ METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
 $(LINTERS):
 	$(METALINT) $@
 
-.PHONY: $(LINTERS) test
+$(TOOLS)/cmdlint: $(wildcard tools/cmdlint/*.go) $(wildcard cmd/*.go)
+	$(GO_BUILD) -o $@ ./tools/cmdlint
+
+cmdlint: $(TOOLS)/cmdlint
+	$(TOOLS)/cmdlint
+
+.PHONY: $(LINTERS) $(TOOLS)/cmdlint test
 
 #################################################
 # Docker targets

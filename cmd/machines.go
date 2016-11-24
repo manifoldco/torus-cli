@@ -46,18 +46,6 @@ func init() {
 				),
 			},
 			{
-				Name:      "view",
-				Usage:     "Show the details of a machine",
-				ArgsUsage: "<id|name>",
-				Flags: []cli.Flag{
-					orgFlag("Org the machine will belongs to", true),
-				},
-				Action: chain(
-					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					checkRequiredFlags, viewMachineCmd,
-				),
-			},
-			{
 				Name:  "list",
 				Usage: "List machines for an organization",
 				Flags: []cli.Flag{
@@ -68,6 +56,18 @@ func init() {
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					checkRequiredFlags, listMachinesCmd,
+				),
+			},
+			{
+				Name:      "view",
+				Usage:     "Show the details of a machine",
+				ArgsUsage: "<id|name>",
+				Flags: []cli.Flag{
+					orgFlag("Org the machine will belongs to", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					checkRequiredFlags, viewMachineCmd,
 				),
 			},
 			{
