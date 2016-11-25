@@ -11,6 +11,9 @@ _Unreleased_
   group can access it. To run the unit, both `TORUS_TOKEN_ID` and
   `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`. See v0.17.0
   for the matching rpm change.
+- Teach `worklog` about missing user keypairs.
+- Unhide `worklog resolve`, as it can now be used to generate missing keypairs
+  for an org.
 
 **Fixes**
 

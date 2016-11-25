@@ -92,7 +92,14 @@ func worklogResolveRoute(engine *logic.Engine, o *observer.Observer) http.Handle
 			return
 		}
 
-		res, err := engine.Worklog.Resolve(ctx, &orgID, &ident)
+		n, err := o.Notifier(ctx, 1)
+		if err != nil {
+			log.Printf("Error creating Notifier: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		res, err := engine.Worklog.Resolve(ctx, n, &orgID, &ident)
 		if err != nil {
 			log.Printf("error resolving worklog item: %s", err)
 			encodeResponseErr(w, err)
