@@ -12,8 +12,9 @@ _Unreleased_
   `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`. See v0.17.0
   for the matching rpm change.
 - Teach `worklog` about missing user keypairs.
+- Teach `worklog` about approving invites.
 - Unhide `worklog resolve`, as it can now be used to generate missing keypairs
-  for an org.
+  for an org, or approve an invite.
 
 **Fixes**
 

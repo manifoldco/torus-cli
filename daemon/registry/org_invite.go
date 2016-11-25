@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"net/url"
 
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
@@ -58,4 +59,27 @@ func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*enve
 	}
 
 	return &invite, nil
+}
+
+// List lists all invites for a given org with the given states
+func (o *OrgInviteClient) List(ctx context.Context, orgID *identity.ID, states []string, email string) ([]envelope.Unsigned, error) {
+	v := &url.Values{}
+	v.Set("org_id", orgID.String())
+
+	for _, state := range states {
+		v.Add("state", state)
+	}
+
+	if email != "" {
+		v.Add("email", email)
+	}
+
+	req, err := o.client.NewRequest("GET", "/org-invites", v, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var invites []envelope.Unsigned
+	_, err = o.client.Do(ctx, req, &invites)
+	return invites, err
 }
