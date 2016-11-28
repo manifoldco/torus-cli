@@ -1,13 +1,15 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+	"text/template"
 
-	"github.com/aymerick/raymond"
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -96,11 +98,17 @@ func loadTemplateFile(templatePath string) (string, error) {
 	return string(buf), nil
 }
 
+var templateFns = template.FuncMap{
+	"last": func(x int, a interface{}) bool {
+		return x == reflect.ValueOf(a).Len()
+	},
+}
+
 // We expose the variables in two ways to the template:
 //
 //  1) Through a _config variable which has a Name and Value property for iterating
 //  2) Directly through the {{ slug }} and {{ Upper(slug) }} for straight referencing
-func deriveTemplateOutput(template string, secrets []apitypes.CredentialEnvelope) (string, error) {
+func deriveTemplateOutput(body string, secrets []apitypes.CredentialEnvelope) (string, error) {
 	variables := make(map[string]interface{})
 	configItems := make([]map[string]string, len(secrets))
 
@@ -120,12 +128,19 @@ func deriveTemplateOutput(template string, secrets []apitypes.CredentialEnvelope
 	// with the variable namespace
 	variables["_config"] = configItems
 
-	result, err := raymond.Render(template, variables)
+	t := template.New("template").Funcs(templateFns).Option("missingkey=error")
+	t, err := t.Parse(body)
+	if err != nil {
+		return "", errs.NewErrorExitError("Could not parse template", err)
+	}
+
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, variables)
 	if err != nil {
 		return "", errs.NewErrorExitError("Could not generate template", err)
 	}
 
-	return result, nil
+	return buf.String(), nil
 }
 
 func writeOutputFile(outputPath, output string) error {
