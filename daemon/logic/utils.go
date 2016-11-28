@@ -21,16 +21,11 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
-// public key types
-const (
-	encryptionKeyType = "encryption"
-	signingKeyType    = "signing"
-)
-
 func packageSigningKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
 	kp *crypto.KeyPairs) (*envelope.Signed, *envelope.Signed, error) {
 
-	pubsig, err := packagePublicKey(ctx, c, authID, orgID, signingKeyType, kp.Signature.Public, nil, &kp.Signature)
+	pubsig, err := packagePublicKey(ctx, c, authID, orgID,
+		primitive.SigningKeyType, kp.Signature.Public, nil, &kp.Signature)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -47,7 +42,7 @@ func packageSigningKeypair(ctx context.Context, c *crypto.Engine, authID, orgID 
 func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
 	kp *crypto.KeyPairs, pubsig *envelope.Signed) (*envelope.Signed, *envelope.Signed, error) {
 
-	pubenc, err := packagePublicKey(ctx, c, authID, orgID, encryptionKeyType,
+	pubenc, err := packagePublicKey(ctx, c, authID, orgID, primitive.EncryptionKeyType,
 		kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
 	if err != nil {
 		return nil, nil, err
@@ -244,7 +239,7 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *registry.Client,
 	s session.Session, orgID, ownerID *identity.ID) ([]envelope.Signed, []registry.KeyringMember, error) {
 
-	// Get this users keypairs
+	// Get this user's keypairs
 	sigID, encID, kp, err := fetchKeyPairs(ctx, client, orgID)
 	if err != nil {
 		log.Printf("could not fetch keypairs for org: %s", err)
@@ -386,11 +381,15 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 	var sigClaimed registry.ClaimedKeyPair
 	var encClaimed registry.ClaimedKeyPair
 	for _, keyPair := range keyPairs {
+		if keyPair.Revoked() {
+			continue
+		}
+
 		pubKey := keyPair.PublicKey.Body.(*primitive.PublicKey)
 		switch pubKey.KeyType {
-		case signingKeyType:
+		case primitive.SigningKeyType:
 			sigClaimed = keyPair
-		case encryptionKeyType:
+		case primitive.EncryptionKeyType:
 			encClaimed = keyPair
 		default:
 			return nil, nil, nil, &apitypes.Error{
@@ -452,8 +451,8 @@ func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *iden
 
 	var encryptingKey *primitive.PublicKey
 	for _, segment := range claimTrees[0].PublicKeys {
-		if *segment.Key.ID == *encryptingKeyID {
-			encryptingKey = segment.Key.Body.(*primitive.PublicKey)
+		if *segment.PublicKey.ID == *encryptingKeyID {
+			encryptingKey = segment.PublicKey.Body.(*primitive.PublicKey)
 			break
 		}
 	}
@@ -520,13 +519,17 @@ func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
 		}
 
 		for _, segment := range tree.PublicKeys {
-			key := segment.Key
+			if segment.Revoked() {
+				continue
+			}
+
+			key := segment.PublicKey
 			keyBody := key.Body.(*primitive.PublicKey)
 			if *keyBody.OwnerID != *userID {
 				continue
 			}
 
-			if keyBody.KeyType != encryptionKeyType {
+			if keyBody.KeyType != primitive.EncryptionKeyType {
 				continue
 			}
 
@@ -553,13 +556,17 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 		}
 
 		for _, segment := range tree.PublicKeys {
-			key := segment.Key
+			if segment.Revoked() {
+				continue
+			}
+
+			key := segment.PublicKey
 			keyBody := key.Body.(*primitive.PublicKey)
 			if *key.ID != *ID {
 				continue
 			}
 
-			if keyBody.KeyType != encryptionKeyType {
+			if keyBody.KeyType != primitive.EncryptionKeyType {
 				continue
 			}
 
@@ -580,11 +587,11 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 }
 
 func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
-	orgID *identity.ID, keyType string, public []byte, sigID *identity.ID,
+	orgID *identity.ID, keyType primitive.KeyType, public []byte, sigID *identity.ID,
 	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
 	alg := crypto.Curve25519
-	if keyType == signingKeyType {
+	if keyType == primitive.SigningKeyType {
 		alg = crypto.EdDSA
 	}
 

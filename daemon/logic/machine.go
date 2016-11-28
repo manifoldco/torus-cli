@@ -184,14 +184,18 @@ func generateKeypairs(ctx context.Context, c *crypto.Engine, orgID, authID *iden
 
 	return []*registry.ClaimedKeyPair{
 		{
-			PublicKey:  pubsig,
+			PublicKeySegment: apitypes.PublicKeySegment{
+				PublicKey: pubsig,
+				Claims:    []envelope.Signed{*sigclaim},
+			},
 			PrivateKey: privsig,
-			Claims:     []envelope.Signed{*sigclaim},
 		},
 		{
-			PublicKey:  pubenc,
+			PublicKeySegment: apitypes.PublicKeySegment{
+				PublicKey: pubenc,
+				Claims:    []envelope.Signed{*encclaim},
+			},
 			PrivateKey: privenc,
-			Claims:     []envelope.Signed{*encclaim},
 		},
 	}, nil
 }

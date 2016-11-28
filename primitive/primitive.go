@@ -94,6 +94,15 @@ type PublicKeyValue struct {
 	Value *base64.Value `json:"value"`
 }
 
+// KeyType the enumeration of all types of keys.
+type KeyType string
+
+// Types of keys supported by the system.
+const (
+	EncryptionKeyType KeyType = "encryption"
+	SigningKeyType    KeyType = "signing"
+)
+
 // PublicKey is the public portion of an asymetric key.
 type PublicKey struct { // type: 0x06
 	v1Schema
@@ -104,13 +113,17 @@ type PublicKey struct { // type: 0x06
 	Key       PublicKeyValue `json:"key"`
 	OrgID     *identity.ID   `json:"org_id"`
 	OwnerID   *identity.ID   `json:"owner_id"`
-	KeyType   string         `json:"type"`
+	KeyType   KeyType        `json:"type"`
 }
+
+// ClaimType is the enumeration of all claims that can be made against public
+// keys.
+type ClaimType string
 
 // Types of claims that can be made against public keys.
 const (
-	SignatureClaimType  = "signature"
-	RevocationClaimType = "revocation"
+	SignatureClaimType  ClaimType = "signature"
+	RevocationClaimType ClaimType = "revocation"
 )
 
 // Claim is a signature or revocation claim against a public key.
@@ -122,18 +135,17 @@ type Claim struct { // type: 0x08
 	OwnerID     *identity.ID `json:"owner_id"`
 	Previous    *identity.ID `json:"previous"`
 	PublicKeyID *identity.ID `json:"public_key_id"`
-	KeyType     string       `json:"type"`
+	ClaimType   ClaimType    `json:"type"`
 }
 
 // NewClaim returns a new Claim, with the created time set to now
-func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID,
-	keyType string) *Claim {
+func NewClaim(orgID, ownerID, previous, pubKeyID *identity.ID, claimType ClaimType) *Claim {
 	return &Claim{
 		OrgID:       orgID,
 		OwnerID:     ownerID,
 		Previous:    previous,
 		PublicKeyID: pubKeyID,
-		KeyType:     keyType,
+		ClaimType:   claimType,
 		Created:     time.Now().UTC(),
 	}
 }
@@ -285,7 +297,7 @@ type KeyringMemberClaim struct { // type: 0x15
 	KeyringMemberID *identity.ID `json:"keyring_member_id"`
 	OwnerID         *identity.ID `json:"owner_id"`
 	Previous        *identity.ID `json:"previous"`
-	ClaimType       string       `json:"type"`
+	ClaimType       ClaimType    `json:"type"`
 	Created         time.Time    `json:"created_at"`
 }
 
