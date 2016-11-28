@@ -21,16 +21,11 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
-// public key types
-const (
-	encryptionKeyType = "encryption"
-	signingKeyType    = "signing"
-)
-
 func packageSigningKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
 	kp *crypto.KeyPairs) (*envelope.Signed, *envelope.Signed, error) {
 
-	pubsig, err := packagePublicKey(ctx, c, authID, orgID, signingKeyType, kp.Signature.Public, nil, &kp.Signature)
+	pubsig, err := packagePublicKey(ctx, c, authID, orgID,
+		primitive.SigningKeyType, kp.Signature.Public, nil, &kp.Signature)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -47,7 +42,7 @@ func packageSigningKeypair(ctx context.Context, c *crypto.Engine, authID, orgID 
 func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
 	kp *crypto.KeyPairs, pubsig *envelope.Signed) (*envelope.Signed, *envelope.Signed, error) {
 
-	pubenc, err := packagePublicKey(ctx, c, authID, orgID, encryptionKeyType,
+	pubenc, err := packagePublicKey(ctx, c, authID, orgID, primitive.EncryptionKeyType,
 		kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
 	if err != nil {
 		return nil, nil, err
@@ -388,9 +383,9 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 	for _, keyPair := range keyPairs {
 		pubKey := keyPair.PublicKey.Body.(*primitive.PublicKey)
 		switch pubKey.KeyType {
-		case signingKeyType:
+		case primitive.SigningKeyType:
 			sigClaimed = keyPair
-		case encryptionKeyType:
+		case primitive.EncryptionKeyType:
 			encClaimed = keyPair
 		default:
 			return nil, nil, nil, &apitypes.Error{
@@ -526,7 +521,7 @@ func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
 				continue
 			}
 
-			if keyBody.KeyType != encryptionKeyType {
+			if keyBody.KeyType != primitive.EncryptionKeyType {
 				continue
 			}
 
@@ -559,7 +554,7 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 				continue
 			}
 
-			if keyBody.KeyType != encryptionKeyType {
+			if keyBody.KeyType != primitive.EncryptionKeyType {
 				continue
 			}
 
@@ -580,11 +575,11 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 }
 
 func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
-	orgID *identity.ID, keyType string, public []byte, sigID *identity.ID,
+	orgID *identity.ID, keyType primitive.KeyType, public []byte, sigID *identity.ID,
 	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
 
 	alg := crypto.Curve25519
-	if keyType == signingKeyType {
+	if keyType == primitive.SigningKeyType {
 		alg = crypto.EdDSA
 	}
 

@@ -94,6 +94,15 @@ type PublicKeyValue struct {
 	Value *base64.Value `json:"value"`
 }
 
+// KeyType the enumeration of all types of keys.
+type KeyType string
+
+// Types of keys supported by the system.
+const (
+	EncryptionKeyType KeyType = "encryption"
+	SigningKeyType    KeyType = "signing"
+)
+
 // PublicKey is the public portion of an asymetric key.
 type PublicKey struct { // type: 0x06
 	v1Schema
@@ -104,7 +113,7 @@ type PublicKey struct { // type: 0x06
 	Key       PublicKeyValue `json:"key"`
 	OrgID     *identity.ID   `json:"org_id"`
 	OwnerID   *identity.ID   `json:"owner_id"`
-	KeyType   string         `json:"type"`
+	KeyType   KeyType        `json:"type"`
 }
 
 // ClaimType is the enumeration of all claims that can be made against public

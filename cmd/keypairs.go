@@ -13,6 +13,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 func init() {
@@ -80,11 +81,13 @@ func listKeypairs(ctx *cli.Context) error {
 
 	fmt.Println("")
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "ID\tORG\tKEY TYPE\tVALID\tCREATION DATE")
 	fmt.Fprintln(w, " \t \t \t \t ")
 	for _, keypair := range keypairs {
-		fmt.Fprintln(w, keypair.PublicKey.ID.String()+"\t"+org.Body.Name+"\t"+keypair.PublicKey.Body.KeyType+"\tYES\t"+keypair.PublicKey.Body.Created.Format(time.RFC3339))
+		pk := keypair.PublicKey.Body
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", keypair.PublicKey.ID,
+			org.Body.Name, pk.KeyType, "YES", pk.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")
@@ -133,7 +136,7 @@ func generateKeypairs(ctx *cli.Context) error {
 
 	// Iterate over target orgs and identify which keys exist
 	var pErr error
-	hasKey := make(map[string]map[string]bool, len(subjectOrgs))
+	hasKey := make(map[identity.ID]map[primitive.KeyType]bool, len(subjectOrgs))
 	for orgID := range subjectOrgs {
 		keypairs, err := client.Keypairs.List(c, orgID)
 		if err != nil {
@@ -141,9 +144,9 @@ func generateKeypairs(ctx *cli.Context) error {
 			break
 		}
 		for _, kp := range keypairs {
-			oID := kp.PublicKey.Body.OrgID.String()
+			oID := *kp.PublicKey.Body.OrgID
 			if hasKey[oID] == nil {
-				hasKey[oID] = make(map[string]bool)
+				hasKey[oID] = make(map[primitive.KeyType]bool)
 			}
 			keyType := kp.PublicKey.Body.KeyType
 			hasKey[oID][keyType] = true
@@ -156,7 +159,7 @@ func generateKeypairs(ctx *cli.Context) error {
 
 	// Regenerate for orgs which do not have both keys present
 	for orgID := range subjectOrgs {
-		if !hasKey[orgID.String()]["encryption"] || !hasKey[orgID.String()]["signing"] {
+		if !hasKey[*orgID][primitive.EncryptionKeyType] || !hasKey[*orgID][primitive.SigningKeyType] {
 			regenOrgs[orgID] = orgNames[orgID]
 		}
 	}
