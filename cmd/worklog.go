@@ -12,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/promptui"
 )
 
 func init() {
@@ -175,6 +176,19 @@ func worklogResolve(ctx *cli.Context) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
 	for _, item := range toResolve {
+		if item.Type() == apitypes.InviteApproveWorklogType {
+			w.Flush()
+
+			err = AskPerform("Approve invite for " + item.Subject)
+			switch err {
+			case nil:
+			case promptui.ErrAbort:
+				continue
+			default:
+				return err
+			}
+		}
+
 		res, err := client.Worklog.Resolve(c, org.ID, item.ID)
 		if err != nil {
 			return errs.NewErrorExitError("Error resolving worklog item.", err)
