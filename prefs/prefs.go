@@ -121,17 +121,14 @@ func RcPath() (string, error) {
 }
 
 // NewPreferences returns a new instance of preferences struct
-func NewPreferences(useDefaults bool) (*Preferences, error) {
-	prefs := &Preferences{}
-	if useDefaults {
-		prefs = &Preferences{
-			Core: Core{
-				RegistryURI:    registryURI,
-				Context:        true,
-				EnableHints:    true,
-				EnableProgress: true,
-			},
-		}
+func NewPreferences() (*Preferences, error) {
+	prefs := &Preferences{
+		Core: Core{
+			RegistryURI:    registryURI,
+			Context:        true,
+			EnableHints:    true,
+			EnableProgress: true,
+		},
 	}
 
 	filePath, _ := RcPath()

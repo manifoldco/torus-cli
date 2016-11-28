@@ -16,7 +16,7 @@ func main() {
 		cmd.VersionLookup(ctx)
 	}
 
-	preferences, _ := prefs.NewPreferences(true)
+	preferences, _ := prefs.NewPreferences()
 	ui.Init(preferences)
 
 	app := cli.NewApp()

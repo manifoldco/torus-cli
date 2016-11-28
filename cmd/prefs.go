@@ -42,7 +42,7 @@ func init() {
 
 func listPref(ctx *cli.Context) error {
 	const loadErr = "Failed to load prefs."
-	preferences, err := prefs.NewPreferences(false)
+	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return errs.NewErrorExitError(loadErr, err)
 	}
@@ -83,7 +83,7 @@ func listPref(ctx *cli.Context) error {
 }
 
 func setPref(ctx *cli.Context) error {
-	preferencess, err := prefs.NewPreferences(false)
+	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return errs.NewErrorExitError("Failed to load prefs.", err)
 	}
@@ -113,7 +113,7 @@ func setPref(ctx *cli.Context) error {
 	}
 
 	// Set value inside prefs struct
-	result, err := preferencess.SetValue(key, value)
+	result, err := preferences.SetValue(key, value)
 	if err != nil {
 		return err
 	}

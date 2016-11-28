@@ -51,7 +51,7 @@ func init() {
 }
 
 func statusCmd(ctx *cli.Context) error {
-	preferences, err := prefs.NewPreferences(true)
+	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return err
 	}

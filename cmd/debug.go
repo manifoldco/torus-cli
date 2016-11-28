@@ -90,7 +90,7 @@ func debugInfoCmd(ctx *cli.Context) error {
 
 	// Which registry
 	var registryURI string
-	preferences, err := prefs.NewPreferences(true)
+	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		registryURI = "Failed to load prefs"
 	} else {

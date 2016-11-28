@@ -52,7 +52,7 @@ func AskPerform(label string) error {
 
 // ConfirmDialogue prompts the user to confirm their action
 func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, allowSkip bool) error {
-	preferences, err := prefs.NewPreferences(true)
+	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return err
 	}
