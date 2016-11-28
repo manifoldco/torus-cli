@@ -244,7 +244,7 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *registry.Client,
 	s session.Session, orgID, ownerID *identity.ID) ([]envelope.Signed, []registry.KeyringMember, error) {
 
-	// Get this users keypairs
+	// Get this user's keypairs
 	sigID, encID, kp, err := fetchKeyPairs(ctx, client, orgID)
 	if err != nil {
 		log.Printf("could not fetch keypairs for org: %s", err)
