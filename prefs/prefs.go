@@ -43,11 +43,13 @@ func (prefs Preferences) CountFields(fieldName string) int {
 
 // Core contains core option values
 type Core struct {
-	PublicKeyFile string `ini:"public_key_file,omitempty"`
-	CABundleFile  string `ini:"ca_bundle_file,omitempty"`
-	RegistryURI   string `ini:"registry_uri,omitempty"`
-	Context       bool   `ini:"context,omitempty"`
-	AutoConfirm   bool   `ini:"auto_confirm,omitempty"`
+	PublicKeyFile  string `ini:"public_key_file,omitempty"`
+	CABundleFile   string `ini:"ca_bundle_file,omitempty"`
+	RegistryURI    string `ini:"registry_uri,omitempty"`
+	Context        bool   `ini:"context,omitempty"`
+	AutoConfirm    bool   `ini:"auto_confirm,omitempty"`
+	EnableProgress bool   `ini:"progress"`
+	EnableHints    bool   `ini:"hints"`
 }
 
 // Defaults contains default values for use in command argument flags
@@ -124,8 +126,10 @@ func NewPreferences(useDefaults bool) (*Preferences, error) {
 	if useDefaults {
 		prefs = &Preferences{
 			Core: Core{
-				RegistryURI: registryURI,
-				Context:     true,
+				RegistryURI:    registryURI,
+				Context:        true,
+				EnableHints:    true,
+				EnableProgress: true,
 			},
 		}
 	}
@@ -137,13 +141,13 @@ func NewPreferences(useDefaults bool) (*Preferences, error) {
 	}
 
 	if err != nil {
-		return nil, err
+		return prefs, err
 	}
 
 	rcPath, _ := RcPath()
 	err = ini.MapTo(prefs, rcPath)
 	if err != nil {
-		return nil, err
+		return prefs, err
 	}
 
 	return prefs, nil
