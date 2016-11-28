@@ -23,10 +23,22 @@ type KeypairResult struct {
 		ID   *identity.ID         `json:"id"`
 		Body *primitive.PublicKey `json:"body"`
 	} `json:"private_key"`
-	Claims *[]struct {
+	Claims []struct {
 		ID   *identity.ID     `json:"id"`
 		Body *primitive.Claim `json:"claims"`
 	}
+}
+
+// Revoked returns a bool indicating if any revocation claims exist against this
+// KeypairResult's keypair.
+func (k *KeypairResult) Revoked() bool {
+	for _, claim := range k.Claims {
+		if claim.Body.ClaimType == primitive.RevocationClaimType {
+			return true
+		}
+	}
+
+	return false
 }
 
 type keypairsGenerateRequest struct {

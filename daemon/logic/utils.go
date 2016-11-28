@@ -381,6 +381,10 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 	var sigClaimed registry.ClaimedKeyPair
 	var encClaimed registry.ClaimedKeyPair
 	for _, keyPair := range keyPairs {
+		if keyPair.Revoked() {
+			continue
+		}
+
 		pubKey := keyPair.PublicKey.Body.(*primitive.PublicKey)
 		switch pubKey.KeyType {
 		case primitive.SigningKeyType:
@@ -447,8 +451,8 @@ func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *iden
 
 	var encryptingKey *primitive.PublicKey
 	for _, segment := range claimTrees[0].PublicKeys {
-		if *segment.Key.ID == *encryptingKeyID {
-			encryptingKey = segment.Key.Body.(*primitive.PublicKey)
+		if *segment.PublicKey.ID == *encryptingKeyID {
+			encryptingKey = segment.PublicKey.Body.(*primitive.PublicKey)
 			break
 		}
 	}
@@ -515,7 +519,11 @@ func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
 		}
 
 		for _, segment := range tree.PublicKeys {
-			key := segment.Key
+			if segment.Revoked() {
+				continue
+			}
+
+			key := segment.PublicKey
 			keyBody := key.Body.(*primitive.PublicKey)
 			if *keyBody.OwnerID != *userID {
 				continue
@@ -548,7 +556,11 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 		}
 
 		for _, segment := range tree.PublicKeys {
-			key := segment.Key
+			if segment.Revoked() {
+				continue
+			}
+
+			key := segment.PublicKey
 			keyBody := key.Body.(*primitive.PublicKey)
 			if *key.ID != *ID {
 				continue

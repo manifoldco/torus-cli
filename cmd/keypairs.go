@@ -144,6 +144,10 @@ func generateKeypairs(ctx *cli.Context) error {
 			break
 		}
 		for _, kp := range keypairs {
+			if kp.Revoked() {
+				continue
+			}
+
 			oID := *kp.PublicKey.Body.OrgID
 			if hasKey[oID] == nil {
 				hasKey[oID] = make(map[primitive.KeyType]bool)

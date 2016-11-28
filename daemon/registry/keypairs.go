@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -12,9 +13,8 @@ import (
 // ClaimedKeyPair contains a public/private keypair, and all the Claims made
 // against it (system and user signatures).
 type ClaimedKeyPair struct {
-	PublicKey  *envelope.Signed  `json:"public_key"`
-	PrivateKey *envelope.Signed  `json:"private_key"`
-	Claims     []envelope.Signed `json:"claims"`
+	apitypes.PublicKeySegment
+	PrivateKey *envelope.Signed `json:"private_key"`
 }
 
 // KeyPairs represents the `/keypairs` registry endpoint, used for accessing
@@ -34,9 +34,11 @@ func (k *KeyPairs) Post(ctx context.Context, pubKey, privKey,
 
 	req, err := k.client.NewRequest("POST", "/keypairs", nil,
 		ClaimedKeyPair{
-			PublicKey:  pubKey,
+			PublicKeySegment: apitypes.PublicKeySegment{
+				PublicKey: pubKey,
+				Claims:    []envelope.Signed{*claim},
+			},
 			PrivateKey: privKey,
-			Claims:     []envelope.Signed{*claim},
 		})
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
