@@ -6,6 +6,8 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+
+	"github.com/manifoldco/torus-cli/daemon/observer"
 )
 
 // Worklog holds the logic for discovering and acting on worklog items.
@@ -70,6 +72,28 @@ func (w *Worklog) List(ctx context.Context, orgID *identity.ID) ([]apitypes.Work
 		items = append(items, item)
 	}
 
+	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, w.engine.client, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if encClaimed == nil || sigClaimed == nil {
+		item := apitypes.WorklogItem{
+			Subject: org.Body.(*primitive.Org).Name,
+			Summary: "Signing and Encryption keypairs missing for org.",
+		}
+
+		if encClaimed != nil {
+			item.Summary = "Signing keypair missing for org."
+		} else if sigClaimed != nil {
+			item.Summary = "Encryption keypair missing for org."
+		}
+
+		item.CreateID(apitypes.MissingKeypairsWorklogType)
+
+		items = append(items, item)
+	}
+
 	return items, nil
 }
 
@@ -93,8 +117,8 @@ func (w *Worklog) Get(ctx context.Context, orgID *identity.ID,
 
 // Resolve attempts to resolve the worklog item in the given org with the given
 // ident.
-func (w *Worklog) Resolve(ctx context.Context, orgID *identity.ID,
-	ident *apitypes.WorklogID) (*apitypes.WorklogResult, error) {
+func (w *Worklog) Resolve(ctx context.Context, n *observer.Notifier,
+	orgID *identity.ID, ident *apitypes.WorklogID) (*apitypes.WorklogResult, error) {
 
 	item, err := w.Get(ctx, orgID, ident)
 	if err != nil {
@@ -112,7 +136,21 @@ func (w *Worklog) Resolve(ctx context.Context, orgID *identity.ID,
 			State:   apitypes.ManualWorklogResult,
 			Message: "Please set a new value for the secret at " + item.Subject,
 		}, nil
+	case apitypes.MissingKeypairsWorklogType:
+		err = w.engine.GenerateKeypair(ctx, n, orgID)
+		if err != nil {
+			return &apitypes.WorklogResult{
+				ID:      item.ID,
+				State:   apitypes.ErrorWorklogResult,
+				Message: "Error generating keypairs: " + err.Error(),
+			}, nil
+		}
 
+		return &apitypes.WorklogResult{
+			ID:      item.ID,
+			State:   apitypes.SuccessWorklogResult,
+			Message: "Keypairs generated.",
+		}, nil
 	}
 
 	return nil, nil

@@ -14,7 +14,11 @@ type WorklogType byte
 // The enumberated byte types of WorklogItems
 const (
 	SecretRotateWorklogType WorklogType = 1 << iota
+	MissingKeypairsWorklogType
 )
+
+// WorklogResultType is the string type of worklog results
+type WorklogResultType string
 
 // WorklogResult result states.
 const (
@@ -74,6 +78,8 @@ func (t WorklogType) String() string {
 	switch t {
 	case SecretRotateWorklogType:
 		return "secret"
+	case MissingKeypairsWorklogType:
+		return "keypairs"
 	default:
 		return "n/a"
 	}

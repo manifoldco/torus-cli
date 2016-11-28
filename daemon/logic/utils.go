@@ -368,19 +368,23 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 	return v1members, v2members, nil
 }
 
-// fetchKeyPairs fetches the user's signing and encryption keypairs from the
-// registry for the given org id.
-func fetchKeyPairs(ctx context.Context, client *registry.Client,
-	orgID *identity.ID) (*identity.ID, *identity.ID, *crypto.KeyPairs, error) {
+// fetchRegistryKeyPairs fetches the user's signing and encryption keypairs
+// from the registry for the given org id.
+// It returns an error if the keypairs cannot be fetched from the registry,
+// or if an invalid keypair type is seen.
+// It returns nil for keypair types that are not found.
+func fetchRegistryKeyPairs(ctx context.Context, client *registry.Client,
+	orgID *identity.ID) (*registry.ClaimedKeyPair, *registry.ClaimedKeyPair, error) {
 
 	keyPairs, err := client.KeyPairs.List(ctx, orgID)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	var sigClaimed registry.ClaimedKeyPair
-	var encClaimed registry.ClaimedKeyPair
-	for _, keyPair := range keyPairs {
+	var sigClaimed *registry.ClaimedKeyPair
+	var encClaimed *registry.ClaimedKeyPair
+	for _, kp := range keyPairs {
+		var keyPair = kp
 		if keyPair.Revoked() {
 			continue
 		}
@@ -388,18 +392,31 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 		pubKey := keyPair.PublicKey.Body.(*primitive.PublicKey)
 		switch pubKey.KeyType {
 		case primitive.SigningKeyType:
-			sigClaimed = keyPair
+			sigClaimed = &keyPair
 		case primitive.EncryptionKeyType:
-			encClaimed = keyPair
+			encClaimed = &keyPair
 		default:
-			return nil, nil, nil, &apitypes.Error{
+			return nil, nil, &apitypes.Error{
 				Type: apitypes.InternalServerError,
 				Err:  []string{fmt.Sprintf("Unknown key type: %s", pubKey.KeyType)},
 			}
 		}
 	}
 
-	if sigClaimed.PublicKey == nil || encClaimed.PublicKey == nil {
+	return encClaimed, sigClaimed, nil
+}
+
+// fetchKeyPairs fetches the user's signing and encryption keypairs from the
+// registry for the given org id.
+func fetchKeyPairs(ctx context.Context, client *registry.Client,
+	orgID *identity.ID) (*identity.ID, *identity.ID, *crypto.KeyPairs, error) {
+
+	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, client, orgID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	if sigClaimed == nil || encClaimed == nil {
 		return nil, nil, nil, &apitypes.Error{
 			Type: apitypes.NotFoundError,
 			Err:  []string{"Missing encryption or signing keypairs"},

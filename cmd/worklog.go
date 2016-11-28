@@ -48,7 +48,6 @@ func init() {
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					checkRequiredFlags, worklogResolve,
 				),
-				Hidden: true, // XXX nothing can be resolved automatically yet
 			},
 		},
 	}
