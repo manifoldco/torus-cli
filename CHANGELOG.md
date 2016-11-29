@@ -19,7 +19,7 @@ _Unreleased_
 **Fixes**
 
 - Fixed "unauthorized" error which occurred while updating email and password at
-  same time.
+  the same time.
 - Improve message for `machines list` when no machines are found.
 - When encrypting or signing, do not use revoked keypairs.
 
