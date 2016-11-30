@@ -70,9 +70,9 @@
                     {{ end }}
                     {{ range .Files }}
                     <tr class="{{ .Type }}">
-                        <td class="name"><a href="{{ .Name }}">{{ .Name }}</a></td>
-                        <td class="size">{{ if ne .Size 0 }}{{ .Size }}{{ end }}</td>
-                        <td class="modified">{{ .Modified }}</td>
+                        <td class="name"><a href="{{ .Name }}">{{ .Name }}{{ if eq .Type "directory" }}/{{ end }}</a></td>
+                        <td class="size">{{ filterZero .Size }}</td>
+                        <td class="modified">{{ filterZero .Modified }}</td>
                     </tr>
                     {{ end }}
                 </table>
