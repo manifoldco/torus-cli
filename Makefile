@@ -326,7 +326,7 @@ release-npm-prod: builds/torus-npm-$(VERSION).tar.gz
 
 builds/dist/manifest.json: builds/dist
 	@echo '{' > $@
-	@echo '  "version": "$(VERSION)"' >> $@
+	@echo '  "version": "$(VERSION)",' >> $@
 	@echo '  "released": "$(shell git log -n1 --format=%cI v$(VERSION))"' >> $@
 	@echo '}' >> $@
 
