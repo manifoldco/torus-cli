@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"text/template"
@@ -32,7 +33,15 @@ func init() {
 
 	prefix := "tools/cdn-indexer/"
 	name := filepath.Join(prefix, "index.html.tmpl")
-	t = template.Must(template.ParseFiles(name))
+	t = template.Must(template.New("index.html.tmpl").Funcs(template.FuncMap{
+		"filterZero": func(v interface{}) interface{} {
+			if v == reflect.Zero(reflect.TypeOf(v)).Interface() {
+				return ""
+			}
+
+			return v
+		},
+	}).ParseFiles(name))
 }
 
 type fileType string
