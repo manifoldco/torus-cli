@@ -1,7 +1,8 @@
 # CHANGELOG
 
 ## v0.18.0
-_Unreleased_
+
+_2016-11-30_
 
 **Notable Changes**
 
