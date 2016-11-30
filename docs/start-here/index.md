@@ -6,6 +6,12 @@ position: 0
 
 # Torus Documentation
 
+## Quickstart
+
+Learn how to start a project to store, view and share secrets in development followed by the basics of taking your secrets beyond development.
+
+[Quickstart &raquo;](./quickstart.md)
+
 ## Commands
 
 Learn the details of each command available in Torus, their arguments, command options and the impact they have on your Organization.
