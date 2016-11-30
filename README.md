@@ -5,7 +5,7 @@ A secure, shared workspace for secrets.
 [Homepage](https://torus.sh) |
 [Documentation](https://torus.sh/docs) |
 [Twitter](https://twitter.com/toruscli) |
-[Security Disclosure](./docs/security.md) |
+[Security Disclosure](./internal/security.md) |
 [Code of Conduct](./.github/CONDUCT.md) |
 [Contribution Guidelines](./.github/CONTRIBUTING.md)
 
@@ -54,7 +54,7 @@ sudo tee /etc/apt/sources.list.d/torus.list <<< "deb https://get.torus.sh/$DISTR
 
 ## Security Disclosure
 
-Please follow our security disclosure document [found here](./docs/security.md).
+Please follow our security disclosure document [found here](./internal/security.md).
 
 ## License
 
