@@ -12,7 +12,10 @@ The path begins with a forward slash and has seven slash-delimited segments, mos
 - Secret  
 
 A complete path:
-`/org/project/environment/service/identity/instance/secret`
+
+```
+/org/project/environment/service/identity/instance/secret
+```
 
 Some segments are unique to the path:
 
@@ -25,17 +28,20 @@ Instance | Unique ID of the accessing process | `*`
 
 Commands that take advantage of the path:
 
-- [set](./secrets.md#set)
-- [unset](./secrets.md#unset)
-- [allow](./secrets.md#allow)
-- [deny](./secrets.md#deny)
-- [ls](./secrets.md#ls)
+- [set](../commands/secrets.md#set)
+- [unset](../commands/secrets.md#unset)
+- [ls](../commands/secrets.md#ls)
+- [allow](../commands/access-control.md#allow)
+- [deny](../commands/access-control.md#deny)
 
 ## Wildcards and Sharing
 Path segments may contain wildcards (with the exception of Organization and Project). Through this secrets can be shared across multiple nodes.
 
 Wildcards support prefixes, so that you can namespace objects:
-`/org/project/env-*/service/identity/instance/secret`
+
+```
+/org/project/env-*/service/identity/instance/secret
+```
 
 So the value of "secret" is available to all applicable environments that match the wildcard such as: "env-1", "env-development", "env-ironment".
 
