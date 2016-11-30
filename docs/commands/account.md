@@ -33,13 +33,13 @@ If you have forgotten your password please contact [support@torus.sh](mailto:sup
 Your profile contains your name, email and password inside Torus.  
 
 ### update
-###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+###### Added [v0.17.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
 `torus profile update` enables you to modify the authenticated user’s name, email or password. 
 
 Currently accounts can only have one email attached to them. In the event of an email change, you will need to re-verify your account. 
 
 ### view
-###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+###### Added [v0.17.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
 `torus profile view` displays the authenticated user’s profile information.
