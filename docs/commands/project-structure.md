@@ -1,5 +1,5 @@
 # Project Structure
-Torus secrets are part of a hierarchy, which is represented by a [path](../guides/path.md). The segments that the path is comprised of are the project structure objects.
+Torus secrets are part of a hierarchy, which is represented by a [path](../concepts/path.md). The segments that the path is comprised of are the project structure objects.
 
 ## projects
 A project is a grouping of services, environments and secrets typically synonymous with a codebase. It is the first level of segmentation inside of an organization.
