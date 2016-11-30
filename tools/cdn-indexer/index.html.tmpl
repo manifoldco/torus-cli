@@ -4,43 +4,83 @@
         <meta charset="utf-8">
         <title>get.torus.sh directory listing</title>
         <style>
-            .listing {
-                min-height: calc(100vh - 7em);
+            body {
+                position: relative;
+                margin: 0;
+                padding: 80px 0 0;
+                font-family: sans-serif;
+                font-size: 18px;
+                background: #f7f7f7;
             }
+
+            body::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 2px;
+              background-image: linear-gradient(-21deg, #FF0264 0%, #FE744A 49%, #FDBC39 82%, #FDDF31 100%);
+            }
+
+            .wrapper {
+                padding: 20px 30px;
+                margin: 0 auto 20px;
+                max-width: 600px;
+                background: #FFF;
+            }
+
+            table {
+              display: table;
+              width: 100%;
+              line-height: 1.5;
+            }
+
+            td {
+              border-bottom: 1px dotted #bababa;
+              padding: 5px;
+            }
+
+
             .footer {
-                margin: 1em 0 0 0;
-                padding: 2em 1em 1em 1em;
-                background-color: #f7f7f8;
+                margin: 40px 0 0 0;
+                padding: 20px 0;
+                font-size: 13px;
+                color: #858181;
+                margin-top: 80px;
             }
-            .footer .copyright {
+
+            .copyright {
                 float: right;
             }
 
         </style>
     </head>
     <body>
-        <div class="listing">
-        <h4>{{ .Dir }}</h4>
-        <table>
-            {{ if ne .Dir "/" }}
-            <tr class="parent directory">
-                <td><a href="../">parent directory</a></td>
-                <td></td>
-                <td></td>
-            </tr>
-            {{ end }}
-            {{ range .Files }}
-            <tr class="{{ .Type }}">
-                <td class="name"><a href="{{ .Name }}">{{ .Name }}</a></td>
-                <td class="size">{{ if ne .Size 0 }}{{ .Size }}{{ end }}</td>
-                <td class="modified">{{ .Modified }}</td>
-            </tr>
-            {{ end }}
-        </table>
-        </div>
-        <div class="footer">
-            <span class="copyright">© 2016 Manifold</span>
-            <span class="timestamp">Index generated at {{ .Timestamp }}</span>
+        <div class="wrapper">
+            <div class="listing">
+                <h4>{{ .Dir }}</h4>
+                <table>
+                    {{ if ne .Dir "/" }}
+                    <tr class="parent directory">
+                        <td><a href="../">parent directory</a></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {{ end }}
+                    {{ range .Files }}
+                    <tr class="{{ .Type }}">
+                        <td class="name"><a href="{{ .Name }}">{{ .Name }}</a></td>
+                        <td class="size">{{ if ne .Size 0 }}{{ .Size }}{{ end }}</td>
+                        <td class="modified">{{ .Modified }}</td>
+                    </tr>
+                    {{ end }}
+                </table>
+            </div>
+            <div class="footer">
+                <span class="copyright">© 2016 Manifold</span>
+                <span class="timestamp">Index generated at {{ .Timestamp }}</span>
+            </div>
         </div>
     </body>
 </html>
