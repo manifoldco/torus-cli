@@ -3,12 +3,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 // Cmds is the list of all cli commands
@@ -16,7 +16,7 @@ var Cmds []cli.Command
 
 var progress api.ProgressFunc = func(evt *api.Event, err error) {
 	if evt != nil {
-		fmt.Println(evt.Message)
+		ui.Progress(evt.Message)
 	}
 }
 

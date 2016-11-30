@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v0.19.0
+
+_Unreleased_
+
+**Notable Changes**
+
+- Add preferences for `core.disable_progress` and `core.disable_hints` to control levels of output
+  in preparation for additional onboarding output.
+
 ## v0.18.0
 
 _2016-11-30_

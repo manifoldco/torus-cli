@@ -160,7 +160,7 @@ func ensureSession(ctx *cli.Context) error {
 
 // loadDirPrefs loads argument values from the .torus.json file
 func loadDirPrefs(ctx *cli.Context) error {
-	p, err := prefs.NewPreferences(true)
+	p, err := prefs.NewPreferences()
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func loadDirPrefs(ctx *cli.Context) error {
 // loadPrefDefaults loads default argument values from the .torusrc
 // preferences file defaults section, inserting them into any unset flag values
 func loadPrefDefaults(ctx *cli.Context) error {
-	p, err := prefs.NewPreferences(true)
+	p, err := prefs.NewPreferences()
 	if err != nil {
 		return err
 	}

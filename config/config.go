@@ -39,7 +39,7 @@ type Config struct {
 
 // NewConfig returns a new Config, with loaded user preferences.
 func NewConfig(torusRoot string) (*Config, error) {
-	preferences, err := prefs.NewPreferences(true)
+	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return nil, err
 	}

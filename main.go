@@ -7,12 +7,17 @@ import (
 
 	"github.com/manifoldco/torus-cli/cmd"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/prefs"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func main() {
 	cli.VersionPrinter = func(ctx *cli.Context) {
 		cmd.VersionLookup(ctx)
 	}
+
+	preferences, _ := prefs.NewPreferences()
+	ui.Init(preferences)
 
 	app := cli.NewApp()
 	app.Version = config.Version
