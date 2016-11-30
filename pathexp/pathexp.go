@@ -284,7 +284,7 @@ func Parse(raw string) (*PathExp, error) {
 	parts := strings.Split(raw, "/")
 
 	if len(parts) != 7 {
-		return nil, errors.New("wrong number of path segements")
+		return nil, errors.New("wrong number of path segments")
 	}
 
 	if parts[0] != "" {
