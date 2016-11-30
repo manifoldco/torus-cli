@@ -1,5 +1,5 @@
 # Secrets
-The Torus CLI is used to set and access secrets and config. Each value is encrypted client-side according to our [cryptography](../internals/crypto) architecture and stored in the Torus Registry.
+The Torus CLI is used to set and access secrets and config. Each value is encrypted client-side according to our [cryptography](../internals/crypto.md) architecture and stored in the Torus Registry.
 
 A secret is a single piece of configuration which should be encrypted.
 
@@ -19,14 +19,14 @@ Torus exposes your decrypted secrets to your process through environment variabl
 ## set
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus set <name|path> <value>` sets a value for the specified name (or [path](../guides/path.md)).
+`torus set <name|path> <value>` sets a value for the specified name (or [path](../concepts/path.md)).
 
 This is how all secrets are stored in Torus.
 
 ## unset
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus unset <name|path>` unsets the value for the specified name (or [path](../guides/path.md)).
+`torus unset <name|path>` unsets the value for the specified name (or [path](../concepts/path.md)).
 
 ## view
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -59,7 +59,7 @@ torus run -o example -- node ./bin/www --app api
 
 `torus ls [path]` allows a user to explore the objects and values set within their organization.
 
-Each level within the organization can be inspected by changing the segments supplied in the path. Wildcards cannot be used for the organization segment of the [path](../guides/path.md).
+Each level within the organization can be inspected by changing the segments supplied in the path. Wildcards cannot be used for the organization segment of the [path](../concepts/path.md).
 
 Segments | Result | Example
 ---- | ---- | ----

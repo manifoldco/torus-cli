@@ -1,5 +1,5 @@
 # Access Control
-The Torus CLI can be used to restrict access to secrets stored within your org. To control access to specific objects we will be using [Path](../guides/path.md) expressions.
+The Torus CLI can be used to restrict access to secrets stored within your org. To control access to specific objects we will be using [Path](../concepts/path.md) expressions.
 
 ## teams
 Users in Torus can be grouped into Teams inside an Organization. These teams have segmented access to the secrets which have been saved.
@@ -37,7 +37,7 @@ To display all members of your organization display the members of the "member" 
 
 `torus teams add <username> <name>` adds the user specified (by username) to the specified team.
 
-To display all members in your organization see the [`members`](./#list) command.
+To display all members in your organization see the [`members`](./#members) command.
 
 ### remove
 ###### Added [v0.4.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -51,7 +51,7 @@ Access to resources is controlled using documents that define access called Poli
 
 A policy contains rules about which actions can be taken on specific resources. Policies are then attached to teams, which enables you to control access in a very specific manner.
 
-Each default team has its own default policy, and can have additional policies attached to the team. You can view the [complete default policies here](../guides/policies.md), in short:
+Each default team has its own default policy, and can have additional policies attached to the team. You can view the [complete default policies here](../concepts/policies.md), in short:
 
 **Member team:** cannot manage resources, can set credentials in their own "dev-username" environment and share credentials through the "dev-\*"  
 environment.
