@@ -94,6 +94,22 @@ func (w *Worklog) List(ctx context.Context, orgID *identity.ID) ([]apitypes.Work
 		items = append(items, item)
 	}
 
+	invites, err := w.engine.client.OrgInvite.List(ctx, org.ID, []string{"accepted"}, "")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, invite := range invites {
+		item := apitypes.WorklogItem{
+			Subject:   invite.Body.(*primitive.OrgInvite).Email,
+			Summary:   "Org invite ready for approval",
+			SubjectID: invite.ID,
+		}
+		item.CreateID(apitypes.InviteApproveWorklogType)
+
+		items = append(items, item)
+	}
+
 	return items, nil
 }
 
@@ -151,6 +167,25 @@ func (w *Worklog) Resolve(ctx context.Context, n *observer.Notifier,
 			State:   apitypes.SuccessWorklogResult,
 			Message: "Keypairs generated.",
 		}, nil
+	case apitypes.InviteApproveWorklogType:
+		_, err = w.engine.ApproveInvite(ctx, n, item.SubjectID)
+		if err != nil {
+			return nil, err
+		}
+		if err != nil {
+			return &apitypes.WorklogResult{
+				ID:      item.ID,
+				State:   apitypes.ErrorWorklogResult,
+				Message: "Error approving invite: " + err.Error(),
+			}, nil
+		}
+
+		return &apitypes.WorklogResult{
+			ID:      item.ID,
+			State:   apitypes.SuccessWorklogResult,
+			Message: "User invite approved and finalized.",
+		}, nil
+
 	}
 
 	return nil, nil

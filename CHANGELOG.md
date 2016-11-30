@@ -9,18 +9,21 @@ _Unreleased_
 - Include a systemd service unit with deb packaging, to run the torus daemon in
   a system wide machine mode. When the unit is running, users in the `torus`
   group can access it. To run the unit, both `TORUS_TOKEN_ID` and
-  `TORUS_TOKEN_SECRE` must be set in `/etc/torus/token.environment`. See v0.17.0
-  for the matching rpm change.
+  `TORUS_TOKEN_SECRET` must be set in `/etc/torus/token.environment`.
+  See v0.17.0 for the matching rpm change.
 - Teach `worklog` about missing user keypairs.
+- Teach `worklog` about approving invites.
 - Unhide `worklog resolve`, as it can now be used to generate missing keypairs
-  for an org.
+  for an org, or approve an invite.
 
 **Fixes**
 
 - Fixed "unauthorized" error which occurred while updating email and password at
-  same time.
+  the same time.
 - Improve message for `machines list` when no machines are found.
 - When encrypting or signing, do not use revoked keypairs.
+- `torus ls` now returns *all* secrets that match the given path, if a `*` was
+  provided or the path contained an alternation it wouldn't have been returned.
 
 ## v0.17.0
 

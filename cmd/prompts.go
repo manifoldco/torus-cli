@@ -40,7 +40,7 @@ func validateInviteCode(input string) error {
 }
 
 // AskPerform prompts the user if they want to do a specified action
-func AskPerform(ctx *cli.Context, label string) error {
+func AskPerform(label string) error {
 	prompt := promptui.Prompt{
 		Label:     label,
 		IsConfirm: true,

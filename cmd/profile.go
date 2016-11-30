@@ -102,7 +102,7 @@ func profileEdit(ctx *cli.Context) error {
 	}
 
 	var newPassword string
-	err = AskPerform(ctx, "Would you like to change your password?")
+	err = AskPerform("Would you like to change your password")
 	if err == nil {
 		password, err := changePassword(&c, client, session)
 		if err != nil {

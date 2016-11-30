@@ -6,6 +6,7 @@ import (
 	"github.com/dchest/blake2b"
 
 	"github.com/manifoldco/torus-cli/base32"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 // WorklogType is the enumerated byte type of WorklogItems
@@ -15,6 +16,7 @@ type WorklogType byte
 const (
 	SecretRotateWorklogType WorklogType = 1 << iota
 	MissingKeypairsWorklogType
+	InviteApproveWorklogType
 )
 
 // WorklogResultType is the string type of worklog results
@@ -66,6 +68,8 @@ type WorklogItem struct {
 	ID      *WorklogID `json:"id"`
 	Subject string     `json:"subject"`
 	Summary string     `json:"summary"`
+
+	SubjectID *identity.ID `json:"subject_id"` // Optional.
 }
 
 // Type returns this item's type
@@ -80,6 +84,8 @@ func (t WorklogType) String() string {
 		return "secret"
 	case MissingKeypairsWorklogType:
 		return "keypairs"
+	case InviteApproveWorklogType:
+		return "invite"
 	default:
 		return "n/a"
 	}
