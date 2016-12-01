@@ -222,7 +222,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 		return nil, err
 	}
 
-	activeGraphs, err := cgs.Active()
+	activeGraphs, err := cgs.Prune()
 	if err != nil {
 		return nil, err
 	}
