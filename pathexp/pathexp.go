@@ -38,6 +38,7 @@ var (
 	slug           = regexp.MustCompile(`^` + slugstr + `$`)
 	globRe         = regexp.MustCompile(`^(` + slugstr + `)(\*?)$`)
 	fullglobOrGlob = regexp.MustCompile(`(^\*$)|(?:^(` + slugstr + `)(\*?)$)`)
+	doubleGlob     = regexp.MustCompile(`^\*\*$`)
 )
 
 const (
@@ -283,27 +284,51 @@ func New(org, project string, envs, services, identities, instances []string) (*
 func Parse(raw string) (*PathExp, error) {
 	parts := strings.Split(raw, "/")
 
-	if len(parts) != 7 {
-		return nil, errors.New("wrong number of path segments")
+	if len(parts) > 7 {
+		return nil, errors.New("too many path segments")
 	}
-
 	if parts[0] != "" {
 		return nil, errors.New("path expressions must start with '/'")
 	}
+
 	// remove leading empty section
 	parts = parts[1:]
+
+	// identify double glob and replace remaining segments with glob
+	hasDoubleGlob := false
+	segments := make([]string, 6)
+	for i := range segments {
+		// if doesn't have ** and is missing, abort
+		if len(parts) <= i && !hasDoubleGlob {
+			return nil, errors.New("missing path segments")
+		}
+		var segment string
+		if len(parts) > i {
+			// if part is **, replace with *
+			if doubleGlob.MatchString(parts[i]) {
+				hasDoubleGlob = true
+				segment = "*"
+			} else {
+				segment = parts[i]
+			}
+		} else if hasDoubleGlob {
+			// use * as segment for missing part
+			segment = "*"
+		}
+		segments[i] = segment
+	}
 
 	splitParts := make([][]string, 6)
 	splitNames := []string{"", "", "environment", "service", "identity", "instance"}
 	var err error
 	for i := 2; i < len(splitParts); i++ {
-		splitParts[i], err = Split(splitNames[i], parts[i])
+		splitParts[i], err = Split(splitNames[i], segments[i])
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return New(parts[orgIdx], parts[projectIdx],
+	return New(segments[orgIdx], segments[projectIdx],
 		splitParts[envIdx],
 		splitParts[serviceIdx],
 		splitParts[identityIdx],
