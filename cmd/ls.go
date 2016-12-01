@@ -1,24 +1,34 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
-	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
 )
+
+var targetMap = []string{"orgs", "projects", "envs", "services"}
 
 func init() {
 	ls := cli.Command{
 		Name:      "ls",
-		ArgsUsage: "[cpath]",
+		ArgsUsage: "<path>",
 		Usage:     "Explore all objects your account has access to",
 		Category:  "SECRETS",
 		Flags: []cli.Flag{
+			recursiveFlag(),
+			formatFlag("simple", "Format used to display data (simple, verbose)"),
+			cli.BoolFlag{
+				Name:  "verbose, v",
+				Usage: "Lists the types of resources and source path (shortcut for --format verbose)",
+			},
 			orgFlag("Use this organization.", false),
 			projectFlag("Use this project.", false),
 			newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
@@ -41,324 +51,190 @@ func init() {
 }
 
 func listObjects(ctx *cli.Context) error {
-	args := ctx.Args()
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return errs.NewExitError("Failed to retrieve objects")
+	}
 
-	var useFlags bool
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	args := ctx.Args()
+	recursive := ctx.Bool("recursive")
+
+	format := ctx.String("format")
+	if ctx.Bool("verbose") {
+		format = "verbose"
+	}
+	if format != "verbose" && format != "simple" {
+		return errs.NewUsageExitError("Invalid format", ctx)
+	}
 
 	// Try to be helpful and detect when a wildcard isn't quoted
 	if len(args) > 1 {
 		return errs.NewUsageExitError("Invalid path supplied.\n"+
-			"Note: arguments containing wildcards must be wrapped in qutoes.", ctx)
+			"Note: arguments containing wildcards must be wrapped in quotes.", ctx)
 	}
 
-	var cpathObj *pathexp.PathExp
-	var count int
-	var err error
+	path, target := identifyTarget(args, recursive)
+	if target == "" {
+		return errs.NewUsageExitError("Invalid path supplied", ctx)
+	}
 
-	identitySlice, err := deriveIdentitySlice(ctx)
+	// Parse the pathexp so we have a full target path
+	cpathExp, err := pathexp.ParsePartial(path)
 	if err != nil {
 		return err
 	}
 
-	hasPath := len(args) > 0
-	emptyOrg := ctx.String("org") == ""
-	emptyProj := ctx.String("project") == ""
-	emptyOrgOrProject := len(args) == 0 && (emptyOrg || emptyProj)
-
-	if hasPath || emptyOrgOrProject {
-		var path string
-		if hasPath {
-			// User has supplied a path
-			path = args[0]
-		} else if emptyProj {
-			// Context enabled, no project supplied
-			path = "/" + ctx.String("org")
-		} else {
-			// Context enabled, no org supplied
-			path = "/"
-		}
-
-		// Construct the target from single path supplied
-		obj, segmentCount, err := pathexp.NewPartialFromPath(path)
-		cpathObj = obj
-		count = *segmentCount
+	var orgName string
+	var projectTree api.ProjectTreeSegment
+	var projectMap map[string]*api.ProjectResult
+	if target != "orgs" {
+		tree, err := projectTreeForOrg(c, client, cpathExp)
 		if err != nil {
 			return err
 		}
-	} else {
-		// Construct the target path through flags
-		obj, _, err := pathexp.NewPartial(ctx.String("org"), ctx.String("project"),
-			ctx.StringSlice("environment"), ctx.StringSlice("service"),
-			identitySlice, ctx.StringSlice("instance"),
-		)
-		cpathObj = obj
-		count = 6
-		if err != nil {
-			return err
-		}
-		useFlags = true
+		projectTree = *tree
+		orgName = projectTree.Org.Body.Name
+		projectMap = matchingProjects(cpathExp, projectTree)
 	}
 
-	// When using flag composition, require org and project at minimum
-	if useFlags && count < 1 {
-		return errs.NewUsageExitError("Org must be supplied", ctx)
-	}
-	if useFlags && count < 2 {
-		return errs.NewUsageExitError("Project must be supplied", ctx)
-	}
-	if count > 3 && cpathObj.Org() == "*" {
-		return errs.NewUsageExitError("Org must be supplied to view secrets", ctx)
-	}
-	if count > 3 && cpathObj.Project() == "*" {
-		return errs.NewUsageExitError("Project must be supplied to view secrets", ctx)
-	}
-
+	// Pull list of paths for the target object
 	var paths []string
-	var pathErr error
-
-	var showing string
-	switch count {
-	case 0:
-		showing = "Listing orgs:"
-		paths, err = orgPaths()
+	var pathsErr error
+	switch target {
+	case "orgs":
+		orgs, _, err := orgsList()
 		if err != nil {
-			pathErr = errs.NewExitError("Failed to list orgs.")
+			pathsErr = err
+			break
 		}
-	case 1:
-		partial := "/" + cpathObj.Org()
-		showing = "Listing projects within path: " + partial
-		paths, err = projectPaths(cpathObj)
-		if err != nil {
-			pathErr = errs.NewExitError("Failed to list projects.")
+		for _, o := range orgs {
+			if cpathExp.Org.Contains(o.Body.Name) {
+				paths = append(paths, fmt.Sprintf("/%s", o.Body.Name))
+			}
 		}
-	case 2:
-		partial := "/" + cpathObj.Org() + "/" + cpathObj.Project()
-		showing = "Listing environments within path: " + partial
-		paths, err = envPaths(cpathObj)
-		if err != nil {
-			pathErr = errs.NewExitError("Failed to list environments.")
+	case "projects":
+		for _, p := range projectMap {
+			paths = append(paths, fmt.Sprintf("/%s/%s", orgName, p.Body.Name))
 		}
-	case 3:
-		partial := "/" + cpathObj.Org() + "/" + cpathObj.Project() + "/*"
-		showing = "Listing services within path: " + partial
-		paths, err = servicePaths(cpathObj)
+	case "envs":
+		for _, e := range projectTree.Envs {
+			if p, ok := projectMap[e.Body.ProjectID.String()]; ok {
+				if cpathExp.Envs.Contains(e.Body.Name) {
+					paths = append(paths, fmt.Sprintf("/%s/%s/%s", orgName, p.Body.Name, e.Body.Name))
+				}
+			}
+		}
+	case "services":
+		for _, s := range projectTree.Services {
+			if p, ok := projectMap[s.Body.ProjectID.String()]; ok {
+				if cpathExp.Services.Contains(s.Body.Name) {
+					paths = append(paths, fmt.Sprintf("/%s/%s/%s/%s", orgName, p.Body.Name, "*", s.Body.Name))
+				}
+			}
+		}
+	case "secrets":
+		creds, err := client.Credentials.Search(c, cpathExp.String())
 		if err != nil {
-			pathErr = errs.NewExitError("Failed to list services.")
+			pathsErr = err
+			break
+		}
+		cset := credentialSet{}
+		for _, c := range creds {
+			cset.Add(c)
+		}
+		for _, cred := range cset {
+			body := *cred.Body
+			paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), body.GetName()))
 		}
 	default:
-		showing = "Listing secrets within path: " + cpathObj.String()
-		paths, err = secretPaths(cpathObj)
-		if err != nil {
-			pathErr = errs.NewExitError("Failed to list secrets.")
-		}
+		pathsErr = errs.NewUsageExitError("Unknown path supplied", ctx)
+	}
+	if pathsErr != nil {
+		return err
 	}
 
-	// Print the path and object type of the output
-	fmt.Println(showing)
-
-	// Must replace Envs with * when only 3 segments supplied
-	if count == 3 && cpathObj.Envs() != "*" {
-		fmt.Println("Note: environment exchanged for *")
-		fmt.Println("")
-	} else {
-		fmt.Println("")
+	// Final output of paths
+	if format == "verbose" {
+		fmt.Println(strings.ToUpper(target) + "\n")
 	}
-
-	if pathErr != nil {
-		return pathErr
-	}
-	for _, path := range paths {
-		fmt.Println(path)
+	sort.Strings(paths)
+	for _, p := range paths {
+		fmt.Println(p)
 	}
 
 	return nil
 }
 
-// generate all paths for /
-func orgPaths() ([]string, error) {
-	var paths []string
-
-	orgs, _, err := orgsList()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, org := range orgs {
-		paths = append(paths, "/"+org.Body.Name)
-	}
-
-	return paths, nil
-}
-
-// generate all paths for /${org}
-func projectPaths(cpathObj *pathexp.PathExp) ([]string, error) {
-	var paths []string
-
-	orgs, _, err := orgsList()
-	if err != nil {
-		return nil, err
-	}
-
-	orgIDs, _, orgMapID, err := filterOrgs(orgs, cpathObj)
-	if err != nil {
-		return nil, err
-	}
-
-	projects, err := listProjectsByOrgID(nil, nil, orgIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, project := range projects {
-		pOrgName := orgMapID[*project.Body.OrgID]
-		paths = append(paths, fmt.Sprintf("/%s/%s", pOrgName, project.Body.Name))
-	}
-
-	return paths, nil
-}
-
-// generate all paths for /${org}/${project}
-func envPaths(cpathObj *pathexp.PathExp) ([]string, error) {
-	var paths []string
-	c, client, err := NewAPIClient(nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	orgs, _, err := orgsList()
-	if err != nil {
-		return nil, err
-	}
-
-	orgIDs, _, orgMapID, err := filterOrgs(orgs, cpathObj)
-	if err != nil {
-		return nil, err
-	}
-
-	projects, err := listProjectsByOrgID(&c, client, orgIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	projectIDs, projMapID, err := filterProjects(projects, cpathObj)
-	if err != nil {
-		return nil, err
-	}
-
-	envs, err := listEnvsByProjectID(&c, client, projectIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, env := range envs {
-		eOrgName := orgMapID[*env.Body.OrgID]
-		eProjName := projMapID[*env.Body.ProjectID]
-		paths = append(paths, fmt.Sprintf("/%s/%s/%s", eOrgName, eProjName, env.Body.Name))
-	}
-
-	return paths, nil
-}
-
-// generate all paths for /${org}/${project}/*
-func servicePaths(cpathObj *pathexp.PathExp) ([]string, error) {
-	var paths []string
-	c, client, err := NewAPIClient(nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	orgs, _, err := orgsList()
-	if err != nil {
-		return nil, err
-	}
-
-	orgIDs, _, orgMapID, err := filterOrgs(orgs, cpathObj)
-	if err != nil {
-		return nil, err
-	}
-
-	projects, err := listProjectsByOrgID(&c, client, orgIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	projectIDs, projMapID, err := filterProjects(projects, cpathObj)
-	if err != nil {
-		return nil, err
-	}
-
-	services, err := listServicesByProjectID(&c, client, projectIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, service := range services {
-		sOrgName := orgMapID[*service.Body.OrgID]
-		sProjName := projMapID[*service.Body.ProjectID]
-		paths = append(paths, fmt.Sprintf("/%s/%s/*/%s", sOrgName, sProjName, service.Body.Name))
-	}
-
-	return paths, nil
-}
-
-func secretPaths(cpathObj *pathexp.PathExp) ([]string, error) {
-	var paths []string
-	c, client, err := NewAPIClient(nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	creds, err := client.Credentials.Search(c, cpathObj.String())
-	if err != nil {
-		return nil, err
-	}
-
-	cset := credentialSet{}
-	for _, c := range creds {
-		cset.Add(c)
-	}
-
-	for _, cred := range cset {
-		body := *cred.Body
-		paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), body.GetName()))
-	}
-	sort.Strings(paths)
-
-	return paths, nil
-}
-
-func filterProjects(projects []api.ProjectResult, pe *pathexp.PathExp) ([]*identity.ID, map[identity.ID]string, error) {
-	projMapID := make(map[identity.ID]string, len(projects))
-	var projectIDs []*identity.ID
-	for _, project := range projects {
-		projMapID[*project.ID] = project.Body.Name
-		if pe.Project() == "*" {
-			projectIDs = append(projectIDs, project.ID)
-		} else if project.Body.Name == pe.Project() {
-			projectIDs = append(projectIDs, project.ID)
+// return a map of the projects which match the supplied pathexp
+func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[string]*api.ProjectResult {
+	projectMap := make(map[string]*api.ProjectResult)
+	for _, p := range tree.Projects {
+		if pexp.Project.Contains(p.Body.Name) {
+			projectMap[p.ID.String()] = p
 		}
 	}
-	if len(projectIDs) < 1 {
-		return nil, nil, errs.NewExitError("Project not found.")
-	}
-	return projectIDs, projMapID, nil
+	return projectMap
 }
 
-func filterOrgs(orgs []api.OrgResult, pe *pathexp.PathExp) ([]*identity.ID, map[string]identity.ID, map[identity.ID]string, error) {
-	orgMapName := make(map[string]identity.ID, len(orgs))
-	orgMapID := make(map[identity.ID]string, len(orgs))
+// identify whether we want to list children or matching resources
+func identifyTarget(args []string, recursive bool) (string, string) {
+	defined := 0
+	path := "/"
+	if len(args) < 1 {
+		if recursive {
+			return path, "secrets"
+		}
+		return path, "orgs"
+	}
 
-	var orgIDs []*identity.ID
-	for _, org := range orgs {
-		orgMapName[org.Body.Name] = *org.ID
-		orgMapID[*org.ID] = org.Body.Name
-		if pe.Org() == "*" || org.Body.Name == pe.Org() {
-			orgIDs = append(orgIDs, org.ID)
+	var hasDoubleGlob bool
+	var showChildren bool
+	path = args[0]
+	if path != "/" {
+		// If path ends with slash, we're looking inside
+		if path[len(path)-1:] == "/" {
+			showChildren = true
+			path = path[:len(path)-1]
+		}
+		segments := strings.Split(path, "/")
+		defined = len(segments) - 1
+		if !showChildren {
+			defined--
+		}
+		for _, s := range segments {
+			if s == "**" {
+				hasDoubleGlob = true
+			}
 		}
 	}
-	if len(orgIDs) < 1 {
-		return nil, nil, nil, errs.NewExitError("Org not found.")
+
+	target := ""
+	if len(targetMap) > defined {
+		target = targetMap[defined]
+	}
+	if recursive || hasDoubleGlob {
+		return path, "secrets"
+	}
+	return path, target
+}
+
+// retrieve the projecttree for non-recursive operations
+func projectTreeForOrg(c context.Context, client *api.Client, cpathExp *pathexp.PathExp) (*api.ProjectTreeSegment, error) {
+	org, err := client.Orgs.GetByName(c, cpathExp.Org.String())
+	if err != nil {
+		return nil, err
 	}
 
-	return orgIDs, orgMapName, orgMapID, nil
+	projectTree, err := client.Projects.GetTree(c, org.ID)
+	if err != nil {
+		return nil, errs.NewErrorExitError("Could not retrieve project information", err)
+	}
+	if len(projectTree) > 0 {
+		return &projectTree[0], nil
+	}
+
+	return nil, errs.NewExitError("Could not retrieve project information")
 }

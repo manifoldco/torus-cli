@@ -61,12 +61,50 @@ torus run -o example -- node ./bin/www --app api
 
 `torus ls [path]` allows a user to explore the objects and values set within their organization.
 
-Each level within the organization can be inspected by changing the segments supplied in the path. Wildcards cannot be used for the organization segment of the [path](../concepts/path.md).
+Each level within the organization can be inspected by changing the segments supplied in the path. Wildcards cannot be used for the organization or project segments of the [path](../concepts/path.md).
 
-Segments | Result | Example
----- | ---- | ----
-0 | All organizations| `torus ls /`
-1 | All projects within an org | `torus ls /org`
-2 | All environments (for the defined project) within an org | `torus ls /org/*`
-3 | All services (for the defined project) within an org | `torus ls /org/*/*`
-4 | All secrets within the defined path (org and path required) | `torus ls /org/project/*/*`
+### Command Options
+
+  Option | Description
+  ---- | ----
+  --recursive, -r | Show secrets for the expanded version of the supplied path
+  --verbose, -v | Show which type of path is being displayed, shortcut for --format=verbose
+  --format FORMAT, -f FORMAT | Format used to display data (simple, verbose) (default: simple)
+
+### Examples
+
+List all secrets in a project:
+```
+$ torus ls /my-org/landing-page/**
+/my-org/landing-page/dev-*/[api|www]/*/*/port
+/my-org/landing-page/[dev-jeff|dev-sally]/api/*/*/token
+```
+
+List orgs you are a member of:
+```
+$ torus ls / -v
+ORGS
+/my-org
+/another-org
+```
+
+List all projects within an org:
+```
+$ torus ls /my-org/
+/my-org/landing-page
+/my-org/other-project
+```
+
+List all environments which match the path:
+```
+$ torus ls /my-org/landing-page/dev*
+/my-org/landing-page/dev-jeff
+/my-org/landing-page/dev-sally
+```
+
+Expanding the path to view secrets using recursive:
+```
+$ torus ls /my-org/landing-page/dev-jeff -r
+/my-org/landing-page/dev-*/[api|www]/*/*/port
+/my-org/landing-page/[dev-jeff|dev-sally]/www/*/*/token
+```

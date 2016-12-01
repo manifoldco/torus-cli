@@ -3,6 +3,9 @@ Package pathexp provides a representation of path expressions; locations of
 secrets within the org/project/environment/service/identity/instance hierarchy
 supporting globs and alternation.
 
+Paths being parsed support <double-glob> but will be converted to <full-glob>
+in the resulting pathexp
+
 Grammar:
 
 	<pathexp>     ::= "/" <org> "/" <project> "/" <environment> "/" <service> "/" <identity> "/" <instance>
@@ -28,8 +31,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-
-	"github.com/manifoldco/torus-cli/errs"
 )
 
 const slugstr = `[a-z\d][-_a-z\d]{0,63}`
@@ -38,6 +39,7 @@ var (
 	slug           = regexp.MustCompile(`^` + slugstr + `$`)
 	globRe         = regexp.MustCompile(`^(` + slugstr + `)(\*?)$`)
 	fullglobOrGlob = regexp.MustCompile(`(^\*$)|(?:^(` + slugstr + `)(\*?)$)`)
+	doubleGlob     = regexp.MustCompile(`^\*\*$`)
 )
 
 const (
@@ -51,16 +53,17 @@ const (
 
 // PathExp is a path expression
 type PathExp struct {
-	org        literal
-	project    literal
-	envs       segment
-	services   segment
-	identities segment
-	instances  segment
+	Org        literal
+	Project    literal
+	Envs       segment
+	Services   segment
+	Identities segment
+	Instances  segment
 }
 
 type segment interface {
 	String() string
+	Contains(subject string) bool
 }
 
 type literal string
@@ -68,9 +71,21 @@ type glob string
 type fullglob struct{}
 type alternation []segment
 
-func (l literal) String() string  { return string(l) }
-func (g glob) String() string     { return string(g) + "*" }
+func (l literal) String() string { return string(l) }
+func (l literal) Contains(subject string) bool {
+	return string(l) == subject
+}
+
+func (g glob) String() string { return string(g) + "*" }
+func (g glob) Contains(subject string) bool {
+	return strings.Index(subject, string(g)) == 0
+}
+
 func (f fullglob) String() string { return "*" }
+func (f fullglob) Contains(subject string) bool {
+	return true
+}
+
 func (a alternation) String() string {
 	strs := []string{}
 	for _, s := range a {
@@ -83,6 +98,14 @@ func (a alternation) String() string {
 	sort.Strings(strs)
 
 	return "[" + strings.Join(strs, "|") + "]"
+}
+func (a alternation) Contains(subject string) bool {
+	for _, s := range a {
+		if s.Contains(subject) {
+			return true
+		}
+	}
+	return false
 }
 
 // compareSegmentType ranks the segments by their type specificity
@@ -154,123 +177,71 @@ func segmentsEqual(a, b segment) bool {
 	}
 }
 
-// NewPartial creates a new path expression from the given path segments
-// It returns an error if any of the values fail to validate
-func NewPartial(org, project string, envs, services, identities, instances []string) (*PathExp, *int, error) {
-	orgValue := org
-	if org == "" {
-		orgValue = "*"
-	}
-	projValue := project
-	if project == "" {
-		projValue = "*"
-	}
-
-	pe := PathExp{
-		org:     literal(orgValue),
-		project: literal(projValue),
-	}
-	segmentCount := 0
-
-	if org != "" && org != "*" && !slug.MatchString(org) {
-		return nil, nil, errors.New("Invalid org")
-	} else if org != "" {
-		segmentCount++
-	}
-
-	if project != "" && project != "*" && !slug.MatchString(project) {
-		return nil, nil, errors.New("Invalid project: " + project)
-	} else if project != "" {
-		segmentCount++
-	}
-
-	var err error
-
-	pe.envs, err = parseMultiple("environment", envs)
-	if err != nil {
-		if !strings.Contains(err.Error(), "Empty") {
-			return nil, nil, err
-		}
-		pe.envs = fullglob{}
-	} else if pe.envs.String() != "" {
-		segmentCount++
-	}
-
-	pe.services, err = parseMultiple("service", services)
-	if err != nil {
-		if !strings.Contains(err.Error(), "Empty") {
-			return nil, nil, err
-		}
-		pe.services = fullglob{}
-	} else if pe.services.String() != "" {
-		segmentCount++
-	}
-	var originalEnv segment
-	if pe.services.String() != "*" && pe.envs.String() != "*" {
-		originalEnv = pe.envs
-		pe.envs = fullglob{}
-	}
-
-	pe.identities, err = parseMultiple("identity", identities)
-	if err != nil {
-		if !strings.Contains(err.Error(), "Empty") {
-			return nil, nil, err
-		}
-		pe.identities = fullglob{}
-	} else if pe.identities.String() != "" {
-		segmentCount++
-	}
-
-	pe.instances, err = parseMultiple("instance", instances)
-	if err != nil {
-		if !strings.Contains(err.Error(), "Empty") {
-			return nil, nil, err
-		}
-		pe.instances = fullglob{}
-	} else if pe.instances.String() != "" {
-		segmentCount++
-	}
-	if segmentCount > 3 && originalEnv != nil {
-		pe.envs = originalEnv
-	}
-
-	return &pe, &segmentCount, nil
-}
-
 // New creates a new path expression from the given path segments
 // It returns an error if any of the values fail to validate
+// and it must contain all relevant parts
 func New(org, project string, envs, services, identities, instances []string) (*PathExp, error) {
-	pe := PathExp{
-		org:     literal(org),
-		project: literal(project),
+	return newPathexp(org, project, envs, services, identities, instances, true)
+}
+
+// NewPartial creates a new path expression from the given path segments
+// It returns an error if any of the values fail to validate
+// but does not require any segments
+func NewPartial(org, project string, envs, services, identities, instances []string) (*PathExp, error) {
+	return newPathexp(org, project, envs, services, identities, instances, false)
+}
+
+func newPathexp(org, project string, envs, services, identities, instances []string, mustBeComplete bool) (*PathExp, error) {
+	if org == "" {
+		org = "*"
+	}
+	if project == "" {
+		project = "*"
 	}
 
-	if !slug.MatchString(org) {
+	pe := PathExp{
+		Org:     literal(org),
+		Project: literal(project),
+	}
+
+	if !slug.MatchString(org) && mustBeComplete {
 		return nil, errors.New("invalid org name")
 	}
 
-	if !slug.MatchString(project) {
+	if !slug.MatchString(project) && mustBeComplete {
 		return nil, errors.New("invalid project name")
 	}
 
 	var err error
 
-	pe.envs, err = parseMultiple("environment", envs)
+	if !mustBeComplete && len(envs) < 1 {
+		return &pe, nil
+	}
+	pe.Envs, err = parseMultiple("environment", envs, mustBeComplete)
 	if err != nil {
 		return nil, err
 	}
 
-	pe.services, err = parseMultiple("service", services)
+	if !mustBeComplete && len(services) < 1 {
+		return &pe, nil
+	}
+	pe.Services, err = parseMultiple("service", services, mustBeComplete)
 	if err != nil {
 		return nil, err
 	}
 
-	pe.identities, err = parseMultiple("identity", identities)
+	if !mustBeComplete && len(identities) < 1 {
+		return &pe, nil
+	}
+	pe.Identities, err = parseMultiple("identity", identities, mustBeComplete)
 	if err != nil {
 		return nil, err
 	}
 
-	pe.instances, err = parseMultiple("instance", instances)
+	if !mustBeComplete && len(instances) < 1 {
+		return &pe, nil
+	}
+	pe.Instances, err = parseMultiple("instance", instances, mustBeComplete)
 	if err != nil {
 		return nil, err
 	}
@@ -281,34 +252,114 @@ func New(org, project string, envs, services, identities, instances []string) (*
 // Parse parses a string into a path expression. It returns an error if the
 // string is not a valid path expression.
 func Parse(raw string) (*PathExp, error) {
-	parts := strings.Split(raw, "/")
+	return parseStr(raw, true)
+}
 
-	if len(parts) != 7 {
-		return nil, errors.New("wrong number of path segments")
+// ParsePartial parses a string into a path expression. It returns an error if the
+// string is not a valid path expression, but allows missing segments
+func ParsePartial(raw string) (*PathExp, error) {
+	return parseStr(raw, false)
+}
+
+func parseStr(raw string, mustBeComplete bool) (*PathExp, error) {
+	if len(raw) < 1 {
+		return nil, errors.New("missing path segments")
 	}
 
+	parts := strings.Split(raw, "/")
+
+	if mustBeComplete && len(parts) > 7 {
+		return nil, errors.New("too many path segments")
+	}
 	if parts[0] != "" {
 		return nil, errors.New("path expressions must start with '/'")
 	}
+
 	// remove leading empty section
 	parts = parts[1:]
 
+	// Identify if path contains doubleglob
+	doubleGlobIndex, hasDoubleGlob, err := doubleGlobIndex(parts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Replace parts with applicable wildcards if doubleglob exists
+	segments := parts
+	if hasDoubleGlob {
+		segments = replaceGlobSegments(doubleGlobIndex, segments)
+	}
+
 	splitParts := make([][]string, 6)
 	splitNames := []string{"", "", "environment", "service", "identity", "instance"}
-	var err error
 	for i := 2; i < len(splitParts); i++ {
-		splitParts[i], err = Split(splitNames[i], parts[i])
+		segment := ""
+		if len(segments) > i {
+			segment = segments[i]
+		}
+		splitParts[i], err = Split(splitNames[i], segment)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return New(parts[orgIdx], parts[projectIdx],
+	org := ""
+	if len(segments) > orgIdx {
+		org = segments[orgIdx]
+	}
+
+	project := ""
+	if len(segments) > projectIdx {
+		project = segments[projectIdx]
+	}
+
+	if mustBeComplete {
+		return New(
+			org,
+			project,
+			splitParts[envIdx],
+			splitParts[serviceIdx],
+			splitParts[identityIdx],
+			splitParts[instanceIdx],
+		)
+	}
+
+	return NewPartial(
+		org,
+		project,
 		splitParts[envIdx],
 		splitParts[serviceIdx],
 		splitParts[identityIdx],
 		splitParts[instanceIdx],
 	)
+}
+
+func doubleGlobIndex(parts []string) (int, bool, error) {
+	var hasDoubleGlob bool
+	var doubleGlobIndex int
+	for i := range parts {
+		if len(parts) > i && doubleGlob.MatchString(parts[i]) {
+			if hasDoubleGlob {
+				return doubleGlobIndex, hasDoubleGlob, errors.New("cannot use more than one **")
+			}
+			hasDoubleGlob = true
+			doubleGlobIndex = i
+		}
+	}
+	return doubleGlobIndex, hasDoubleGlob, nil
+}
+
+func replaceGlobSegments(doubleGlobIndex int, parts []string) []string {
+	segments := []string{"", "", "*", "*", "*", "*"}
+	leading := parts[:doubleGlobIndex]
+	copy(segments, leading)
+	trailing := parts[doubleGlobIndex+1:]
+	for i, part := range trailing {
+		idx := len(segments) - len(trailing) + i
+		segments[idx] = part
+	}
+
+	return segments
 }
 
 // WithInstance clones a PathExp, replacing its instance with the parsed value
@@ -321,58 +372,28 @@ func (pe *PathExp) WithInstance(instance string) (*PathExp, error) {
 		return nil, err
 	}
 
-	segment, err := parseMultiple("instance", parts)
+	segment, err := parseMultiple("instance", parts, true)
 	if err != nil {
 		return nil, err
 	}
 
 	return &PathExp{
-		org:        pe.org,
-		project:    pe.project,
-		envs:       pe.envs,
-		services:   pe.services,
-		identities: pe.identities,
-		instances:  segment,
+		Org:        pe.Org,
+		Project:    pe.Project,
+		Envs:       pe.Envs,
+		Services:   pe.Services,
+		Identities: pe.Identities,
+		Instances:  segment,
 	}, nil
-}
-
-// Org returns the org set for this pathexp
-func (pe *PathExp) Org() string {
-	return string(pe.org)
-}
-
-// Project returns the project set for this pathexp
-func (pe *PathExp) Project() string {
-	return string(pe.project)
-}
-
-// Envs returns the envs set for this pathexp
-func (pe *PathExp) Envs() string {
-	return pe.envs.String()
-}
-
-// Services returns the services set for this pathexp
-func (pe *PathExp) Services() string {
-	return pe.services.String()
-}
-
-// Identities returns the identities set for this pathexp
-func (pe *PathExp) Identities() string {
-	return pe.identities.String()
-}
-
-// Instances returns the instances set for this pathexp
-func (pe *PathExp) Instances() string {
-	return pe.instances.String()
 }
 
 // String returns the unparsed string representation of the path expression
 func (pe *PathExp) String() string {
-	return strings.Join([]string{"", string(pe.org), string(pe.project),
-		pe.envs.String(),
-		pe.services.String(),
-		pe.identities.String(),
-		pe.instances.String(),
+	return strings.Join([]string{"", string(pe.Org), string(pe.Project),
+		pe.Envs.String(),
+		pe.Services.String(),
+		pe.Identities.String(),
+		pe.Instances.String(),
 	}, "/")
 }
 
@@ -395,14 +416,17 @@ func Split(name, segment string) ([]string, error) {
 	return parts, nil
 }
 
-func parseMultiple(name string, parts []string) (segment, error) {
+func parseMultiple(name string, parts []string, mustBeComplete bool) (segment, error) {
 	switch len(parts) {
 	case 0:
 		return nil, errors.New("Empty segment alternation for " + name + ".")
 	case 1:
 		matches := fullglobOrGlob.FindAllStringSubmatch(parts[0], -1)
 		if len(matches) != 1 {
-			return nil, errors.New("Invalid " + name + ".")
+			if mustBeComplete {
+				return nil, errors.New("Invalid " + name + ".")
+			}
+			return fullglob{}, nil
 		}
 
 		match := matches[0]
@@ -439,17 +463,17 @@ func parseMultiple(name string, parts []string) (segment, error) {
 func (pe *PathExp) Equal(other *PathExp) bool {
 
 	switch {
-	case pe.org != other.org:
+	case pe.Org != other.Org:
 		return false
-	case pe.project != other.project:
+	case pe.Project != other.Project:
 		return false
-	case !segmentsEqual(pe.envs, other.envs):
+	case !segmentsEqual(pe.Envs, other.Envs):
 		return false
-	case !segmentsEqual(pe.services, other.services):
+	case !segmentsEqual(pe.Services, other.Services):
 		return false
-	case !segmentsEqual(pe.identities, other.identities):
+	case !segmentsEqual(pe.Identities, other.Identities):
 		return false
-	case !segmentsEqual(pe.instances, other.instances):
+	case !segmentsEqual(pe.Instances, other.Instances):
 		return false
 	default:
 		return true
@@ -470,19 +494,19 @@ func (pe *PathExp) Equal(other *PathExp) bool {
 //
 // It is assumed that the provided PathExps are not disjoint.
 func (pe *PathExp) CompareSpecificity(other *PathExp) int {
-	if cmp := compareSegmentType(pe.envs, other.envs); cmp != 0 {
+	if cmp := compareSegmentType(pe.Envs, other.Envs); cmp != 0 {
 		return cmp
 	}
 
-	if cmp := compareSegmentType(pe.services, other.services); cmp != 0 {
+	if cmp := compareSegmentType(pe.Services, other.Services); cmp != 0 {
 		return cmp
 	}
 
-	if cmp := compareSegmentType(pe.identities, other.identities); cmp != 0 {
+	if cmp := compareSegmentType(pe.Identities, other.Identities); cmp != 0 {
 		return cmp
 	}
 
-	return compareSegmentType(pe.instances, other.instances)
+	return compareSegmentType(pe.Instances, other.Instances)
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
@@ -493,12 +517,12 @@ func (pe *PathExp) UnmarshalText(b []byte) error {
 		return err
 	}
 
-	pe.org = o.org
-	pe.project = o.project
-	pe.envs = o.envs
-	pe.services = o.services
-	pe.instances = o.instances
-	pe.identities = o.identities
+	pe.Org = o.Org
+	pe.Project = o.Project
+	pe.Envs = o.Envs
+	pe.Services = o.Services
+	pe.Instances = o.Instances
+	pe.Identities = o.Identities
 
 	return nil
 }
@@ -507,38 +531,6 @@ func (pe *PathExp) UnmarshalText(b []byte) error {
 // This will be used in json encoding.
 func (pe *PathExp) MarshalText() ([]byte, error) {
 	return []byte(pe.String()), nil
-}
-
-// NewPartialFromPath creates a PathExp object from a cpath string that may be
-// an incomplete path, resulting in added asterisks
-func NewPartialFromPath(value string) (*PathExp, *int, error) {
-	segments := strings.Split(value, "/")
-	segments = segments[1:]
-	if segments[len(segments)-1] == "" {
-		segments = segments[:len(segments)-1]
-	}
-
-	org := stringAtIndex(segments, 0)
-	project := stringAtIndex(segments, 1)
-
-	envs, err := splitSliceAtIndex("environment", segments, 2)
-	if err != nil {
-		return nil, nil, errs.NewExitError(err.Error())
-	}
-	services, err := splitSliceAtIndex("service", segments, 3)
-	if err != nil {
-		return nil, nil, errs.NewExitError(err.Error())
-	}
-	users, err := splitSliceAtIndex("user", segments, 4)
-	if err != nil {
-		return nil, nil, errs.NewExitError(err.Error())
-	}
-	instances, err := splitSliceAtIndex("instance", segments, 5)
-	if err != nil {
-		return nil, nil, errs.NewExitError(err.Error())
-	}
-
-	return NewPartial(org, project, envs, services, users, instances)
 }
 
 // return string at index, or empty (prevent out of range)

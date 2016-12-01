@@ -90,9 +90,12 @@ func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp,
 	if idx != -1 {
 		var err error
 		path := nameOrPath[:idx]
-		pe, err = pathexp.Parse(path)
+		pe, err = pathexp.ParsePartial(path)
 		if err != nil {
 			return nil, nil, errs.NewExitError(err.Error())
+		}
+		if name == "*" {
+			return nil, nil, errs.NewExitError("Secret name cannot be wildcard")
 		}
 	} else {
 		// Falling back to flags. do the expensive population of the user flag now,
@@ -107,9 +110,13 @@ func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp,
 			return nil, nil, err
 		}
 
-		pe, err = pathexp.New(ctx.String("org"), ctx.String("project"),
-			ctx.StringSlice("environment"), ctx.StringSlice("service"),
-			identity, ctx.StringSlice("instance"),
+		pe, err = pathexp.New(
+			ctx.String("org"),
+			ctx.String("project"),
+			ctx.StringSlice("environment"),
+			ctx.StringSlice("service"),
+			identity,
+			ctx.StringSlice("instance"),
 		)
 		if err != nil {
 			return nil, nil, err
@@ -137,12 +144,12 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 		name = *credName
 	}
 
-	org, err := client.Orgs.GetByName(c, pe.Org())
+	org, err := client.Orgs.GetByName(c, pe.Org.String())
 	if org == nil || err != nil {
 		return nil, errs.NewExitError("Org not found")
 	}
 
-	pName := pe.Project()
+	pName := pe.Project.String()
 	projects, err := listProjects(&c, client, org.ID, &pName)
 	if len(projects) != 1 || err != nil {
 		return nil, errs.NewExitError("Project not found")
