@@ -6,8 +6,13 @@ _Unreleased_
 
 **Notable Changes**
 
-- Add preferences for `core.disable_progress` and `core.disable_hints` to control levels of output
-  in preparation for additional onboarding output.
+- Add preferences for `core.disable_progress` and `core.disable_hints` to
+  control levels of output in preparation for additional onboarding output.
+
+**Fixes**
+
+- Ensure that `torus version` will always return, even if the upstream server
+  is misconfigured.
 
 ## v0.18.0
 
