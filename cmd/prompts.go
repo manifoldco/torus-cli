@@ -41,12 +41,17 @@ func validateInviteCode(input string) error {
 
 // AskPerform prompts the user if they want to do a specified action
 func AskPerform(label string) error {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return err
+	}
 	prompt := promptui.Prompt{
 		Label:     label,
 		IsConfirm: true,
 		Preamble:  nil,
+		IsVimMode: preferences.Defaults.Vim,
 	}
-	_, err := prompt.Run()
+	_, err = prompt.Run()
 	return err
 }
 
@@ -74,6 +79,7 @@ func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, a
 		Label:     label,
 		IsConfirm: true,
 		Preamble:  &warning,
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	_, err = prompt.Run()
@@ -83,6 +89,10 @@ func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, a
 // NamePrompt prompts the user to input a person's name
 func NamePrompt(override *string, defaultValue string, autoAccept bool) (string, error) {
 	var prompt promptui.Prompt
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return "", err
+	}
 
 	label := "Name"
 	if override != nil {
@@ -100,15 +110,20 @@ func NamePrompt(override *string, defaultValue string, autoAccept bool) (string,
 	}
 
 	prompt = promptui.Prompt{
-		Label:    label,
-		Default:  defaultValue,
-		Validate: validateSlug(strings.ToLower(label)),
+		Label:     label,
+		Default:   defaultValue,
+		Validate:  validateSlug(strings.ToLower(label)),
+		IsVimMode: preferences.Defaults.Vim,
 	}
 	return prompt.Run()
 }
 
 // VerificationPrompt prompts the user to input an email verify code
 func VerificationPrompt() (string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return "", err
+	}
 	prompt := promptui.Prompt{
 		Label: "Verification code",
 		Validate: func(input string) error {
@@ -118,6 +133,7 @@ func VerificationPrompt() (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid code")
 		},
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	return prompt.Run()
@@ -125,6 +141,11 @@ func VerificationPrompt() (string, error) {
 
 // SelectProjectPrompt prompts the user to select an org from a list, or enter a new name
 func SelectProjectPrompt(projects []api.ProjectResult) (int, string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return 0, "", err
+	}
+
 	names := make([]string, len(projects))
 	for i, p := range projects {
 		names[i] = p.Body.Name
@@ -132,10 +153,11 @@ func SelectProjectPrompt(projects []api.ProjectResult) (int, string, error) {
 
 	// Get the user's org selection
 	prompt := promptui.SelectWithAdd{
-		Label:    "Select project",
-		Items:    names,
-		AddLabel: "Create a new project",
-		Validate: validateSlug("project"),
+		Label:     "Select project",
+		Items:     names,
+		AddLabel:  "Create a new project",
+		Validate:  validateSlug("project"),
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	return prompt.Run()
@@ -143,6 +165,11 @@ func SelectProjectPrompt(projects []api.ProjectResult) (int, string, error) {
 
 // SelectOrgPrompt prompts the user to select an org from a list, or enter a new name
 func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return 0, "", err
+	}
+
 	names := make([]string, len(orgs))
 	for i, o := range orgs {
 		names[i] = o.Body.Name
@@ -150,10 +177,11 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 
 	// Get the user's org selection
 	prompt := promptui.SelectWithAdd{
-		Label:    "Select organization",
-		Items:    names,
-		AddLabel: "Create a new organization",
-		Validate: validateSlug("org"),
+		Label:     "Select organization",
+		Items:     names,
+		AddLabel:  "Create a new organization",
+		Validate:  validateSlug("org"),
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	return prompt.Run()
@@ -162,6 +190,11 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 // SelectTeamPrompt prompts the user to select a team from a list or enter a
 // new name, an optional label can be provided.
 func SelectTeamPrompt(teams []api.TeamResult, label, addLabel string) (int, string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return 0, "", err
+	}
+
 	names := make([]string, len(teams))
 	for i, t := range teams {
 		names[i] = t.Body.Name
@@ -176,10 +209,11 @@ func SelectTeamPrompt(teams []api.TeamResult, label, addLabel string) (int, stri
 	}
 
 	prompt := promptui.SelectWithAdd{
-		Label:    label,
-		Items:    names,
-		AddLabel: addLabel,
-		Validate: validateSlug("team"),
+		Label:     label,
+		Items:     names,
+		AddLabel:  addLabel,
+		Validate:  validateSlug("team"),
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	return prompt.Run()
@@ -340,6 +374,11 @@ const PasswordMask = '●'
 
 // PasswordPrompt prompts the user to input a password value
 func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return "", err
+	}
+
 	label := "Password"
 	if labelOverride != nil {
 		label = *labelOverride
@@ -359,6 +398,7 @@ func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
 
 			return promptui.NewValidationError("Please enter your password")
 		},
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	password, err := prompt.Run()
@@ -382,6 +422,7 @@ func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
 
 			return promptui.NewValidationError("Please confirm your password")
 		},
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	_, err = prompt.Run()
@@ -394,6 +435,11 @@ func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
 
 // EmailPrompt prompts the user to input an email
 func EmailPrompt(defaultValue string) (string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return "", err
+	}
+
 	prompt := promptui.Prompt{
 		Label: "Email",
 		Validate: func(input string) error {
@@ -402,6 +448,7 @@ func EmailPrompt(defaultValue string) (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid email address")
 		},
+		IsVimMode: preferences.Defaults.Vim,
 	}
 	if defaultValue != "" {
 		prompt.Default = defaultValue
@@ -412,6 +459,11 @@ func EmailPrompt(defaultValue string) (string, error) {
 
 // UsernamePrompt prompts the user to input a person's name
 func UsernamePrompt(un string) (string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return "", err
+	}
+
 	prompt := promptui.Prompt{
 		Label: "Username",
 		Validate: func(input string) error {
@@ -420,6 +472,7 @@ func UsernamePrompt(un string) (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid username")
 		},
+		IsVimMode: preferences.Defaults.Vim,
 	}
 	if un != "" {
 		prompt.Default = un
@@ -430,6 +483,11 @@ func UsernamePrompt(un string) (string, error) {
 
 // FullNamePrompt prompts the user to input a person's name
 func FullNamePrompt(name string) (string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return "", err
+	}
+
 	prompt := promptui.Prompt{
 		Label: "Name",
 		Validate: func(input string) error {
@@ -438,6 +496,7 @@ func FullNamePrompt(name string) (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid name")
 		},
+		IsVimMode: preferences.Defaults.Vim,
 	}
 	if name != "" {
 		prompt.Default = name
@@ -448,10 +507,16 @@ func FullNamePrompt(name string) (string, error) {
 
 // InviteCodePrompt prompts the user to input an invite code
 func InviteCodePrompt(defaultValue string) (string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return "", err
+	}
+
 	prompt := promptui.Prompt{
-		Label:    "Invite Code",
-		Default:  defaultValue,
-		Validate: validateInviteCode,
+		Label:     "Invite Code",
+		Default:   defaultValue,
+		Validate:  validateInviteCode,
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	return prompt.Run()
@@ -459,15 +524,20 @@ func InviteCodePrompt(defaultValue string) (string, error) {
 
 // SelectAcceptAction prompts the user to select an org from a list, or enter a new name
 func SelectAcceptAction() (int, string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return 0, "", err
+	}
+
 	names := []string{
 		"Login",
 		"Signup",
 	}
 
-	// Get the user's org selection
 	prompt := promptui.Select{
-		Label: "Do you want to login or create an account?",
-		Items: names,
+		Label:     "Do you want to login or create an account?",
+		Items:     names,
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	return prompt.Run()
@@ -475,6 +545,11 @@ func SelectAcceptAction() (int, string, error) {
 
 // SelectProfileAction prompts the user to select an option from a list
 func SelectProfileAction() (int, string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return 0, "", err
+	}
+
 	names := []string{
 		"Name or email",
 		"Change password",
@@ -482,8 +557,9 @@ func SelectProfileAction() (int, string, error) {
 
 	// Get the user's org selection
 	prompt := promptui.Select{
-		Label: "What would you like to update?",
-		Items: names,
+		Label:     "What would you like to update?",
+		Items:     names,
+		IsVimMode: preferences.Defaults.Vim,
 	}
 
 	return prompt.Run()

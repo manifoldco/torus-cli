@@ -58,6 +58,7 @@ type Defaults struct {
 	Project      string `ini:"project,omitempty"`
 	Environment  string `ini:"environment,omitempty"`
 	Service      string `ini:"service,omitempty"`
+	Vim          bool   `ini:"vim,omitempty"`
 }
 
 // SetValue for ini key on preferences struct
