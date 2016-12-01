@@ -94,6 +94,9 @@ func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp,
 		if err != nil {
 			return nil, nil, errs.NewExitError(err.Error())
 		}
+		if name == "*" {
+			return nil, nil, errs.NewExitError("Secret name cannot be wildcard")
+		}
 	} else {
 		// Falling back to flags. do the expensive population of the user flag now,
 		// and see if any required flags (all of them) are missing.
