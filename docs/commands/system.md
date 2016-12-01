@@ -15,17 +15,18 @@ The following are the available preferences:
 `core.public_key_file` | Location of the ed25519 public key file.
 `core.context` | Boolean determining if the `.torus.json` and defaults should be considered during command execution
 `core.auto_confirm` | Boolean determining if confirmation prompts should be automatically skipped (equivalent of always using `-y` command option)
+`core.vim` | Boolean determining if CLI input should use Vim bindings
 `defaults.org` | Organization name to be used with context
 `defaults.project` | Project name to be used with context
 `defaults.environment` | Environment name to be used with context
-`defaults.service` | Service name to be used with context  
+`defaults.service` | Service name to be used with context
 
 ### set
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
 `torus prefs set <key> <value>` sets a preference value by key, where key is the dot-delimited path of the category and preference name.
 
-If value is omitted it defaults to boolean true.
+If value is omitted it defaults to boolean true, except for the Vim setting, which is false by default.
 
 ### list
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)

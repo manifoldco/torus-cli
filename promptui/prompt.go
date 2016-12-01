@@ -25,6 +25,7 @@ type Prompt struct {
 	Mask rune
 
 	IsConfirm bool
+	IsVimMode bool
 	Preamble  *string
 
 	stdin  io.Reader
@@ -50,6 +51,10 @@ func (p *Prompt) Run() (string, error) {
 	if p.Mask != 0 {
 		c.EnableMask = true
 		c.MaskRune = p.Mask
+	}
+
+	if p.IsVimMode {
+		c.VimMode = true
 	}
 
 	if p.Preamble != nil {
