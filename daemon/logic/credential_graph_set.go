@@ -12,6 +12,11 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/registry"
 )
 
+var (
+	errUnknownKeyringVersion    = errors.New("unknown keyring version")
+	errUnknownCredentialVersion = errors.New("unknown credential version")
+)
+
 // credentialGraphSet holds credential graphs and answers questions about their
 // liveliness/reachability.
 //
@@ -39,7 +44,7 @@ func (cgs *credentialGraphSet) Add(graphs ...registry.CredentialGraph) error {
 			pe = env.Body.(*primitive.Keyring).PathExp
 
 		default:
-			return errors.New("Unknown keyring version")
+			return errUnknownKeyringVersion
 		}
 
 		cgs.graphs[pe.String()] = append(cgs.graphs[pe.String()], c)
@@ -73,7 +78,7 @@ func (credentialGraphSet) activeCreds(parents []identity.ID,
 				maybeActive[*cred.ID] = cred
 			}
 		default:
-			return nil, parents, errors.New("Unknown credential version")
+			return nil, parents, errUnknownCredentialVersion
 		}
 
 		if parent != nil {
@@ -135,6 +140,46 @@ func (cgs *credentialGraphSet) Active() ([]registry.CredentialGraph, error) {
 	}
 
 	return active, nil
+}
+
+// Prune returns a slice of CredentialGraphs that contain credentials that
+// are still reachable. Each returned CredentialGraph contains *only* those
+// Credentials that are reachable, unlike Active, which returns all Credentials
+// within the CredentialGraph.
+func (cgs *credentialGraphSet) Prune() ([]registry.CredentialGraph, error) {
+	pruned := make([]registry.CredentialGraph, 0, len(cgs.graphs))
+
+	for _, graphs := range cgs.graphs {
+
+		// parents is the slice of IDs already seen in Previous fields.
+		// they cannot be active as they have been overwritten.
+		var parents []identity.ID
+
+		sort.Sort(graphSorter(graphs))
+		for _, graph := range graphs {
+			var activeCreds []envelope.Signed
+			var err error
+			activeCreds, parents, err = cgs.activeCreds(parents, graph)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(activeCreds) > 0 {
+				switch g := graph.(type) {
+				case *registry.CredentialGraphV1:
+					g.Credentials = activeCreds
+				case *registry.CredentialGraphV2:
+					g.Credentials = activeCreds
+				default:
+					return nil, errUnknownKeyringVersion
+				}
+
+				pruned = append(pruned, graph)
+			}
+		}
+	}
+
+	return pruned, nil
 }
 
 // NeedRotation returns a slice of Credentials that need to be rotated.

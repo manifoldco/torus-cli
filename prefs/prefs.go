@@ -144,9 +144,5 @@ func NewPreferences() (*Preferences, error) {
 
 	rcPath, _ := RcPath()
 	err = ini.MapTo(prefs, rcPath)
-	if err != nil {
-		return prefs, err
-	}
-
-	return prefs, nil
+	return prefs, err
 }
