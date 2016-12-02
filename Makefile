@@ -1,7 +1,7 @@
 OUT=torus
 PKG=github.com/manifoldco/torus-cli
 
-GO_REQUIRED_VERSION=1.7.1
+GO_REQUIRED_VERSION=1.7.4
 LINUX=\
 	linux-amd64
 TARGETS=\
