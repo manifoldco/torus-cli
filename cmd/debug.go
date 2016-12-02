@@ -65,11 +65,7 @@ func debugInfoCmd(ctx *cli.Context) error {
 	timestamp := time.Now()
 
 	// Cli and registry versions
-	daemonVersion, registryVersion, vErr := retrieveVersions(c, client)
-	if vErr != nil {
-		daemonVersion = &apitypes.Version{Version: "N/A"}
-		registryVersion = &apitypes.Version{Version: "N/A"}
-	}
+	daemonVersion, registryVersion := retrieveVersions(c, client)
 
 	// User information
 	session, uErr := client.Session.Who(c)

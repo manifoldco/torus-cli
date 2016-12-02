@@ -109,6 +109,12 @@ func TestCredentialGraphSetAdd(t *testing.T) {
 	}
 }
 
+func assertActive(t *testing.T, active []registry.CredentialGraph, want int) {
+	if len(active) != want {
+		t.Error("Wrong active count. wanted:", want, "got:", len(active))
+	}
+}
+
 func TestCredentialGraphSetActive(t *testing.T) {
 	t.Run("Many PathExps", func(t *testing.T) {
 		cgs := newCredentialGraphSet()
@@ -121,9 +127,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 2 {
-			t.Fail()
-		}
+		assertActive(t, active, 2)
 	})
 
 	t.Run("Multi version no shadow", func(t *testing.T) {
@@ -138,9 +142,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 3 {
-			t.Fail()
-		}
+		assertActive(t, active, 3)
 	})
 
 	t.Run("Multi version shadowed", func(t *testing.T) {
@@ -155,9 +157,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 1 {
-			t.Error("Wrong active count. wanted: 1 got:", len(active))
-		}
+		assertActive(t, active, 1)
 
 		v := active[0].KeyringVersion()
 		if v != 3 {
@@ -177,9 +177,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 2 {
-			t.Error("Wrong active count. wanted: 2 got:", len(active))
-		}
+		assertActive(t, active, 2)
 
 		if active[0].KeyringVersion() == 1 || active[1].KeyringVersion() == 1 {
 			t.Error("Keyring version 1 should not be active")
@@ -197,9 +195,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 2 {
-			t.Error("Wrong active count. wanted: 2 got:", len(active))
-		}
+		assertActive(t, active, 2)
 	})
 
 	t.Run("Multi version unset", func(t *testing.T) {
@@ -213,9 +209,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 1 {
-			t.Error("Wrong active count. wanted: 1 got:", len(active))
-		}
+		assertActive(t, active, 1)
 
 		v := active[0].KeyringVersion()
 		if v != 2 {
@@ -234,9 +228,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 1 {
-			t.Error("Wrong active count. wanted: 1 got:", len(active))
-		}
+		assertActive(t, active, 1)
 
 		v := active[0].KeyringVersion()
 		if v != 2 {
@@ -256,9 +248,7 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 1 {
-			t.Error("Wrong active count. wanted: 1 got:", len(active))
-		}
+		assertActive(t, active, 1)
 
 		v := active[0].KeyringVersion()
 		if v != 3 {
@@ -276,10 +266,224 @@ func TestCredentialGraphSetActive(t *testing.T) {
 			t.Fatal("error seen:", err)
 		}
 
-		if len(active) != 1 {
-			t.Error("Wrong active count. wanted: 1 got:", len(active))
+		assertActive(t, active, 1)
+	})
+}
+
+func TestCredentialGraphSetPrune(t *testing.T) {
+	t.Run("Many PathExps", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/i1", 1, cred{id: id1}))
+		cgs.Add(buildGraph("/o/p/e/s/u/i2", 1, cred{id: id2}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 2)
+
+		for _, g := range active {
+			if len(g.GetCredentials()) != 1 {
+				t.Fail()
+			}
 		}
 	})
+
+	t.Run("Multi version no shadow", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2, cred{id: id1}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3, cred{id: id2}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id3}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 3)
+
+		for _, g := range active {
+			if len(g.GetCredentials()) != 1 {
+				t.Fail()
+			}
+		}
+	})
+
+	t.Run("Multi version shadowed", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2, cred{id: id2, prev: id1}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3, cred{id: id3, prev: id2}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id1}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 1)
+
+		v := active[0].KeyringVersion()
+		if v != 3 {
+			t.Error("Wrong keyring version. wanted: 3 got:", v)
+		}
+
+		if len(active[0].GetCredentials()) != 1 {
+			t.Fail()
+		}
+	})
+
+	t.Run("Multi version skip shadowed", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2, cred{id: id2}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3, cred{id: id3, prev: id1}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id1}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 2)
+
+		if active[0].KeyringVersion() == 1 || active[1].KeyringVersion() == 1 {
+			t.Error("Keyring version 1 should not be active")
+		}
+
+		for _, g := range active {
+			if len(g.GetCredentials()) != 1 {
+				t.Fail()
+			}
+		}
+	})
+
+	t.Run("Multi version mixed shadowed", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2, cred{id: id3, prev: id1}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id1}, cred{id: id2}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 2)
+
+		for _, g := range active {
+			if len(g.GetCredentials()) != 1 {
+				t.Fail()
+			}
+		}
+	})
+
+	t.Run("Previous version in other keyring is pruned", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2, cred{id: id3, prev: id1}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id1}, cred{id: id2, state: &unset}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 1)
+
+		v := active[0].KeyringVersion()
+		if v != 2 {
+			t.Error("Wrong active keyring version. wanted: 2 got:", v)
+		}
+
+		if len(active[0].GetCredentials()) != 1 {
+			t.Fail()
+		}
+	})
+
+	t.Run("unset is not active", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2, cred{id: id3}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id1}, cred{id: id2, prev: id1, state: &unset}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 1)
+
+		v := active[0].KeyringVersion()
+		if v != 2 {
+			t.Error("Wrong active keyring version. wanted: 2 got:", v)
+		}
+
+		if len(active[0].GetCredentials()) != 1 {
+			t.Fail()
+		}
+	})
+
+	t.Run("unset shadows old versions", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 3, cred{id: id3}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 2, cred{id: id2, prev: id1, state: &unset}))
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id1}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 1)
+
+		v := active[0].KeyringVersion()
+		if v != 3 {
+			t.Error("Wrong active keyring version. wanted: 2 got:", v)
+		}
+
+		if len(active[0].GetCredentials()) != 1 {
+			t.Fail()
+		}
+	})
+
+	t.Run("head version is not always active", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id1, state: &unset}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 0)
+	})
+
+	t.Run("previous version cred in same keyring is pruned", func(t *testing.T) {
+		cgs := newCredentialGraphSet()
+
+		cgs.Add(buildGraph("/o/p/e/s/u/*", 1, cred{id: id2, prev: id1}, cred{id: id1}))
+
+		active, err := cgs.Prune()
+		if err != nil {
+			t.Fatal("error seen:", err)
+		}
+
+		assertActive(t, active, 1)
+		if len(active[0].GetCredentials()) != 1 {
+			t.Fail()
+		}
+
+		if active[0].GetCredentials()[0].ID != id2 {
+			t.Error("Wrong credential was pruned")
+		}
+	})
+
 }
 
 func TestCredentialGraphSetHead(t *testing.T) {
