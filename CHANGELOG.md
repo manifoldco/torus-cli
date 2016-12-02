@@ -13,6 +13,8 @@ _Unreleased_
 
 - Ensure that `torus version` will always return, even if the upstream server
   is misconfigured.
+- Fix an issue where the wrong version of a credential would be used after a
+  user was removed from an org.
 
 ## v0.18.0
 
