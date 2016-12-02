@@ -16,7 +16,7 @@ const SelectedAdd = -1
 type Select struct {
 	Label     string   // Label is the value displayed on the command line prompt.
 	Items     []string // Items are the items to use in the list.
-	IsVimMode bool     // Wether readline is using Vim mode.
+	IsVimMode bool     // Whether readline is using Vim mode.
 }
 
 // Run runs the Select list. It returns the index of the selected element,
@@ -63,7 +63,21 @@ func (s *Select) innerRun(starting int, top rune) (int, string, error) {
 
 	counter := 0
 
+	rl.Operation.ExitVimInsertMode() // Never use insert mode for selects
+
 	c.SetListener(func(line []rune, pos int, key rune) ([]rune, int, bool) {
+		if rl.Operation.IsEnableVimMode() {
+			rl.Operation.ExitVimInsertMode()
+			// Remap j and k for down/up selections immediately after an
+			// `i` press
+			switch key {
+			case 'j':
+				key = readline.CharNext
+			case 'k':
+				key = readline.CharPrev
+			}
+		}
+
 		switch key {
 		case readline.CharEnter:
 			return nil, 0, true

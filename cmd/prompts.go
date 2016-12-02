@@ -49,7 +49,7 @@ func AskPerform(label string) error {
 		Label:     label,
 		IsConfirm: true,
 		Preamble:  nil,
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 	_, err = prompt.Run()
 	return err
@@ -79,7 +79,7 @@ func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, a
 		Label:     label,
 		IsConfirm: true,
 		Preamble:  &warning,
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	_, err = prompt.Run()
@@ -113,7 +113,7 @@ func NamePrompt(override *string, defaultValue string, autoAccept bool) (string,
 		Label:     label,
 		Default:   defaultValue,
 		Validate:  validateSlug(strings.ToLower(label)),
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 	return prompt.Run()
 }
@@ -133,7 +133,7 @@ func VerificationPrompt() (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid code")
 		},
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	return prompt.Run()
@@ -157,7 +157,7 @@ func SelectProjectPrompt(projects []api.ProjectResult) (int, string, error) {
 		Items:     names,
 		AddLabel:  "Create a new project",
 		Validate:  validateSlug("project"),
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	return prompt.Run()
@@ -181,7 +181,7 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 		Items:     names,
 		AddLabel:  "Create a new organization",
 		Validate:  validateSlug("org"),
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	return prompt.Run()
@@ -213,7 +213,7 @@ func SelectTeamPrompt(teams []api.TeamResult, label, addLabel string) (int, stri
 		Items:     names,
 		AddLabel:  addLabel,
 		Validate:  validateSlug("team"),
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	return prompt.Run()
@@ -398,7 +398,7 @@ func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
 
 			return promptui.NewValidationError("Please enter your password")
 		},
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	password, err := prompt.Run()
@@ -422,7 +422,7 @@ func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
 
 			return promptui.NewValidationError("Please confirm your password")
 		},
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	_, err = prompt.Run()
@@ -448,7 +448,7 @@ func EmailPrompt(defaultValue string) (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid email address")
 		},
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 	if defaultValue != "" {
 		prompt.Default = defaultValue
@@ -472,7 +472,7 @@ func UsernamePrompt(un string) (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid username")
 		},
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 	if un != "" {
 		prompt.Default = un
@@ -496,7 +496,7 @@ func FullNamePrompt(name string) (string, error) {
 			}
 			return promptui.NewValidationError("Please enter a valid name")
 		},
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 	if name != "" {
 		prompt.Default = name
@@ -516,7 +516,7 @@ func InviteCodePrompt(defaultValue string) (string, error) {
 		Label:     "Invite Code",
 		Default:   defaultValue,
 		Validate:  validateInviteCode,
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	return prompt.Run()
@@ -537,7 +537,7 @@ func SelectAcceptAction() (int, string, error) {
 	prompt := promptui.Select{
 		Label:     "Do you want to login or create an account?",
 		Items:     names,
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	return prompt.Run()
@@ -559,7 +559,7 @@ func SelectProfileAction() (int, string, error) {
 	prompt := promptui.Select{
 		Label:     "What would you like to update?",
 		Items:     names,
-		IsVimMode: preferences.Defaults.Vim,
+		IsVimMode: preferences.Core.Vim,
 	}
 
 	return prompt.Run()

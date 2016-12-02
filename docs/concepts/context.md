@@ -34,7 +34,6 @@ Supported system default preferences:
 - project
 - environment
 - service
-- vim
 
 ### Linked directory
 
