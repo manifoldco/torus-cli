@@ -85,8 +85,9 @@ By default only invites which have not yet been approved will be shown.
 
 ### Command Options
 
---approved | Display approved invites instead of pending
+Option | Description
 ---- | ----
+--approved | Display approved invites instead of pending
 
 ### approve
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
