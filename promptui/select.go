@@ -14,8 +14,9 @@ const SelectedAdd = -1
 
 // Select represents a list for selecting a single item
 type Select struct {
-	Label string   // Label is the value displayed on the command line prompt.
-	Items []string // Items are the items to use in the list.
+	Label     string   // Label is the value displayed on the command line prompt.
+	Items     []string // Items are the items to use in the list.
+	IsVimMode bool     // Whether readline is using Vim mode.
 }
 
 // Run runs the Select list. It returns the index of the selected element,
@@ -33,6 +34,10 @@ func (s *Select) innerRun(starting int, top rune) (int, string, error) {
 	}
 
 	c.Stdin = stdin
+
+	if s.IsVimMode {
+		c.VimMode = true
+	}
 
 	prompt := s.Label + ": "
 
@@ -58,7 +63,21 @@ func (s *Select) innerRun(starting int, top rune) (int, string, error) {
 
 	counter := 0
 
+	rl.Operation.ExitVimInsertMode() // Never use insert mode for selects
+
 	c.SetListener(func(line []rune, pos int, key rune) ([]rune, int, bool) {
+		if rl.Operation.IsEnableVimMode() {
+			rl.Operation.ExitVimInsertMode()
+			// Remap j and k for down/up selections immediately after an
+			// `i` press
+			switch key {
+			case 'j':
+				key = readline.CharNext
+			case 'k':
+				key = readline.CharPrev
+			}
+		}
+
 		switch key {
 		case readline.CharEnter:
 			return nil, 0, true
@@ -155,6 +174,8 @@ type SelectWithAdd struct {
 	// Validate is optional. If set, this function is used to validate the input
 	// after each character entry.
 	Validate ValidateFunc
+
+	IsVimMode bool // Whether readline is using Vim mode.
 }
 
 // Run runs the Select list. It returns the index of the selected element,
@@ -164,8 +185,9 @@ func (sa *SelectWithAdd) Run() (int, string, error) {
 		newItems := append([]string{sa.AddLabel}, sa.Items...)
 
 		s := Select{
-			Label: sa.Label,
-			Items: newItems,
+			Label:     sa.Label,
+			Items:     newItems,
+			IsVimMode: sa.IsVimMode,
 		}
 
 		selected, value, err := s.innerRun(1, '+')
@@ -178,8 +200,9 @@ func (sa *SelectWithAdd) Run() (int, string, error) {
 	}
 
 	p := Prompt{
-		Label:    sa.AddLabel,
-		Validate: sa.Validate,
+		Label:     sa.AddLabel,
+		Validate:  sa.Validate,
+		IsVimMode: sa.IsVimMode,
 	}
 	value, err := p.Run()
 	return SelectedAdd, value, err

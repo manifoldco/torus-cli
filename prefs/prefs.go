@@ -50,6 +50,7 @@ type Core struct {
 	AutoConfirm    bool   `ini:"auto_confirm,omitempty"`
 	EnableProgress bool   `ini:"progress"`
 	EnableHints    bool   `ini:"hints"`
+	Vim            bool   `ini:"vim,omitempty"`
 }
 
 // Defaults contains default values for use in command argument flags
