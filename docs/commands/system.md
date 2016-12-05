@@ -9,8 +9,9 @@ There are two categories of preferences: Core and Defaults. Core contains prefer
 
 The following are the available preferences:
 
-`core.registry_uri` | The hostname (including protocol) of the Torus Registry
+Preference | Description
 ---- | ----
+`core.registry_uri` | The hostname (including protocol) of the Torus Registry
 `core.ca_bundle_file` | Certificate bundle used to communicate with the Torus Registry.
 `core.public_key_file` | Location of the ed25519 public key file.
 `core.context` | Boolean determining if the `.torus.json` and defaults should be considered during command execution

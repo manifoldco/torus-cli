@@ -7,8 +7,9 @@ Torus exposes your decrypted secrets to your process through environment variabl
 
 ### Command Options
 
-  --org, ORG, -o ORG | Executing the command for the specified org.
+  Option | Description
   ---- | ----
+  --org, ORG, -o ORG | Executing the command for the specified org.
   --project PROJECT, -p PROJECT | Executing the command for the specified project.
   --environment ENV, -e ENV | Executing the command for the specified environment. Can be specified multiple times.
   --service SERVICE, -s SERVICE | Execute the command for the specified environment. (default: default)
@@ -37,8 +38,9 @@ By default items are displayed in environment variable format.
 
 ### Command Options
 
-  --verbose, -v | List the sources of the secrets (shortcut for --format verbose)
+  Option | Description
   ---- | ----
+  --verbose, -v | List the sources of the secrets (shortcut for --format verbose)
   --format FORMAT, -f FORMAT | Format used to display data (json, env, verbose) (default: env)
 
 ## run
