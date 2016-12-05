@@ -74,6 +74,11 @@ func worklogList(ctx *cli.Context) error {
 		return err
 	}
 
+	if len(items) == 0 {
+		fmt.Println("Worklog complete! No items left to resolve. 👍")
+		return nil
+	}
+
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "IDENTITY\tTYPE\tSUBJECT")
 	for _, item := range items {
