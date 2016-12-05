@@ -8,6 +8,8 @@ _Unreleased_
 
 - Add preferences for `core.disable_progress` and `core.disable_hints` to
   control levels of output in preparation for additional onboarding output.
+- Support vim movement bindings for interactive inputs. This can be enabled with
+  `torus prefs set core.vim true`.
 
 **Fixes**
 
@@ -15,6 +17,10 @@ _Unreleased_
   is misconfigured.
 - Fix an issue where the wrong version of a credential would be used after a
   user was removed from an org.
+
+**Thanks**
+
+- Ben Tranter
 
 ## v0.18.0
 
