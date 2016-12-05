@@ -45,6 +45,17 @@ Wildcards support prefixes, so that you can namespace objects:
 
 So the value of "secret" is available to all applicable environments that match the wildcard such as: "env-1", "env-development", "env-ironment".
 
+Paths support `**` to be expanded to fill absent segments.
+
+#### Examples
+
+The following paths are equivalent when supplied to a command:
+
+```
+/org/project/**/name
+/org/project/*/*/*/*/name
+```
+
 ## Alternations
 Path segments may also contain alternations (otherwise known as "OR" statements). Alternations enable you to allow two or more values to match at a particular depth of the hierarchy.
 

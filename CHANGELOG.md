@@ -10,6 +10,9 @@ _Unreleased_
   control levels of output in preparation for additional onboarding output.
 - Support vim movement bindings for interactive inputs. This can be enabled with
   `torus prefs set core.vim true`.
+- Support `**` in path expressions passed to commands.
+  `torus set /org/project/**/port 5000` is equivalent to `torus set /org/project/*/*/*/*/port`
+- `torus ls` behaviour changed to follow system `ls` more closely
 
 **Fixes**
 

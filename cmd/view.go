@@ -16,9 +16,6 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 )
 
-var formatFlag = newPlaceholder("format, f", "FORMAT", "Format used to display data (json, env, verbose)",
-	"env", "TORUS_FORMAT", false)
-
 func init() {
 	view := cli.Command{
 		Name:     "view",
@@ -32,7 +29,7 @@ func init() {
 			userFlag("Use this user.", false),
 			machineFlag("Use this machine.", false),
 			stdInstanceFlag,
-			formatFlag,
+			formatFlag("env", "Format used to display data (json, env, verbose)"),
 			cli.BoolFlag{
 				Name:  "verbose, v",
 				Usage: "Lists the sources of the secrets (shortcut for --format verbose)",

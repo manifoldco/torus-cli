@@ -79,7 +79,7 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := client.Orgs.GetByName(c, pe.Org())
+	org, err := client.Orgs.GetByName(c, pe.Org.String())
 	if err != nil {
 		return errs.NewErrorExitError("Unable to lookup org.", err)
 	}

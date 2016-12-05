@@ -263,3 +263,49 @@ func TestNormalize(t *testing.T) {
 		t.Errorf("String() %s does not match normalized form %s", out, norm)
 	}
 }
+
+func TestDoubleGlob(t *testing.T) {
+	path := "/org/project/**/instance"
+	pe, err := Parse(path)
+	if err != nil {
+		t.Errorf("Parsing of %s failed", path)
+	}
+
+	norm := "/org/project/*/*/*/instance"
+	out := pe.String()
+	if out != norm {
+		t.Errorf("String() %s does not match normalized form %s", out, norm)
+	}
+
+	path = "/org/project/**/identity/instance"
+	pe, err = Parse(path)
+	if err != nil {
+		t.Errorf("Parsing of %s failed", path)
+	}
+
+	norm = "/org/project/*/*/identity/instance"
+	out = pe.String()
+	if out != norm {
+		t.Errorf("String() %s does not match normalized form %s", out, norm)
+	}
+}
+
+func TestContains(t *testing.T) {
+	path := "/org/project/[development|staging]/**/instance"
+	pe, err := Parse(path)
+	if err != nil {
+		t.Errorf("Parsing of %s failed", path)
+	}
+
+	if !pe.Project.Contains("project") {
+		t.Errorf("Literal contains failed to match match value")
+	}
+
+	if !pe.Envs.Contains("development") {
+		t.Errorf("Alternation contains failed to match value")
+	}
+
+	if !pe.Identities.Contains("development") {
+		t.Errorf("FullGlob contains failed to match any value")
+	}
+}
