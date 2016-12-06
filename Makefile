@@ -50,7 +50,7 @@ bootstrap: $(BOOTSTRAP)
 
 VERSION_FLAG=-X $(PKG)/config.Version=$(VERSION)
 STATIC_FLAGS=-w -s $(VERSION_FLAG)
-GO_BUILD=CGO_ENABLED=0 go build -i -v
+GO_BUILD=CGO_ENABLED=0 go build -v
 
 binary: generated vendor
 	$(GO_BUILD) -o ${OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
@@ -194,9 +194,12 @@ OS=$(word 1, $(subst -, ,$*))
 ARCH=$(word 2, $(subst -, ,$*))
 BUILD_DIR=builds/bin/$(VERSION)/$(OS)/$(ARCH)
 BINARY=-o $(BUILD_DIR)/$(OUT)
+
+TRIM_PATH='-trimpath $(subst /$(PKG),,$(shell pwd))'
+PATH_STRIP_FLAGS=-gcflags $(TRIM_PATH) -asmflags $(TRIM_PATH)
 $(addprefix binary-,$(TARGETS)): binary-%: gocheck generated vendor
-	GOOS=$(OS) GOARCH=$(ARCH) $(GO_BUILD) $(BINARY) \
-		-ldflags='$(STATIC_FLAGS)' ${PKG}
+	GOOS=$(OS) GOARCH=$(ARCH) GOROOT_FINAL="go/" $(GO_BUILD) -a $(BINARY) \
+		-ldflags='$(STATIC_FLAGS)' $(PATH_STRIP_FLAGS) ${PKG}
 
 BUILD_DIRS=\
 	builds/dist \
