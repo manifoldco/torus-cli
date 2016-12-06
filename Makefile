@@ -198,7 +198,7 @@ BINARY=-o $(BUILD_DIR)/$(OUT)
 TRIM_PATH='-trimpath $(subst /$(PKG),,$(shell pwd))'
 PATH_STRIP_FLAGS=-gcflags $(TRIM_PATH) -asmflags $(TRIM_PATH)
 $(addprefix binary-,$(TARGETS)): binary-%: gocheck generated vendor
-	GOOS=$(OS) GOARCH=$(ARCH) GOROOT_FINAL="go/" $(GO_BUILD) -a $(BINARY) \
+	GOOS=$(OS) GOARCH=$(ARCH) GOROOT_FINAL="go/" $(GO_BUILD) $(BINARY) \
 		-ldflags='$(STATIC_FLAGS)' $(PATH_STRIP_FLAGS) ${PKG}
 
 BUILD_DIRS=\
