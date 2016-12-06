@@ -63,11 +63,12 @@ torus run -o example -- node ./bin/www --app api
 
 Each level within the organization can be inspected by changing the segments supplied in the path. Wildcards cannot be used for the organization or project segments of the [path](../concepts/path.md).
 
+Path is required, and does not support context.
+
 ### Command Options
 
   Option | Description
   ---- | ----
-  --recursive, -r | Show secrets for the expanded version of the supplied path
   --verbose, -v | Show which type of path is being displayed, shortcut for --format=verbose
   --format FORMAT, -f FORMAT | Format used to display data (simple, verbose) (default: simple)
 

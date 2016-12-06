@@ -24,14 +24,6 @@ var (
 	stdAutoAcceptFlag = autoAcceptFlag()
 )
 
-// recursiveFlag creates a new --recursive, -r cli.BoolFlag
-func recursiveFlag() cli.Flag {
-	return cli.BoolFlag{
-		Name:  "recursive, r",
-		Usage: "Perform recursive action for result",
-	}
-}
-
 func formatFlag(defaultValue, description string) cli.Flag {
 	return newPlaceholder("format, f", "FORMAT", description,
 		defaultValue, "TORUS_FORMAT", false)

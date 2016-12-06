@@ -13,6 +13,7 @@ _Unreleased_
 - Support `**` in path expressions passed to commands.
   `torus set /org/project/**/port 5000` is equivalent to `torus set /org/project/*/*/*/*/port`
 - `torus ls` behaviour changed to follow system `ls` more closely
+- `torus ls` no longer supports supplying values through command options.
 
 **Fixes**
 
