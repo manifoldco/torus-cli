@@ -153,7 +153,7 @@ func listObjects(ctx *cli.Context) error {
 		pathsErr = errs.NewUsageExitError("Unknown path supplied", ctx)
 	}
 	if pathsErr != nil {
-		return err
+		return pathsErr
 	}
 
 	// Final output of paths
@@ -226,6 +226,9 @@ func projectTreeForOrg(c context.Context, client *api.Client, cpathExp *pathexp.
 	org, err := client.Orgs.GetByName(c, cpathExp.Org.String())
 	if err != nil {
 		return nil, err
+	}
+	if org == nil {
+		return nil, errs.NewExitError("Org not found")
 	}
 
 	projectTree, err := client.Projects.GetTree(c, org.ID)
