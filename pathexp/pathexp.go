@@ -81,6 +81,12 @@ func (g glob) Contains(subject string) bool {
 	return strings.Index(subject, string(g)) == 0
 }
 
+// GlobContains returns whether a glob, built from the value, contains the subject
+func GlobContains(value, subject string) bool {
+	gl := glob(value)
+	return gl.Contains(subject)
+}
+
 func (f fullglob) String() string { return "*" }
 func (f fullglob) Contains(subject string) bool {
 	return true

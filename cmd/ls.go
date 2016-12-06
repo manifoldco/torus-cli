@@ -50,6 +50,16 @@ func init() {
 	Cmds = append(Cmds, ls)
 }
 
+func matchPathSegment(pathSegment, subject string) bool {
+	if pathSegment == "*" {
+		return true
+	}
+	if strings.Contains(pathSegment, "*") {
+		return pathexp.GlobContains(pathSegment[:len(pathSegment)-1], subject)
+	}
+	return pathSegment == subject
+}
+
 func listObjects(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -105,7 +115,7 @@ func listObjects(ctx *cli.Context) error {
 			break
 		}
 		for _, o := range orgs {
-			if cpathExp.Org.Contains(o.Body.Name) {
+			if cpathExp.Org.Contains(o.Body.Name) || matchPathSegment(cpathExp.Org.String(), o.Body.Name) {
 				paths = append(paths, fmt.Sprintf("/%s", o.Body.Name))
 			}
 		}
@@ -132,6 +142,9 @@ func listObjects(ctx *cli.Context) error {
 	case "secrets":
 		segments := strings.Split(args[0], "/")
 		targetName := segments[len(segments)-1:][0]
+		if targetName == "**" {
+			targetName = "*"
+		}
 		pexp, err := pathexp.Parse(cpathExp.String())
 		if err != nil {
 			pathsErr = err
@@ -148,7 +161,10 @@ func listObjects(ctx *cli.Context) error {
 		}
 		for _, cred := range cset {
 			body := *cred.Body
-			paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), body.GetName()))
+			name := body.GetName()
+			if matchPathSegment(targetName, name) {
+				paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), name))
+			}
 		}
 	default:
 		pathsErr = errs.NewUsageExitError("Unknown path supplied", ctx)
@@ -173,7 +189,7 @@ func listObjects(ctx *cli.Context) error {
 func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[string]*api.ProjectResult {
 	projectMap := make(map[string]*api.ProjectResult)
 	for _, p := range tree.Projects {
-		if pexp.Project.Contains(p.Body.Name) {
+		if pexp.Project.Contains(p.Body.Name) || matchPathSegment(pexp.Project.String(), p.Body.Name) {
 			projectMap[p.ID.String()] = p
 		}
 	}
