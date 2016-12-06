@@ -50,7 +50,7 @@ bootstrap: $(BOOTSTRAP)
 
 VERSION_FLAG=-X $(PKG)/config.Version=$(VERSION)
 STATIC_FLAGS=-w -s $(VERSION_FLAG)
-GO_BUILD=CGO_ENABLED=0 go build -v
+GO_BUILD=CGO_ENABLED=0 go build -i -v
 
 binary: generated vendor
 	$(GO_BUILD) -o ${OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
