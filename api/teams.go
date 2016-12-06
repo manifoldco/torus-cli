@@ -23,7 +23,7 @@ type TeamResult struct {
 }
 
 // List retrieves all teams for an org based on the filtered values
-func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name, teamType string) ([]TeamResult, error) {
+func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name string, teamType primitive.TeamType) ([]TeamResult, error) {
 	v := &url.Values{}
 
 	if orgID != nil {
@@ -32,8 +32,8 @@ func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name, teamTy
 	if name != "" {
 		v.Set("name", name)
 	}
-	if teamType != "" {
-		v.Set("type", teamType)
+	if teamType != primitive.AnyTeamType {
+		v.Set("type", string(teamType))
 	}
 
 	req, _, err := t.client.NewRequest("GET", "/teams", v, nil, true)
@@ -78,14 +78,10 @@ func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name st
 }
 
 // Create performs a request to create a new team object
-func (t *TeamsClient) Create(
-	ctx context.Context, orgID *identity.ID, name, teamType string) (*apitypes.Team, error) {
+func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name string,
+	teamType primitive.TeamType) (*apitypes.Team, error) {
 	if orgID == nil {
 		return nil, errors.New("invalid org")
-	}
-
-	if teamType == "" {
-		teamType = primitive.UserTeam
 	}
 
 	teamBody := primitive.Team{

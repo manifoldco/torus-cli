@@ -332,7 +332,7 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 // and a boolean indicating if a new team should be created.
 func SelectCreateRole(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.TeamResult, string, bool, error) {
 
-	teams, err := client.Teams.List(c, orgID, "", primitive.MachineTeam)
+	teams, err := client.Teams.List(c, orgID, "", primitive.MachineTeamType)
 	if err != nil {
 		return nil, "", false, err
 	}
