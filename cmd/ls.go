@@ -23,24 +23,11 @@ func init() {
 		Usage:     "Explore all objects your account has access to",
 		Category:  "SECRETS",
 		Flags: []cli.Flag{
-			recursiveFlag(),
 			formatFlag("simple", "Format used to display data (simple, verbose)"),
 			cli.BoolFlag{
 				Name:  "verbose, v",
 				Usage: "Lists the types of resources and source path (shortcut for --format verbose)",
 			},
-			orgFlag("Use this organization.", false),
-			projectFlag("Use this project.", false),
-			newSlicePlaceholder("environment, e", "ENV", "Use this environment.",
-				"*", "TORUS_ENVIRONMENT", false),
-			newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
-				"default", "TORUS_SERVICE", false),
-			newSlicePlaceholder("user, u", "USER", "Use this user (identity).",
-				"*", "TORUS_USER", false),
-			newSlicePlaceholder("machine, m", "MACHINE", "Use this machine.",
-				"*", "TORUS_MACHINE", false),
-			newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
-				"*", "TORUS_INSTANCE", false),
 		},
 		Action: chain(
 			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -48,6 +35,16 @@ func init() {
 		),
 	}
 	Cmds = append(Cmds, ls)
+}
+
+func matchPathSegment(pathSegment, subject string) bool {
+	if pathSegment == "*" {
+		return true
+	}
+	if strings.Contains(pathSegment, "*") {
+		return pathexp.GlobContains(pathSegment[:len(pathSegment)-1], subject)
+	}
+	return pathSegment == subject
 }
 
 func listObjects(ctx *cli.Context) error {
@@ -76,15 +73,9 @@ func listObjects(ctx *cli.Context) error {
 			"Note: arguments containing wildcards must be wrapped in quotes.", ctx)
 	}
 
-	path, target := identifyTarget(args, recursive)
-	if target == "" {
+	cpathExp, target, err := identifyTarget(args, recursive)
+	if err != nil || cpathExp == nil {
 		return errs.NewUsageExitError("Invalid path supplied", ctx)
-	}
-
-	// Parse the pathexp so we have a full target path
-	cpathExp, err := pathexp.ParsePartial(path)
-	if err != nil {
-		return err
 	}
 
 	var orgName string
@@ -111,7 +102,7 @@ func listObjects(ctx *cli.Context) error {
 			break
 		}
 		for _, o := range orgs {
-			if cpathExp.Org.Contains(o.Body.Name) {
+			if cpathExp.Org.Contains(o.Body.Name) || matchPathSegment(cpathExp.Org.String(), o.Body.Name) {
 				paths = append(paths, fmt.Sprintf("/%s", o.Body.Name))
 			}
 		}
@@ -136,7 +127,17 @@ func listObjects(ctx *cli.Context) error {
 			}
 		}
 	case "secrets":
-		creds, err := client.Credentials.Search(c, cpathExp.String())
+		segments := strings.Split(args[0], "/")
+		targetName := segments[len(segments)-1:][0]
+		if targetName == "**" {
+			targetName = "*"
+		}
+		pexp, err := pathexp.Parse(cpathExp.String())
+		if err != nil {
+			pathsErr = err
+			break
+		}
+		creds, err := client.Credentials.Search(c, pexp.String())
 		if err != nil {
 			pathsErr = err
 			break
@@ -147,13 +148,16 @@ func listObjects(ctx *cli.Context) error {
 		}
 		for _, cred := range cset {
 			body := *cred.Body
-			paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), body.GetName()))
+			name := body.GetName()
+			if matchPathSegment(targetName, name) {
+				paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), name))
+			}
 		}
 	default:
 		pathsErr = errs.NewUsageExitError("Unknown path supplied", ctx)
 	}
 	if pathsErr != nil {
-		return err
+		return pathsErr
 	}
 
 	// Final output of paths
@@ -172,7 +176,7 @@ func listObjects(ctx *cli.Context) error {
 func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[string]*api.ProjectResult {
 	projectMap := make(map[string]*api.ProjectResult)
 	for _, p := range tree.Projects {
-		if pexp.Project.Contains(p.Body.Name) {
+		if pexp.Project.Contains(p.Body.Name) || matchPathSegment(pexp.Project.String(), p.Body.Name) {
 			projectMap[p.ID.String()] = p
 		}
 	}
@@ -180,21 +184,30 @@ func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[st
 }
 
 // identify whether we want to list children or matching resources
-func identifyTarget(args []string, recursive bool) (string, string) {
-	defined := 0
-	path := "/"
-	if len(args) < 1 {
-		if recursive {
-			return path, "secrets"
-		}
-		return path, "orgs"
-	}
-
+func identifyTarget(args []string, recursive bool) (*pathexp.PathExp, string, error) {
+	var defined int
+	var path string
+	var target string
 	var hasDoubleGlob bool
 	var showChildren bool
-	path = args[0]
+
+	// Default to org lookup
+	if len(args) != 1 {
+		path = "/"
+		target = "orgs"
+	} else {
+		path = args[0]
+		if len(path) == 0 {
+			return nil, "", errs.NewExitError("Invalid path supplied")
+		}
+	}
+
 	if path != "/" {
-		// If path ends with slash, we're looking inside
+		// Paths must begin with slash
+		if path[:1] != "/" {
+			return nil, "", errs.NewExitError("path must start with /")
+		}
+		// Identify if path ends with slash for child lookup
 		if path[len(path)-1:] == "/" {
 			showChildren = true
 			path = path[:len(path)-1]
@@ -204,6 +217,7 @@ func identifyTarget(args []string, recursive bool) (string, string) {
 		if !showChildren {
 			defined--
 		}
+		// Identify if double glob was used in any segment
 		for _, s := range segments {
 			if s == "**" {
 				hasDoubleGlob = true
@@ -211,14 +225,30 @@ func identifyTarget(args []string, recursive bool) (string, string) {
 		}
 	}
 
-	target := ""
+	// Pull target from map
 	if len(targetMap) > defined {
 		target = targetMap[defined]
 	}
 	if recursive || hasDoubleGlob {
-		return path, "secrets"
+		target = "secrets"
 	}
-	return path, target
+
+	// Parse the partial pathexp to be used with matching
+	pexp, err := pathexp.ParsePartial(path)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// valid org required to list objects in the tree
+	if target != "orgs" && !pathexp.ValidSlug(pexp.Org.String()) {
+		return nil, "", errs.NewExitError("Invalid path supplied")
+	}
+	// valid project must be present for non-project targets
+	if target != "orgs" && target != "projects" && !pathexp.ValidSlug(pexp.Project.String()) {
+		return nil, "", errs.NewExitError("Invalid path supplied")
+	}
+
+	return pexp, target, nil
 }
 
 // retrieve the projecttree for non-recursive operations
@@ -226,6 +256,9 @@ func projectTreeForOrg(c context.Context, client *api.Client, cpathExp *pathexp.
 	org, err := client.Orgs.GetByName(c, cpathExp.Org.String())
 	if err != nil {
 		return nil, err
+	}
+	if org == nil {
+		return nil, errs.NewExitError("Org not found")
 	}
 
 	projectTree, err := client.Projects.GetTree(c, org.ID)

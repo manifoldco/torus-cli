@@ -81,6 +81,12 @@ func (g glob) Contains(subject string) bool {
 	return strings.Index(subject, string(g)) == 0
 }
 
+// GlobContains returns whether a glob, built from the value, contains the subject
+func GlobContains(value, subject string) bool {
+	gl := glob(value)
+	return gl.Contains(subject)
+}
+
 func (f fullglob) String() string { return "*" }
 func (f fullglob) Contains(subject string) bool {
 	return true
@@ -191,6 +197,11 @@ func NewPartial(org, project string, envs, services, identities, instances []str
 	return newPathexp(org, project, envs, services, identities, instances, false)
 }
 
+// ValidSlug returns whether the subject is a valid slug value
+func ValidSlug(subject string) bool {
+	return slug.MatchString(subject)
+}
+
 func newPathexp(org, project string, envs, services, identities, instances []string, mustBeComplete bool) (*PathExp, error) {
 	if org == "" {
 		org = "*"
@@ -204,11 +215,11 @@ func newPathexp(org, project string, envs, services, identities, instances []str
 		Project: literal(project),
 	}
 
-	if !slug.MatchString(org) && mustBeComplete {
+	if !ValidSlug(org) && mustBeComplete {
 		return nil, errors.New("invalid org name")
 	}
 
-	if !slug.MatchString(project) && mustBeComplete {
+	if !ValidSlug(project) && mustBeComplete {
 		return nil, errors.New("invalid project name")
 	}
 
