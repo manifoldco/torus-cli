@@ -76,15 +76,9 @@ func listObjects(ctx *cli.Context) error {
 			"Note: arguments containing wildcards must be wrapped in quotes.", ctx)
 	}
 
-	path, target := identifyTarget(args, recursive)
-	if target == "" {
+	cpathExp, target, err := identifyTarget(args, recursive)
+	if err != nil || cpathExp == nil {
 		return errs.NewUsageExitError("Invalid path supplied", ctx)
-	}
-
-	// Parse the pathexp so we have a full target path
-	cpathExp, err := pathexp.ParsePartial(path)
-	if err != nil {
-		return err
 	}
 
 	var orgName string
@@ -136,7 +130,14 @@ func listObjects(ctx *cli.Context) error {
 			}
 		}
 	case "secrets":
-		creds, err := client.Credentials.Search(c, cpathExp.String())
+		segments := strings.Split(args[0], "/")
+		targetName := segments[len(segments)-1:][0]
+		pexp, err := pathexp.Parse(cpathExp.String())
+		if err != nil {
+			pathsErr = err
+			break
+		}
+		creds, err := client.Credentials.Search(c, pexp.String())
 		if err != nil {
 			pathsErr = err
 			break
@@ -180,21 +181,30 @@ func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[st
 }
 
 // identify whether we want to list children or matching resources
-func identifyTarget(args []string, recursive bool) (string, string) {
-	defined := 0
-	path := "/"
-	if len(args) < 1 {
-		if recursive {
-			return path, "secrets"
-		}
-		return path, "orgs"
-	}
-
+func identifyTarget(args []string, recursive bool) (*pathexp.PathExp, string, error) {
+	var defined int
+	var path string
+	var target string
 	var hasDoubleGlob bool
 	var showChildren bool
-	path = args[0]
+
+	// Default to org lookup
+	if len(args) != 1 {
+		path = "/"
+		target = "orgs"
+	} else {
+		path = args[0]
+		if len(path) == 0 {
+			return nil, "", errs.NewExitError("Invalid path supplied")
+		}
+	}
+
 	if path != "/" {
-		// If path ends with slash, we're looking inside
+		// Paths must begin with slash
+		if path[:1] != "/" {
+			return nil, "", errs.NewExitError("path must start with /")
+		}
+		// Identify if path ends with slash for child lookup
 		if path[len(path)-1:] == "/" {
 			showChildren = true
 			path = path[:len(path)-1]
@@ -204,6 +214,7 @@ func identifyTarget(args []string, recursive bool) (string, string) {
 		if !showChildren {
 			defined--
 		}
+		// Identify if double glob was used in any segment
 		for _, s := range segments {
 			if s == "**" {
 				hasDoubleGlob = true
@@ -211,14 +222,30 @@ func identifyTarget(args []string, recursive bool) (string, string) {
 		}
 	}
 
-	target := ""
+	// Pull target from map
 	if len(targetMap) > defined {
 		target = targetMap[defined]
 	}
 	if recursive || hasDoubleGlob {
-		return path, "secrets"
+		target = "secrets"
 	}
-	return path, target
+
+	// Parse the partial pathexp to be used with matching
+	pexp, err := pathexp.ParsePartial(path)
+	if err != nil {
+		return nil, "", err
+	}
+
+	// valid org required to list objects in the tree
+	if target != "orgs" && !pathexp.ValidSlug(pexp.Org.String()) {
+		return nil, "", errs.NewExitError("Invalid path supplied")
+	}
+	// valid project must be present for non-project targets
+	if target != "orgs" && target != "projects" && !pathexp.ValidSlug(pexp.Project.String()) {
+		return nil, "", errs.NewExitError("Invalid path supplied")
+	}
+
+	return pexp, target, nil
 }
 
 // retrieve the projecttree for non-recursive operations
