@@ -7,24 +7,32 @@ _Unreleased_
 **Notable Changes**
 
 - Add preferences for `core.disable_progress` and `core.disable_hints` to
-  control levels of output in preparation for additional onboarding output.
-- Support vim movement bindings for interactive inputs. This can be enabled with
-  `torus prefs set core.vim true`.
-- Support `**` in path expressions passed to commands.
-  `torus set /org/project/**/port 5000` is equivalent to `torus set /org/project/*/*/*/*/port`
-- `torus ls` behaviour changed to follow system `ls` more closely
-- `torus ls` no longer supports supplying values through command options.
+  control levels of output in preparation for guided on-boarding.
+- Support vim movement bindings for interactive inputs. This can be enabled
+  with `torus prefs set core.vim true`.
+- Support `**` in path expressions passed to commands.  `torus set
+  /org/project/**/port 5000` is equivalent to `torus set
+  /org/project/*/*/*/*/port`
+- `torus ls` behaviour changed to follow system `ls` more closely, no longer
+  supporting context or command flags (e.g. `--org, --project, etc`).
+- `torus worklog list` now displays a friendly message if no actions need to be
+  taken.
+- `torus prefs list` now displays the default values for preferences if no
+  override has been set by the user.
+- Added directory styles to [get.torus.sh](https://get.torus.sh)
 
 **Fixes**
 
 - Ensure that `torus version` will always return, even if the upstream server
   is misconfigured.
-- Fix an issue where the wrong version of a credential would be used after a
+- Fixed an issue where the wrong version of a credential would be used after a
   user was removed from an org.
+- Fixed an issue where the wrong version of a credential would be displayed if
+  more than two credentials of the same name existed inside the same keyring.
 
-**Thanks**
+**Docs**
 
-- Ben Tranter
+- Added documentation for `torus worklog resolve`
 
 ## v0.18.0
 
