@@ -60,6 +60,11 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	name := rawPath[idx+1:]
 	path := rawPath[:idx]
 
+	if name == "**" {
+		path = rawPath
+		name = "*"
+	}
+
 	// Ensure that the secret name is valid
 	if !pathexp.ValidSecret(name) {
 		return errs.NewExitError("Invalid secret name")
