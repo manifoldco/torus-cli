@@ -142,12 +142,11 @@ func listObjects(ctx *cli.Context) error {
 			pathsErr = err
 			break
 		}
-		cset := credentialSet{}
-		for _, c := range creds {
-			cset.Add(c)
-		}
-		for _, cred := range cset {
+		for _, cred := range creds {
 			body := *cred.Body
+			if body.GetValue() == nil {
+				continue
+			}
 			name := body.GetName()
 			if matchPathSegment(targetName, name) {
 				paths = append(paths, fmt.Sprintf("%s/%s", body.GetPathExp(), name))
