@@ -20,6 +20,7 @@ _Unreleased_
 - `torus prefs list` now displays the default values for preferences if no
   override has been set by the user.
 - Added directory styles to [get.torus.sh](https://get.torus.sh)
+- Updated validation for `torus allow` and `torus deny` to catch when secret name is missing
 
 **Fixes**
 

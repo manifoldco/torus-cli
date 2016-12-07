@@ -197,6 +197,11 @@ func NewPartial(org, project string, envs, services, identities, instances []str
 	return newPathexp(org, project, envs, services, identities, instances, false)
 }
 
+// ValidSecret returns whether the subject is a valid secret name value
+func ValidSecret(subject string) bool {
+	return fullglobOrGlob.MatchString(subject)
+}
+
 // ValidSlug returns whether the subject is a valid slug value
 func ValidSlug(subject string) bool {
 	return slug.MatchString(subject)

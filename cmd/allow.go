@@ -50,14 +50,20 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 		return errs.NewUsageExitError(msg, ctx)
 	}
 
-	idx := strings.LastIndex(args[1], "/")
+	// Separate the pathexp from the secret name
+	rawPath := args[1]
+	idx := strings.LastIndex(rawPath, "/")
 	if idx == -1 {
 		msg := "resource path format is incorrect."
 		return errs.NewUsageExitError(msg, ctx)
 	}
+	name := rawPath[idx+1:]
+	path := rawPath[:idx]
 
-	name := args[1][idx+1:]
-	path := args[1][:idx]
+	// Ensure that the secret name is valid
+	if !pathexp.ValidSecret(name) {
+		return errs.NewExitError("Invalid secret name")
+	}
 
 	pe, err := pathexp.Parse(path)
 	if err != nil {
