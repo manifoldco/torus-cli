@@ -21,6 +21,7 @@ _Unreleased_
   override has been set by the user.
 - Added directory styles to [get.torus.sh](https://get.torus.sh)
 - Updated validation for `torus allow` and `torus deny` to catch when secret name is missing
+- `torus ls` changes to not filter out paths based on specificity
 
 **Fixes**
 
