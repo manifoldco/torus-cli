@@ -493,7 +493,7 @@ func findSystemTeams(teams []envelope.Unsigned) (*envelope.Unsigned, *envelope.U
 		var team = t
 		tBody := t.Body.(*primitive.Team)
 
-		if tBody.TeamType == primitive.SystemTeam {
+		if tBody.TeamType == primitive.SystemTeamType {
 			switch tBody.Name {
 			case "member":
 				members = &team

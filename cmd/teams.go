@@ -166,7 +166,7 @@ func teamsListCmd(ctx *cli.Context) error {
 		displayTeamType := ""
 
 		switch teamType := t.Body.TeamType; teamType {
-		case primitive.SystemTeam:
+		case primitive.SystemTeamType:
 			displayTeamType = "[system]"
 		}
 
@@ -352,7 +352,7 @@ func createTeamCmd(ctx *cli.Context) error {
 
 	// Create our new team
 	fmt.Println("")
-	_, err = client.Teams.Create(c, orgID, teamName, "")
+	_, err = client.Teams.Create(c, orgID, teamName, primitive.UserTeamType)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Team already exists")
@@ -563,5 +563,5 @@ func teamsAddCmd(ctx *cli.Context) error {
 // isMachineTeam returns whether or not the given team represents a machine
 // role (which uses the Team primitive)
 func isMachineTeam(team *primitive.Team) bool {
-	return team.TeamType == primitive.MachineTeam || (team.TeamType == primitive.SystemTeam && team.Name == primitive.MachineTeamName)
+	return team.TeamType == primitive.MachineTeamType || (team.TeamType == primitive.SystemTeamType && team.Name == primitive.MachineTeamName)
 }

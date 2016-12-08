@@ -265,7 +265,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 	var teamNames []string
 	for _, m := range machineSegment.Memberships {
 		team := teamMap[*m.Body.TeamID]
-		if team.Body.TeamType == primitive.MachineTeam {
+		if team.Body.TeamType == primitive.MachineTeamType {
 			teamNames = append(teamNames, team.Body.Name)
 		}
 	}
@@ -339,7 +339,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 			"Cannot specify --destroyed and --role at the same time")
 	}
 
-	roles, err := client.Teams.List(c, org.ID, ctx.String("role"), primitive.MachineTeam)
+	roles, err := client.Teams.List(c, org.ID, ctx.String("role"), primitive.MachineTeamType)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to retrieve metadata", err)
 	}
@@ -367,7 +367,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 
 	roleMap := make(map[identity.ID]primitive.Team, len(roles))
 	for _, t := range roles {
-		if t.Body.TeamType == primitive.MachineTeam {
+		if t.Body.TeamType == primitive.MachineTeamType {
 			roleMap[*t.ID] = *t.Body
 		}
 	}
@@ -416,7 +416,7 @@ func listMachineRoles(ctx *cli.Context) error {
 		return errs.NewExitError("Org not found.")
 	}
 
-	teams, err := client.Teams.List(c, org.ID, "", "")
+	teams, err := client.Teams.List(c, org.ID, "", primitive.AnyTeamType)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to retrieve roles", err)
 	}
@@ -428,7 +428,7 @@ func listMachineRoles(ctx *cli.Context) error {
 		}
 
 		displayTeamType := ""
-		if t.Body.TeamType == primitive.SystemTeam && t.Body.Name == primitive.MachineTeamName {
+		if t.Body.TeamType == primitive.SystemTeamType && t.Body.Name == primitive.MachineTeamName {
 			displayTeamType = "[system]"
 		}
 
@@ -491,7 +491,7 @@ func createMachineRole(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	_, err = client.Teams.Create(c, orgID, teamName, primitive.MachineTeam)
+	_, err = client.Teams.Create(c, orgID, teamName, primitive.MachineTeamType)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Role already exists")
@@ -567,7 +567,7 @@ func createMachine(ctx *cli.Context) error {
 	}
 
 	if newTeam {
-		team, err := client.Teams.Create(c, orgID, teamName, primitive.MachineTeam)
+		team, err := client.Teams.Create(c, orgID, teamName, primitive.MachineTeamType)
 		if err != nil {
 			return errs.NewErrorExitError("Could not create machine role", err)
 		}

@@ -567,12 +567,16 @@ type Environment struct { // type: 0x05
 	ProjectID *identity.ID `json:"project_id"`
 }
 
+// TeamType is the type that holds the enumeration of possible team types.
+type TeamType string
+
 // There are three types of teams: system, machine and user. System teams are
 // managed by the Torus registry while Machine teams contain only machines.
 const (
-	SystemTeam  = "system"
-	UserTeam    = "user"
-	MachineTeam = "machine"
+	AnyTeamType     TeamType = ""
+	SystemTeamType  TeamType = "system"
+	UserTeamType    TeamType = "user"
+	MachineTeamType TeamType = "machine"
 )
 
 // Teams are used to represent a group of identities and their associated
@@ -595,7 +599,7 @@ type Team struct { // type: 0x0f
 	mutable
 	Name     string       `json:"name"`
 	OrgID    *identity.ID `json:"org_id"`
-	TeamType string       `json:"type"`
+	TeamType TeamType     `json:"type"`
 }
 
 // Membership is an entity that represents whether a user or
