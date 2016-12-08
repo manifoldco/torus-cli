@@ -65,7 +65,12 @@ func (p *Prompt) Run() (string, error) {
 	punctuation := ":"
 	if p.IsConfirm {
 		punctuation = "?"
-		suggestedAnswer = " " + faint("[y/n]")
+		answers := "y/N"
+		if strings.ToLower(p.Default) == "y" {
+			answers = "Y/n"
+		}
+		suggestedAnswer = " " + faint("["+answers+"]")
+		p.Default = ""
 	}
 
 	state := iconInitial

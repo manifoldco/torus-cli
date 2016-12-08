@@ -56,7 +56,7 @@ func AskPerform(label string) error {
 }
 
 // ConfirmDialogue prompts the user to confirm their action
-func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, allowSkip bool) error {
+func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, defaultValue string, allowSkip bool) error {
 	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return err
@@ -78,6 +78,7 @@ func ConfirmDialogue(ctx *cli.Context, labelOverride, warningOverride *string, a
 	prompt := promptui.Prompt{
 		Label:     label,
 		IsConfirm: true,
+		Default:   defaultValue,
 		Preamble:  &warning,
 		IsVimMode: preferences.Core.Vim,
 	}

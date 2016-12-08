@@ -11,6 +11,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/pathexp"
 )
 
@@ -168,6 +169,7 @@ func listObjects(ctx *cli.Context) error {
 		fmt.Println(p)
 	}
 
+	hints.Display([]string{"path", "view"})
 	return nil
 }
 

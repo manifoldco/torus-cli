@@ -13,6 +13,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/dirprefs"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/prefs"
 )
@@ -162,5 +163,6 @@ func linkCmd(ctx *cli.Context) error {
 		fmt.Printf("Warning: context is disabled. Use '%s prefs' to enable it.\n", ctx.App.Name)
 	}
 
+	hints.Display([]string{"context", "set", "run", "view"})
 	return nil
 }

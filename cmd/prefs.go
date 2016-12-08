@@ -83,11 +83,6 @@ func listPref(ctx *cli.Context) error {
 }
 
 func setPref(ctx *cli.Context) error {
-	preferences, err := prefs.NewPreferences()
-	if err != nil {
-		return errs.NewErrorExitError("Failed to load prefs.", err)
-	}
-
 	args := ctx.Args()
 	key := args.Get(0)
 	value := args.Get(1)
@@ -97,6 +92,15 @@ func setPref(ctx *cli.Context) error {
 
 	if len(strings.Split(key, ".")) < 2 {
 		return errs.NewExitError("Key must be have at least two dot delimited segments.")
+	}
+
+	return setPrefByName(key, value)
+}
+
+func setPrefByName(key, value string) error {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return errs.NewErrorExitError("Failed to load prefs.", err)
 	}
 
 	// Validate public key file

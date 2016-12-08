@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 )
 
@@ -105,5 +106,6 @@ TeamSearch:
 	fmt.Println("\n\t" + strings.Join(matchTeams, "\n\t"))
 	fmt.Println("\nThey will receive an e-mail with instructions.")
 
+	hints.Display([]string{"invites approve", "teams members"})
 	return nil
 }

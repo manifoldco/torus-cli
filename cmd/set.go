@@ -12,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/pathexp"
 )
 
@@ -75,6 +76,7 @@ func setCmd(ctx *cli.Context) error {
 	pe := (*cred.Body).GetPathExp()
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
 
+	hints.Display([]string{"view", "run"})
 	return nil
 }
 

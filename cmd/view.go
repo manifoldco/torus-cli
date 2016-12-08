@@ -14,6 +14,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 )
 
 func init() {
@@ -62,14 +63,17 @@ func viewCmd(ctx *cli.Context) error {
 
 	switch format {
 	case "env":
-		return printEnvFormat(secrets, path)
+		err = printEnvFormat(secrets, path)
 	case "verbose":
-		return printVerboseFormat(secrets, path)
+		err = printVerboseFormat(secrets, path)
 	case "json":
-		return printJSONFormat(secrets, path)
+		err = printJSONFormat(secrets, path)
 	default:
 		return errs.NewUsageExitError("Unknown format: "+format, ctx)
 	}
+
+	hints.Display([]string{"link", "run"})
+	return err
 }
 
 func printEnvFormat(secrets []apitypes.CredentialEnvelope, path string) error {
