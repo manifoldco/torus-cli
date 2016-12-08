@@ -1,8 +1,12 @@
 # CHANGELOG
 
+## Unreleased
+
+_unreleased_
+
 ## v0.19.0
 
-_Unreleased_
+_2016-12-08_
 
 **Notable Changes**
 
