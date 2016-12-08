@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/base64"
-	"log"
 
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/scrypt"
@@ -180,8 +179,6 @@ func CreateMasterKeyObject(ctx context.Context, password []byte, masterKey *[]by
 		// Use the provided key
 		key = *masterKey
 	}
-
-	log.Print("length:" + string(len(key)))
 
 	err := ctxutil.ErrIfDone(ctx)
 	if err != nil {
