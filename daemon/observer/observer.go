@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 )
 
 type ctxkey string
@@ -76,6 +77,7 @@ type Notifier struct {
 	notifications  chan<- *notification
 	observerClosed <-chan int
 	ctxDone        <-chan struct{}
+	sync.RWMutex
 }
 
 func (t *transaction) start() {
@@ -132,13 +134,17 @@ func (n *Notifier) Notify(eventType EventType, message string, increment bool) {
 	}
 
 	if increment {
+		n.Lock()
 		n.current++
+		n.Unlock()
 	}
 
+	n.RLock()
 	if n.current > n.total {
 		panic(fmt.Sprintf(
 			"notifications exceed maximum %d/%d", n.current, n.total))
 	}
+	n.RUnlock()
 
 	select {
 	case n.notifications <- notif:
