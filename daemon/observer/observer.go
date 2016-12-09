@@ -125,7 +125,8 @@ func (n *Notifier) Notifier(total uint) *Notifier {
 	return notifier
 }
 
-// Notify publishes an event to all SSE observers.
+// Notify publishes an event to all SSE observers. This function panics when it
+// is called more often than it is supposed to have been called.
 func (n *Notifier) Notify(eventType EventType, message string, increment bool) {
 	notif := &notification{
 		Type:      eventType,
