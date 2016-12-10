@@ -104,7 +104,7 @@ clean:
 #################################################
 
 test: generated vendor
-	@CGO_ENABLED=0 go test -short $$(glide nv)
+	@CGO_ENABLED=0 go test -run=. -bench=. -short $$(glide nv)
 
 METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
 	 ./... --enable
