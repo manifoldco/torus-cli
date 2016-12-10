@@ -157,7 +157,9 @@ func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}, reqID *
 	}
 
 	resp, err := c.client.Do(r)
-	close(done)
+	if progress != nil {
+		done <- true
+	}
 	if err != nil {
 		return nil, err
 	}
