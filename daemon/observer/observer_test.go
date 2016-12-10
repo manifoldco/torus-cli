@@ -133,10 +133,14 @@ func TestObserverServeHTTP(t *testing.T) {
 			t.Errorf("unexpected error constructing Notifier: %s", err)
 		}
 
-		go n.Notify(Progress, "hi", true)
 		go o.ServeHTTP(rw, r)
-
+		// A single flush. When we serve HTTP requests through the observer, it
+		// does an initial flush after setting the headers. After that, it
+		// flushes once per Notification. This flush is to make sure the initial
+		// flush is accounted for.
 		<-rw.flushed
+
+		go n.Notify(Progress, "hi", true)
 		<-rw.flushed
 
 		expected := "text/event-stream"
@@ -150,6 +154,90 @@ func TestObserverServeHTTP(t *testing.T) {
 		)
 		if !bytes.Equal(rw.Body.Bytes(), expectedEvent) {
 			t.Errorf("Event data does not match. got:\n%s\nwanted:\n%s", rw.Body.Bytes(), expectedEvent)
+		}
+	})
+}
+
+func TestNotifier_Notify(t *testing.T) {
+	t.Run("it should not lock when there is no http listener", func(t *testing.T) {
+		o := New()
+		id := uuid.NewV4().String()
+		ctx := context.WithValue(context.Background(), CtxRequestID, id)
+
+		go o.Start()
+		defer o.Stop()
+
+		n, err := o.Notifier(ctx, 1)
+		if err != nil {
+			t.Errorf("unexpected error constructing Notifier: %s", err)
+		}
+
+		go n.Notify(Progress, "hi", true)
+	})
+}
+
+// This benchmark is set up so we can track deadlocks for waiting on server
+// boot.
+func BenchmarkObserver_ServeHTTP_Notify(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		o := New()
+		id := uuid.NewV4().String()
+		ctx := context.WithValue(context.Background(), CtxRequestID, id)
+
+		go o.Start()
+		defer o.Stop()
+
+		rw := &CloseNotifyResponseRecorder{
+			ResponseRecorder: *httptest.NewRecorder(),
+			flushed:          make(chan bool),
+		}
+
+		r := httptest.NewRequest("GET", "/observe", nil)
+
+		n, err := o.Notifier(ctx, uint(b.N))
+		if err != nil {
+			b.Errorf("unexpected error constructing Notifier: %s", err)
+		}
+
+		go o.ServeHTTP(rw, r)
+		<-rw.flushed
+
+		go n.Notify(Progress, "hi", true)
+		<-rw.flushed
+	}
+}
+
+// This benchmark ensures the concurrent behaviour of the notifier. We should be
+// able to send multiple notifications at once.
+func BenchmarkObserver_Notify(b *testing.B) {
+	o := New()
+	id := uuid.NewV4().String()
+	ctx := context.WithValue(context.Background(), CtxRequestID, id)
+
+	go o.Start()
+	defer o.Stop()
+
+	rw := &CloseNotifyResponseRecorder{
+		ResponseRecorder: *httptest.NewRecorder(),
+		flushed:          make(chan bool),
+	}
+
+	r := httptest.NewRequest("GET", "/observe", nil)
+
+	n, err := o.Notifier(ctx, uint(b.N))
+	if err != nil {
+		b.Errorf("unexpected error constructing Notifier: %s", err)
+	}
+
+	go o.ServeHTTP(rw, r)
+	<-rw.flushed
+
+	b.ResetTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			go n.Notify(Progress, "hi", true)
+			<-rw.flushed
 		}
 	})
 }
