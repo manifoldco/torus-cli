@@ -252,6 +252,7 @@ func (o *Observer) Start() {
 		select {
 		case evt := <-o.notify: // We have an event to observe
 			if len(o.observers) == 0 {
+				log.Printf("Ignoring event due to no observers: %s", evt.ID)
 				continue
 			}
 
