@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 )
 
 type ctxkey string
@@ -76,6 +77,7 @@ type Notifier struct {
 	notifications  chan<- *notification
 	observerClosed <-chan int
 	ctxDone        <-chan struct{}
+	sync.RWMutex
 }
 
 func (t *transaction) start() {
@@ -123,7 +125,8 @@ func (n *Notifier) Notifier(total uint) *Notifier {
 	return notifier
 }
 
-// Notify publishes an event to all SSE observers.
+// Notify publishes an event to all SSE observers. This function panics when it
+// is called more often than it is supposed to have been called.
 func (n *Notifier) Notify(eventType EventType, message string, increment bool) {
 	notif := &notification{
 		Type:      eventType,
@@ -132,12 +135,19 @@ func (n *Notifier) Notify(eventType EventType, message string, increment bool) {
 	}
 
 	if increment {
+		n.Lock()
 		n.current++
+		n.Unlock()
 	}
 
-	if n.current > n.total {
+	n.RLock()
+	current := n.current
+	total := n.total
+	n.RUnlock()
+
+	if current > total {
 		panic(fmt.Sprintf(
-			"notifications exceed maximum %d/%d", n.current, n.total))
+			"notifications exceed maximum %d/%d", current, total))
 	}
 
 	select {
@@ -245,6 +255,7 @@ func (o *Observer) Start() {
 		select {
 		case evt := <-o.notify: // We have an event to observe
 			if len(o.observers) == 0 {
+				log.Printf("Ignoring event due to no observers: %s", evt.ID)
 				continue
 			}
 
