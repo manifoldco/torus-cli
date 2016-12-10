@@ -141,11 +141,14 @@ func (n *Notifier) Notify(eventType EventType, message string, increment bool) {
 	}
 
 	n.RLock()
-	if n.current > n.total {
-		panic(fmt.Sprintf(
-			"notifications exceed maximum %d/%d", n.current, n.total))
-	}
+	current := n.current
+	total := n.total
 	n.RUnlock()
+
+	if current > total {
+		panic(fmt.Sprintf(
+			"notifications exceed maximum %d/%d", current, total))
+	}
 
 	select {
 	case n.notifications <- notif:
