@@ -48,7 +48,7 @@ func NewEngine(c *config.Config, s session.Session, db *db.DB, e *crypto.Engine,
 		crypto:  e,
 		client:  client,
 	}
-	engine.Worklog = Worklog{engine: engine}
+	engine.Worklog = newWorklog(engine)
 	engine.Machine = Machine{engine: engine}
 	engine.Session = Session{engine: engine}
 	return engine

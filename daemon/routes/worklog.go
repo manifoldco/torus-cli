@@ -23,7 +23,7 @@ func worklogListRoute(engine *logic.Engine, o *observer.Observer) http.HandlerFu
 			return
 		}
 
-		items, err := engine.Worklog.List(ctx, &orgID)
+		items, err := engine.Worklog.List(ctx, &orgID, apitypes.AnyWorklogType)
 		if err != nil {
 			log.Printf("error getting worklog list: %s", err)
 			encodeResponseErr(w, err)
