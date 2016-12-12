@@ -1,8 +1,16 @@
 # CHANGELOG
 
-## Unreleased
+## v0.20.0
 
 _unreleased_
+
+**Fixes**
+
+- Resolved possible race condition in the progress notification code.
+
+**Thanks**
+
+- Jelmer Snoeck
 
 ## v0.19.0
 
@@ -39,6 +47,10 @@ _2016-12-08_
 **Docs**
 
 - Added documentation for `torus worklog resolve`
+
+**Thanks**
+
+- Ben Tranter
 
 ## v0.18.0
 
