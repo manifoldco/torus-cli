@@ -167,14 +167,6 @@ func listServices(ctx *context.Context, client *api.Client, orgID, projID *ident
 	return client.Services.List(c, &orgIDs, &projectIDs, &names)
 }
 
-func listServicesByProjectID(ctx *context.Context, client *api.Client, projectIDs []*identity.ID) ([]api.ServiceResult, error) {
-	c, client, err := NewAPIClient(ctx, client)
-	if err != nil {
-		return nil, cli.NewExitError(envListFailed, -1)
-	}
-	return client.Services.List(c, nil, &projectIDs, nil)
-}
-
 const serviceCreateFailed = "Could not create service."
 
 func createServiceCmd(ctx *cli.Context) error {

@@ -11,7 +11,6 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
-	"github.com/manifoldco/torus-cli/identity"
 )
 
 func init() {
@@ -219,15 +218,4 @@ func getOrg(ctx context.Context, client *api.Client, name string) (*api.OrgResul
 	}
 
 	return org, nil
-}
-
-func getOrgTree(c context.Context, client *api.Client, orgID identity.ID) ([]api.OrgTreeSegment, error) {
-	orgTree, err := client.Orgs.GetTree(c, orgID)
-	if err != nil {
-		return nil, errs.NewErrorExitError("Unable to lookup org tree.", err)
-	}
-	if orgTree == nil {
-		return nil, errs.NewExitError("Org tree not found.")
-	}
-	return orgTree, nil
 }

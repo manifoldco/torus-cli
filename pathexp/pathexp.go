@@ -548,19 +548,3 @@ func (pe *PathExp) UnmarshalText(b []byte) error {
 func (pe *PathExp) MarshalText() ([]byte, error) {
 	return []byte(pe.String()), nil
 }
-
-// return string at index, or empty (prevent out of range)
-func stringAtIndex(segments []string, idx int) string {
-	if len(segments) > idx {
-		return segments[idx]
-	}
-	return ""
-}
-
-// split cpathExp segment within []string at idx
-func splitSliceAtIndex(name string, segments []string, idx int) ([]string, error) {
-	if (len(segments) - 1) < idx {
-		return []string{}, nil
-	}
-	return Split(name, segments[idx])
-}

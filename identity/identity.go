@@ -43,7 +43,7 @@ type Mutable interface {
 // The second byte holds the type of the object.
 // The remaining 16 bytes hold a digest of the contents of the object for
 // immutable objects, or a random value for mutable objects.
-type ID [18]byte
+type ID [byteLength]byte
 
 // NewMutable returns a new ID for a mutable object.
 func NewMutable(body Mutable) (ID, error) {
@@ -145,7 +145,7 @@ func decodeFromByte(raw []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(out) != 18 {
+	if len(out) != byteLength {
 		return nil, errors.New("Incorrect length for id")
 	}
 
