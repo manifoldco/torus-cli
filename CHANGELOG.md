@@ -4,6 +4,10 @@
 
 _unreleased_
 
+**Notable Changes**
+
+- Update the style of selection lists for improved readability.
+
 **Fixes**
 
 - Resolved possible race condition in the progress notification code.

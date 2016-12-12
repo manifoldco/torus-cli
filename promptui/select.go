@@ -119,10 +119,10 @@ func (s *Select) innerRun(starting int, top rune) (int, string, error) {
 				page = '↓'
 			}
 			if i == selected {
-				selection = "☞"
+				selection = "▸"
 				item = underlined(item)
 			}
-			list[i-start] = clearLine + "\r" + string(page) + selection + " " + item
+			list[i-start] = clearLine + "\r" + string(page) + " " + selection + " " + item
 		}
 
 		prefix := ""
