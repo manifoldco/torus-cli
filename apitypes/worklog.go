@@ -17,6 +17,8 @@ const (
 	SecretRotateWorklogType WorklogType = 1 << iota
 	MissingKeypairsWorklogType
 	InviteApproveWorklogType
+
+	AnyWorklogType WorklogType = 0xff
 )
 
 // WorklogResultType is the string type of worklog results
@@ -24,10 +26,10 @@ type WorklogResultType string
 
 // WorklogResult result states.
 const (
-	SuccessWorklogResult = "success"
-	FailureWorklogResult = "failure"
-	ErrorWorklogResult   = "error"
-	ManualWorklogResult  = "manual"
+	SuccessWorklogResult WorklogResultType = "success"
+	FailureWorklogResult WorklogResultType = "failure"
+	ErrorWorklogResult   WorklogResultType = "error"
+	ManualWorklogResult  WorklogResultType = "manual"
 )
 
 // ErrIncorrectWorklogIDLen is returned when a base32 encoded worklog id is the
@@ -62,6 +64,11 @@ func (id WorklogID) String() string {
 	return base32.EncodeToString(id[:])
 }
 
+// Type returns this id's type
+func (id WorklogID) Type() WorklogType {
+	return WorklogType(id[0])
+}
+
 // WorklogItem is an item that the daemon has identified as needing to be done
 // to ensure system correctness, or security in the face of stale secrets.
 type WorklogItem struct {
@@ -74,7 +81,7 @@ type WorklogItem struct {
 
 // Type returns this item's type
 func (w *WorklogItem) Type() WorklogType {
-	return WorklogType(w.ID[0])
+	return w.ID.Type()
 }
 
 // String returns a human reable string for this worklog item type.
@@ -110,7 +117,7 @@ func (w *WorklogItem) CreateID(worklogType WorklogType) {
 // WorklogResult is the result, either positive or negative, of attempting to
 // resolve a WorklogItem
 type WorklogResult struct {
-	ID      *WorklogID `json:"id"`
-	State   string     `json:"state"`
-	Message string     `json:"message"`
+	ID      *WorklogID        `json:"id"`
+	State   WorklogResultType `json:"state"`
+	Message string            `json:"message"`
 }

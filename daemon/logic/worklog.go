@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 
@@ -19,95 +20,49 @@ import (
 // Worklog items may be automatically resolved, or require the user do manually
 // perform some action.
 type Worklog struct {
-	engine *Engine
+	engine   *Engine
+	handlers map[apitypes.WorklogType]worklogTypeHandler
+}
+
+func newWorklog(e *Engine) Worklog {
+	w := Worklog{
+		engine: e,
+		handlers: map[apitypes.WorklogType]worklogTypeHandler{
+			apitypes.SecretRotateWorklogType:    &secretRotateHandler{engine: e},
+			apitypes.MissingKeypairsWorklogType: &missingKeypairsHandler{engine: e},
+			apitypes.InviteApproveWorklogType:   &inviteApproveHandler{engine: e},
+		},
+	}
+
+	return w
+}
+
+type worklogTypeHandler interface {
+	list(context.Context, *envelope.Unsigned) ([]apitypes.WorklogItem, error)
+	resolve(context.Context, *observer.Notifier, *identity.ID,
+		*apitypes.WorklogItem) (*apitypes.WorklogResult, error)
 }
 
 // List returns the list of all outstanding worklog items for the given org
-func (w *Worklog) List(ctx context.Context, orgID *identity.ID) ([]apitypes.WorklogItem, error) {
-	var items []apitypes.WorklogItem
+func (w *Worklog) List(ctx context.Context, orgID *identity.ID,
+	itemType apitypes.WorklogType) ([]apitypes.WorklogItem, error) {
 
 	org, err := w.engine.client.Orgs.Get(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	projects, err := w.engine.client.Projects.List(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
+	var items []apitypes.WorklogItem
+	for t, h := range w.handlers {
+		if t&itemType == 0 {
+			continue
+		}
 
-	cgs := newCredentialGraphSet()
-	orgName := org.Body.(*primitive.Org).Name
-	for _, project := range projects {
-		projName := project.Body.(*primitive.Project).Name
-		graphs, err := w.engine.client.CredentialGraph.Search(ctx,
-			"/"+orgName+"/"+projName+"/*/*/*/*", w.engine.session.AuthID())
+		hItems, err := h.list(ctx, org)
 		if err != nil {
 			return nil, err
 		}
-
-		err = cgs.Add(graphs...)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	needRotation, err := cgs.NeedRotation()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, cred := range needRotation {
-		base, err := baseCredential(&cred)
-		if err != nil {
-			return nil, err
-		}
-
-		item := apitypes.WorklogItem{
-			Subject: base.PathExp.String() + "/" + base.Name,
-			Summary: "A user's access was revoked. This secret's value should be changed.",
-		}
-		item.CreateID(apitypes.SecretRotateWorklogType)
-
-		items = append(items, item)
-	}
-
-	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, w.engine.client, org.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if encClaimed == nil || sigClaimed == nil {
-		item := apitypes.WorklogItem{
-			Subject: org.Body.(*primitive.Org).Name,
-			Summary: "Signing and Encryption keypairs missing for org.",
-		}
-
-		if encClaimed != nil {
-			item.Summary = "Signing keypair missing for org."
-		} else if sigClaimed != nil {
-			item.Summary = "Encryption keypair missing for org."
-		}
-
-		item.CreateID(apitypes.MissingKeypairsWorklogType)
-
-		items = append(items, item)
-	}
-
-	invites, err := w.engine.client.OrgInvite.List(ctx, org.ID, []string{"accepted"}, "")
-	if err != nil {
-		return nil, err
-	}
-
-	for _, invite := range invites {
-		item := apitypes.WorklogItem{
-			Subject:   invite.Body.(*primitive.OrgInvite).Email,
-			Summary:   "Org invite ready for approval",
-			SubjectID: invite.ID,
-		}
-		item.CreateID(apitypes.InviteApproveWorklogType)
-
-		items = append(items, item)
+		items = append(items, hItems...)
 	}
 
 	return items, nil
@@ -117,7 +72,7 @@ func (w *Worklog) List(ctx context.Context, orgID *identity.ID) ([]apitypes.Work
 func (w *Worklog) Get(ctx context.Context, orgID *identity.ID,
 	ident *apitypes.WorklogID) (*apitypes.WorklogItem, error) {
 
-	items, err := w.List(ctx, orgID)
+	items, err := w.List(ctx, orgID, ident.Type())
 	if err != nil {
 		return nil, err
 	}
@@ -145,48 +100,159 @@ func (w *Worklog) Resolve(ctx context.Context, n *observer.Notifier,
 		return nil, nil
 	}
 
-	switch item.Type() {
-	case apitypes.SecretRotateWorklogType:
-		return &apitypes.WorklogResult{
-			ID:      item.ID,
-			State:   apitypes.ManualWorklogResult,
-			Message: "Please set a new value for the secret at " + item.Subject,
-		}, nil
-	case apitypes.MissingKeypairsWorklogType:
-		err = w.engine.GenerateKeypair(ctx, n, orgID)
-		if err != nil {
-			return &apitypes.WorklogResult{
-				ID:      item.ID,
-				State:   apitypes.ErrorWorklogResult,
-				Message: "Error generating keypairs: " + err.Error(),
-			}, nil
-		}
+	return w.handlers[item.Type()].resolve(ctx, n, orgID, item)
+}
 
-		return &apitypes.WorklogResult{
-			ID:      item.ID,
-			State:   apitypes.SuccessWorklogResult,
-			Message: "Keypairs generated.",
-		}, nil
-	case apitypes.InviteApproveWorklogType:
-		_, err = w.engine.ApproveInvite(ctx, n, item.SubjectID)
+type secretRotateHandler struct {
+	engine *Engine
+}
+
+func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
+	projects, err := h.engine.client.Projects.List(ctx, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cgs := newCredentialGraphSet()
+	orgName := org.Body.(*primitive.Org).Name
+	for _, project := range projects {
+		projName := project.Body.(*primitive.Project).Name
+		graphs, err := h.engine.client.CredentialGraph.Search(ctx,
+			"/"+orgName+"/"+projName+"/*/*/*/*", h.engine.session.AuthID())
 		if err != nil {
 			return nil, err
 		}
+
+		err = cgs.Add(graphs...)
 		if err != nil {
-			return &apitypes.WorklogResult{
-				ID:      item.ID,
-				State:   apitypes.ErrorWorklogResult,
-				Message: "Error approving invite: " + err.Error(),
-			}, nil
+			return nil, err
 		}
-
-		return &apitypes.WorklogResult{
-			ID:      item.ID,
-			State:   apitypes.SuccessWorklogResult,
-			Message: "User invite approved and finalized.",
-		}, nil
-
 	}
 
-	return nil, nil
+	needRotation, err := cgs.NeedRotation()
+	if err != nil {
+		return nil, err
+	}
+
+	var items []apitypes.WorklogItem
+	for _, cred := range needRotation {
+		base, err := baseCredential(&cred)
+		if err != nil {
+			return nil, err
+		}
+
+		item := apitypes.WorklogItem{
+			Subject: base.PathExp.String() + "/" + base.Name,
+			Summary: "A user's access was revoked. This secret's value should be changed.",
+		}
+		item.CreateID(apitypes.SecretRotateWorklogType)
+
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+func (h *secretRotateHandler) resolve(ctx context.Context, n *observer.Notifier,
+	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
+	return &apitypes.WorklogResult{
+		ID:      item.ID,
+		State:   apitypes.ManualWorklogResult,
+		Message: "Please set a new value for the secret at " + item.Subject,
+	}, nil
+}
+
+type missingKeypairsHandler struct {
+	engine *Engine
+}
+
+func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
+	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, h.engine.client, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []apitypes.WorklogItem
+	if encClaimed == nil || sigClaimed == nil {
+		item := apitypes.WorklogItem{
+			Subject: org.Body.(*primitive.Org).Name,
+			Summary: "Signing and Encryption keypairs missing for org.",
+		}
+
+		if encClaimed != nil {
+			item.Summary = "Signing keypair missing for org."
+		} else if sigClaimed != nil {
+			item.Summary = "Encryption keypair missing for org."
+		}
+
+		item.CreateID(apitypes.MissingKeypairsWorklogType)
+
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+func (h *missingKeypairsHandler) resolve(ctx context.Context, n *observer.Notifier,
+	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
+	err := h.engine.GenerateKeypair(ctx, n, orgID)
+	if err != nil {
+		return &apitypes.WorklogResult{
+			ID:      item.ID,
+			State:   apitypes.ErrorWorklogResult,
+			Message: "Error generating keypairs: " + err.Error(),
+		}, nil
+	}
+
+	return &apitypes.WorklogResult{
+		ID:      item.ID,
+		State:   apitypes.SuccessWorklogResult,
+		Message: "Keypairs generated.",
+	}, nil
+}
+
+type inviteApproveHandler struct {
+	engine *Engine
+}
+
+func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
+	invites, err := h.engine.client.OrgInvite.List(ctx, org.ID, []string{"accepted"}, "")
+	if err != nil {
+		return nil, err
+	}
+
+	var items []apitypes.WorklogItem
+	for _, invite := range invites {
+		item := apitypes.WorklogItem{
+			Subject:   invite.Body.(*primitive.OrgInvite).Email,
+			Summary:   "Org invite ready for approval",
+			SubjectID: invite.ID,
+		}
+		item.CreateID(apitypes.InviteApproveWorklogType)
+
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+func (h *inviteApproveHandler) resolve(ctx context.Context, n *observer.Notifier,
+	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
+	_, err := h.engine.ApproveInvite(ctx, n, item.SubjectID)
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return &apitypes.WorklogResult{
+			ID:      item.ID,
+			State:   apitypes.ErrorWorklogResult,
+			Message: "Error approving invite: " + err.Error(),
+		}, nil
+	}
+
+	return &apitypes.WorklogResult{
+		ID:      item.ID,
+		State:   apitypes.SuccessWorklogResult,
+		Message: "User invite approved and finalized.",
+	}, nil
 }
