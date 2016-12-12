@@ -2,6 +2,10 @@ package ui
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/chzyer/readline"
+	"github.com/kr/text"
 
 	"github.com/manifoldco/torus-cli/prefs"
 )
@@ -27,9 +31,28 @@ func Progress(str string) {
 }
 
 // Hint handles the ui output for hint/onboarding messages, when enabled
-func Hint(str string) {
+func Hint(str string, noPadding bool) {
 	if !enableHints {
 		return
 	}
-	fmt.Println(str)
+	if !noPadding {
+		fmt.Println("")
+	}
+	printWrapLabeled("Protip:", str)
+}
+
+func printWrapLabeled(label, message string) {
+	cols := readline.GetScreenWidth() - 2
+	fmt.Printf("%s  ", label)
+	longest := len(label)
+	wrapped := text.Wrap(message, cols-(2+longest))
+	fmt.Println(indentOthers(wrapped, 2+longest))
+}
+
+func indentOthers(str string, indent int) string {
+	nl := strings.IndexRune(str, '\n')
+	if nl == -1 {
+		nl = len(str)
+	}
+	return str[:nl] + text.Indent(str[nl:], fmt.Sprintf("%*s", indent, ""))
 }

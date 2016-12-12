@@ -7,6 +7,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/cmd"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/prefs"
 	"github.com/manifoldco/torus-cli/ui"
 )
@@ -18,6 +19,7 @@ func main() {
 
 	preferences, _ := prefs.NewPreferences()
 	ui.Init(preferences)
+	hints.Init()
 
 	app := cli.NewApp()
 	app.Version = config.Version

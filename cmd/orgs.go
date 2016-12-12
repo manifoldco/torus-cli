@@ -11,6 +11,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 )
 
 func init() {
@@ -79,7 +80,12 @@ func orgsCreate(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 
 	_, err = createOrgByName(c, ctx, client, name)
-	return err
+	if err != nil {
+		return err
+	}
+
+	hints.Display([]string{"invites send", "projects", "link"})
+	return nil
 }
 
 func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, name string) (*api.OrgResult, error) {

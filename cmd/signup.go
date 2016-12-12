@@ -9,6 +9,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/promptui"
 
 	"github.com/urfave/cli"
 )
@@ -79,6 +80,25 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	password, err := PasswordPrompt(true, nil)
 	if err != nil {
 		return err
+	}
+
+	// Whether we should enable tool hints
+	label := "Enable hints"
+	preamble := "Would you like to enable hints on how to use Torus?\nThey can be disabled at any time using `torus prefs`."
+	enableHints := ConfirmDialogue(ctx, &label, &preamble, "y", false)
+	prefValue := "true"
+	if enableHints != nil {
+		// Abort if they interrupt
+		if enableHints == promptui.ErrInterrupt {
+			return enableHints
+		}
+		prefValue = "false"
+	}
+	// Store the preference value
+	prefErr := setPrefByName("core.hints", prefValue)
+	// Alert the user we failed to disable them, but continue with signup
+	if prefErr != nil {
+		fmt.Printf("Failed to set core.hints. Run `torus prefs set core.hints %s` to try again.\n", prefValue)
 	}
 
 	cfg, err := config.LoadConfig()

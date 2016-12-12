@@ -133,7 +133,7 @@ func profileEdit(ctx *cli.Context) error {
 	if email != ogEmail {
 		preamble = "\nYou will be required to re-verify your email address before taking any further actions within Torus."
 	}
-	abortErr := ConfirmDialogue(ctx, nil, &preamble, false)
+	abortErr := ConfirmDialogue(ctx, nil, &preamble, "", false)
 	if abortErr != nil {
 		return abortErr
 	}

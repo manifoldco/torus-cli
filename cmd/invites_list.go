@@ -12,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 )
 
@@ -101,5 +102,6 @@ func invitesList(ctx *cli.Context) error {
 	w.Flush()
 	fmt.Println("")
 
+	hints.Display([]string{"invites approve", "teams members"})
 	return nil
 }

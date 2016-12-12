@@ -7,6 +7,9 @@ _unreleased_
 **Notable Changes**
 
 - Update the style of selection lists for improved readability.
+- Added hint output to core commands, prompting the user during signup if they
+  wish to enable them.
+- Confirm dialogues now show default value as uppercase
 
 **Fixes**
 

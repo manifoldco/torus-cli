@@ -16,6 +16,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -361,6 +362,8 @@ func createTeamCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Printf("Team %s created.\n", teamName)
+
+	hints.Display([]string{"allow", "deny"})
 	return nil
 }
 
