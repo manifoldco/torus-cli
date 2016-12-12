@@ -86,22 +86,7 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		return nil, err
 	}
 
-	teams, err := client.Teams.List(ctx, credBody.OrgID)
-	if err != nil {
-		return nil, err
-	}
-
-	membersTeam, machinesTeam, err := findSystemTeams(teams)
-	if err != nil {
-		return nil, err
-	}
-
-	userMembers, err := client.Memberships.List(ctx, credBody.OrgID, membersTeam.ID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	machineMembers, err := client.Memberships.List(ctx, credBody.OrgID, machinesTeam.ID, nil)
+	subjects, err := getKeyringMembers(ctx, client, credBody.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -117,28 +102,6 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 			Err: []string{
 				fmt.Sprintf("Claim tree not found for org: %s", credBody.OrgID),
 			},
-		}
-	}
-
-	// get users in the members group of this org.
-	// XXX: we need to filter this down based on ACL
-	var subjects []identity.ID
-	for _, membership := range userMembers {
-		subjects = append(subjects, *membership.Body.(*primitive.Membership).OwnerID)
-	}
-
-	for _, membership := range machineMembers {
-		machineID := membership.Body.(*primitive.Membership).OwnerID
-		segment, err := client.Machines.Get(ctx, machineID)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, token := range segment.Tokens {
-			if token.Token.Body.State == primitive.MachineTokenActiveState {
-				subjects = append(subjects, *token.Token.ID)
-				break
-			}
 		}
 	}
 
@@ -667,4 +630,54 @@ func baseCredential(cred *envelope.Signed) (*primitive.BaseCredential, error) {
 	default:
 		return nil, fmt.Errorf("Unknown credential version %d", v)
 	}
+}
+
+// getKeyringMembers returns a slice of IDs of all subjects that should be
+// members of a keyring.
+// This includes both users, and the active tokens of machines.
+// XXX: we need to filter the members down based on ACL
+func getKeyringMembers(ctx context.Context, client *registry.Client,
+	orgID *identity.ID) ([]identity.ID, error) {
+
+	teams, err := client.Teams.List(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	membersTeam, machinesTeam, err := findSystemTeams(teams)
+	if err != nil {
+		return nil, err
+	}
+
+	userMembers, err := client.Memberships.List(ctx, orgID, membersTeam.ID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	machineMembers, err := client.Memberships.List(ctx, orgID, machinesTeam.ID, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var members []identity.ID
+	for _, membership := range userMembers {
+		members = append(members, *membership.Body.(*primitive.Membership).OwnerID)
+	}
+
+	for _, membership := range machineMembers {
+		machineID := membership.Body.(*primitive.Membership).OwnerID
+		segment, err := client.Machines.Get(ctx, machineID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, token := range segment.Tokens {
+			if token.Token.Body.State == primitive.MachineTokenActiveState {
+				members = append(members, *token.Token.ID)
+				break
+			}
+		}
+	}
+
+	return members, nil
 }
