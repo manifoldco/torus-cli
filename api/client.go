@@ -144,6 +144,9 @@ func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}, reqID *
 					err = json.Unmarshal(raw, &event)
 					if err != nil {
 						output(nil, err)
+						go func() {
+							<-done
+						}()
 						return
 					}
 					if event.ID == *reqID {
@@ -157,7 +160,9 @@ func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}, reqID *
 	}
 
 	resp, err := c.client.Do(r)
-	close(done)
+	if progress != nil {
+		done <- true
+	}
 	if err != nil {
 		return nil, err
 	}
