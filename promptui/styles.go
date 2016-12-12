@@ -9,7 +9,7 @@ var (
 var (
 	iconInitial = styler(fgBlue)("?")
 	iconGood    = styler(fgGreen)("✔")
-	iconWarn    = styler(fgYellow)("⚠")
+	_           = styler(fgYellow)("⚠") // iconWarn
 	iconBad     = styler(fgRed)("✗")
 )
 

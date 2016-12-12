@@ -252,11 +252,3 @@ func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.
 
 	return client.Environments.List(c, &orgIDs, &projectIDs, &names)
 }
-
-func listEnvsByProjectID(ctx *context.Context, client *api.Client, projectIDs []*identity.ID) ([]api.EnvironmentResult, error) {
-	c, client, err := NewAPIClient(ctx, client)
-	if err != nil {
-		return nil, cli.NewExitError(envListFailed, -1)
-	}
-	return client.Environments.List(c, nil, &projectIDs, nil)
-}

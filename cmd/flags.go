@@ -12,29 +12,22 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 )
 
-// Standard flags for path expression parts.
+// Standard flags with generic descriptions
 var (
-	stdOrgFlag        = orgFlag("Use this organization.", true)
-	stdProjectFlag    = projectFlag("Use this project.", true)
-	stdEnvFlag        = envFlag("Use this environment.", true)
-	stdServiceFlag    = serviceFlag("Use this service.", "", true)
-	stdUserFlag       = userFlag("Use this user.", true)
-	stdMachineFlag    = machineFlag("Use this machine.", true)
-	stdInstanceFlag   = instanceFlag("Use this instance.", true)
-	stdAutoAcceptFlag = autoAcceptFlag()
+	stdOrgFlag      = orgFlag("Use this organization.", true)
+	stdProjectFlag  = projectFlag("Use this project.", true)
+	stdEnvFlag      = envFlag("Use this environment.", true)
+	stdInstanceFlag = instanceFlag("Use this instance.", true)
+
+	stdAutoAcceptFlag = cli.BoolFlag{
+		Name:  "yes, y",
+		Usage: "Automatically accept confirmation dialogues.",
+	}
 )
 
 func formatFlag(defaultValue, description string) cli.Flag {
 	return newPlaceholder("format, f", "FORMAT", description,
 		defaultValue, "TORUS_FORMAT", false)
-}
-
-// autoAcceptFlag creates a new --yes cli.BoolFlag
-func autoAcceptFlag() cli.Flag {
-	return cli.BoolFlag{
-		Name:  "yes, y",
-		Usage: "Automatically accept confirmation dialogues.",
-	}
 }
 
 // orgFlag creates a new --org cli.Flag with custom usage string.
@@ -70,11 +63,6 @@ func machineFlag(usage string, required bool) cli.Flag {
 // instanceFlag creates a new --instance cli.Flag with custom usage string.
 func instanceFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "TORUS_INSTANCE", required)
-}
-
-// teamFlag creates a new --team cli.Flag with custom usage string.
-func teamFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("team, t", "TEAM", usage, "", "TORUS_TEAM", required)
 }
 
 // roleFlag creates a new --role cli.Flag with custom usage string.

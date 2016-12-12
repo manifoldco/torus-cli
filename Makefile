@@ -16,7 +16,8 @@ LINTERS=\
 	gosimple \
 	vet \
 	misspell \
-	ineffassign
+	ineffassign \
+	deadcode
 
 all: binary
 ci: binary $(LINTERS) cmdlint test
@@ -27,8 +28,6 @@ ci: binary $(LINTERS) cmdlint test
 # Bootstrapping for base golang package deps
 #################################################
 
-# XXX: switch back to upstream go-bindata when it passes gosimple
-
 BOOTSTRAP=\
 	github.com/Masterminds/glide \
 	github.com/golang/lint/golint \
@@ -36,6 +35,7 @@ BOOTSTRAP=\
 	github.com/jteeuwen/go-bindata/... \
 	github.com/client9/misspell/cmd/misspell \
 	github.com/gordonklaus/ineffassign \
+	github.com/tsenart/deadcode \
 	github.com/alecthomas/gometalinter
 
 $(BOOTSTRAP):

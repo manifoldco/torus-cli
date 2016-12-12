@@ -14,19 +14,19 @@ const (
 	reset attribute = iota
 	fgBold
 	fgFaint
-	fgItalic
+	_ // fgItalic
 	fgUnderline
 )
 
 const (
-	fgBlack attribute = iota + 30
+	_ attribute = iota + 30 // fgBlack
 	fgRed
 	fgGreen
 	fgYellow
 	fgBlue
-	fgMagenta
-	fgCyan
-	fgWhite
+	_ // fgMagenta
+	_ // fgCyan
+	_ // fgWhite
 )
 
 var (
