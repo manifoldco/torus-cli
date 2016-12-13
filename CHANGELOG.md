@@ -16,6 +16,7 @@ _unreleased_
 **Fixes**
 
 - Resolved possible race condition in the progress notification code.
+- Ensure the user is logged in when trying to create an org.
 
 **Thanks**
 
