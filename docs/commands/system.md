@@ -17,6 +17,7 @@ Preference | Description
 `core.context` | Boolean determining if the `.torus.json` and defaults should be considered during command execution
 `core.auto_confirm` | Boolean determining if confirmation prompts should be automatically skipped (equivalent of always using `-y` command option)
 `core.vim` | Boolean determining if CLI input should use Vim bindings
+`core.hints` | Boolean determining if the "protip" hints are shown after command execution
 `defaults.org` | Organization name to be used with context
 `defaults.project` | Project name to be used with context
 `defaults.environment` | Environment name to be used with context

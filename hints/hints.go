@@ -47,9 +47,6 @@ func Init() {
 		"run": {
 			"Start your process with your decrypted secrets using `torus run`",
 		},
-		"system": {
-			"Disable hints with `torus prefs set core.hints false`",
-		},
 		"teams members": {
 			"Display current members of your organization with `torus members member`",
 		},
