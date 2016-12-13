@@ -24,7 +24,7 @@ func init() {
 				Name:      "create",
 				Usage:     "Create a new organization",
 				ArgsUsage: "<name>",
-				Action:    chain(ensureDaemon, orgsCreate),
+				Action:    chain(ensureDaemon, ensureSession, orgsCreate),
 			},
 			{
 				Name:   "list",
