@@ -98,7 +98,9 @@ func (k *KeyringSectionV2) FindMember(id *identity.ID) (*primitive.KeyringMember
 		mbody := m.Member.Body.(*primitive.KeyringMember)
 		if *mbody.OwnerID == *id {
 			krm = mbody
-			mekshare = m.MEKShare.Body.(*primitive.MEKShare)
+			if m.MEKShare != nil {
+				mekshare = m.MEKShare.Body.(*primitive.MEKShare)
+			}
 			break
 		}
 	}

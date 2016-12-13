@@ -10,6 +10,8 @@ _unreleased_
 - Added hint output to core commands, prompting the user during signup if they
   wish to enable them.
 - Confirm dialogues now show default value as uppercase
+- Teach `worklog` how to identify and fix cases where users or machines
+  haven't been included in a keyring for secrets access when they should be.
 
 **Fixes**
 
