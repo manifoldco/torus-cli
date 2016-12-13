@@ -41,6 +41,7 @@ type worklogTypeHandler interface {
 	list(context.Context, *envelope.Unsigned) ([]apitypes.WorklogItem, error)
 	resolve(context.Context, *observer.Notifier, *identity.ID,
 		*apitypes.WorklogItem) (*apitypes.WorklogResult, error)
+	resolveErr() string
 }
 
 // List returns the list of all outstanding worklog items for the given org
@@ -100,11 +101,32 @@ func (w *Worklog) Resolve(ctx context.Context, n *observer.Notifier,
 		return nil, nil
 	}
 
-	return w.handlers[item.Type()].resolve(ctx, n, orgID, item)
+	handler := w.handlers[item.Type()]
+	result, err := handler.resolve(ctx, n, orgID, item)
+
+	// We handle errors from the handler's resolve differently than regular
+	// errors; for every other part of the daemon code they're non-errors, sent
+	// back to the caller for display. The caller can then continue trying to
+	// resolve other worklog items.
+	if err != nil {
+		result = &apitypes.WorklogResult{
+			ID:      item.ID,
+			State:   apitypes.ErrorWorklogResult,
+			Message: handler.resolveErr() + ": " + err.Error(),
+		}
+	}
+
+	return result, nil
 }
 
 type secretRotateHandler struct {
 	engine *Engine
+}
+
+func (secretRotateHandler) resolveErr() string {
+	// This won't happen, because rotation must be manual. Let's include an
+	// error message just in case, though!
+	return "Error rotating secret"
 }
 
 func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
@@ -166,6 +188,10 @@ type missingKeypairsHandler struct {
 	engine *Engine
 }
 
+func (missingKeypairsHandler) resolveErr() string {
+	return "Error generating keypairs"
+}
+
 func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
 	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, h.engine.client, org.ID)
 	if err != nil {
@@ -197,11 +223,7 @@ func (h *missingKeypairsHandler) resolve(ctx context.Context, n *observer.Notifi
 	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
 	err := h.engine.GenerateKeypair(ctx, n, orgID)
 	if err != nil {
-		return &apitypes.WorklogResult{
-			ID:      item.ID,
-			State:   apitypes.ErrorWorklogResult,
-			Message: "Error generating keypairs: " + err.Error(),
-		}, nil
+		return nil, err
 	}
 
 	return &apitypes.WorklogResult{
@@ -213,6 +235,10 @@ func (h *missingKeypairsHandler) resolve(ctx context.Context, n *observer.Notifi
 
 type inviteApproveHandler struct {
 	engine *Engine
+}
+
+func (inviteApproveHandler) resolveErr() string {
+	return "Error approving invite"
 }
 
 func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
@@ -241,13 +267,6 @@ func (h *inviteApproveHandler) resolve(ctx context.Context, n *observer.Notifier
 	_, err := h.engine.ApproveInvite(ctx, n, item.SubjectID)
 	if err != nil {
 		return nil, err
-	}
-	if err != nil {
-		return &apitypes.WorklogResult{
-			ID:      item.ID,
-			State:   apitypes.ErrorWorklogResult,
-			Message: "Error approving invite: " + err.Error(),
-		}, nil
 	}
 
 	return &apitypes.WorklogResult{
