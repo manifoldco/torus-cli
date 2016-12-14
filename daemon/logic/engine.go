@@ -102,8 +102,8 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	// No matching CredentialGraph/KeyRing for this credential.
 	// We'll make a new one now.
 	if graph == nil || graph.HasRevocations() {
-		newGraph, err = createCredentialGraph(ctx, cred.Body, graph, sigID,
-			encID, kp, e.client, e.crypto)
+		newGraph, err = createCredentialGraph(ctx, cred.Body, graph,
+			sigID, encID, kp, e.client, e.crypto)
 		if err != nil {
 			log.Printf("error creating credential graph: %s", err)
 			return nil, err
@@ -387,9 +387,9 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 	return invite, nil
 }
 
-// GenerateKeypair creates a signing and encrypting keypair for the current
+// GenerateKeypairs creates a signing and encrypting keypair for the current
 // user for the given organization.
-func (e *Engine) GenerateKeypair(ctx context.Context, notifier *observer.Notifier,
+func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifier,
 	OrgID *identity.ID) error {
 
 	n := notifier.Notifier(4)
@@ -476,6 +476,88 @@ func (e *Engine) GenerateKeypair(ctx context.Context, notifier *observer.Notifie
 		log.Printf("Error storing encryption keys in local db: %s", err)
 		return err
 	}
+
+	return nil
+}
+
+// RevokeKeypairs creates revocation claims for the signing and encrypting
+// keypair for the current user for the given organization.
+//
+// A revocation claim is a self-signed claim that effectively deletes the
+// keypairs.
+func (e *Engine) RevokeKeypairs(ctx context.Context, notifier *observer.Notifier,
+	orgID *identity.ID) error {
+
+	n := notifier.Notifier(5)
+
+	encKP, sigKP, err := fetchRegistryKeyPairs(ctx, e.client, orgID)
+	if err != nil {
+		log.Printf("Error retrieving keypairs: %s", err)
+		return err
+	}
+
+	n.Notify(observer.Progress, "Keypairs retrieved", true)
+
+	if sigKP == nil { // no active keypairs; nothing to revoke
+		log.Println("No keys to revoke")
+		return nil
+	}
+
+	sigID := sigKP.PublicKey.ID
+
+	kp := bundleKeypairs(sigKP, encKP)
+
+	if encKP != nil { // the encryption keypair might already be revoked
+		encID := encKP.PublicKey.ID
+
+		prevEncClaim, err := encKP.HeadClaim()
+		if err != nil {
+			return err
+		}
+
+		encclaim, err := e.crypto.SignedEnvelope(
+			ctx, primitive.NewClaim(orgID, e.session.AuthID(), prevEncClaim.ID,
+				encID, primitive.RevocationClaimType),
+			sigID, &kp.Signature)
+		if err != nil {
+			log.Printf("Error creating revocation claim for encryption key: %s", err)
+			return err
+		}
+
+		n.Notify(observer.Progress, "Encryption keys revoked", true)
+
+		_, err = e.client.Claims.Create(ctx, encclaim)
+		if err != nil {
+			log.Printf("Error uploading encryption keypair revocation: %s", err)
+			return err
+		}
+
+		n.Notify(observer.Progress, "Encryption key revocation uploaded", true)
+	}
+
+	prevSigClaim, err := sigKP.HeadClaim()
+	if err != nil {
+		return err
+	}
+
+	sigclaim, err := e.crypto.SignedEnvelope(
+		ctx, primitive.NewClaim(orgID, e.session.AuthID(), prevSigClaim.ID,
+			sigID, primitive.RevocationClaimType),
+		sigID, &kp.Signature)
+	if err != nil {
+		log.Printf("Error creating revocation claim for signing key: %s", err)
+		return err
+	}
+
+	n.Notify(observer.Progress, "Signing keys revoked", true)
+
+	_, err = e.client.Claims.Create(ctx, sigclaim)
+	if err != nil {
+		log.Printf("Error uploading signature keypair revocation: %s", err)
+		return err
+	}
+
+	n.Notify(observer.Progress, "Signing key revocation uploaded", true)
 
 	return nil
 }

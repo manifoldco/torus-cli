@@ -33,7 +33,9 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.PatchFunc("/self", updateSelfRoute(client, s, lEngine))
 
 	mux.PostFunc("/machines", machinesCreateRoute(client, s, lEngine, o))
+
 	mux.PostFunc("/keypairs/generate", keypairsGenerateRoute(lEngine, o))
+	mux.PostFunc("/keypairs/revoke", keypairsRevokeRoute(lEngine, o))
 
 	mux.GetFunc("/credentials", credentialsGetRoute(lEngine, o))
 	mux.PostFunc("/credentials", credentialsPostRoute(lEngine, o))

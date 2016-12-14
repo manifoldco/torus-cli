@@ -8,6 +8,8 @@ _unreleased_
 
 - Ensure `keypairs generate` does not panic when used against an org that has
   existing keypairs.
+- Teach `keypairs list` to display the real validity state of a key, not just
+  always "YES".
 
 ## v0.20.0
 
