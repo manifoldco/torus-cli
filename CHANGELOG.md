@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## v0.21.0
+
+_unreleased_
+
+**Fixes**
+
+- Ensure `keypairs generate` does not panic when used against an org that has
+  existing keypairs.
+
 ## v0.20.0
 
 _2016-12-13_

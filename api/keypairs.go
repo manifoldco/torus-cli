@@ -25,8 +25,8 @@ type KeypairResult struct {
 	} `json:"private_key"`
 	Claims []struct {
 		ID   *identity.ID     `json:"id"`
-		Body *primitive.Claim `json:"claims"`
-	}
+		Body *primitive.Claim `json:"body"`
+	} `json:"claims"`
 }
 
 // Revoked returns a bool indicating if any revocation claims exist against this
