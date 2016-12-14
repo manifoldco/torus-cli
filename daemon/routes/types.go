@@ -4,12 +4,7 @@ import (
 	"net/http"
 
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/identity"
 )
-
-type keyPairGenerate struct {
-	OrgID *identity.ID `json:"org_id"`
-}
 
 type errorMsg struct {
 	Type  apitypes.ErrorType `json:"type"`

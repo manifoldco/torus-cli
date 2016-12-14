@@ -48,6 +48,19 @@ func init() {
 					setUserEnv, checkRequiredFlags, generateKeypairs,
 				),
 			},
+			{
+				Name:  "revoke",
+				Usage: "Revoke the keypairs for an organization (used for testing only)",
+
+				Flags: []cli.Flag{
+					orgFlag("org to revoke keypairs for", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, revokeKeypairs,
+				),
+				Hidden: true,
+			},
 		},
 	}
 	Cmds = append(Cmds, keypairs)
@@ -86,8 +99,12 @@ func listKeypairs(ctx *cli.Context) error {
 	fmt.Fprintln(w, " \t \t \t \t ")
 	for _, keypair := range keypairs {
 		pk := keypair.PublicKey.Body
+		valid := "YES"
+		if keypair.Revoked() {
+			valid = "NO"
+		}
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", keypair.PublicKey.ID,
-			org.Body.Name, pk.KeyType, "YES", pk.Created.Format(time.RFC3339))
+			org.Body.Name, pk.KeyType, valid, pk.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")
@@ -215,5 +232,54 @@ func generateKeypairsForOrg(c context.Context, ctx *cli.Context, client *api.Cli
 		return outputErr
 	}
 
+	return nil
+}
+
+func revokeKeypairs(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	// Verify the org they've specified exists
+	orgName := ctx.String("org")
+	if orgName == "" {
+		return errs.NewExitError("Missing flags: --org.")
+	}
+	org, err := client.Orgs.GetByName(c, orgName)
+	if err != nil || org == nil {
+		return errs.NewExitError("Org '" + orgName + "' not found.")
+	}
+
+	// Iterate over target orgs and identify which keys exist
+	keypairs, err := client.Keypairs.List(c, org.ID)
+	if err != nil {
+		return errs.NewErrorExitError("Error fetching keypairs.", err)
+	}
+
+	hasKey := make(map[primitive.KeyType]struct{})
+
+	for _, kp := range keypairs {
+		if kp.Revoked() {
+			continue
+		}
+
+		hasKey[kp.PublicKey.Body.KeyType] = struct{}{}
+	}
+
+	if _, ok := hasKey[primitive.SigningKeyType]; !ok {
+		fmt.Println("No existing keys to revoke.")
+		return nil
+	}
+
+	err = client.Keypairs.Revoke(c, org.ID, &progress)
+	if err != nil {
+		return errs.NewErrorExitError("Error while revoking keypairs.", err)
+	}
+
+	fmt.Println("Keypairs revoked.")
 	return nil
 }

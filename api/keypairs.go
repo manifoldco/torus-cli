@@ -41,7 +41,7 @@ func (k *KeypairResult) Revoked() bool {
 	return false
 }
 
-type keypairsGenerateRequest struct {
+type keypairsRequest struct {
 	OrgID *identity.ID `json:"org_id"`
 }
 
@@ -49,9 +49,9 @@ type keypairsGenerateRequest struct {
 func (k *KeypairsClient) Generate(ctx context.Context, orgID *identity.ID,
 	output *ProgressFunc) error {
 
-	kpgr := keypairsGenerateRequest{OrgID: orgID}
+	kpr := keypairsRequest{OrgID: orgID}
 
-	req, reqID, err := k.client.NewRequest("POST", "/keypairs/generate", nil, &kpgr, false)
+	req, reqID, err := k.client.NewRequest("POST", "/keypairs/generate", nil, &kpr, false)
 	if err != nil {
 		return err
 	}
@@ -79,4 +79,17 @@ func (k *KeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]Keypai
 	}
 
 	return keypairs, nil
+}
+
+// Revoke revokes the existing keypairs for the user in the given org.
+func (k *KeypairsClient) Revoke(ctx context.Context, orgID *identity.ID, output *ProgressFunc) error {
+	kpr := keypairsRequest{OrgID: orgID}
+
+	req, reqID, err := k.client.NewRequest("POST", "/keypairs/revoke", nil, &kpr, false)
+	if err != nil {
+		return err
+	}
+
+	_, err = k.client.Do(ctx, req, nil, &reqID, output)
+	return err
 }

@@ -227,7 +227,7 @@ func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Unsigne
 
 func (h *missingKeypairsHandler) resolve(ctx context.Context, n *observer.Notifier,
 	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
-	err := h.engine.GenerateKeypair(ctx, n, orgID)
+	err := h.engine.GenerateKeypairs(ctx, n, orgID)
 	if err != nil {
 		return nil, err
 	}

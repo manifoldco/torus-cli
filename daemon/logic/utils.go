@@ -386,6 +386,12 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 		}
 	}
 
+	kp := bundleKeypairs(sigClaimed, encClaimed)
+	return sigClaimed.PublicKey.ID, encClaimed.PublicKey.ID, kp, nil
+}
+
+func bundleKeypairs(sigClaimed, encClaimed *registry.ClaimedKeyPair) *crypto.KeyPairs {
+
 	sigPub := sigClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
 	sigKP := crypto.SignatureKeyPair{
 		Public:  ed25519.PublicKey(*sigPub),
@@ -393,21 +399,22 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 		PNonce:  *sigClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
 	}
 
-	encPub := *encClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
-	encPubB := [32]byte{}
-	copy(encPubB[:], encPub)
-	encKP := crypto.EncryptionKeyPair{
-		Public:  encPubB,
-		Private: *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
-		PNonce:  *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
-	}
-
 	kp := crypto.KeyPairs{
-		Signature:  sigKP,
-		Encryption: encKP,
+		Signature: sigKP,
 	}
 
-	return sigClaimed.PublicKey.ID, encClaimed.PublicKey.ID, &kp, nil
+	if encClaimed != nil {
+		encPub := *encClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
+		encPubB := [32]byte{}
+		copy(encPubB[:], encPub)
+		kp.Encryption = crypto.EncryptionKeyPair{
+			Public:  encPubB,
+			Private: *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
+			PNonce:  *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
+		}
+	}
+
+	return &kp
 }
 
 // findEncryptingKey queries the registry for public keys in the given org, to
