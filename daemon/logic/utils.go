@@ -111,7 +111,9 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		// For this user, find their public encryption key
 		encPubKey, err := findEncryptionPublicKey(claimTrees, credBody.OrgID, &subject)
 		if err != nil {
-			return nil, err
+			// If we didn't find an active key, don't encode this user in the
+			// keyring, but keep going.
+			continue
 		}
 
 		pubKey := encPubKey.Body.(*primitive.PublicKey)

@@ -84,21 +84,39 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 
 ### Worklog/Keyring Versioning
 
-- [ ]   *prerequisite:* Create an org, and invite another user.
-- [ ]   *prerequisite:* Create a team, add the other user to it, and give it
-        access to a project (`projA`)
-- [ ]   *prerequisite:* Create a second project (`projB`) that the other user
-        does not have access to.
-- [ ]   *prerequiresite:* Set two secrets in both projects
-- [ ]   `torus orgs remove [username] —org [org-name]` removes the user from the
-        org.
-- [ ]   `torus worklog list` shows the secrets from `projA` as needing to be
-        changed, but does not show the secrets from `projB`.
-- [ ]   `torus worklog view <id>` shows a worklog entry by id.
-- [ ]   After each secret from `projA` is changed, it no longer appears in the
-        worklog.
-- [ ]   `torus view` can display a mixture of old and new secrets (ie after a
-        single new set in `projA`).
+- [ ]   *Keyring Versioning*
+  - [ ]   *prerequisite:* Create an org, and invite another user.
+  - [ ]   *prerequisite:* Create a team, add the other user to it, and give it
+          access to a project (`projA`)
+  - [ ]   *prerequisite:* Create a second project (`projB`) that the other user
+          does not have access to.
+  - [ ]   *prerequisite:* Set two secrets in both projects
+  - [ ]   `torus orgs remove [username] —org [org-name]` removes the user from
+          the org.
+  - [ ]   `torus worklog list` shows the secrets from `projA` as needing to be
+          changed, but does not show the secrets from `projB`.
+  - [ ]   `torus worklog view <id>` shows a worklog entry by id.
+  - [ ]   After each secret from `projA` is changed, it no longer appears in the
+          worklog.
+  - [ ]   `torus view` can display a mixture of old and new secrets (ie after a
+          single new set in `projA`).
+- [ ]   *Keypair revocation*
+  - [ ]   *prerequisite:* Create an org, and invite another user.
+  - [ ]   *prerequisite:* Create a team, add the other user to it, and give it
+          access to a project (`projA`)
+  - [ ]   *prerequisite:* Set a secret in the project
+  - [ ]   Run `torus keypairs revoke` as the other user, to revoke your keypairs
+  - [ ]   The other user now cannot see any secrets with `torus view`
+  - [ ]   As the first user, `torus worklog list` should show a secrets item
+          to rotate the secret.
+  - [ ]   Run `torus set` as the first user, to set a *new* secret. It should
+          not error (the revoked keypairs should cause no issues).
+  - [ ]   Run `torus keypairs generate` as the other user.
+  - [ ]   The first user should now see keyring entries in the worklog, to
+          encode the other user's new keypairs.
+  - [ ]   `torus worklog resolve` should resolve the keyring entries.
+  - [ ]   The other user should be able to `torus view` the original secret,
+          and the new secret.
 
 ### List
 
