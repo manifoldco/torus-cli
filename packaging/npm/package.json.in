@@ -17,9 +17,6 @@
   "engines": {
     "node": ">=4.4.0"
   },
-  "scripts": {
-    "preinstall": "scripts/install.js"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/manifoldco/torus-cli.git"
@@ -37,6 +34,7 @@
   "logo": "https://s3.amazonaws.com/manifold.co/torus_logo.png",
   "license": "BSD-3-Clause",
   "dependencies": {
+    "kexec": "^3.0.0"
   },
   "devDependencies": {
   }
