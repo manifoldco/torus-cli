@@ -4,6 +4,10 @@
 
 _unreleased_
 
+**Notable Changes**
+
+- Support Ubuntu 16.10 (Yakkety Yak) for deb packages.
+
 **Fixes**
 
 - Ensure `keypairs generate` does not panic when used against an org that has
