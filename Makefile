@@ -413,7 +413,7 @@ NPM_DEPS=\
 	builds/npm/package.json \
 	builds/npm/README.md \
 	builds/npm/LICENSE.md \
-	builds/npm/scripts/install.js \
+	builds/npm/bin/torus \
 	builds/npm/bin/torus-darwin-amd64 \
 	builds/npm/bin/torus-linux-amd64
 npm: $(NPM_DEPS)
@@ -427,7 +427,7 @@ builds/npm/README.md builds/npm/LICENSE.md: builds/npm/%: builds/npm
 builds/npm/package.json: packaging/npm/package.json.in builds/npm
 	sed 's/VERSION/$(VERSION)/' < $< > $@
 
-builds/npm/scripts/install.js: packaging/npm/install.js builds/npm/scripts
+builds/npm/bin/torus: packaging/npm/passthrough.js builds/npm/bin/
 	cp $< $@
 
 builds/npm/bin/torus-darwin-amd64: builds/bin/$(VERSION)/darwin/amd64/torus builds/npm/bin

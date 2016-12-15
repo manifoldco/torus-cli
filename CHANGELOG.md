@@ -14,6 +14,9 @@ _unreleased_
   existing keypairs.
 - Teach `keypairs list` to display the real validity state of a key, not just
   always "YES".
+- Under NPM/Node.js, run via a passthrough script that will select the right
+  binary. This replaces the previous install time symlinking script, which
+  was error prone and unusable with sudo installs in some cases.
 
 ## v0.20.0
 

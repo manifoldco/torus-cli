@@ -22,8 +22,9 @@ func main() {
 	hints.Init()
 
 	app := cli.NewApp()
-	app.Version = config.Version
+	app.Name = "torus"
 	app.Usage = "A secure, shared workspace for secrets"
+	app.Version = config.Version
 	app.Commands = cmd.Cmds
 	app.Run(os.Args)
 }
