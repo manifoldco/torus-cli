@@ -19,6 +19,10 @@ _unreleased_
   was error prone and unusable with sudo installs in some cases.
 - Skip over users without encryption keys when storing secrets, instead of
   erroring out, allowing other users to still access the secrets.
+- Teach the `keypairs` `worklog` item how to handle users that have been
+  removed from a keyring (or had their keys revoked), and then subsequently
+  re-added: The old secret values still require rotation, but the user can be
+  given access to the secrets once again.
 
 ## v0.20.0
 

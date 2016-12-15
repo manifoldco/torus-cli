@@ -91,13 +91,33 @@ func (k *KeyringSectionV2) GetKeyring() *envelope.Signed {
 }
 
 // FindMember returns the membership and mekshare for the given user id.
+//
+// An owner (user/machine token) may have multiple memberships, one per
+// encryption key. There will only be one unrevoked membership.
+// Either this unrevoked membership will be returned, or the result will error
+// with ErrMemberNotFound.
 func (k *KeyringSectionV2) FindMember(id *identity.ID) (*primitive.KeyringMember, *primitive.MEKShare, error) {
 	var krm *primitive.KeyringMember
 	var mekshare *primitive.MEKShare
+
+outerLoop:
 	for _, m := range k.Members {
 		mbody := m.Member.Body.(*primitive.KeyringMember)
 		if *mbody.OwnerID == *id {
+			// We've found the right owner. Now see if this membership is
+			// unrevoked.
+			// A revocation is always terminal for a claim chain, so if there's
+			// any revocations for this membership, we know it is invalid.
+			for _, c := range k.Claims {
+				claim := c.Body.(*primitive.KeyringMemberClaim)
+				if *claim.KeyringMemberID == *m.Member.ID && claim.ClaimType == primitive.RevocationClaimType {
+					continue outerLoop
+				}
+
+			}
+
 			krm = mbody
+			// We never get the MEKShare for another user returned.
 			if m.MEKShare != nil {
 				mekshare = m.MEKShare.Body.(*primitive.MEKShare)
 			}
