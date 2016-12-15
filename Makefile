@@ -272,6 +272,7 @@ apt-repo: $(addprefix deb-,$(LINUX)) builds/dist/debian/conf/distributions build
 		cd /torus/builds/dist/debian && \
 		reprepro includedeb jessie /torus/builds/deb/*.deb && \
 		cd /torus/builds/dist/ubuntu && \
+		reprepro includedeb yakkety /torus/builds/deb/*.deb && \
 		reprepro includedeb xenial /torus/builds/deb/*.deb && \
 		reprepro includedeb trusty /torus/builds/deb/*.deb \
 	"
