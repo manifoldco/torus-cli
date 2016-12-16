@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -56,16 +55,7 @@ func setCmd(ctx *cli.Context) error {
 	}
 
 	cred, err := setCredential(ctx, args[0], func() *apitypes.CredentialValue {
-		var v *apitypes.CredentialValue
-		if i, err := strconv.Atoi(args[1]); err == nil {
-			v = apitypes.NewIntCredentialValue(i)
-		} else if f, err := strconv.ParseFloat(args[1], 64); err == nil {
-			v = apitypes.NewFloatCredentialValue(f)
-		} else {
-			v = apitypes.NewStringCredentialValue(args[1])
-		}
-
-		return v
+		return apitypes.NewStringCredentialValue(args[1])
 	})
 
 	if err != nil {
