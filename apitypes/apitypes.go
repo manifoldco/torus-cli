@@ -88,6 +88,19 @@ func IsNotFoundError(err error) bool {
 	return false
 }
 
+// IsUnauthorizedError returns whether or not an error is a 401 result from the api.
+func IsUnauthorizedError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if apiErr, ok := err.(*Error); ok {
+		return apiErr.Type == UnauthorizedError
+	}
+
+	return false
+}
+
 // A session can represent either a machine or a user
 const (
 	MachineSession = "machine"
