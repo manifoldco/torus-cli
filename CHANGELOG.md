@@ -7,6 +7,11 @@ _unreleased_
 **Notable Changes**
 
 - Support Ubuntu 16.10 (Yakkety Yak) for deb packages.
+- Secrets set on the command line are now always treated as strings. Previously,
+  We would attempt to convert to ints or floats. Torus doesn't know if
+  you want `-007` to be a string suffix for your spy identifiers, or the number
+  `-7`; so no longer guess, and use the provided value.
+  This change will affect newly set values, but not existing ones.
 
 **Fixes**
 
