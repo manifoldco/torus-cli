@@ -28,6 +28,8 @@ _unreleased_
   removed from a keyring (or had their keys revoked), and then subsequently
   re-added: The old secret values still require rotation, but the user can be
   given access to the secrets once again.
+- Allow non-admin users to run worklog list, by continuing passed unauthorized
+  requests when looking at invites. Only admins can view invites.
 
 ## v0.20.0
 
