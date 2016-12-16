@@ -23,6 +23,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "torus"
+	app.HelpName = "torus"
 	app.Usage = "A secure, shared workspace for secrets"
 	app.Version = config.Version
 	app.Commands = cmd.Cmds
