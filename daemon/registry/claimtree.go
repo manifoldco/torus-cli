@@ -19,7 +19,7 @@ type ClaimTreeClient struct {
 // ClaimTree represents an organizations claim tree which contains public
 // signing and encryption keys for every member.
 type ClaimTree struct {
-	Org        *envelope.Unsigned          `json:"org"`
+	Org        *envelope.Org               `json:"org"`
 	PublicKeys []apitypes.PublicKeySegment `json:"public_keys"`
 }
 

@@ -15,7 +15,7 @@ type ProjectsClient struct {
 }
 
 // List returns a list of all Projects within the given org.
-func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID) ([]envelope.Unsigned, error) {
+func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID) ([]envelope.Project, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
@@ -26,7 +26,7 @@ func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID) ([]envelo
 		return nil, err
 	}
 
-	var projects []envelope.Unsigned
+	var projects []envelope.Project
 	_, err = p.client.Do(ctx, req, &projects)
 	return projects, err
 }

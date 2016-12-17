@@ -36,7 +36,7 @@ func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (
 		return nil, err
 	}
 
-	env := envelope.Unsigned{
+	env := envelope.Policy{
 		ID:      &ID,
 		Version: 1,
 		Body:    policy,
@@ -85,7 +85,7 @@ func (p *PoliciesClient) Attach(ctx context.Context, org, policy, team *identity
 		return err
 	}
 
-	env := envelope.Unsigned{
+	env := envelope.PolicyAttachment{
 		ID:      &ID,
 		Version: 1,
 		Body:    &attachment,

@@ -17,7 +17,7 @@ type TeamsClient struct {
 }
 
 // List returns all teams for an organization
-func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID) ([]envelope.Unsigned, error) {
+func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID) ([]envelope.Team, error) {
 	if orgID == nil {
 		return nil, errors.New("must provide org id")
 	}
@@ -31,7 +31,7 @@ func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID) ([]envelope.
 		return nil, err
 	}
 
-	teams := []envelope.Unsigned{}
+	teams := []envelope.Team{}
 	_, err = t.client.Do(ctx, req, &teams)
 	if err != nil {
 		log.Printf("Error performing GET /teams request: %s", err)

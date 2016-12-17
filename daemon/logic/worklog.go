@@ -44,7 +44,7 @@ func newWorklog(e *Engine) Worklog {
 }
 
 type worklogTypeHandler interface {
-	list(context.Context, *envelope.Unsigned) ([]apitypes.WorklogItem, error)
+	list(context.Context, *envelope.Org) ([]apitypes.WorklogItem, error)
 	resolve(context.Context, *observer.Notifier, *identity.ID,
 		*apitypes.WorklogItem) (*apitypes.WorklogResult, error)
 	resolveErr() string
@@ -135,18 +135,17 @@ func (secretRotateHandler) resolveErr() string {
 	return "Error rotating secret"
 }
 
-func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
+func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Org) ([]apitypes.WorklogItem, error) {
 	projects, err := h.engine.client.Projects.List(ctx, org.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	cgs := newCredentialGraphSet()
-	orgName := org.Body.(*primitive.Org).Name
 	for _, project := range projects {
-		projName := project.Body.(*primitive.Project).Name
 		graphs, err := h.engine.client.CredentialGraph.Search(ctx,
-			"/"+orgName+"/"+projName+"/*/*/*/*", h.engine.session.AuthID())
+			"/"+org.Body.Name+"/"+project.Body.Name+"/*/*/*/*",
+			h.engine.session.AuthID())
 		if err != nil {
 			return nil, err
 		}
@@ -198,7 +197,7 @@ func (missingKeypairsHandler) resolveErr() string {
 	return "Error generating keypairs"
 }
 
-func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
+func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Org) ([]apitypes.WorklogItem, error) {
 	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, h.engine.client, org.ID)
 	if err != nil {
 		return nil, err
@@ -207,7 +206,7 @@ func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Unsigne
 	var items []apitypes.WorklogItem
 	if encClaimed == nil || sigClaimed == nil {
 		item := apitypes.WorklogItem{
-			Subject: org.Body.(*primitive.Org).Name,
+			Subject: org.Body.Name,
 			Summary: "Signing and Encryption keypairs missing for org.",
 		}
 
@@ -247,7 +246,7 @@ func (inviteApproveHandler) resolveErr() string {
 	return "Error approving invite"
 }
 
-func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
+func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Org) ([]apitypes.WorklogItem, error) {
 	invites, err := h.engine.client.OrgInvite.List(ctx, org.ID, []string{"accepted"}, "")
 	if err != nil {
 		// The user can be unauthorized because they don't have access to
@@ -262,7 +261,7 @@ func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Unsigned)
 	var items []apitypes.WorklogItem
 	for _, invite := range invites {
 		item := apitypes.WorklogItem{
-			Subject:   invite.Body.(*primitive.OrgInvite).Email,
+			Subject:   invite.Body.Email,
 			Summary:   "Org invite ready for approval",
 			SubjectID: invite.ID,
 		}
@@ -296,7 +295,7 @@ func (keyringMembersHandler) resolveErr() string {
 	return "Error adding user(s) to keyring"
 }
 
-func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Unsigned) ([]apitypes.WorklogItem, error) {
+func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]apitypes.WorklogItem, error) {
 	// Find all of the credential graphs in this org.
 	// We need to get all credential graphs. To do this, we first need to know
 	// their pathexps. Use keyring listing for this.

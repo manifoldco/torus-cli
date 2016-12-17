@@ -10,16 +10,17 @@ import (
 	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
-	"github.com/manifoldco/torus-cli/primitive"
 )
 
 const notLoggedInError = "Please login to perform that command"
 
 type session struct {
 	mutex       *sync.Mutex
-	sessionType string
-	identity    *envelope.Unsigned
-	auth        *envelope.Unsigned
+	sessionType apitypes.SessionType
+
+	// XXX: These should be scoped down to an interface that can do auth stuff.
+	identity envelope.Envelope
+	auth     envelope.Envelope
 
 	// sensitive values
 	token      string
@@ -28,9 +29,9 @@ type session struct {
 
 // Session is the interface for access to secure session details.
 type Session interface {
-	Type() string
-	Set(string, *envelope.Unsigned, *envelope.Unsigned, []byte, string) error
-	SetIdentity(string, *envelope.Unsigned, *envelope.Unsigned) error
+	Type() apitypes.SessionType
+	Set(apitypes.SessionType, envelope.Envelope, envelope.Envelope, []byte, string) error
+	SetIdentity(apitypes.SessionType, envelope.Envelope, envelope.Envelope) error
 	ID() *identity.ID
 	AuthID() *identity.ID
 	Token() string
@@ -51,7 +52,7 @@ func NewSession() Session {
 
 // Type returns the type of identity this session represents (e.g. user or
 // machine)
-func (s *session) Type() string {
+func (s *session) Type() apitypes.SessionType {
 	return s.sessionType
 }
 
@@ -65,7 +66,7 @@ func (s *session) ID() *identity.ID {
 		return nil
 	}
 
-	return s.identity.ID
+	return s.identity.GetID()
 }
 
 // AuthID returns the ID representing the object used for authorization (e.g.
@@ -78,7 +79,7 @@ func (s *session) AuthID() *identity.ID {
 		return nil
 	}
 
-	return s.auth.ID
+	return s.auth.GetID()
 }
 
 // Token returns the auth token stored in this session.
@@ -114,26 +115,26 @@ func (s *session) String() string {
 		s.Type(), s.HasToken(), s.HasPassphrase())
 }
 
-func checkSessionType(sessionType string, identity, auth *envelope.Unsigned) error {
+func checkSessionType(sessionType apitypes.SessionType, identity, auth envelope.Envelope) error {
 	if identity == nil || auth == nil {
 		return errors.New("identity and auth cannot be null")
 	}
 
 	switch sessionType {
 	case apitypes.UserSession:
-		if _, ok := identity.Body.(*primitive.User); !ok {
+		if _, ok := identity.(*envelope.User); !ok {
 			return errors.New("Identity must be a user object")
 		}
 
-		if _, ok := auth.Body.(*primitive.User); !ok {
+		if _, ok := auth.(*envelope.User); !ok {
 			return errors.New("Auth must be a user object")
 		}
 	case apitypes.MachineSession:
-		if _, ok := identity.Body.(*primitive.Machine); !ok {
+		if _, ok := identity.(*envelope.Machine); !ok {
 			return errors.New("Identity must be machine object")
 		}
 
-		if _, ok := auth.Body.(*primitive.MachineToken); !ok {
+		if _, ok := auth.(*envelope.MachineToken); !ok {
 			return errors.New("Auth must be a machine token object")
 		}
 	default:
@@ -145,7 +146,7 @@ func checkSessionType(sessionType string, identity, auth *envelope.Unsigned) err
 // Set atomically sets all relevant session details.
 //
 // It returns an error if any values are empty.
-func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
+func (s *session) Set(sessionType apitypes.SessionType, identity, auth envelope.Envelope,
 	passphrase []byte, token string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -173,7 +174,7 @@ func (s *session) Set(sessionType string, identity, auth *envelope.Unsigned,
 }
 
 // SetIdentity updates the session identity
-func (s *session) SetIdentity(sessionType string, identity, auth *envelope.Unsigned) error {
+func (s *session) SetIdentity(sessionType apitypes.SessionType, identity, auth envelope.Envelope) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -205,10 +206,10 @@ func (s *session) MasterKey() (*base64.Value, error) {
 	}
 
 	if s.Type() == apitypes.UserSession {
-		return s.auth.Body.(*primitive.User).Master.Value, nil
+		return s.auth.(*envelope.User).Body.Master.Value, nil
 	}
 
-	return s.auth.Body.(*primitive.MachineToken).Master.Value, nil
+	return s.auth.(*envelope.MachineToken).Body.Master.Value, nil
 }
 
 // Self returns the Self apitype which represents the current sessions state

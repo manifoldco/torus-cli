@@ -211,7 +211,7 @@ func deriveIdentity(ctx *cli.Context, session *api.Session) (string, error) {
 	}
 
 	if identity == "" {
-		identity, err = identityString(session.Type(), session.Username())
+		identity, err = identityString(string(session.Type()), session.Username())
 		if err != nil {
 			return "", err
 		}

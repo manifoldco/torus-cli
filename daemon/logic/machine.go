@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"errors"
 	"log"
 	"time"
 
@@ -24,13 +23,13 @@ type Machine struct {
 
 // MachineTokenSegment represents a Token and it's associated Keypair
 type MachineTokenSegment struct {
-	Token   *envelope.Unsigned       `json:"token"`
+	Token   *envelope.MachineToken   `json:"token"`
 	Keypair *registry.ClaimedKeyPair `json:"keypair"`
 }
 
 // CreateToken generates a new machine token given a machine and a secret value.
 func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
-	machine *envelope.Unsigned, secret *base64.Value) (*registry.MachineTokenCreationSegment, error) {
+	machine *envelope.Machine, secret *base64.Value) (*registry.MachineTokenCreationSegment, error) {
 	n := notifier.Notifier(2)
 
 	n.Notify(observer.Progress, "Generating machine token", true)
@@ -44,14 +43,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 		return nil, err
 	}
 
-	machineBody, ok := machine.Body.(*primitive.Machine)
-	if !ok {
-		return nil, &apitypes.Error{
-			Type: apitypes.InternalServerError,
-			Err:  []string{"Could not cast to Machine"},
-		}
-	}
-	orgID := machineBody.OrgID
+	orgID := machine.Body.OrgID
 
 	masterKey, err := crypto.CreateMasterKeyObject(ctx, *secret, nil)
 	if err != nil {
@@ -78,7 +70,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 		return nil, err
 	}
 
-	token := &envelope.Unsigned{
+	token := &envelope.MachineToken{
 		ID:      &tokenID,
 		Version: 1,
 		Body:    tokenBody,
@@ -87,7 +79,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 	// Create an "empty" machine session in order to create a Crypto engine on
 	// behalf of the machine for deriving and uploading these keys.
 	sess := session.NewSession()
-	err = sess.Set(apitypes.MachineSession, machine, token, *secret, "asdfsdf")
+	err = sess.Set(apitypes.MachineSession, machine, token, *secret, "")
 	if err != nil {
 		return nil, err
 	}
@@ -115,19 +107,14 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 // EncodeToken creates KeyringMemberships for the provided Machine Token. Used
 // during the machine creation process
 func (m *Machine) EncodeToken(ctx context.Context, notifier *observer.Notifier,
-	token *envelope.Unsigned) error {
+	token *envelope.MachineToken) error {
 
 	n := notifier.Notifier(2)
 
 	n.Notify(observer.Progress, "Creating keyring memberships for token", true)
 
-	tokenBody, ok := token.Body.(*primitive.MachineToken)
-	if !ok {
-		return errors.New("Could not cast token to MachineToken")
-	}
-
 	v1members, v2members, err := createKeyringMemberships(ctx, m.engine.crypto,
-		m.engine.client, m.engine.session, tokenBody.OrgID, token.ID)
+		m.engine.client, m.engine.session, token.Body.OrgID, token.ID)
 	if err != nil {
 		return err
 	}

@@ -241,11 +241,9 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 	}
 
 	var graphs []registry.CredentialGraph
-	orgName := org.Body.(*primitive.Org).Name
 	for _, project := range projects {
-		projName := project.Body.(*primitive.Project).Name
 		projGraphs, err := client.CredentialGraph.Search(ctx,
-			"/"+orgName+"/"+projName+"/*/*/*/*", s.AuthID())
+			"/"+org.Body.Name+"/"+project.Body.Name+"/*/*/*/*", s.AuthID())
 		if err != nil {
 			log.Printf("Error retrieving credential graphs: %s", err)
 			return nil, nil, err
@@ -459,14 +457,12 @@ func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *iden
 
 // findSystemTeams takes in a list of team objects and returns the members and machines
 // teams.
-func findSystemTeams(teams []envelope.Unsigned) (*envelope.Unsigned, *envelope.Unsigned, error) {
-	var members, machines *envelope.Unsigned
+func findSystemTeams(teams []envelope.Team) (*envelope.Team, *envelope.Team, error) {
+	var members, machines *envelope.Team
 	for _, t := range teams {
 		var team = t
-		tBody := t.Body.(*primitive.Team)
-
-		if tBody.TeamType == primitive.SystemTeamType {
-			switch tBody.Name {
+		if t.Body.TeamType == primitive.SystemTeamType {
+			switch t.Body.Name {
 			case "member":
 				members = &team
 			case "machine":
@@ -670,11 +666,11 @@ func getKeyringMembers(ctx context.Context, client *registry.Client,
 
 	var members []identity.ID
 	for _, membership := range userMembers {
-		members = append(members, *membership.Body.(*primitive.Membership).OwnerID)
+		members = append(members, *membership.Body.OwnerID)
 	}
 
 	for _, membership := range machineMembers {
-		machineID := membership.Body.(*primitive.Membership).OwnerID
+		machineID := membership.Body.OwnerID
 		segment, err := client.Machines.Get(ctx, machineID)
 		if err != nil {
 			return nil, err

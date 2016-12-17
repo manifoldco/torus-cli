@@ -101,18 +101,23 @@ func IsUnauthorizedError(err error) bool {
 	return false
 }
 
+// SessionType is the enumerated string type of sessions.
+type SessionType string
+
 // A session can represent either a machine or a user
 const (
-	MachineSession = "machine"
-	UserSession    = "user"
-	NotLoggedIn    = "no_session"
+	MachineSession SessionType = "machine"
+	UserSession    SessionType = "user"
+	NotLoggedIn    SessionType = "no_session"
 )
 
 // Self represents the current identity and auth combination for this session
 type Self struct {
-	Type     string             `json:"type"`
-	Identity *envelope.Unsigned `json:"identity"`
-	Auth     *envelope.Unsigned `json:"auth"`
+	Type SessionType `json:"type"`
+
+	// XXX: create an ident/auth interface
+	Identity envelope.Envelope `json:"identity"`
+	Auth     envelope.Envelope `json:"auth"`
 }
 
 // Version contains the release version of the daemon.
@@ -128,13 +133,13 @@ type SessionStatus struct {
 
 // Login is a wrapper around a login request from the CLI to the Daemon
 type Login struct {
-	Type        string          `json:"type"`
+	Type        SessionType     `json:"type"`
 	Credentials json.RawMessage `json:"credentials"`
 }
 
 // LoginCredential represents an login credentials for a user or machine
 type LoginCredential interface {
-	Type() string
+	Type() SessionType
 	Valid() bool
 	Passphrase() []byte
 	Identifier() string
@@ -148,7 +153,7 @@ type UserLogin struct {
 }
 
 // Type returns the type of login request
-func (u *UserLogin) Type() string {
+func (UserLogin) Type() SessionType {
 	return UserSession
 }
 
@@ -175,7 +180,7 @@ type MachineLogin struct {
 }
 
 // Type returns the type of the login request
-func (m *MachineLogin) Type() string {
+func (MachineLogin) Type() SessionType {
 	return MachineSession
 }
 

@@ -330,7 +330,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 // ApproveInvite approves an invitation of a user into an organzation by
 // encoding them into a Keyring.
 func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
-	InviteID *identity.ID) (*envelope.Unsigned, error) {
+	InviteID *identity.ID) (*envelope.OrgInvite, error) {
 
 	n := notifier.Notifier(3)
 
@@ -340,10 +340,8 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 		return nil, err
 	}
 
-	inviteBody := invite.Body.(*primitive.OrgInvite)
-
-	if inviteBody.State != primitive.OrgInviteAcceptedState {
-		log.Printf("invitation not in accepted state: %s", inviteBody.State)
+	if invite.Body.State != primitive.OrgInviteAcceptedState {
+		log.Printf("invitation not in accepted state: %s", invite.Body.State)
 		return nil, &apitypes.Error{
 			Type: apitypes.BadRequestError,
 			Err:  []string{"Invite must be accepted before it can be approved"},
@@ -353,7 +351,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 	n.Notify(observer.Progress, "Invite retrieved", true)
 
 	v1members, v2members, err := createKeyringMemberships(ctx, e.crypto,
-		e.client, e.session, inviteBody.OrgID, inviteBody.InviteeID)
+		e.client, e.session, invite.Body.OrgID, invite.Body.InviteeID)
 	if err != nil {
 		return nil, err
 	}
