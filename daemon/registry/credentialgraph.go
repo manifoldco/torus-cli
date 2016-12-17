@@ -42,7 +42,7 @@ func (c *CredentialGraphV1) GetCredentials() []envelope.Signed {
 
 // KeyringVersion returns the version of the keyring itself (not its schema).
 func (c *CredentialGraphV1) KeyringVersion() int {
-	return c.Keyring.Body.(*primitive.KeyringV1).BaseKeyring.KeyringVersion
+	return c.Keyring.Body.(*primitive.KeyringV1).KeyringVersion
 }
 
 // CredentialGraphV2 represents a Keyring, it's members, and associated
@@ -59,7 +59,7 @@ func (c *CredentialGraphV2) GetCredentials() []envelope.Signed {
 
 // KeyringVersion returns the version of the keyring itself (not its schema).
 func (c *CredentialGraphV2) KeyringVersion() int {
-	return c.Keyring.Body.(*primitive.Keyring).BaseKeyring.KeyringVersion
+	return c.Keyring.Body.(*primitive.Keyring).KeyringVersion
 }
 
 // Post creates a new CredentialGraph on the registry.
