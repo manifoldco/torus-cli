@@ -68,6 +68,7 @@ type {{.Name}} struct {
 	ID      *identity.ID     `json:"id"`
 	Version uint8            `json:"version"`
 	Body    *primitive.{{.Name}} `json:"body"`
+	{{if eq $envType "Signed"}}Signature primitive.Signature `json:"sig"`{{end}}
 }
 
 // GetID returns the ID of the contained {{.Name}}.

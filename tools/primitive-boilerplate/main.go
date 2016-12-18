@@ -18,9 +18,10 @@ import (
 const (
 	primitiveFile = "primitive/zz_generated_primitive.go"
 	envelopeFile  = "envelope/zz_generated_envelope.go"
+	cryptoFile    = "daemon/crypto/zz_generated_crypto.go"
 )
 
-var primitiveTmpl, envelopeTmpl *template.Template
+var primitiveTmpl, envelopeTmpl, cryptoTmpl *template.Template
 
 func init() {
 	prefix := "tools/primitive-boilerplate/"
@@ -33,6 +34,9 @@ func init() {
 			return a + b
 		},
 	}).ParseFiles(envelopeName))
+
+	cryptoName := filepath.Join(prefix, "crypto.tmpl")
+	cryptoTmpl = template.Must(template.ParseFiles(cryptoName))
 }
 
 // data is a representation of one of our primitive structs, or a struct
@@ -330,4 +334,6 @@ func main() {
 		{Name: "Unsigned", Mutability: "Mutable", Types: mutable},
 		{Name: "Signed", Mutability: "Immutable", Types: immutable},
 	})
+
+	writeTemplate(cryptoFile, cryptoTmpl, immutable)
 }

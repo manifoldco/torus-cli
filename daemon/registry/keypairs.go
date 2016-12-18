@@ -14,7 +14,7 @@ import (
 // against it (system and user signatures).
 type ClaimedKeyPair struct {
 	apitypes.PublicKeySegment
-	PrivateKey *envelope.Signed `json:"private_key"`
+	PrivateKey *envelope.PrivateKey `json:"private_key"`
 }
 
 // KeyPairs represents the `/keypairs` registry endpoint, used for accessing
@@ -29,14 +29,15 @@ type KeyPairs struct {
 // claim on the public key.
 //
 // keys may be either signing or encryption keys.
-func (k *KeyPairs) Post(ctx context.Context, pubKey, privKey,
-	claim *envelope.Signed) (*envelope.Signed, *envelope.Signed, []envelope.Signed, error) {
+func (k *KeyPairs) Post(ctx context.Context, pubKey *envelope.PublicKey,
+	privKey *envelope.PrivateKey, claim *envelope.Claim) (*envelope.PublicKey,
+	*envelope.PrivateKey, []envelope.Claim, error) {
 
 	req, err := k.client.NewRequest("POST", "/keypairs", nil,
 		ClaimedKeyPair{
 			PublicKeySegment: apitypes.PublicKeySegment{
 				PublicKey: pubKey,
-				Claims:    []envelope.Signed{*claim},
+				Claims:    []envelope.Claim{*claim},
 			},
 			PrivateKey: privKey,
 		})

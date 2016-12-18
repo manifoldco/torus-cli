@@ -118,7 +118,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		BaseCredential: primitive.BaseCredential{
 			Name:      cred.Body.Name,
 			PathExp:   cred.Body.PathExp,
-			KeyringID: graph.GetKeyring().ID,
+			KeyringID: graph.GetKeyring().GetID(),
 			ProjectID: cred.Body.ProjectID,
 			OrgID:     cred.Body.OrgID,
 			Credential: &primitive.CredentialValue{
@@ -132,13 +132,8 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		credBody.Previous = nil
 		credBody.CredentialVersion = 1
 	} else {
-		base, err := baseCredential(previousCred)
-		if err != nil {
-			return nil, err
-		}
-
-		credBody.Previous = previousCred.ID
-		credBody.CredentialVersion = base.CredentialVersion + 1
+		credBody.Previous = previousCred.GetID()
+		credBody.CredentialVersion = previousCred.CredentialVersion() + 1
 	}
 
 	krm, mekshare, err := graph.FindMember(e.session.AuthID())
@@ -171,7 +166,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	credBody.Credential.Nonce = base64.NewValue(ctNonce)
 	credBody.Credential.Value = base64.NewValue(ct)
 
-	signed, err := e.crypto.SignedEnvelope(ctx, &credBody, sigID, &kp.Signature)
+	signed, err := e.crypto.SignedCredential(ctx, &credBody, sigID, &kp.Signature)
 	if err != nil {
 		log.Printf("Error signing credential body: %s", err)
 		return nil, err
@@ -180,7 +175,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 	n.Notify(observer.Progress, "Credential encrypted", true)
 
 	if newGraph != nil {
-		newGraph.Credentials = []envelope.Signed{*signed}
+		newGraph.Credentials = []envelope.CredentialInf{signed}
 		_, err = e.client.CredentialGraph.Post(ctx, &graph)
 	} else {
 		_, err = e.client.Credentials.Create(ctx, signed)
@@ -243,18 +238,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	// now we just need ot return a list of them!
 	creds := []PlaintextCredentialEnvelope{}
 	for _, graph := range activeGraphs {
-		var orgID *identity.ID
-		switch b := graph.GetKeyring().Body.(type) {
-		case *primitive.Keyring:
-			orgID = b.OrgID
-		case *primitive.KeyringV1:
-			orgID = b.OrgID
-		default:
-			return nil, &apitypes.Error{
-				Type: apitypes.InternalServerError,
-				Err:  []string{"Malformed keyring body"},
-			}
-		}
+		orgID := graph.GetKeyring().OrgID()
 		kp, ok := keypairs[*orgID]
 		if !ok {
 			_, _, kp, err = fetchKeyPairs(ctx, e.client, orgID)
@@ -284,33 +268,27 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 
 		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
 			for _, cred := range graph.GetCredentials() {
-				var state *string
-
-				base, err := baseCredential(&cred)
-				if err != nil {
-					return err
+				state := "set"
+				if cred.Unset() {
+					state = "unset"
 				}
 
-				if c, ok := cred.Body.(*primitive.Credential); ok {
-					state = c.State
-				}
-
-				pt, err := u.Unbox(ctx, *base.Credential.Value, *base.Nonce, *base.Credential.Nonce)
+				pt, err := u.Unbox(ctx, *cred.Credential().Value, *cred.Nonce(), *cred.Credential().Nonce)
 				if err != nil {
 					log.Printf("Error decrypting credential: %s", err)
 					return err
 				}
 
 				plainCred := PlaintextCredentialEnvelope{
-					ID:      cred.ID,
-					Version: cred.Version,
+					ID:      cred.GetID(),
+					Version: cred.GetVersion(),
 					Body: &PlaintextCredential{
-						Name:      base.Name,
-						PathExp:   base.PathExp,
-						ProjectID: base.ProjectID,
-						OrgID:     base.OrgID,
+						Name:      cred.Name(),
+						PathExp:   cred.PathExp(),
+						ProjectID: cred.ProjectID(),
+						OrgID:     cred.OrgID(),
 						Value:     string(pt),
-						State:     state,
+						State:     &state,
 					},
 				}
 				creds = append(creds, plainCred)
@@ -407,10 +385,9 @@ func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifi
 		return err
 	}
 
-	sigclaim, err := e.crypto.SignedEnvelope(
-		ctx, primitive.NewClaim(OrgID, e.session.AuthID(), pubsig.ID, pubsig.ID,
-			primitive.SignatureClaimType),
-		pubsig.ID, &kp.Signature)
+	sigBody := primitive.NewClaim(OrgID, e.session.AuthID(), pubsig.ID, pubsig.ID,
+		primitive.SignatureClaimType)
+	sigclaim, err := e.crypto.SignedClaim(ctx, sigBody, pubsig.ID, &kp.Signature)
 	if err != nil {
 		log.Printf("Error creating signature claim: %s", err)
 		return err
@@ -445,10 +422,9 @@ func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifi
 		log.Printf("Error packaging encryption keypair: %s", err)
 	}
 
-	encclaim, err := e.crypto.SignedEnvelope(
-		ctx, primitive.NewClaim(OrgID, e.session.AuthID(), pubenc.ID, pubenc.ID,
-			primitive.SignatureClaimType),
-		pubsig.ID, &kp.Signature)
+	encBody := primitive.NewClaim(OrgID, e.session.AuthID(), pubenc.ID, pubenc.ID,
+		primitive.SignatureClaimType)
+	encclaim, err := e.crypto.SignedClaim(ctx, encBody, pubsig.ID, &kp.Signature)
 	if err != nil {
 		log.Printf("Error creating signature claim for encryption key: %s", err)
 		return err
@@ -513,10 +489,9 @@ func (e *Engine) RevokeKeypairs(ctx context.Context, notifier *observer.Notifier
 			return err
 		}
 
-		encclaim, err := e.crypto.SignedEnvelope(
-			ctx, primitive.NewClaim(orgID, e.session.AuthID(), prevEncClaim.ID,
-				encID, primitive.RevocationClaimType),
-			sigID, &kp.Signature)
+		encBody := primitive.NewClaim(orgID, e.session.AuthID(), prevEncClaim.ID,
+			encID, primitive.RevocationClaimType)
+		encclaim, err := e.crypto.SignedClaim(ctx, encBody, sigID, &kp.Signature)
 		if err != nil {
 			log.Printf("Error creating revocation claim for encryption key: %s", err)
 			return err
@@ -538,10 +513,9 @@ func (e *Engine) RevokeKeypairs(ctx context.Context, notifier *observer.Notifier
 		return err
 	}
 
-	sigclaim, err := e.crypto.SignedEnvelope(
-		ctx, primitive.NewClaim(orgID, e.session.AuthID(), prevSigClaim.ID,
-			sigID, primitive.RevocationClaimType),
-		sigID, &kp.Signature)
+	sigBody := primitive.NewClaim(orgID, e.session.AuthID(), prevSigClaim.ID,
+		sigID, primitive.RevocationClaimType)
+	sigclaim, err := e.crypto.SignedClaim(ctx, sigBody, sigID, &kp.Signature)
 	if err != nil {
 		log.Printf("Error creating revocation claim for signing key: %s", err)
 		return err

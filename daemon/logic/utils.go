@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -22,7 +21,7 @@ import (
 )
 
 func packageSigningKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
-	kp *crypto.KeyPairs) (*envelope.Signed, *envelope.Signed, error) {
+	kp *crypto.KeyPairs) (*envelope.PublicKey, *envelope.PrivateKey, error) {
 
 	pubsig, err := packagePublicKey(ctx, c, authID, orgID,
 		primitive.SigningKeyType, kp.Signature.Public, nil, &kp.Signature)
@@ -40,7 +39,7 @@ func packageSigningKeypair(ctx context.Context, c *crypto.Engine, authID, orgID 
 }
 
 func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, orgID *identity.ID,
-	kp *crypto.KeyPairs, pubsig *envelope.Signed) (*envelope.Signed, *envelope.Signed, error) {
+	kp *crypto.KeyPairs, pubsig *envelope.PublicKey) (*envelope.PublicKey, *envelope.PrivateKey, error) {
 
 	pubenc, err := packagePublicKey(ctx, c, authID, orgID, primitive.EncryptionKeyType,
 		kp.Encryption.Public[:], pubsig.ID, &kp.Signature)
@@ -70,11 +69,11 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 
 	keyringBody := primitive.NewKeyring(credBody.OrgID, credBody.ProjectID, pathExp)
 	if parent != nil {
-		keyringBody.Previous = parent.GetKeyring().ID
+		keyringBody.Previous = parent.GetKeyring().GetID()
 		keyringBody.KeyringVersion = parent.KeyringVersion() + 1
 	}
 
-	keyring, err := engine.SignedEnvelope(ctx, keyringBody, sigID, &kp.Signature)
+	keyring, err := engine.SignedKeyring(ctx, keyringBody, sigID, &kp.Signature)
 	if err != nil {
 		return nil, err
 	}
@@ -116,8 +115,7 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 			continue
 		}
 
-		pubKey := encPubKey.Body.(*primitive.PublicKey)
-		encmek, nonce, err := engine.Box(ctx, mek, &kp.Encryption, []byte(*pubKey.Key.Value))
+		encmek, nonce, err := engine.Box(ctx, mek, &kp.Encryption, []byte(*encPubKey.Body.Key.Value))
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +127,7 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		}
 
 		member, err := newV2KeyringMember(ctx, engine, credBody.OrgID, keyring.ID,
-			pubKey.OwnerID, encPubKey.ID, encID, sigID, key, kp)
+			encPubKey.Body.OwnerID, encPubKey.ID, encID, sigID, key, kp)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +138,7 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	graph := registry.CredentialGraphV2{
 		KeyringSectionV2: registry.KeyringSectionV2{
 			Keyring: keyring,
-			Claims:  []envelope.Signed{},
+			Claims:  []envelope.KeyringMemberClaim{},
 			Members: members,
 		},
 	}
@@ -150,10 +148,10 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 
 func newV1KeyringMember(ctx context.Context, engine *crypto.Engine,
 	orgID, projectID, keyringID, ownerID, pubKeyID, encKeyID, sigID *identity.ID,
-	key *primitive.KeyringMemberKey, kp *crypto.KeyPairs) (*envelope.Signed, error) {
+	key *primitive.KeyringMemberKey, kp *crypto.KeyPairs) (*envelope.KeyringMemberV1, error) {
 
 	now := time.Now().UTC()
-	return engine.SignedEnvelope(ctx, &primitive.KeyringMemberV1{
+	return engine.SignedKeyringMemberV1(ctx, &primitive.KeyringMemberV1{
 		Created:         now,
 		OrgID:           orgID,
 		ProjectID:       projectID,
@@ -170,7 +168,7 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 	key *primitive.KeyringMemberKey, kp *crypto.KeyPairs) (*registry.KeyringMember, error) {
 
 	now := time.Now().UTC()
-	member, err := engine.SignedEnvelope(ctx, &primitive.KeyringMember{
+	member, err := engine.SignedKeyringMember(ctx, &primitive.KeyringMember{
 		Created:         now,
 		OrgID:           orgID,
 		KeyringID:       keyringID,
@@ -183,7 +181,7 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 		return nil, err
 	}
 
-	mekshare, err := engine.SignedEnvelope(ctx, &primitive.MEKShare{
+	mekshare, err := engine.SignedMEKShare(ctx, &primitive.MEKShare{
 		Created:         now,
 		OrgID:           orgID,
 		OwnerID:         ownerID,
@@ -202,7 +200,7 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 }
 
 func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *registry.Client,
-	s session.Session, orgID, ownerID *identity.ID) ([]envelope.Signed, []registry.KeyringMember, error) {
+	s session.Session, orgID, ownerID *identity.ID) ([]envelope.KeyringMemberV1, []registry.KeyringMember, error) {
 
 	// Get this user's keypairs
 	sigID, encID, kp, err := fetchKeyPairs(ctx, client, orgID)
@@ -270,7 +268,7 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 		return nil, nil, err
 	}
 
-	v1members := []envelope.Signed{}
+	v1members := []envelope.KeyringMemberV1{}
 	v2members := []registry.KeyringMember{}
 	for _, graph := range activeGraphs {
 		krm, mekshare, err := graph.FindMember(s.AuthID())
@@ -288,11 +286,8 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 			return nil, nil, err
 		}
 
-		encPKBody := encPubKey.Body.(*primitive.PublicKey)
-		targetPKBody := targetPubKey.Body.(*primitive.PublicKey)
-
 		encMek, nonce, err := c.CloneMembership(ctx, *mekshare.Key.Value,
-			*mekshare.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
+			*mekshare.Key.Nonce, &kp.Encryption, *encPubKey.Body.Key.Value, *targetPubKey.Body.Key.Value)
 		if err != nil {
 			log.Printf("could not clone keyring membership: %s", err)
 			return nil, nil, err
@@ -304,16 +299,16 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 			Value:     base64.NewValue(encMek),
 		}
 
-		switch graph.GetKeyring().Version {
-		case 1:
-			projectID := graph.GetKeyring().Body.(*primitive.KeyringV1).ProjectID
+		switch k := graph.GetKeyring().(type) {
+		case *envelope.KeyringV1:
+			projectID := k.Body.ProjectID
 			member, err := newV1KeyringMember(ctx, c, krm.OrgID, projectID,
 				krm.KeyringID, ownerID, targetPubKey.ID, encID, sigID, key, kp)
 			if err != nil {
 				return nil, nil, err
 			}
 			v1members = append(v1members, *member)
-		case 2:
+		case *envelope.Keyring:
 			member, err := newV2KeyringMember(ctx, c, krm.OrgID, krm.KeyringID,
 				ownerID, targetPubKey.ID, encID, sigID, key, kp)
 			if err != nil {
@@ -352,8 +347,7 @@ func fetchRegistryKeyPairs(ctx context.Context, client *registry.Client,
 			continue
 		}
 
-		pubKey := keyPair.PublicKey.Body.(*primitive.PublicKey)
-		switch pubKey.KeyType {
+		switch kt := keyPair.PublicKey.Body.KeyType; kt {
 		case primitive.SigningKeyType:
 			sigClaimed = &keyPair
 		case primitive.EncryptionKeyType:
@@ -361,7 +355,7 @@ func fetchRegistryKeyPairs(ctx context.Context, client *registry.Client,
 		default:
 			return nil, nil, &apitypes.Error{
 				Type: apitypes.InternalServerError,
-				Err:  []string{fmt.Sprintf("Unknown key type: %s", pubKey.KeyType)},
+				Err:  []string{fmt.Sprintf("Unknown key type: %s", kt)},
 			}
 		}
 	}
@@ -392,11 +386,11 @@ func fetchKeyPairs(ctx context.Context, client *registry.Client,
 
 func bundleKeypairs(sigClaimed, encClaimed *registry.ClaimedKeyPair) *crypto.KeyPairs {
 
-	sigPub := sigClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
+	sigPub := sigClaimed.PublicKey.Body.Key.Value
 	sigKP := crypto.SignatureKeyPair{
 		Public:  ed25519.PublicKey(*sigPub),
-		Private: *sigClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
-		PNonce:  *sigClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
+		Private: *sigClaimed.PrivateKey.Body.Key.Value,
+		PNonce:  *sigClaimed.PrivateKey.Body.PNonce,
 	}
 
 	kp := crypto.KeyPairs{
@@ -404,13 +398,13 @@ func bundleKeypairs(sigClaimed, encClaimed *registry.ClaimedKeyPair) *crypto.Key
 	}
 
 	if encClaimed != nil {
-		encPub := *encClaimed.PublicKey.Body.(*primitive.PublicKey).Key.Value
+		encPub := *encClaimed.PublicKey.Body.Key.Value
 		encPubB := [32]byte{}
 		copy(encPubB[:], encPub)
 		kp.Encryption = crypto.EncryptionKeyPair{
 			Public:  encPubB,
-			Private: *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).Key.Value,
-			PNonce:  *encClaimed.PrivateKey.Body.(*primitive.PrivateKey).PNonce,
+			Private: *encClaimed.PrivateKey.Body.Key.Value,
+			PNonce:  *encClaimed.PrivateKey.Body.PNonce,
 		}
 	}
 
@@ -439,7 +433,7 @@ func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *iden
 	var encryptingKey *primitive.PublicKey
 	for _, segment := range claimTrees[0].PublicKeys {
 		if *segment.PublicKey.ID == *encryptingKeyID {
-			encryptingKey = segment.PublicKey.Body.(*primitive.PublicKey)
+			encryptingKey = segment.PublicKey.Body
 			break
 		}
 	}
@@ -494,10 +488,10 @@ func findSystemTeams(teams []envelope.Team) (*envelope.Team, *envelope.Team, err
 }
 
 func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
-	userID *identity.ID) (*envelope.Signed, error) {
+	userID *identity.ID) (*envelope.PublicKey, error) {
 
 	// Loop over claimtree looking for the users encryption key
-	var encKey *envelope.Signed
+	var encKey *envelope.PublicKey
 	for _, tree := range trees {
 		if *tree.Org.ID != *orgID {
 			continue
@@ -509,12 +503,11 @@ func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
 			}
 
 			key := segment.PublicKey
-			keyBody := key.Body.(*primitive.PublicKey)
-			if *keyBody.OwnerID != *userID {
+			if *key.Body.OwnerID != *userID {
 				continue
 			}
 
-			if keyBody.KeyType != primitive.EncryptionKeyType {
+			if key.Body.KeyType != primitive.EncryptionKeyType {
 				continue
 			}
 
@@ -531,10 +524,10 @@ func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
 }
 
 func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
-	ID *identity.ID) (*envelope.Signed, error) {
+	ID *identity.ID) (*envelope.PublicKey, error) {
 
 	// Loop over claimtree looking for the users encryption key
-	var encKey *envelope.Signed
+	var encKey *envelope.PublicKey
 	for _, tree := range trees {
 		if *tree.Org.ID != *orgID {
 			continue
@@ -546,12 +539,11 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 			}
 
 			key := segment.PublicKey
-			keyBody := key.Body.(*primitive.PublicKey)
 			if *key.ID != *ID {
 				continue
 			}
 
-			if keyBody.KeyType != primitive.EncryptionKeyType {
+			if key.Body.KeyType != primitive.EncryptionKeyType {
 				continue
 			}
 
@@ -573,7 +565,7 @@ func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
 
 func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	orgID *identity.ID, keyType primitive.KeyType, public []byte, sigID *identity.ID,
-	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
+	sigKP *crypto.SignatureKeyPair) (*envelope.PublicKey, error) {
 
 	alg := crypto.Curve25519
 	if keyType == primitive.SigningKeyType {
@@ -596,12 +588,12 @@ func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
 		Expires: now.Add(time.Hour * 8760), // one year
 	}
 
-	return engine.SignedEnvelope(ctx, &body, sigID, sigKP)
+	return engine.SignedPublicKey(ctx, &body, sigID, sigKP)
 }
 
 func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	orgID *identity.ID, pnonce, private []byte, pubID, sigID *identity.ID,
-	sigKP *crypto.SignatureKeyPair) (*envelope.Signed, error) {
+	sigKP *crypto.SignatureKeyPair) (*envelope.PrivateKey, error) {
 
 	body := primitive.PrivateKey{
 		OrgID:       orgID,
@@ -615,26 +607,7 @@ func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 		},
 	}
 
-	return engine.SignedEnvelope(ctx, &body, sigID, sigKP)
-}
-
-var errCredVersionMistmach = errors.New("Mismatched credential version and body")
-
-func baseCredential(cred *envelope.Signed) (*primitive.BaseCredential, error) {
-	switch v := cred.Version; v {
-	case 1:
-		if b, ok := cred.Body.(*primitive.CredentialV1); ok {
-			return &b.BaseCredential, nil
-		}
-		return nil, errCredVersionMistmach
-	case 2:
-		if b, ok := cred.Body.(*primitive.Credential); ok {
-			return &b.BaseCredential, nil
-		}
-		return nil, errCredVersionMistmach
-	default:
-		return nil, fmt.Errorf("Unknown credential version %d", v)
-	}
+	return engine.SignedPrivateKey(ctx, &body, sigID, sigKP)
 }
 
 // getKeyringMembers returns a slice of IDs of all subjects that should be

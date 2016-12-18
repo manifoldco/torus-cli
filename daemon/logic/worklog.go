@@ -163,13 +163,8 @@ func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Org) ([]ap
 
 	var items []apitypes.WorklogItem
 	for _, cred := range needRotation {
-		base, err := baseCredential(&cred)
-		if err != nil {
-			return nil, err
-		}
-
 		item := apitypes.WorklogItem{
-			Subject: base.PathExp.String() + "/" + base.Name,
+			Subject: cred.PathExp().String() + "/" + cred.Name(),
 			Summary: "A user's access was revoked. This secret's value should be changed.",
 		}
 		item.CreateID(apitypes.SecretRotateWorklogType)
@@ -310,15 +305,7 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 	}
 
 	for _, k := range keyrings {
-		var path *pathexp.PathExp
-		keyring := k.GetKeyring()
-		switch keyring.Version {
-		case 1:
-			path = keyring.Body.(*primitive.KeyringV1).PathExp
-		case 2:
-			path = keyring.Body.(*primitive.Keyring).PathExp
-		}
-
+		path := k.GetKeyring().PathExp()
 		paths[path.String()] = path
 	}
 
@@ -362,15 +349,7 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 				continue
 			}
 
-			var path string
-			keyring := graph.GetKeyring()
-			switch keyring.Version {
-			case 1:
-				path = keyring.Body.(*primitive.KeyringV1).PathExp.String()
-			case 2:
-				path = keyring.Body.(*primitive.Keyring).PathExp.String()
-			}
-
+			path := graph.GetKeyring().PathExp().String()
 			if _, ok := missing[path]; !ok {
 				item := apitypes.WorklogItem{
 					Subject: path,
@@ -454,8 +433,6 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 			return nil, err
 		}
 
-		encPKBody := encPubKey.Body.(*primitive.PublicKey)
-
 		for _, member := range members {
 			m, _, err := graph.FindMember(&member)
 			if err != nil && err != registry.ErrMemberNotFound {
@@ -475,9 +452,9 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 				return nil, err
 			}
 
-			targetPKBody := targetPubKey.Body.(*primitive.PublicKey)
-			encMek, nonce, err := h.engine.crypto.CloneMembership(ctx, *mekshare.Key.Value,
-				*mekshare.Key.Nonce, &kp.Encryption, *encPKBody.Key.Value, *targetPKBody.Key.Value)
+			encMek, nonce, err := h.engine.crypto.CloneMembership(ctx,
+				*mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption,
+				*encPubKey.Body.Key.Value, *targetPubKey.Body.Key.Value)
 			if err != nil {
 				return nil, err
 			}
@@ -489,21 +466,21 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 			}
 
 			keyring := graph.GetKeyring()
-			switch keyring.Version {
-			case 1:
-				projectID := graph.GetKeyring().Body.(*primitive.KeyringV1).ProjectID
+			switch k := keyring.(type) {
+			case *envelope.KeyringV1:
+				projectID := k.Body.ProjectID
 				membership, err := newV1KeyringMember(ctx, h.engine.crypto, orgID, projectID,
 					krm.KeyringID, &member, targetPubKey.ID, encID, sigID, key, kp)
 				if err != nil {
 					return nil, err
 				}
 
-				_, err = h.engine.client.KeyringMember.Post(ctx, []envelope.Signed{*membership})
+				_, err = h.engine.client.KeyringMember.Post(ctx, []envelope.KeyringMemberV1{*membership})
 				if err != nil {
 					return nil, err
 				}
 
-			case 2:
+			case *envelope.Keyring:
 				membership, err := newV2KeyringMember(ctx, h.engine.crypto, orgID, krm.KeyringID,
 					&member, targetPubKey.ID, encID, sigID, key, kp)
 				if err != nil {

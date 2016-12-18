@@ -150,7 +150,7 @@ func generateKeypairs(ctx context.Context, c *crypto.Engine, orgID, authID *iden
 	}
 
 	rawsigClaim := primitive.NewClaim(orgID, authID, pubsig.ID, pubsig.ID, primitive.SignatureClaimType)
-	sigclaim, err := c.SignedEnvelope(ctx, rawsigClaim, pubsig.ID, &kp.Signature)
+	sigclaim, err := c.SignedClaim(ctx, rawsigClaim, pubsig.ID, &kp.Signature)
 	if err != nil {
 		log.Printf("Error generating signature claim: %s", err)
 		return nil, err
@@ -163,7 +163,7 @@ func generateKeypairs(ctx context.Context, c *crypto.Engine, orgID, authID *iden
 	}
 
 	rawencClaim := primitive.NewClaim(orgID, authID, pubenc.ID, pubenc.ID, primitive.SignatureClaimType)
-	encclaim, err := c.SignedEnvelope(ctx, rawencClaim, pubsig.ID, &kp.Signature)
+	encclaim, err := c.SignedClaim(ctx, rawencClaim, pubsig.ID, &kp.Signature)
 	if err != nil {
 		log.Printf("Error generating encryption claim: %s", err)
 		return nil, err
@@ -173,14 +173,14 @@ func generateKeypairs(ctx context.Context, c *crypto.Engine, orgID, authID *iden
 		{
 			PublicKeySegment: apitypes.PublicKeySegment{
 				PublicKey: pubsig,
-				Claims:    []envelope.Signed{*sigclaim},
+				Claims:    []envelope.Claim{*sigclaim},
 			},
 			PrivateKey: privsig,
 		},
 		{
 			PublicKeySegment: apitypes.PublicKeySegment{
 				PublicKey: pubenc,
-				Claims:    []envelope.Signed{*encclaim},
+				Claims:    []envelope.Claim{*encclaim},
 			},
 			PrivateKey: privenc,
 		},
