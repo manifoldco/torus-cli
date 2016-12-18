@@ -335,8 +335,12 @@ builds/dist/manifest.json: builds/dist
 	@echo '}' >> $@
 
 CDN_INDEXER=tools/cdn-indexer
-$(TOOLS)/cdn-indexer: $(wildcard $(CDN_INDEXER)/*.go) $(wildcard $(CDN_INDEXER)/*.tmpl)
+$(TOOLS)/cdn-indexer: $(wildcard $(CDN_INDEXER)/*.go) $(wildcard $(CDN_INDEXER)/*.tmpl) vendor
 	$(GO_BUILD) -o $@ ./$(CDN_INDEXER)
+
+GH_RELEASER=tools/gh-releaser
+$(TOOLS)/gh-releaser: $(wildcard $(GH_RELEASER)/*.go) $(wildcard $(GH_RELEASER)/*.tmpl) vendor
+	$(GO_BUILD) -o $@ ./$(GH_RELEASER)
 
 RELEASE_TARGETS=\
 	builds/dist/manifest.json \
@@ -349,7 +353,7 @@ COLS=$(shell tput cols)
 S3_CACHE=--cache-control "public, max-age=604800"
 S3_FAST_CACHE=--cache-control "public, max-age=300"
 S3_CP=pushd builds/dist && aws s3 cp --recursive . s3://$(TORUS_S3_BUCKET)
-release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer
+release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer $(TOOLS)/gh-releaser
 	$(S3_CP) $(S3_CACHE) --content-type="text/plain" --exclude "*" \
 		--include "*SHA256SUMS*"
 	$(S3_CP) $(S3_FAST_CACHE) --exclude "*" \
@@ -361,6 +365,7 @@ release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer
 		--exclude "*/repomd.xml" \
 		$(foreach distro,debian ubuntu,$(foreach dir,conf db dists,--exclude "$(distro)/$(dir)/*"))
 	AWS_REGION=us-east-1 $(TOOLS)/cdn-indexer -bucket s3://$(TORUS_S3_BUCKET)
+	$(TOOLS)/gh-releaser
 
 	@echo
 	@printf "=%.0s" {1..$(COLS)}

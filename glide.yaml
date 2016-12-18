@@ -32,3 +32,9 @@ import:
 - package: github.com/donovanhide/eventsource
 - package: github.com/aws/aws-sdk-go
   version: ^1.5.13
+- package: github.com/google/go-github
+  subpackages:
+  - github
+- package: github.com/blang/semver
+  version: ^3.3.0
+- package: golang.org/x/oauth2

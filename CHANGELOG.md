@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.22.0
+
+_Unreleased_
+
+**Notable Changes**
+
+- Publish release details to GitHub as proper releases.
+
 ## v0.21.0
 
 _2016-12-16_

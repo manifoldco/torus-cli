@@ -45,6 +45,8 @@ You will need the following:
 - AWS SDK installed locally (e.g. `aws-cli/1.10.56 Python/2.7.10 Darwin/15.6.0 botocore/1.4.46`)
 - Correct AWS environment variables set (`aws iam get-user` is successful)
 - You belong to the CLIDevelopers group on AWS
+- A GitHub personal access token with full repo permissions, exported as
+  `GITHUB_TOKEN` (to create the GitHub release).
 
 The steps for packaging the CLI:
 

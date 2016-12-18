@@ -1,10 +1,16 @@
-hash: 41ccd0c27ecd1b25239fbcf89dba9a65f53d671150465616e1e2d793182735b9
-updated: 2016-12-02T09:57:38.182581289-04:00
+hash: ed9edc1e79cec4131f4cdaa8df86520d42108422ad6207f53662af97640e9611
+updated: 2016-12-16T12:27:25.264571661-04:00
 imports:
+- name: cloud.google.com/go
+  version: cd98f454026dda47cbe1b8a189313207573f6d6b
+  subpackages:
+  - compute/metadata
+  - internal
+  - internal/atomiccache
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: 918c42e2bcdb277aa821401c906e88254501bdf4
+  version: 0df2a7ae7e82d2643e4a8fed1b2e36a1cf0580bc
   subpackages:
   - aws
   - aws/awserr
@@ -18,10 +24,10 @@ imports:
   - aws/credentials/stscreds
   - aws/defaults
   - aws/ec2metadata
+  - aws/endpoints
   - aws/request
   - aws/session
   - aws/signer/v4
-  - private/endpoints
   - private/protocol
   - private/protocol/json/jsonutil
   - private/protocol/jsonrpc
@@ -37,6 +43,8 @@ imports:
   - service/s3/s3iface
   - service/s3/s3manager
   - service/sts
+- name: github.com/blang/semver
+  version: 60ec3488bfea7cca02b021d106d9911120d25fe9
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/BurntSushi/toml
@@ -57,6 +65,25 @@ imports:
   version: 6e4869b434bd001f6983749881c7ead3545887d8
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+- name: github.com/golang/protobuf
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  subpackages:
+  - proto
+  - proto/testdata
+  - protoc-gen-go/descriptor
+  - ptypes/any
+- name: github.com/google/go-github
+  version: 466070b0580728e63bd1a415e0019639e55d7148
+  subpackages:
+  - github
+- name: github.com/google/go-querystring
+  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  subpackages:
+  - query
+- name: github.com/googleapis/gax-go
+  version: da06d194a00e19ce00d9011a13931c3f6f6887c7
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
@@ -96,9 +123,15 @@ imports:
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/urfave/cli
   version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
+- name: go4.org
+  version: 09d86de304dc27e636298361bbfee4ac6ab04f21
+  subpackages:
+  - syncutil/singleflight
 - name: golang.org/x/crypto
   version: 8a549a1948fc5271eb24f36dcb0d3b47dec75a16
   subpackages:
+  - acme
+  - acme/autocert
   - curve25519
   - ed25519
   - ed25519/internal/edwards25519
@@ -109,7 +142,88 @@ imports:
   - salsa20
   - salsa20/salsa
   - scrypt
+  - ssh/terminal
   - twofish
+- name: golang.org/x/net
+  version: 45e771701b814666a7eb299e6c7a57d0b1799e91
+  subpackages:
+  - context
+  - context/ctxhttp
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/oauth2
+  version: 96382aa079b72d8c014eb0c50f6c223d1e6a2de0
+  subpackages:
+  - clientcredentials
+  - google
+  - internal
+  - jws
+  - jwt
+- name: google.golang.org/api
+  version: 55146ba61254fdb1c26d65ff3c04bc1611ad73fb
+  subpackages:
+  - compute/v1
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+- name: google.golang.org/appengine
+  version: ca59ef35f409df61fa4a5f8290ff289b37eccfb8
+  subpackages:
+  - datastore
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/blobstore
+  - internal/capability
+  - internal/channel
+  - internal/datastore
+  - internal/image
+  - internal/log
+  - internal/mail
+  - internal/memcache
+  - internal/modules
+  - internal/remote_api
+  - internal/search
+  - internal/socket
+  - internal/system
+  - internal/taskqueue
+  - internal/urlfetch
+  - internal/user
+  - internal/xmpp
+  - log
+  - taskqueue
+  - urlfetch
+  - user
+- name: google.golang.org/grpc
+  version: 8712952b7d646dbbbc6fb73a782174f3115060f3
+  subpackages:
+  - benchmark
+  - benchmark/grpc_testing
+  - benchmark/stats
+  - codes
+  - credentials
+  - credentials/oauth
+  - examples/helloworld/helloworld
+  - examples/route_guide/routeguide
+  - grpclb/grpc_lb_v1
+  - grpclog
+  - health/grpc_health_v1
+  - internal
+  - interop
+  - interop/grpc_testing
+  - metadata
+  - naming
+  - peer
+  - reflection
+  - reflection/grpc_reflection_v1alpha
+  - stats
+  - stress/grpc_testing
+  - tap
+  - transport
 - name: gopkg.in/oleiade/reflections.v1
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
 - name: gopkg.in/urfave/cli.v1
