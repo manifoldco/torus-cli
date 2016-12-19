@@ -13,6 +13,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -87,7 +88,7 @@ func detachPolicies(ctx *cli.Context) error {
 	c := context.Background()
 
 	// Look up the target org
-	var org *api.OrgResult
+	var org *envelope.Org
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
 		return errs.NewErrorExitError(policyDetachFailed, err)
@@ -99,12 +100,12 @@ func detachPolicies(ctx *cli.Context) error {
 	var waitPolicy sync.WaitGroup
 	waitPolicy.Add(2)
 
-	var team *api.TeamResult
-	var policy *api.PoliciesResult
+	var team *envelope.Team
+	var policy *envelope.Policy
 	var pErr, tErr error
 
 	go func() {
-		var policies []api.PoliciesResult
+		var policies []envelope.Policy
 		policies, pErr = client.Policies.List(c, org.ID, "")
 		for _, p := range policies {
 			if p.Body.Policy.Name == policyName {
@@ -171,7 +172,7 @@ func listPolicies(ctx *cli.Context) error {
 	c := context.Background()
 
 	// Look up the target org
-	var org *api.OrgResult
+	var org *envelope.Org
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
 		return errs.NewErrorExitError(policyListFailed, err)
@@ -184,21 +185,21 @@ func listPolicies(ctx *cli.Context) error {
 	getAttachments.Add(3)
 	display.Add(1)
 
-	var policies []api.PoliciesResult
+	var policies []envelope.Policy
 	var pErr error
 	go func() {
 		policies, pErr = client.Policies.List(c, org.ID, "")
 		getAttachments.Done()
 	}()
 
-	var attachments []api.PolicyAttachmentResult
+	var attachments []envelope.PolicyAttachment
 	var aErr error
 	go func() {
 		attachments, aErr = client.Policies.AttachmentsList(c, org.ID, nil, nil)
 		getAttachments.Done()
 	}()
 
-	var teams []api.TeamResult
+	var teams []envelope.Team
 	var tErr error
 	go func() {
 		teams, tErr = client.Teams.GetByOrg(c, org.ID)
@@ -214,8 +215,8 @@ func listPolicies(ctx *cli.Context) error {
 		)
 	}
 
-	teamsByID := make(map[identity.ID]api.TeamResult)
-	policiesByName := make(map[string]api.PoliciesResult)
+	teamsByID := make(map[identity.ID]envelope.Team)
+	policiesByName := make(map[string]envelope.Policy)
 	attachedTeamsByPolicyID := make(map[identity.ID][]string)
 	var sortedNames []string
 

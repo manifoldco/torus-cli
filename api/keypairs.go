@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -15,18 +16,9 @@ type KeypairsClient struct {
 
 // KeypairResult is the payload returned for a keypair object
 type KeypairResult struct {
-	PublicKey *struct {
-		ID   *identity.ID         `json:"id"`
-		Body *primitive.PublicKey `json:"body"`
-	} `json:"public_key"`
-	PrivateKey *struct {
-		ID   *identity.ID         `json:"id"`
-		Body *primitive.PublicKey `json:"body"`
-	} `json:"private_key"`
-	Claims []struct {
-		ID   *identity.ID     `json:"id"`
-		Body *primitive.Claim `json:"body"`
-	} `json:"claims"`
+	PublicKey  *envelope.PublicKey  `json:"public_key"`
+	PrivateKey *envelope.PrivateKey `json:"private_key"`
+	Claims     []envelope.Claim     `json:"claims"`
 }
 
 // Revoked returns a bool indicating if any revocation claims exist against this

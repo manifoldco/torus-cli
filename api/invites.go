@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -15,15 +16,8 @@ type InvitesClient struct {
 	client *Client
 }
 
-// InviteResult is the payload returned for a team object
-type InviteResult struct {
-	ID      *identity.ID         `json:"id"`
-	Version uint8                `json:"version"`
-	Body    *primitive.OrgInvite `json:"body"`
-}
-
 // List all invites for a given org
-func (i *InvitesClient) List(ctx context.Context, orgID *identity.ID, states []string) ([]InviteResult, error) {
+func (i *InvitesClient) List(ctx context.Context, orgID *identity.ID, states []string) ([]envelope.OrgInvite, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 
@@ -36,7 +30,7 @@ func (i *InvitesClient) List(ctx context.Context, orgID *identity.ID, states []s
 		return nil, err
 	}
 
-	invites := []InviteResult{}
+	invites := []envelope.OrgInvite{}
 	_, err = i.client.Do(ctx, req, &invites, nil, nil)
 	return invites, err
 }
@@ -95,7 +89,7 @@ func (i *InvitesClient) Accept(ctx context.Context, org, email, code string) err
 }
 
 // Associate executes the associate invite request
-func (i *InvitesClient) Associate(ctx context.Context, org, email, code string) (*InviteResult, error) {
+func (i *InvitesClient) Associate(ctx context.Context, org, email, code string) (*envelope.OrgInvite, error) {
 	// Same payload as accept, re-use type
 	data := apitypes.InviteAccept{
 		Org:   org,
@@ -108,7 +102,7 @@ func (i *InvitesClient) Associate(ctx context.Context, org, email, code string) 
 		return nil, err
 	}
 
-	invite := InviteResult{}
+	invite := envelope.OrgInvite{}
 	_, err = i.client.Do(ctx, req, &invite, &reqID, nil)
 	return &invite, err
 }

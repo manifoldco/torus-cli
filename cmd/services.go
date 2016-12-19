@@ -11,6 +11,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -77,7 +78,7 @@ func listServicesCmd(ctx *cli.Context) error {
 	c := context.Background()
 
 	// Look up the target org
-	var org *api.OrgResult
+	var org *envelope.Org
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
 		return errs.NewErrorExitError(serviceListFailed, err)
@@ -88,7 +89,7 @@ func listServicesCmd(ctx *cli.Context) error {
 
 	// Identify which projects to list services for
 	var projectID identity.ID
-	var projects []api.ProjectResult
+	var projects []envelope.Project
 	if ctx.Bool("all") {
 		// Pull all projects for the given orgID
 		projects, err = listProjects(&c, client, org.ID, nil)
@@ -117,11 +118,11 @@ func listServicesCmd(ctx *cli.Context) error {
 	}
 
 	// Build map of services to project
-	pMap := make(map[string]api.ProjectResult)
+	pMap := make(map[string]envelope.Project)
 	for _, project := range projects {
 		pMap[project.ID.String()] = project
 	}
-	sMap := make(map[string][]api.ServiceResult)
+	sMap := make(map[string][]envelope.Service)
 	for _, service := range services {
 		ID := service.Body.ProjectID.String()
 		sMap[ID] = append(sMap[ID], service)
@@ -143,7 +144,7 @@ func listServicesCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func listServices(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]api.ServiceResult, error) {
+func listServices(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]envelope.Service, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(serviceListFailed, -1)

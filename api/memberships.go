@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -16,16 +17,9 @@ type MembershipsClient struct {
 	client *Client
 }
 
-// MembershipResult is the payload returned for team membership association.
-type MembershipResult struct {
-	ID      *identity.ID
-	Version uint8
-	Body    *primitive.Membership
-}
-
 // List returns all team membership associations for the given user id within
 // the given org id.
-func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.ID) ([]MembershipResult, error) {
+func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.ID) ([]envelope.Membership, error) {
 	v := &url.Values{}
 	v.Set("org_id", org.String())
 	if user != nil {
@@ -40,7 +34,7 @@ func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.
 		return nil, err
 	}
 
-	memberships := []MembershipResult{}
+	memberships := []envelope.Membership{}
 	_, err = m.client.Do(ctx, req, &memberships, nil, nil)
 	return memberships, err
 }

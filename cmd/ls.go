@@ -10,6 +10,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/pathexp"
@@ -81,7 +82,7 @@ func listObjects(ctx *cli.Context) error {
 
 	var orgName string
 	var projectTree api.ProjectTreeSegment
-	var projectMap map[string]*api.ProjectResult
+	var projectMap map[string]envelope.Project
 	if target != "orgs" {
 		tree, err := projectTreeForOrg(c, client, cpathExp)
 		if err != nil {
@@ -174,8 +175,8 @@ func listObjects(ctx *cli.Context) error {
 }
 
 // return a map of the projects which match the supplied pathexp
-func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[string]*api.ProjectResult {
-	projectMap := make(map[string]*api.ProjectResult)
+func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[string]envelope.Project {
+	projectMap := make(map[string]envelope.Project)
 	for _, p := range tree.Projects {
 		if pexp.Project.Contains(p.Body.Name) || matchPathSegment(pexp.Project.String(), p.Body.Name) {
 			projectMap[p.ID.String()] = p

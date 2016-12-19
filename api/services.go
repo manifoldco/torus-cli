@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -15,15 +16,8 @@ type ServicesClient struct {
 	client *Client
 }
 
-// ServiceResult is the payload returned for a service object
-type ServiceResult struct {
-	ID      *identity.ID       `json:"id"`
-	Version uint8              `json:"version"`
-	Body    *primitive.Service `json:"body"`
-}
-
 // List retrieves relevant services by name and/or orgID and/or projectID
-func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs *[]*identity.ID, names *[]string) ([]ServiceResult, error) {
+func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs *[]*identity.ID, names *[]string) ([]envelope.Service, error) {
 	v := &url.Values{}
 	if orgIDs != nil {
 		for _, id := range *orgIDs {
@@ -46,7 +40,7 @@ func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs *[]*identi
 		return nil, err
 	}
 
-	services := []ServiceResult{}
+	services := []envelope.Service{}
 	_, err = s.client.Do(ctx, req, &services, nil, nil)
 	return services, err
 }

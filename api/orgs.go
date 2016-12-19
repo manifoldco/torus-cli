@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -13,13 +14,6 @@ import (
 // OrgsClient makes proxied requests to the registry's orgs endpoints
 type OrgsClient struct {
 	client *Client
-}
-
-// OrgResult is the payload returned for an org object
-type OrgResult struct {
-	ID      *identity.ID   `json:"id"`
-	Version uint8          `json:"version"`
-	Body    *primitive.Org `json:"body"`
 }
 
 type orgCreateRequest struct {
@@ -31,17 +25,17 @@ type orgCreateRequest struct {
 // OrgTreeSegment is the payload returns for an org tree
 type OrgTreeSegment struct {
 	Org      *primitive.Org      `json:"org"`
-	Policies []*primitive.Policy `json:"policies"`
+	Policies []primitive.Policy  `json:"policies"`
 	Profiles []*apitypes.Profile `json:"profiles"`
 	Teams    []*struct {
-		Team              *apitypes.Team             `json:"team"`
-		Memberships       *[]*apitypes.Membership    `json:"memberships"`
-		PolicyAttachments *[]*PolicyAttachmentResult `json:"policy_attachments"`
+		Team              *envelope.Team               `json:"team"`
+		Memberships       *[]envelope.Membership       `json:"memberships"`
+		PolicyAttachments *[]envelope.PolicyAttachment `json:"policy_attachments"`
 	} `json:"teams"`
 }
 
 // Create creates a new org with the given name. It returns the newly-created org.
-func (o *OrgsClient) Create(ctx context.Context, name string) (*OrgResult, error) {
+func (o *OrgsClient) Create(ctx context.Context, name string) (*envelope.Org, error) {
 	org := orgCreateRequest{}
 	org.Body.Name = name
 
@@ -50,13 +44,13 @@ func (o *OrgsClient) Create(ctx context.Context, name string) (*OrgResult, error
 		return nil, err
 	}
 
-	res := OrgResult{}
+	res := envelope.Org{}
 	_, err = o.client.Do(ctx, req, &res, nil, nil)
 	return &res, err
 }
 
 // GetByName retrieves an org by its named
-func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, error) {
+func (o *OrgsClient) GetByName(ctx context.Context, name string) (*envelope.Org, error) {
 	v := &url.Values{}
 	if name == "" {
 		return nil, errors.New("invalid org name")
@@ -68,7 +62,7 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, er
 		return nil, err
 	}
 
-	orgs := []OrgResult{}
+	var orgs []envelope.Org
 	_, err = o.client.Do(ctx, req, &orgs, nil, nil)
 	if err != nil {
 		return nil, err
@@ -81,13 +75,13 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*OrgResult, er
 }
 
 // List returns all organizations that the signed-in user has access to
-func (o *OrgsClient) List(ctx context.Context) ([]OrgResult, error) {
+func (o *OrgsClient) List(ctx context.Context) ([]envelope.Org, error) {
 	req, _, err := o.client.NewRequest("GET", "/orgs", nil, nil, true)
 	if err != nil {
 		return nil, err
 	}
 
-	orgs := []OrgResult{}
+	var orgs []envelope.Org
 	_, err = o.client.Do(ctx, req, &orgs, nil, nil)
 	return orgs, err
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/prefs"
@@ -141,7 +142,7 @@ func VerificationPrompt() (string, error) {
 }
 
 // SelectProjectPrompt prompts the user to select an org from a list, or enter a new name
-func SelectProjectPrompt(projects []api.ProjectResult) (int, string, error) {
+func SelectProjectPrompt(projects []envelope.Project) (int, string, error) {
 	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return 0, "", err
@@ -165,7 +166,7 @@ func SelectProjectPrompt(projects []api.ProjectResult) (int, string, error) {
 }
 
 // SelectOrgPrompt prompts the user to select an org from a list, or enter a new name
-func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
+func SelectOrgPrompt(orgs []envelope.Org) (int, string, error) {
 	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return 0, "", err
@@ -190,7 +191,7 @@ func SelectOrgPrompt(orgs []api.OrgResult) (int, string, error) {
 
 // SelectTeamPrompt prompts the user to select a team from a list or enter a
 // new name, an optional label can be provided.
-func SelectTeamPrompt(teams []api.TeamResult, label, addLabel string) (int, string, error) {
+func SelectTeamPrompt(teams []envelope.Team, label, addLabel string) (int, string, error) {
 	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return 0, "", err
@@ -237,8 +238,8 @@ func handleSelectError(err error, generic string) error {
 // It returns the object of the selected project (if created a new project was not chosed),
 // the name of the selected project, and a boolean indicating if a new project should
 // be created.
-func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.ProjectResult, string, bool, error) {
-	var projects []api.ProjectResult
+func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.ID, name string) (*envelope.Project, string, bool, error) {
+	var projects []envelope.Project
 	var err error
 	if orgID != nil {
 		// Get the list of projects the user has access to in the specified org
@@ -286,7 +287,7 @@ func SelectCreateProject(c context.Context, client *api.Client, orgID *identity.
 // It returns the object of the selected org (if created a new org was not chosed),
 // the name of the selected org, and a boolean indicating if a new org should
 // be created.
-func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.OrgResult, string, bool, error) {
+func SelectCreateOrg(c context.Context, client *api.Client, name string) (*envelope.Org, string, bool, error) {
 	// Get the list of orgs the user has access to
 	orgs, err := client.Orgs.List(c)
 	if err != nil {
@@ -331,7 +332,7 @@ func SelectCreateOrg(c context.Context, client *api.Client, name string) (*api.O
 //
 // It returns the object of the selected team, the name of the selected team,
 // and a boolean indicating if a new team should be created.
-func SelectCreateRole(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.TeamResult, string, bool, error) {
+func SelectCreateRole(c context.Context, client *api.Client, orgID *identity.ID, name string) (*envelope.Team, string, bool, error) {
 
 	teams, err := client.Teams.List(c, orgID, "", primitive.MachineTeamType)
 	if err != nil {

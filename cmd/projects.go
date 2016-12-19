@@ -11,6 +11,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -71,7 +72,7 @@ func listProjectsCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, name *string) ([]api.ProjectResult, error) {
+func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, name *string) ([]envelope.Project, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(projectListFailed, -1)
@@ -90,7 +91,7 @@ func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, 
 	return client.Projects.List(c, &orgIDs, &projectNames)
 }
 
-func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []*identity.ID) ([]api.ProjectResult, error) {
+func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []*identity.ID) ([]envelope.Project, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(projectListFailed, -1)
@@ -99,14 +100,14 @@ func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []*ide
 	return client.Projects.List(c, &orgIDs, nil)
 }
 
-func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName string) ([]api.ProjectResult, error) {
+func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName string) ([]envelope.Project, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(projectListFailed, -1)
 	}
 
 	// Look up the target org
-	var org *api.OrgResult
+	var org *envelope.Org
 	org, err = client.Orgs.GetByName(c, orgName)
 	if err != nil {
 		return nil, errs.NewExitError(projectListFailed)
@@ -181,7 +182,7 @@ func createProjectCmd(ctx *cli.Context) error {
 	return err
 }
 
-func createProjectByName(c context.Context, client *api.Client, orgID *identity.ID, name string) (*api.ProjectResult, error) {
+func createProjectByName(c context.Context, client *api.Client, orgID *identity.ID, name string) (*envelope.Project, error) {
 	project, err := client.Projects.Create(c, orgID, name)
 	if orgID == nil {
 		return nil, errs.NewExitError("Org not found")
