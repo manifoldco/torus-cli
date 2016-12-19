@@ -24,8 +24,8 @@ type projectCreateRequest struct {
 // ProjectTreeSegment is the payload returned for a project tree
 type ProjectTreeSegment struct {
 	Org      *envelope.Org           `json:"org"`
-	Envs     []*apitypes.Environment `json:"envs"`
-	Services []*apitypes.Service     `json:"services"`
+	Envs     []*envelope.Environment `json:"envs"`
+	Services []*envelope.Service     `json:"services"`
 	Projects []envelope.Project      `json:"projects"`
 	Profiles []*apitypes.Profile     `json:"profiles"`
 }

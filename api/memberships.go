@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -62,7 +61,7 @@ func (m *MembershipsClient) Create(ctx context.Context, userID, orgID, teamID *i
 		return err
 	}
 
-	membership := apitypes.Membership{
+	membership := envelope.Membership{
 		ID:      &ID,
 		Version: 1,
 		Body:    &membershipBody,

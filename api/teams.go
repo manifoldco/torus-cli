@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -73,7 +72,7 @@ func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name st
 
 // Create performs a request to create a new team object
 func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name string,
-	teamType primitive.TeamType) (*apitypes.Team, error) {
+	teamType primitive.TeamType) (*envelope.Team, error) {
 	if orgID == nil {
 		return nil, errors.New("invalid org")
 	}
@@ -89,7 +88,7 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 		return nil, err
 	}
 
-	team := apitypes.Team{
+	team := envelope.Team{
 		ID:      &ID,
 		Version: 1,
 		Body:    &teamBody,
@@ -100,7 +99,7 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 		return nil, err
 	}
 
-	teamResult := &apitypes.Team{}
+	teamResult := &envelope.Team{}
 	_, err = t.client.Do(ctx, req, teamResult, nil, nil)
 	return teamResult, err
 }

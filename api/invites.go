@@ -37,7 +37,6 @@ func (i *InvitesClient) List(ctx context.Context, orgID *identity.ID, states []s
 
 // Send creates a new org invitation
 func (i *InvitesClient) Send(ctx context.Context, email string, orgID, inviterID identity.ID, teamIDs []identity.ID) error {
-	invite := apitypes.OrgInvite{}
 	now := time.Now()
 
 	inviteBody := primitive.OrgInvite{
@@ -58,9 +57,11 @@ func (i *InvitesClient) Send(ctx context.Context, email string, orgID, inviterID
 		return err
 	}
 
-	invite.ID = ID.String()
-	invite.Version = 1
-	invite.Body = &inviteBody
+	invite := envelope.OrgInvite{
+		ID:      &ID,
+		Version: 1,
+		Body:    &inviteBody,
+	}
 
 	req, _, err := i.client.NewRequest("POST", "/org-invites", nil, &invite, true)
 	if err != nil {

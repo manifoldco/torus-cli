@@ -8,7 +8,6 @@ import (
 	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
-	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // ErrorType represents the string error types that the daemon and registry can
@@ -226,46 +225,11 @@ type ProfileUpdate struct {
 	Password string `json:"password"`
 }
 
-// OrgInvite contains information for sending an Org invite
-type OrgInvite struct {
-	ID      string               `json:"id"`
-	Version int                  `json:"version"`
-	Body    *primitive.OrgInvite `json:"body"`
-}
-
-// Team contains information for creating a new Team object
-type Team struct {
-	ID      *identity.ID    `json:"id"`
-	Version int             `json:"version"`
-	Body    *primitive.Team `json:"body"`
-}
-
-// Service contains information for creating a new Service object
-type Service struct {
-	ID      *identity.ID       `json:"id"`
-	Version int                `json:"version"`
-	Body    *primitive.Service `json:"body"`
-}
-
-// Environment contains information for creating a new Env object
-type Environment struct {
-	ID      string                 `json:"id"`
-	Version int                    `json:"version"`
-	Body    *primitive.Environment `json:"body"`
-}
-
 // InviteAccept contains data required to accept org invite
 type InviteAccept struct {
 	Org   string `json:"org"`
 	Email string `json:"email"`
 	Code  string `json:"code"`
-}
-
-// Membership contains data required to be added to a team
-type Membership struct {
-	ID      *identity.ID          `json:"id"`
-	Version int                   `json:"version"`
-	Body    *primitive.Membership `json:"body"`
 }
 
 // VerifyEmail contains email verification code

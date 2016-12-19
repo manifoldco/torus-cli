@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -33,8 +32,8 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 		return err
 	}
 
-	env := apitypes.Environment{
-		ID:      ID.String(),
+	env := envelope.Environment{
+		ID:      &ID,
 		Version: 1,
 		Body:    &envBody,
 	}
