@@ -15,7 +15,6 @@ import (
 	"golang.org/x/crypto/nacl/secretbox"
 
 	"github.com/manifoldco/torus-cli/base64"
-	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 
@@ -429,23 +428,22 @@ func (e *Engine) Verify(ctx context.Context, s SignatureKeyPair, b, sig []byte) 
 	return ed25519.Verify(s.Public, b, sig), nil
 }
 
-// SignedEnvelope returns a new SignedEnvelope containing body
-func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Immutable,
-	sigID *identity.ID, sigKP *SignatureKeyPair) (*envelope.Signed, error) {
+func (e *Engine) signAndID(ctx context.Context, body identity.Immutable,
+	sigID *identity.ID, sigKP *SignatureKeyPair) (*identity.ID, *primitive.Signature, error) {
 
 	err := ctxutil.ErrIfDone(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	b, err := json.Marshal(&body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	s, err := e.Sign(ctx, *sigKP, append([]byte(strconv.Itoa(body.Version())), b...))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	sig := primitive.Signature{
@@ -456,15 +454,10 @@ func (e *Engine) SignedEnvelope(ctx context.Context, body identity.Immutable,
 
 	id, err := identity.NewImmutable(body, &sig)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &envelope.Signed{
-		ID:        &id,
-		Version:   uint8(body.Version()),
-		Body:      body,
-		Signature: sig,
-	}, nil
+	return &id, &sig, err
 }
 
 // unsealMasterKey uses the scrypt stretched password to decrypt the master

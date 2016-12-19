@@ -25,7 +25,8 @@ type KeyringClient struct {
 // KeyringSection is the shared interface between different KeyringSection
 // versions.
 type KeyringSection interface {
-	GetKeyring() *envelope.Signed
+	GetKeyring() envelope.KeyringInf
+	KeyringVersion() int
 	FindMember(*identity.ID) (*primitive.KeyringMember, *primitive.MEKShare, error)
 	HasRevocations() bool
 }
@@ -33,13 +34,18 @@ type KeyringSection interface {
 // KeyringSectionV1 represents a section of the CredentialGraph only pertaining to
 // a keyring and it's membership.
 type KeyringSectionV1 struct {
-	Keyring *envelope.Signed  `json:"keyring"`
-	Members []envelope.Signed `json:"members"`
+	Keyring *envelope.KeyringV1        `json:"keyring"`
+	Members []envelope.KeyringMemberV1 `json:"members"`
 }
 
 // GetKeyring returns the Keyring object in this KeyringSection
-func (k *KeyringSectionV1) GetKeyring() *envelope.Signed {
+func (k *KeyringSectionV1) GetKeyring() envelope.KeyringInf {
 	return k.Keyring
+}
+
+// KeyringVersion returns the version of the keyring itself (not its schema).
+func (k *KeyringSectionV1) KeyringVersion() int {
+	return k.Keyring.Body.KeyringVersion
 }
 
 // FindMember returns the membership and mekshare for the given user id.
@@ -48,18 +54,17 @@ func (k *KeyringSectionV1) FindMember(id *identity.ID) (*primitive.KeyringMember
 	var krm *primitive.KeyringMember
 	var mekshare *primitive.MEKShare
 	for _, m := range k.Members {
-		mbody := m.Body.(*primitive.KeyringMemberV1)
-		if *mbody.OwnerID == *id {
+		if *m.Body.OwnerID == *id {
 			krm = &primitive.KeyringMember{
-				OrgID:           mbody.OrgID,
-				KeyringID:       mbody.KeyringID,
-				OwnerID:         mbody.OwnerID,
-				PublicKeyID:     mbody.PublicKeyID,
-				EncryptingKeyID: mbody.EncryptingKeyID,
+				OrgID:           m.Body.OrgID,
+				KeyringID:       m.Body.KeyringID,
+				OwnerID:         m.Body.OwnerID,
+				PublicKeyID:     m.Body.PublicKeyID,
+				EncryptingKeyID: m.Body.EncryptingKeyID,
 			}
 
 			mekshare = &primitive.MEKShare{
-				Key: mbody.Key,
+				Key: m.Body.Key,
 			}
 			break
 		}
@@ -80,14 +85,19 @@ func (KeyringSectionV1) HasRevocations() bool {
 
 // KeyringSectionV2 represents a Keyring and its members.
 type KeyringSectionV2 struct {
-	Keyring *envelope.Signed  `json:"keyring"`
-	Members []KeyringMember   `json:"members"`
-	Claims  []envelope.Signed `json:"claims"`
+	Keyring *envelope.Keyring             `json:"keyring"`
+	Members []KeyringMember               `json:"members"`
+	Claims  []envelope.KeyringMemberClaim `json:"claims"`
 }
 
 // GetKeyring returns the Keyring object in this KeyringSection
-func (k *KeyringSectionV2) GetKeyring() *envelope.Signed {
+func (k *KeyringSectionV2) GetKeyring() envelope.KeyringInf {
 	return k.Keyring
+}
+
+// KeyringVersion returns the version of the keyring itself (not its schema).
+func (k *KeyringSectionV2) KeyringVersion() int {
+	return k.Keyring.Body.KeyringVersion
 }
 
 // FindMember returns the membership and mekshare for the given user id.
@@ -102,24 +112,22 @@ func (k *KeyringSectionV2) FindMember(id *identity.ID) (*primitive.KeyringMember
 
 outerLoop:
 	for _, m := range k.Members {
-		mbody := m.Member.Body.(*primitive.KeyringMember)
-		if *mbody.OwnerID == *id {
+		if *m.Member.Body.OwnerID == *id {
 			// We've found the right owner. Now see if this membership is
 			// unrevoked.
 			// A revocation is always terminal for a claim chain, so if there's
 			// any revocations for this membership, we know it is invalid.
 			for _, c := range k.Claims {
-				claim := c.Body.(*primitive.KeyringMemberClaim)
-				if *claim.KeyringMemberID == *m.Member.ID && claim.ClaimType == primitive.RevocationClaimType {
+				if *c.Body.KeyringMemberID == *m.Member.ID && c.Body.ClaimType == primitive.RevocationClaimType {
 					continue outerLoop
 				}
 
 			}
 
-			krm = mbody
+			krm = m.Member.Body
 			// We never get the MEKShare for another user returned.
 			if m.MEKShare != nil {
-				mekshare = m.MEKShare.Body.(*primitive.MEKShare)
+				mekshare = m.MEKShare.Body
 			}
 			break
 		}
@@ -135,7 +143,7 @@ outerLoop:
 // HasRevocations indicates that a Keyring holds revoked user keys.
 func (k *KeyringSectionV2) HasRevocations() bool {
 	for _, claim := range k.Claims {
-		if claim.Body.(*primitive.KeyringMemberClaim).ClaimType == primitive.RevocationClaimType {
+		if claim.Body.ClaimType == primitive.RevocationClaimType {
 			return true
 		}
 	}
@@ -145,8 +153,8 @@ func (k *KeyringSectionV2) HasRevocations() bool {
 // KeyringMember holds membership information for v2 keyrings. In v2, a user
 // can have their master encryption key share removed.
 type KeyringMember struct {
-	Member   *envelope.Signed `json:"member"`
-	MEKShare *envelope.Signed `json:"mekshare"`
+	Member   *envelope.KeyringMember `json:"member"`
+	MEKShare *envelope.MEKShare      `json:"mekshare"`
 }
 
 // List retrieves an array of KeyringSections from the registry.
@@ -169,9 +177,9 @@ func (k *KeyringClient) List(ctx context.Context, orgID *identity.ID,
 	}
 
 	resp := []struct {
-		Keyring *envelope.Signed  `json:"keyring"`
-		Members json.RawMessage   `json:"members"`
-		Claims  []envelope.Signed `json:"claims"`
+		Keyring *envelope.Signed              `json:"keyring"`
+		Members json.RawMessage               `json:"members"`
+		Claims  []envelope.KeyringMemberClaim `json:"claims"`
 	}{}
 
 	_, err = k.client.Do(ctx, req, &resp)
@@ -182,8 +190,15 @@ func (k *KeyringClient) List(ctx context.Context, orgID *identity.ID,
 	converted := make([]KeyringSection, len(resp))
 	for i, k := range resp {
 		if k.Keyring.Version == 1 {
+			kre := &envelope.KeyringV1{
+				ID:        k.Keyring.ID,
+				Version:   k.Keyring.Version,
+				Signature: k.Keyring.Signature,
+				Body:      k.Keyring.Body.(*primitive.KeyringV1),
+			}
+
 			s := KeyringSectionV1{
-				Keyring: k.Keyring,
+				Keyring: kre,
 			}
 			err := json.Unmarshal(k.Members, &s.Members)
 			if err != nil {
@@ -191,8 +206,14 @@ func (k *KeyringClient) List(ctx context.Context, orgID *identity.ID,
 			}
 			converted[i] = &s
 		} else {
+			kre := &envelope.Keyring{
+				ID:        k.Keyring.ID,
+				Version:   k.Keyring.Version,
+				Signature: k.Keyring.Signature,
+				Body:      k.Keyring.Body.(*primitive.Keyring),
+			}
 			s := KeyringSectionV2{
-				Keyring: k.Keyring,
+				Keyring: kre,
 				Claims:  k.Claims,
 			}
 			err := json.Unmarshal(k.Members, &s.Members)

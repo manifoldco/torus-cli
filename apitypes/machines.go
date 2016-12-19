@@ -2,26 +2,17 @@ package apitypes
 
 import (
 	"github.com/manifoldco/torus-cli/base64"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
-	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // MachineSegment represents a machine, its tokens, and their connected keypairs
 type MachineSegment struct {
-	Machine *struct {
-		ID   *identity.ID       `json:"id"`
-		Body *primitive.Machine `json:"body"`
-	} `json:"machine"`
-	Memberships []*struct {
-		ID   *identity.ID          `json:"id"`
-		Body *primitive.Membership `json:"body"`
-	} `json:"memberships"`
-	Tokens []*struct {
-		Token *struct {
-			ID   *identity.ID            `json:"id"`
-			Body *primitive.MachineToken `json:"body"`
-		} `json:"token"`
-		Keypairs []PublicKeySegment `json:"keypairs"`
+	Machine     *envelope.Machine     `json:"machine"`
+	Memberships []envelope.Membership `json:"memberships"`
+	Tokens      []struct {
+		Token    *envelope.MachineToken `json:"token"`
+		Keypairs []PublicKeySegment     `json:"keypairs"`
 	} `json:"tokens"`
 }
 

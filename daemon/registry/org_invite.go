@@ -18,7 +18,7 @@ type OrgInviteClient struct {
 
 // Approve sends an approval notification to the registry regarding a specific
 // invitation.
-func (o *OrgInviteClient) Approve(ctx context.Context, inviteID *identity.ID) (*envelope.Unsigned, error) {
+func (o *OrgInviteClient) Approve(ctx context.Context, inviteID *identity.ID) (*envelope.OrgInvite, error) {
 
 	path := "/org-invites/" + inviteID.String() + "/approve"
 	req, err := o.client.NewRequest("POST", path, nil, nil)
@@ -28,7 +28,7 @@ func (o *OrgInviteClient) Approve(ctx context.Context, inviteID *identity.ID) (*
 		return nil, err
 	}
 
-	invite := envelope.Unsigned{}
+	invite := envelope.OrgInvite{}
 	_, err = o.client.Do(ctx, req, &invite)
 	if err != nil {
 		log.Printf("Error performing POST /org-invites/:id/accept: %s", err)
@@ -39,7 +39,7 @@ func (o *OrgInviteClient) Approve(ctx context.Context, inviteID *identity.ID) (*
 }
 
 // Get returns a specific Org Invite based on it's ID
-func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*envelope.Unsigned, error) {
+func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*envelope.OrgInvite, error) {
 	if inviteID == nil {
 		return nil, errors.New("an inviteID must be provided")
 	}
@@ -51,7 +51,7 @@ func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*enve
 		return nil, err
 	}
 
-	invite := envelope.Unsigned{}
+	invite := envelope.OrgInvite{}
 	_, err = o.client.Do(ctx, req, &invite)
 	if err != nil {
 		log.Printf("Error performing GET /org-invites/:id request: %s", err)
@@ -62,7 +62,7 @@ func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*enve
 }
 
 // List lists all invites for a given org with the given states
-func (o *OrgInviteClient) List(ctx context.Context, orgID *identity.ID, states []string, email string) ([]envelope.Unsigned, error) {
+func (o *OrgInviteClient) List(ctx context.Context, orgID *identity.ID, states []string, email string) ([]envelope.OrgInvite, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 
@@ -79,7 +79,7 @@ func (o *OrgInviteClient) List(ctx context.Context, orgID *identity.ID, states [
 		return nil, err
 	}
 
-	var invites []envelope.Unsigned
+	var invites []envelope.OrgInvite
 	_, err = o.client.Do(ctx, req, &invites)
 	return invites, err
 }

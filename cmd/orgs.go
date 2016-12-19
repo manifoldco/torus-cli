@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
 )
@@ -88,7 +89,7 @@ func orgsCreate(ctx *cli.Context) error {
 	return nil
 }
 
-func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, name string) (*api.OrgResult, error) {
+func createOrgByName(c context.Context, ctx *cli.Context, client *api.Client, name string) (*envelope.Org, error) {
 	org, err := client.Orgs.Create(c, name)
 	if err != nil {
 		return nil, errs.NewErrorExitError(orgCreateFailed, err)
@@ -128,7 +129,7 @@ func orgsListCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func orgsList() ([]api.OrgResult, *api.Session, error) {
+func orgsList() ([]envelope.Org, *api.Session, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, nil, err
@@ -139,7 +140,7 @@ func orgsList() ([]api.OrgResult, *api.Session, error) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	var orgs []api.OrgResult
+	var orgs []envelope.Org
 	var session *api.Session
 	var oErr, sErr error
 
@@ -214,7 +215,7 @@ func orgsRemove(ctx *cli.Context) error {
 	return nil
 }
 
-func getOrg(ctx context.Context, client *api.Client, name string) (*api.OrgResult, error) {
+func getOrg(ctx context.Context, client *api.Client, name string) (*envelope.Org, error) {
 	org, err := client.Orgs.GetByName(ctx, name)
 	if err != nil {
 		return nil, errs.NewErrorExitError("Unable to lookup org.", err)

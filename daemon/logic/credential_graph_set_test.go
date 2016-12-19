@@ -49,7 +49,7 @@ func buildGraph(rawPathExp string, version int, secrets ...cred) registry.Creden
 	pe := mustPathExp(rawPathExp)
 	cg := &registry.CredentialGraphV2{
 		KeyringSectionV2: registry.KeyringSectionV2{
-			Keyring: &envelope.Signed{
+			Keyring: &envelope.Keyring{
 				Version: 2,
 				Body: &primitive.Keyring{
 					BaseKeyring: primitive.BaseKeyring{
@@ -73,7 +73,7 @@ func buildGraph(rawPathExp string, version int, secrets ...cred) registry.Creden
 			base.Name = *secret.name
 		}
 
-		cred := envelope.Signed{
+		cred := envelope.Credential{
 			ID:      secret.id,
 			Version: 2,
 			Body: &primitive.Credential{
@@ -81,7 +81,7 @@ func buildGraph(rawPathExp string, version int, secrets ...cred) registry.Creden
 				State:          secret.state,
 			},
 		}
-		cg.Credentials = append(cg.Credentials, cred)
+		cg.Credentials = append(cg.Credentials, &cred)
 	}
 
 	return cg
@@ -90,7 +90,7 @@ func buildGraph(rawPathExp string, version int, secrets ...cred) registry.Creden
 func buildGraphWithRevocation(rawPathExp string, version int, secrets ...cred) registry.CredentialGraph {
 	cg := buildGraph(rawPathExp, version, secrets...)
 
-	cg.(*registry.CredentialGraphV2).Claims = []envelope.Signed{
+	cg.(*registry.CredentialGraphV2).Claims = []envelope.KeyringMemberClaim{
 		{Body: &primitive.KeyringMemberClaim{
 			ClaimType: primitive.RevocationClaimType,
 		}},
@@ -479,7 +479,7 @@ func TestCredentialGraphSetPrune(t *testing.T) {
 			t.Fail()
 		}
 
-		if active[0].GetCredentials()[0].ID != id2 {
+		if active[0].GetCredentials()[0].GetID() != id2 {
 			t.Error("Wrong credential was pruned")
 		}
 	})
@@ -563,8 +563,8 @@ func TestCredentialGraphSetHeadCredential(t *testing.T) {
 			t.Fatal("Head credential not found when there should be one")
 		}
 
-		if out.ID != id3 {
-			t.Error("Wrong head credential found. wanted:", id3, "got:", out.ID)
+		if out.GetID() != id3 {
+			t.Error("Wrong head credential found. wanted:", id3, "got:", out.GetID())
 		}
 	})
 
@@ -588,8 +588,8 @@ func TestCredentialGraphSetHeadCredential(t *testing.T) {
 			t.Fatal("Head credential not found when there should be one")
 		}
 
-		if out.ID != id2 {
-			t.Error("Wrong head credential found. wanted:", id2, "got:", out.ID)
+		if out.GetID() != id2 {
+			t.Error("Wrong head credential found. wanted:", id2, "got:", out.GetID())
 		}
 	})
 }
@@ -649,7 +649,7 @@ func TestCredentialGraphSetNeedRotation(t *testing.T) {
 			t.Fatal("Wrong number of credentials needing revision found")
 		}
 
-		if out[0].ID != id2 {
+		if out[0].GetID() != id2 {
 			t.Error("Wrong credential needing revision returned")
 		}
 	})

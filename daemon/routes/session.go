@@ -143,7 +143,7 @@ func updateSelfRoute(client *registry.Client, s session.Session, e *logic.Engine
 		}
 
 		// The fresh user object
-		var result *envelope.Unsigned
+		var result *envelope.User
 
 		if req.Email != "" {
 			envelope, err := client.Users.Update(c, updateEmail{Email: req.Email})

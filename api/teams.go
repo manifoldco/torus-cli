@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -15,15 +15,8 @@ type TeamsClient struct {
 	client *Client
 }
 
-// TeamResult is the payload returned for a team object
-type TeamResult struct {
-	ID      *identity.ID    `json:"id"`
-	Version uint8           `json:"version"`
-	Body    *primitive.Team `json:"body"`
-}
-
 // List retrieves all teams for an org based on the filtered values
-func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name string, teamType primitive.TeamType) ([]TeamResult, error) {
+func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name string, teamType primitive.TeamType) ([]envelope.Team, error) {
 	v := &url.Values{}
 
 	if orgID != nil {
@@ -41,13 +34,13 @@ func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name string,
 		return nil, err
 	}
 
-	teams := []TeamResult{}
+	teams := []envelope.Team{}
 	_, err = t.client.Do(ctx, req, &teams, nil, nil)
 	return teams, err
 }
 
 // GetByOrg retrieves all teams for an org id
-func (t *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]TeamResult, error) {
+func (t *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]envelope.Team, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 
@@ -56,13 +49,13 @@ func (t *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]TeamR
 		return nil, err
 	}
 
-	teams := []TeamResult{}
+	teams := []envelope.Team{}
 	_, err = t.client.Do(ctx, req, &teams, nil, nil)
 	return teams, err
 }
 
 // GetByName retrieves the team with the specified name
-func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name string) ([]TeamResult, error) {
+func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name string) ([]envelope.Team, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 	v.Set("name", name)
@@ -72,14 +65,14 @@ func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name st
 		return nil, err
 	}
 
-	teams := []TeamResult{}
+	teams := []envelope.Team{}
 	_, err = t.client.Do(ctx, req, &teams, nil, nil)
 	return teams, err
 }
 
 // Create performs a request to create a new team object
 func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name string,
-	teamType primitive.TeamType) (*apitypes.Team, error) {
+	teamType primitive.TeamType) (*envelope.Team, error) {
 	if orgID == nil {
 		return nil, errors.New("invalid org")
 	}
@@ -95,7 +88,7 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 		return nil, err
 	}
 
-	team := apitypes.Team{
+	team := envelope.Team{
 		ID:      &ID,
 		Version: 1,
 		Body:    &teamBody,
@@ -106,7 +99,7 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 		return nil, err
 	}
 
-	teamResult := &apitypes.Team{}
+	teamResult := &envelope.Team{}
 	_, err = t.client.Do(ctx, req, teamResult, nil, nil)
 	return teamResult, err
 }

@@ -59,4 +59,22 @@ func (e *{{.Name}}) UnmarshalJSON(b []byte) error {
 
 	return nil
 }
+
+{{ $envType := .Name}}
+{{ range $b, $ts := .Types -}}
+{{- range $ts -}}
+// {{.Name}} wraps primitive.{{.Name}}
+type {{.Name}} struct {
+	ID      *identity.ID     `json:"id"`
+	Version uint8            `json:"version"`
+	Body    *primitive.{{.Name}} `json:"body"`
+	{{if eq $envType "Signed"}}Signature primitive.Signature `json:"sig"`{{end}}
+}
+
+// GetID returns the ID of the contained {{.Name}}.
+func (e *{{.Name}}) GetID() *identity.ID {
+	return e.ID
+}
+{{end -}}
+{{end -}}
 {{end}}

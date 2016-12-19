@@ -3,7 +3,9 @@
 package envelope
 
 import (
+	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/primitive"
 )
 
@@ -38,4 +40,168 @@ type Unsigned struct {
 // GetID returns the ID of the object encapsulated in this envelope.
 func (e *Unsigned) GetID() *identity.ID {
 	return e.ID
+}
+
+// KeyringInf is the common interface for all keyring schema versions.
+type KeyringInf interface {
+	Envelope
+	PathExp() *pathexp.PathExp
+	OrgID() *identity.ID
+	GetVersion() uint8 // Return the schema version of the keyring
+}
+
+// GetVersion returns the schema version of this Keyring.
+func (k *KeyringV1) GetVersion() uint8 {
+	return k.Version
+}
+
+// OrgID returns the ID of the Org that this Keyring belongs to.
+func (k *KeyringV1) OrgID() *identity.ID {
+	return k.Body.OrgID
+}
+
+// PathExp returns the path expression that contains all Credentials in this
+// Keyring.
+func (k *KeyringV1) PathExp() *pathexp.PathExp {
+	return k.Body.PathExp
+}
+
+// GetVersion returns the schema version of this Keyring.
+func (k *Keyring) GetVersion() uint8 {
+	return k.Version
+}
+
+// OrgID returns the ID of the Org that this Keyring belongs to.
+func (k *Keyring) OrgID() *identity.ID {
+	return k.Body.OrgID
+}
+
+// PathExp returns the path expression that contains all Credentials in this
+// Keyring.
+func (k *Keyring) PathExp() *pathexp.PathExp {
+	return k.Body.PathExp
+}
+
+// CredentialInf is the common interface for all Credential schema versions.
+type CredentialInf interface {
+	Envelope
+	GetVersion() uint8 // schema version
+
+	Previous() *identity.ID
+	CredentialVersion() int
+
+	PathExp() *pathexp.PathExp
+	Name() string
+
+	Unset() bool
+	Nonce() *base64.Value
+	Credential() *primitive.CredentialValue
+
+	OrgID() *identity.ID
+	ProjectID() *identity.ID
+}
+
+// GetVersion returns the schema version of this Credential.
+func (c *CredentialV1) GetVersion() uint8 {
+	return c.Version
+}
+
+// Previous returns the ID of the previous versino of this Credential, or nil
+// if this Credential has no previous version.
+func (c *CredentialV1) Previous() *identity.ID {
+	return c.Body.Previous
+}
+
+// CredentialVersion returns the monotomically incremented version of the
+// Credential for this PathExp/Name pair.
+func (c *CredentialV1) CredentialVersion() int {
+	return c.Body.CredentialVersion
+}
+
+// PathExp returns the path expression for this Credential's location.
+func (c *CredentialV1) PathExp() *pathexp.PathExp {
+	return c.Body.PathExp
+}
+
+// Name returns this Credential's name.
+func (c *CredentialV1) Name() string {
+	return c.Body.Name
+}
+
+// Unset returns a bool indicating if this Credential has been explicitly unset.
+// Version 1 credentials do not track this, so it is always false.
+func (CredentialV1) Unset() bool {
+	return false
+}
+
+// Nonce returns the Nonce for this Credential's encrypted value.
+func (c *CredentialV1) Nonce() *base64.Value {
+	return c.Body.Nonce
+}
+
+// Credential returns the encrypted CredentialValue for this Credential.
+func (c *CredentialV1) Credential() *primitive.CredentialValue {
+	return c.Body.Credential
+}
+
+// OrgID returns the ID of the Org that this Credential belongs to.
+func (c *CredentialV1) OrgID() *identity.ID {
+	return c.Body.OrgID
+}
+
+// ProjectID returns the ID of the Project that this Credential belongs to.
+func (c *CredentialV1) ProjectID() *identity.ID {
+	return c.Body.ProjectID
+}
+
+// GetVersion returns the schema version of this Credential.
+func (c *Credential) GetVersion() uint8 {
+	return c.Version
+}
+
+// Previous returns the ID of the previous versino of this Credential, or nil
+// if this Credential has no previous version.
+func (c *Credential) Previous() *identity.ID {
+	return c.Body.Previous
+}
+
+// CredentialVersion returns the monotomically incremented version of the
+// Credential for this PathExp/Name pair.
+func (c *Credential) CredentialVersion() int {
+	return c.Body.CredentialVersion
+}
+
+// PathExp returns the path expression for this Credential's location.
+func (c *Credential) PathExp() *pathexp.PathExp {
+	return c.Body.PathExp
+}
+
+// Name returns this Credential's name.
+func (c *Credential) Name() string {
+	return c.Body.Name
+}
+
+// Unset returns a bool indicating if this Credential has been explicitly unset.
+func (c *Credential) Unset() bool {
+	return c.Body.State != nil && *c.Body.State == "unset"
+}
+
+// Nonce returns the Nonce for this Credential's encrypted value.
+func (c *Credential) Nonce() *base64.Value {
+	return c.Body.Nonce
+}
+
+// Credential returns the encrypted CredentialValue for this Credential.
+func (c *Credential) Credential() *primitive.CredentialValue {
+	return c.Body.Credential
+}
+
+// OrgID returns the ID of the Org that this Credential belongs to.
+func (c *Credential) OrgID() *identity.ID {
+	return c.Body.OrgID
+}
+
+// ProjectID returns the ID of the Project that this Credential belongs to.
+func (c *Credential) ProjectID() *identity.ID {
+	return c.Body.ProjectID
 }

@@ -18,24 +18,24 @@ type MachinesClient struct {
 // MachineCreationSegment represents the request sent to create the registry to
 // create a machine and it's first token
 type MachineCreationSegment struct {
-	Machine     *envelope.Unsigned            `json:"machine"`
-	Memberships []envelope.Unsigned           `json:"memberships"`
+	Machine     *envelope.Machine             `json:"machine"`
+	Memberships []envelope.Membership         `json:"memberships"`
 	Tokens      []MachineTokenCreationSegment `json:"tokens"`
 }
 
 // MachineTokenCreationSegment represents the request send to the registry to
 // create a Machine Token
 type MachineTokenCreationSegment struct {
-	Token    *envelope.Unsigned `json:"token"`
-	Keypairs []*ClaimedKeyPair  `json:"keypairs"`
+	Token    *envelope.MachineToken `json:"token"`
+	Keypairs []*ClaimedKeyPair      `json:"keypairs"`
 }
 
 // Create requests the registry to create a MachineSegment.
 //
 // The MachineSegment includes the Machine, it's Memberships, and authorization
 // tokens.
-func (m *MachinesClient) Create(ctx context.Context, machine *envelope.Unsigned,
-	memberships []envelope.Unsigned, token *MachineTokenCreationSegment) (*apitypes.MachineSegment, error) {
+func (m *MachinesClient) Create(ctx context.Context, machine *envelope.Machine,
+	memberships []envelope.Membership, token *MachineTokenCreationSegment) (*apitypes.MachineSegment, error) {
 
 	segment := MachineCreationSegment{
 		Machine:     machine,

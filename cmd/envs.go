@@ -11,6 +11,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -163,7 +164,7 @@ func listEnvsCmd(ctx *cli.Context) error {
 	c := context.Background()
 
 	// Look up the target org
-	var org *api.OrgResult
+	var org *envelope.Org
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
 		return errs.NewExitError(envListFailed)
@@ -174,7 +175,7 @@ func listEnvsCmd(ctx *cli.Context) error {
 
 	// Identify which projects to list envs for
 	var projectID identity.ID
-	var projects []api.ProjectResult
+	var projects []envelope.Project
 	if ctx.Bool("all") {
 		// Pull all projects for the given orgID
 		projects, err = listProjects(&c, client, org.ID, nil)
@@ -203,11 +204,11 @@ func listEnvsCmd(ctx *cli.Context) error {
 	}
 
 	// Build map of envs to project
-	pMap := make(map[string]api.ProjectResult)
+	pMap := make(map[string]envelope.Project)
 	for _, project := range projects {
 		pMap[project.ID.String()] = project
 	}
-	eMap := make(map[string][]api.EnvironmentResult)
+	eMap := make(map[string][]envelope.Environment)
 	for _, env := range envs {
 		ID := env.Body.ProjectID.String()
 		eMap[ID] = append(eMap[ID], env)
@@ -229,7 +230,7 @@ func listEnvsCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]api.EnvironmentResult, error) {
+func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]envelope.Environment, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(envListFailed, -1)

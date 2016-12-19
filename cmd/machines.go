@@ -16,6 +16,7 @@ import (
 	"github.com/manifoldco/torus-cli/base32"
 	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
@@ -240,7 +241,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 		profileMap[*p.ID] = *p
 	}
 
-	teamMap := make(map[identity.ID]apitypes.Team, len(orgTree.Teams))
+	teamMap := make(map[identity.ID]envelope.Team, len(orgTree.Teams))
 	for _, t := range orgTree.Teams {
 		teamMap[*t.Team.ID] = *t.Team
 	}

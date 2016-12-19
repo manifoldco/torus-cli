@@ -8,7 +8,6 @@ import (
 	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
-	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // ErrorType represents the string error types that the daemon and registry can
@@ -101,18 +100,23 @@ func IsUnauthorizedError(err error) bool {
 	return false
 }
 
+// SessionType is the enumerated string type of sessions.
+type SessionType string
+
 // A session can represent either a machine or a user
 const (
-	MachineSession = "machine"
-	UserSession    = "user"
-	NotLoggedIn    = "no_session"
+	MachineSession SessionType = "machine"
+	UserSession    SessionType = "user"
+	NotLoggedIn    SessionType = "no_session"
 )
 
 // Self represents the current identity and auth combination for this session
 type Self struct {
-	Type     string             `json:"type"`
-	Identity *envelope.Unsigned `json:"identity"`
-	Auth     *envelope.Unsigned `json:"auth"`
+	Type SessionType `json:"type"`
+
+	// XXX: create an ident/auth interface
+	Identity envelope.Envelope `json:"identity"`
+	Auth     envelope.Envelope `json:"auth"`
 }
 
 // Version contains the release version of the daemon.
@@ -128,13 +132,13 @@ type SessionStatus struct {
 
 // Login is a wrapper around a login request from the CLI to the Daemon
 type Login struct {
-	Type        string          `json:"type"`
+	Type        SessionType     `json:"type"`
 	Credentials json.RawMessage `json:"credentials"`
 }
 
 // LoginCredential represents an login credentials for a user or machine
 type LoginCredential interface {
-	Type() string
+	Type() SessionType
 	Valid() bool
 	Passphrase() []byte
 	Identifier() string
@@ -148,7 +152,7 @@ type UserLogin struct {
 }
 
 // Type returns the type of login request
-func (u *UserLogin) Type() string {
+func (UserLogin) Type() SessionType {
 	return UserSession
 }
 
@@ -175,7 +179,7 @@ type MachineLogin struct {
 }
 
 // Type returns the type of the login request
-func (m *MachineLogin) Type() string {
+func (MachineLogin) Type() SessionType {
 	return MachineSession
 }
 
@@ -221,46 +225,11 @@ type ProfileUpdate struct {
 	Password string `json:"password"`
 }
 
-// OrgInvite contains information for sending an Org invite
-type OrgInvite struct {
-	ID      string               `json:"id"`
-	Version int                  `json:"version"`
-	Body    *primitive.OrgInvite `json:"body"`
-}
-
-// Team contains information for creating a new Team object
-type Team struct {
-	ID      *identity.ID    `json:"id"`
-	Version int             `json:"version"`
-	Body    *primitive.Team `json:"body"`
-}
-
-// Service contains information for creating a new Service object
-type Service struct {
-	ID      *identity.ID       `json:"id"`
-	Version int                `json:"version"`
-	Body    *primitive.Service `json:"body"`
-}
-
-// Environment contains information for creating a new Env object
-type Environment struct {
-	ID      string                 `json:"id"`
-	Version int                    `json:"version"`
-	Body    *primitive.Environment `json:"body"`
-}
-
 // InviteAccept contains data required to accept org invite
 type InviteAccept struct {
 	Org   string `json:"org"`
 	Email string `json:"email"`
 	Code  string `json:"code"`
-}
-
-// Membership contains data required to be added to a team
-type Membership struct {
-	ID      *identity.ID          `json:"id"`
-	Version int                   `json:"version"`
-	Body    *primitive.Membership `json:"body"`
 }
 
 // VerifyEmail contains email verification code

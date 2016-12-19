@@ -88,7 +88,7 @@ func machinesCreateRoute(client *registry.Client, session session.Session,
 // createMachine generates a Machine object and associated Membership objects
 // to be uploaded to the registry in the future.
 func createMachine(orgID, teamID, creatorID *identity.ID, name string) (
-	*envelope.Unsigned, []envelope.Unsigned, error) {
+	*envelope.Machine, []envelope.Membership, error) {
 
 	machineBody := &primitive.Machine{
 		Name:        name,
@@ -103,7 +103,7 @@ func createMachine(orgID, teamID, creatorID *identity.ID, name string) (
 	if err != nil {
 		return nil, nil, err
 	}
-	machine := envelope.Unsigned{
+	machine := envelope.Machine{
 		ID:      &machineID,
 		Version: 1,
 		Body:    machineBody,
@@ -111,7 +111,7 @@ func createMachine(orgID, teamID, creatorID *identity.ID, name string) (
 
 	machineTeamID := identity.DeriveMutable(&primitive.Team{}, orgID, primitive.DerivableMachineTeamSymbol)
 	teamIDList := []*identity.ID{&machineTeamID, teamID}
-	memberships := []envelope.Unsigned{}
+	var memberships []envelope.Membership
 	for _, curTeamID := range teamIDList {
 		body := primitive.Membership{
 			OwnerID: &machineID,
@@ -124,7 +124,7 @@ func createMachine(orgID, teamID, creatorID *identity.ID, name string) (
 			return nil, nil, err
 		}
 
-		membership := envelope.Unsigned{
+		membership := envelope.Membership{
 			ID:      &ID,
 			Version: 1,
 			Body:    &body,

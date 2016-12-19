@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/manifoldco/torus-cli/envelope"
-	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // KeyringMemberClientV1 represents the `/keyring-members` registry endpoint
@@ -16,7 +15,7 @@ type KeyringMemberClientV1 struct {
 
 // Post sends a creation requests for a set of KeyringMember objects to the
 // registry.
-func (k *KeyringMemberClientV1) Post(ctx context.Context, members []envelope.Signed) ([]envelope.Signed, error) {
+func (k *KeyringMemberClientV1) Post(ctx context.Context, members []envelope.KeyringMemberV1) ([]envelope.KeyringMemberV1, error) {
 
 	req, err := k.client.NewRequest("POST", "/keyring-members", nil, members)
 	if err != nil {
@@ -24,7 +23,7 @@ func (k *KeyringMemberClientV1) Post(ctx context.Context, members []envelope.Sig
 		return nil, err
 	}
 
-	resp := []envelope.Signed{}
+	resp := []envelope.KeyringMemberV1{}
 	_, err = k.client.Do(ctx, req, &resp)
 	if err != nil {
 		log.Printf("Error performing POST /keyring-members request: %s", err)
@@ -43,7 +42,7 @@ type KeyringMembersClient struct {
 // Post sends a creation requests for a set of KeyringMember objects to the
 // registry.
 func (k *KeyringMembersClient) Post(ctx context.Context, member KeyringMember) error {
-	keyringID := member.Member.Body.(*primitive.KeyringMember).KeyringID
+	keyringID := member.Member.Body.KeyringID
 	members := []KeyringMember{member}
 	req, err := k.client.NewRequest("POST", "/keyrings/"+keyringID.String()+"/members", nil, members)
 	if err != nil {

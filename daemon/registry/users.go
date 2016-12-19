@@ -20,7 +20,7 @@ type Users struct {
 }
 
 // Create attempts to register a new user
-func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Signup) (*envelope.Unsigned, error) {
+func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Signup) (*envelope.User, error) {
 	v := &url.Values{}
 	if signup.InviteCode != "" {
 		v.Set("code", signup.InviteCode)
@@ -37,7 +37,7 @@ func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Sign
 		return nil, err
 	}
 
-	user := envelope.Unsigned{}
+	user := envelope.User{}
 	_, err = u.client.Do(ctx, req, &user)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
@@ -54,14 +54,14 @@ func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Sign
 }
 
 // Update patches the user object with whitelisted fields
-func (u *Users) Update(ctx context.Context, userObj interface{}) (*envelope.Unsigned, error) {
+func (u *Users) Update(ctx context.Context, userObj interface{}) (*envelope.User, error) {
 	req, err := u.client.NewRequest("PATCH", "/users/self", nil, userObj)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
 		return nil, err
 	}
 
-	user := envelope.Unsigned{}
+	user := envelope.User{}
 	_, err = u.client.Do(ctx, req, &user)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)
@@ -77,31 +77,29 @@ func (u *Users) Update(ctx context.Context, userObj interface{}) (*envelope.Unsi
 	return &user, nil
 }
 
-func validateSelf(s *envelope.Unsigned) error {
+func validateSelf(s *envelope.User) error {
 	if s.Version != 1 {
 		return errors.New("version must be 1")
 	}
 
-	body := s.Body.(*primitive.User)
-
-	if body == nil {
+	if s.Body == nil {
 		return errors.New("missing body")
 	}
 
-	if body.Master == nil {
+	if s.Body.Master == nil {
 		return errors.New("missing master key section")
 	}
 
-	if body.Master.Alg != crypto.Triplesec {
+	if s.Body.Master.Alg != crypto.Triplesec {
 		return &apitypes.Error{
 			Type: apitypes.InternalServerError,
 			Err: []string{
-				fmt.Sprintf("Unknown alg: %s", body.Master.Alg),
+				fmt.Sprintf("Unknown alg: %s", s.Body.Master.Alg),
 			},
 		}
 	}
 
-	if len(*body.Master.Value) == 0 {
+	if len(*s.Body.Master.Value) == 0 {
 		return errors.New("Zero length master key found")
 	}
 

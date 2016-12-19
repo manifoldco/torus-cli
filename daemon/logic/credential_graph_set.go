@@ -7,14 +7,12 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
-	"github.com/manifoldco/torus-cli/primitive"
 
 	"github.com/manifoldco/torus-cli/daemon/registry"
 )
 
 var (
-	errUnknownKeyringVersion    = errors.New("unknown keyring version")
-	errUnknownCredentialVersion = errors.New("unknown credential version")
+	errUnknownKeyringVersion = errors.New("unknown keyring version")
 )
 
 // credentialGraphSet holds credential graphs and answers questions about their
@@ -35,18 +33,7 @@ func newCredentialGraphSet() *credentialGraphSet {
 
 func (cgs *credentialGraphSet) Add(graphs ...registry.CredentialGraph) error {
 	for _, c := range graphs {
-		var pe *pathexp.PathExp
-		env := c.GetKeyring()
-		switch env.Version {
-		case 1:
-			pe = env.Body.(*primitive.KeyringV1).PathExp
-		case 2:
-			pe = env.Body.(*primitive.Keyring).PathExp
-
-		default:
-			return errUnknownKeyringVersion
-		}
-
+		pe := c.GetKeyring().PathExp()
 		cgs.graphs[pe.String()] = append(cgs.graphs[pe.String()], c)
 	}
 
@@ -54,31 +41,20 @@ func (cgs *credentialGraphSet) Add(graphs ...registry.CredentialGraph) error {
 }
 
 func (credentialGraphSet) activeCreds(parents []identity.ID,
-	graph registry.CredentialGraph) ([]envelope.Signed, []identity.ID, error) {
+	graph registry.CredentialGraph) ([]envelope.CredentialInf, []identity.ID, error) {
 
 	creds := graph.GetCredentials()
 
 	// maybeActive is a set of potentially active credentials.
 	// It will never contain unset credentials as they can't be
 	// active.
-	maybeActive := make(map[identity.ID]envelope.Signed, len(creds))
+	maybeActive := make(map[identity.ID]envelope.CredentialInf, len(creds))
 	unchecked := make([]identity.ID, 0, len(creds))
 	for i := range creds {
-		var parent *identity.ID
 		cred := creds[i]
-		switch cred.Version {
-		case 1:
-			parent = cred.Body.(*primitive.CredentialV1).Previous
-			maybeActive[*cred.ID] = cred
-		case 2:
-			body := cred.Body.(*primitive.Credential)
-			parent = body.Previous
-
-			if body.State == nil || *body.State != "unset" {
-				maybeActive[*cred.ID] = cred
-			}
-		default:
-			return nil, parents, errUnknownCredentialVersion
+		parent := cred.Previous()
+		if !cred.Unset() {
+			maybeActive[*cred.GetID()] = cred
 		}
 
 		if parent != nil {
@@ -102,7 +78,7 @@ func (credentialGraphSet) activeCreds(parents []identity.ID,
 		}
 	}
 
-	var activeCreds []envelope.Signed
+	var activeCreds []envelope.CredentialInf
 	for _, cred := range maybeActive {
 		activeCreds = append(activeCreds, cred)
 	}
@@ -124,7 +100,7 @@ func (cgs *credentialGraphSet) Active() ([]registry.CredentialGraph, error) {
 
 		sort.Sort(graphSorter(graphs))
 		for headOffset, graph := range graphs {
-			var activeCreds []envelope.Signed
+			var activeCreds []envelope.CredentialInf
 			var err error
 			activeCreds, parents, err = cgs.activeCreds(parents, graph)
 			if err != nil {
@@ -157,7 +133,7 @@ func (cgs *credentialGraphSet) Prune() ([]registry.CredentialGraph, error) {
 
 		sort.Sort(graphSorter(graphs))
 		for _, graph := range graphs {
-			var activeCreds []envelope.Signed
+			var activeCreds []envelope.CredentialInf
 			var err error
 			activeCreds, parents, err = cgs.activeCreds(parents, graph)
 			if err != nil {
@@ -187,15 +163,15 @@ func (cgs *credentialGraphSet) Prune() ([]registry.CredentialGraph, error) {
 // A Credential needs to be rotated if its most recent set version is in a
 // CredentialGraph version that contains a revocation of a user's share to
 // that Keyring.
-func (cgs *credentialGraphSet) NeedRotation() ([]envelope.Signed, error) {
-	var needRotation []envelope.Signed
+func (cgs *credentialGraphSet) NeedRotation() ([]envelope.CredentialInf, error) {
+	var needRotation []envelope.CredentialInf
 
 	for _, graphs := range cgs.graphs {
 		var parents []identity.ID
 
 		sort.Sort(graphSorter(graphs))
 		for _, graph := range graphs {
-			var activeCreds []envelope.Signed
+			var activeCreds []envelope.CredentialInf
 			var err error
 			activeCreds, parents, err = cgs.activeCreds(parents, graph)
 			if err != nil {
@@ -233,8 +209,8 @@ func (cgs *credentialGraphSet) Head(pe *pathexp.PathExp) (registry.CredentialGra
 // the provided PathExp and Name
 //
 // A Head Credential need not be in the Head of the CredentialGraph.
-func (cgs *credentialGraphSet) HeadCredential(pe *pathexp.PathExp, name string) (*envelope.Signed, error) {
-	var head *envelope.Signed
+func (cgs *credentialGraphSet) HeadCredential(pe *pathexp.PathExp, name string) (envelope.CredentialInf, error) {
+	var head envelope.CredentialInf
 	version := -1
 
 	gpe, err := pe.WithInstance("*")
@@ -251,15 +227,10 @@ func (cgs *credentialGraphSet) HeadCredential(pe *pathexp.PathExp, name string) 
 	for _, graph := range graphs {
 		creds := graph.GetCredentials()
 		for _, cred := range creds {
-			base, err := baseCredential(&cred)
-			if err != nil {
-				return nil, err
-			}
-
-			if base.PathExp.Equal(pe) && base.Name == name && base.CredentialVersion > version {
+			if cred.PathExp().Equal(pe) && cred.Name() == name && cred.CredentialVersion() > version {
 				env := cred
-				head = &env
-				version = base.CredentialVersion
+				head = env
+				version = cred.CredentialVersion()
 			}
 		}
 	}

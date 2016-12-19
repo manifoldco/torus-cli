@@ -11,6 +11,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -78,7 +79,7 @@ func listKeypairs(ctx *cli.Context) error {
 	c := context.Background()
 
 	// Look up the target org
-	var org *api.OrgResult
+	var org *envelope.Org
 	org, err = client.Orgs.GetByName(c, ctx.String("org"))
 	if err != nil {
 		return errs.NewExitError(keypairListFailed)
@@ -122,12 +123,12 @@ func generateKeypairs(ctx *cli.Context) error {
 	c := context.Background()
 
 	orgNames := make(map[*identity.ID]string)
-	subjectOrgs := make(map[*identity.ID]*api.OrgResult)
+	subjectOrgs := make(map[*identity.ID]*envelope.Org)
 	regenOrgs := make(map[*identity.ID]string)
 
 	if ctx.Bool("all") {
 		// If all flag is supplied, we will get all their orgs
-		var orgs []api.OrgResult
+		var orgs []envelope.Org
 		orgs, oErr := client.Orgs.List(c)
 		if oErr != nil {
 			return errs.NewExitError("Could not retrieve orgs, please try again.")
@@ -138,7 +139,7 @@ func generateKeypairs(ctx *cli.Context) error {
 		}
 	} else {
 		// Verify the org they've specified exists
-		var org *api.OrgResult
+		var org *envelope.Org
 		orgName := ctx.String("org")
 		if orgName == "" {
 			return errs.NewExitError("Missing flags: --org.")

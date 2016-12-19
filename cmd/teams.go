@@ -15,6 +15,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
@@ -105,8 +106,8 @@ func teamsListCmd(ctx *cli.Context) error {
 	getMemberships.Add(2)
 	display.Add(2)
 
-	var teams []api.TeamResult
-	var org *api.OrgResult
+	var teams []envelope.Team
+	var org *envelope.Org
 	var session *api.Session
 	var oErr, sErr, tErr error
 
@@ -136,7 +137,7 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	go func() {
 		getMemberships.Wait()
-		var memberships []api.MembershipResult
+		var memberships []envelope.Membership
 		if oErr == nil && sErr == nil {
 			memberships, sErr = client.Memberships.List(c, org.ID, session.ID(), nil)
 		}
@@ -201,10 +202,10 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	var getMembers sync.WaitGroup
 	getMembers.Add(2)
 
-	var org *api.OrgResult
-	var team api.TeamResult
-	var teams []api.TeamResult
-	var memberships []api.MembershipResult
+	var org *envelope.Org
+	var team envelope.Team
+	var teams []envelope.Team
+	var memberships []envelope.Membership
 	var oErr, tErr, mErr, sErr error
 	go func() {
 		// Identify the org supplied
@@ -400,8 +401,8 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 	wait.Add(2)
 
 	var uErr, oErr, tErr error
-	var org *api.OrgResult
-	var team api.TeamResult
+	var org *envelope.Org
+	var team envelope.Team
 	var user *apitypes.Profile
 
 	go func() {
@@ -499,8 +500,8 @@ func teamsAddCmd(ctx *cli.Context) error {
 	wait.Add(2)
 
 	var uErr, oErr, tErr error
-	var org *api.OrgResult
-	var team api.TeamResult
+	var org *envelope.Org
+	var team envelope.Team
 	var user *apitypes.Profile
 
 	go func() {

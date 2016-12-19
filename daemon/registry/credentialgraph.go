@@ -24,42 +24,31 @@ type CredentialGraphClient struct {
 // versions
 type CredentialGraph interface {
 	KeyringSection
-	GetCredentials() []envelope.Signed
-	KeyringVersion() int
+	GetCredentials() []envelope.CredentialInf
 }
 
 // CredentialGraphV1 represents a Keyring, it's members, and associated
 // Credentials.
 type CredentialGraphV1 struct {
 	KeyringSectionV1
-	Credentials []envelope.Signed `json:"credentials"`
+	Credentials []envelope.CredentialInf `json:"credentials"`
 }
 
 // GetCredentials returns the Credentials objects in this CredentialGraph
-func (c *CredentialGraphV1) GetCredentials() []envelope.Signed {
+func (c *CredentialGraphV1) GetCredentials() []envelope.CredentialInf {
 	return c.Credentials
-}
-
-// KeyringVersion returns the version of the keyring itself (not its schema).
-func (c *CredentialGraphV1) KeyringVersion() int {
-	return c.Keyring.Body.(*primitive.KeyringV1).BaseKeyring.KeyringVersion
 }
 
 // CredentialGraphV2 represents a Keyring, it's members, and associated
 // Credentials.
 type CredentialGraphV2 struct {
 	KeyringSectionV2
-	Credentials []envelope.Signed `json:"credentials"`
+	Credentials []envelope.CredentialInf `json:"credentials"`
 }
 
 // GetCredentials returns the Credentials objects in this CredentialGraph
-func (c *CredentialGraphV2) GetCredentials() []envelope.Signed {
+func (c *CredentialGraphV2) GetCredentials() []envelope.CredentialInf {
 	return c.Credentials
-}
-
-// KeyringVersion returns the version of the keyring itself (not its schema).
-func (c *CredentialGraphV2) KeyringVersion() int {
-	return c.Keyring.Body.(*primitive.Keyring).BaseKeyring.KeyringVersion
 }
 
 // Post creates a new CredentialGraph on the registry.
@@ -129,10 +118,10 @@ func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) 
 	}
 
 	resp := []struct {
-		Keyring     *envelope.Signed  `json:"keyring"`
-		Members     json.RawMessage   `json:"members"`
-		Credentials []envelope.Signed `json:"credentials"`
-		Claims      []envelope.Signed `json:"claims"`
+		Keyring     *envelope.Signed              `json:"keyring"`
+		Members     json.RawMessage               `json:"members"`
+		Credentials []envelope.Signed             `json:"credentials"`
+		Claims      []envelope.KeyringMemberClaim `json:"claims"`
 	}{}
 
 	_, err = c.client.Do(ctx, req, &resp)
@@ -142,10 +131,39 @@ func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) 
 
 	converted := make([]CredentialGraph, len(resp))
 	for i, g := range resp {
+		creds := make([]envelope.CredentialInf, len(g.Credentials))
+		for i, ec := range g.Credentials {
+			switch ec.Body.(type) {
+			case *primitive.CredentialV1:
+				creds[i] = &envelope.CredentialV1{
+					ID:        ec.ID,
+					Version:   ec.Version,
+					Signature: ec.Signature,
+					Body:      ec.Body.(*primitive.CredentialV1),
+				}
+			case *primitive.Credential:
+				creds[i] = &envelope.Credential{
+					ID:        ec.ID,
+					Version:   ec.Version,
+					Signature: ec.Signature,
+					Body:      ec.Body.(*primitive.Credential),
+				}
+			}
+		}
+
 		if g.Keyring.Version == 1 {
+			kre := &envelope.KeyringV1{
+				ID:        g.Keyring.ID,
+				Version:   g.Keyring.Version,
+				Signature: g.Keyring.Signature,
+				Body:      g.Keyring.Body.(*primitive.KeyringV1),
+			}
+
 			c := CredentialGraphV1{
-				KeyringSectionV1: KeyringSectionV1{Keyring: g.Keyring},
-				Credentials:      g.Credentials,
+				KeyringSectionV1: KeyringSectionV1{
+					Keyring: kre,
+				},
+				Credentials: creds,
 			}
 			err := json.Unmarshal(g.Members, &c.Members)
 			if err != nil {
@@ -153,12 +171,19 @@ func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) 
 			}
 			converted[i] = &c
 		} else {
+			kre := &envelope.Keyring{
+				ID:        g.Keyring.ID,
+				Version:   g.Keyring.Version,
+				Signature: g.Keyring.Signature,
+				Body:      g.Keyring.Body.(*primitive.Keyring),
+			}
+
 			c := CredentialGraphV2{
 				KeyringSectionV2: KeyringSectionV2{
-					Keyring: g.Keyring,
+					Keyring: kre,
 					Claims:  g.Claims,
 				},
-				Credentials: g.Credentials,
+				Credentials: creds,
 			}
 			err := json.Unmarshal(g.Members, &c.Members)
 			if err != nil {

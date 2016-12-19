@@ -14,29 +14,15 @@ type PoliciesClient struct {
 	client *Client
 }
 
-// PolicyAttachmentResult is the payload returned for a policy_attachment object
-type PolicyAttachmentResult struct {
-	ID      *identity.ID                `json:"id"`
-	Version uint8                       `json:"version"`
-	Body    *primitive.PolicyAttachment `json:"body"`
-}
-
-// PoliciesResult is the payload returned for a policy object
-type PoliciesResult struct {
-	ID      *identity.ID      `json:"id"`
-	Version uint8             `json:"version"`
-	Body    *primitive.Policy `json:"body"`
-}
-
 // Create creates a new policy
-func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (*PoliciesResult, error) {
+func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (*envelope.Policy, error) {
 
 	ID, err := identity.NewMutable(policy)
 	if err != nil {
 		return nil, err
 	}
 
-	env := envelope.Unsigned{
+	env := envelope.Policy{
 		ID:      &ID,
 		Version: 1,
 		Body:    policy,
@@ -47,13 +33,13 @@ func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (
 		return nil, err
 	}
 
-	res := PoliciesResult{}
+	res := envelope.Policy{}
 	_, err = p.client.Do(ctx, req, &res, nil, nil)
 	return &res, err
 }
 
 // List retrieves relevant policiies by orgID and/or name
-func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name string) ([]PoliciesResult, error) {
+func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name string) ([]envelope.Policy, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
@@ -67,7 +53,7 @@ func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name stri
 		return nil, err
 	}
 
-	policies := []PoliciesResult{}
+	policies := []envelope.Policy{}
 	_, err = p.client.Do(ctx, req, &policies, nil, nil)
 	return policies, err
 }
@@ -85,7 +71,7 @@ func (p *PoliciesClient) Attach(ctx context.Context, org, policy, team *identity
 		return err
 	}
 
-	env := envelope.Unsigned{
+	env := envelope.PolicyAttachment{
 		ID:      &ID,
 		Version: 1,
 		Body:    &attachment,
@@ -110,7 +96,7 @@ func (p *PoliciesClient) Detach(ctx context.Context, attachmentID *identity.ID) 
 }
 
 // AttachmentsList retrieves all policy attachments for an org
-func (p *PoliciesClient) AttachmentsList(ctx context.Context, orgID, ownerID, policyID *identity.ID) ([]PolicyAttachmentResult, error) {
+func (p *PoliciesClient) AttachmentsList(ctx context.Context, orgID, ownerID, policyID *identity.ID) ([]envelope.PolicyAttachment, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
@@ -127,7 +113,7 @@ func (p *PoliciesClient) AttachmentsList(ctx context.Context, orgID, ownerID, po
 		return nil, err
 	}
 
-	attachments := []PolicyAttachmentResult{}
+	attachments := []envelope.PolicyAttachment{}
 	_, err = p.client.Do(ctx, req, &attachments, nil, nil)
 	return attachments, err
 }

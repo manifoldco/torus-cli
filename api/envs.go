@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -13,13 +13,6 @@ import (
 // EnvironmentsClient makes proxied requests to the registry's envs endpoints
 type EnvironmentsClient struct {
 	client *Client
-}
-
-// EnvironmentResult is the payload returned for a env object
-type EnvironmentResult struct {
-	ID      *identity.ID           `json:"id"`
-	Version uint8                  `json:"version"`
-	Body    *primitive.Environment `json:"body"`
 }
 
 // Create generates a new env object for an org/project ID
@@ -39,8 +32,8 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 		return err
 	}
 
-	env := apitypes.Environment{
-		ID:      ID.String(),
+	env := envelope.Environment{
+		ID:      &ID,
 		Version: 1,
 		Body:    &envBody,
 	}
@@ -55,7 +48,7 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 }
 
 // List retrieves relevant envs by name and/or orgID and/or projectID
-func (e *EnvironmentsClient) List(ctx context.Context, orgIDs, projectIDs *[]*identity.ID, names *[]string) ([]EnvironmentResult, error) {
+func (e *EnvironmentsClient) List(ctx context.Context, orgIDs, projectIDs *[]*identity.ID, names *[]string) ([]envelope.Environment, error) {
 	v := &url.Values{}
 	if orgIDs != nil {
 		for _, id := range *orgIDs {
@@ -78,7 +71,7 @@ func (e *EnvironmentsClient) List(ctx context.Context, orgIDs, projectIDs *[]*id
 		return nil, err
 	}
 
-	envs := []EnvironmentResult{}
+	envs := []envelope.Environment{}
 	_, err = e.client.Do(ctx, req, &envs, nil, nil)
 	return envs, err
 }
