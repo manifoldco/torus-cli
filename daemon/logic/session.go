@@ -108,13 +108,11 @@ func attemptPDPKALogin(ctx context.Context, client *registry.Client, s session.S
 	}
 
 	pw := base64.NewValue([]byte(creds.Passphrase()))
-	log.Print(pw, salt)
 	keypair, err := crypto.DeriveLoginKeypair(ctx, pw, salt)
 	if err != nil {
 		return "", err
 	}
 
-	log.Printf("Public Key %s", keypair.PublicKey())
 	loginTokenSig := keypair.Sign([]byte(loginToken))
 	return client.Tokens.PostPDPKAuth(ctx, loginToken, loginTokenSig)
 }

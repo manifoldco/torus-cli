@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.21.1
+
+_2016-12-20_
+
+**Security**
+
+- Resolved information leak to daemon log file during machine login.
+
 ## v0.21.0
 
 _2016-12-16_
