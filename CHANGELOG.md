@@ -8,6 +8,10 @@ _Unreleased_
 
 - Publish release details to GitHub as proper releases.
 
+## v0.21.1
+
+_2016-12-20_
+
 **Security**
 
 - Resolved information leak to daemon log file during machine login.
