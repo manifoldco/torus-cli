@@ -13,6 +13,12 @@ _Unreleased_
 - Torus now checks for available updates to itself, and reports on them during
   the `login` and `version` commands. This behaviour can be disabled with
   `torus prefs set core.check_updates false`.
+- Exciting new worklog ui:
+  - Items are grouped by type, making the display more compact and usable.
+  - Lots of color and formatting!
+  - Each worklog item includes details visible with `view`. For example, secret
+    rotation items include which users caused the need for rotation, and why
+    (i.e. 'james was removed from the org.').
 
 **Thanks**
 

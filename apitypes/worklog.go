@@ -208,7 +208,7 @@ func (t WorklogType) String() string {
 	case UserKeyringMembersWorklogType:
 		fallthrough
 	case MachineKeyringMembersWorklogType:
-		return "keyring"
+		return "secret"
 	default:
 		return "n/a"
 	}

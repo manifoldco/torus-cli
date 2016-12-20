@@ -2,17 +2,34 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
-	"text/tabwriter"
 
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/promptui"
+)
+
+var catOrder = []apitypes.WorklogType{
+	apitypes.MissingKeypairsWorklogType,
+	apitypes.InviteApproveWorklogType,
+	apitypes.UserKeyringMembersWorklogType,
+	apitypes.MachineKeyringMembersWorklogType,
+	apitypes.SecretRotateWorklogType,
+}
+
+var (
+	yellow = promptui.Styler(promptui.FGYellow)
+
+	faint     = promptui.Styler(promptui.FGFaint)
+	underline = promptui.Styler(promptui.FGUnderline)
+	italic    = promptui.Styler(promptui.FGItalic)
 )
 
 func init() {
@@ -55,6 +72,79 @@ func init() {
 	Cmds = append(Cmds, worklog)
 }
 
+func groupMsgFor(typ apitypes.WorklogType) string {
+	switch typ {
+	case apitypes.MissingKeypairsWorklogType:
+		return "Orgs with missing keypairs:"
+	case apitypes.InviteApproveWorklogType:
+		return "Invites ready for approval to the %s org:"
+	case apitypes.UserKeyringMembersWorklogType:
+		return "Users missing granted access to secrets in the %s org:"
+	case apitypes.MachineKeyringMembersWorklogType:
+		return "Machines missing granted access to secrets in the %s org:"
+	case apitypes.SecretRotateWorklogType:
+		return "Secrets that should be rotated in the %s org:"
+	default:
+		return ""
+	}
+}
+
+func subjectFor(item *apitypes.WorklogItem) string {
+	switch d := item.Details.(type) {
+	case *apitypes.MissingKeypairsWorklogDetails:
+		return underline(d.Org)
+	case *apitypes.InviteApproveWorklogDetails:
+		return fmt.Sprintf("%s <%s>", underline(d.Username), italic(d.Email))
+	case *apitypes.KeyringMembersWorklogDetails:
+		return underline(d.Name)
+	case *apitypes.SecretRotateWorklogDetails:
+		return item.Subject()
+	default:
+		return item.Subject()
+	}
+}
+
+func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) string {
+	switch d := item.Details.(type) {
+	case *apitypes.MissingKeypairsWorklogDetails:
+		return underline(d.Org) + "\n"
+	case *apitypes.InviteApproveWorklogDetails:
+		msg := fmt.Sprintf("  The invite for %s to the %s org is ready for approval.\n",
+			d.Name, underline(org.Body.Name))
+		msg += "  They will be invited to the following teams:\n"
+		for _, t := range d.Teams {
+			msg += fmt.Sprintf("    %s\n", t)
+		}
+		return msg
+	case *apitypes.KeyringMembersWorklogDetails:
+		msg := fmt.Sprintf("  %s is missing granted access to secrets in the %s org.\n",
+			underline(d.Name), underline(org.Body.Name))
+		msg += "  Secrets in the following paths are affected:\n"
+		for _, p := range d.Keyrings {
+			msg += fmt.Sprintf("    %s\n", p.String())
+		}
+		return msg
+	case *apitypes.SecretRotateWorklogDetails:
+		msg := "  The value for this secret should be rotated for the following reasons:\n"
+		for _, r := range d.Reasons {
+			var rm string
+			switch r.Type {
+			case primitive.OrgRemovalRevocationType:
+				rm = "was removed from the org."
+			case primitive.KeyRevocationRevocationType:
+				rm = "changed their encryption key."
+			default:
+				rm = "lost access."
+			}
+
+			msg += fmt.Sprintf("    %s %s\n", underline(r.Username), rm)
+		}
+		return msg
+	default:
+		return item.Subject() + "\n"
+	}
+}
+
 func worklogList(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -79,13 +169,31 @@ func worklogList(ctx *cli.Context) error {
 		return nil
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "IDENTITY\tTYPE\tSUBJECT")
+	itemsByCat := make(map[apitypes.WorklogType][]apitypes.WorklogItem)
 	for _, item := range items {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", item.ID, item.Type(), item.Subject())
+		itemsByCat[item.Type()] = append(itemsByCat[item.Type()], item)
 	}
 
-	w.Flush()
+	newlineNeeded := false
+
+	for _, cat := range catOrder {
+		items = itemsByCat[cat]
+		if len(items) == 0 {
+			continue
+		}
+
+		if newlineNeeded {
+			fmt.Println()
+		}
+		newlineNeeded = true
+
+		groupMsg := fmt.Sprintf(groupMsgFor(cat), underline(org.Body.Name))
+		fmt.Printf("%s %s\n", yellow(cat.String()), groupMsg)
+		for _, item := range items {
+			fmt.Printf("  %s %s\n", faint(item.ID.String()), subjectFor(&item))
+		}
+	}
+
 	return nil
 }
 
@@ -122,14 +230,8 @@ func worklogView(ctx *cli.Context) error {
 		return err
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "Identity:\t%s\n", item.ID.String())
-	fmt.Fprintf(w, "Type:\t%s\n", item.Type())
-	fmt.Fprintf(w, "Subject:\t%s\n", item.Subject())
-	w.Flush()
-	fmt.Println("Summary:")
-	fmt.Println(item.Details.Summary())
-
+	fmt.Printf("%s %s\n", yellow(item.ID.String()), subjectFor(item))
+	fmt.Printf(detailsFor(org, item))
 	return nil
 }
 
@@ -179,41 +281,110 @@ func worklogResolve(ctx *cli.Context) error {
 		}
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
+	itemsByCat := make(map[apitypes.WorklogType][]apitypes.WorklogItem)
 	for _, item := range toResolve {
-		if item.Type() == apitypes.InviteApproveWorklogType {
-			w.Flush()
-
-			err = AskPerform("Approve invite for "+item.Subject(), "")
-			switch err {
-			case nil:
-			case promptui.ErrAbort:
-				continue
-			default:
-				return err
-			}
-		}
-
-		res, err := client.Worklog.Resolve(c, org.ID, item.ID)
-		if err != nil {
-			return errs.NewErrorExitError("Error resolving worklog item.", err)
-		}
-
-		var icon string
-		switch res.State {
-		case apitypes.SuccessWorklogResult:
-			icon = "✔"
-		case apitypes.FailureWorklogResult:
-			icon = "✗"
-		case apitypes.ManualWorklogResult:
-			icon = "⚠"
-		default:
-			icon = "?"
-		}
-
-		fmt.Fprintf(w, "%s\t%s\t%s\n", icon, res.ID, res.Message)
+		itemsByCat[item.Type()] = append(itemsByCat[item.Type()], item)
 	}
-	w.Flush()
+
+	grouped := len(idents) == 0 // no manual ids; doing all of them
+
+	newlineNeeded := false
+
+	for _, cat := range catOrder {
+		items = itemsByCat[cat]
+		if len(items) == 0 {
+			continue
+		}
+
+		if grouped {
+			if newlineNeeded {
+				fmt.Println()
+			}
+			newlineNeeded = true
+
+			groupMsg := fmt.Sprintf(groupMsgFor(cat), underline(org.Body.Name))
+			fmt.Printf("%s %s\n", yellow(cat.String()), groupMsg)
+		}
+
+		for _, item := range items {
+			// An explicit invite id won't trigger a prompt
+			if item.Type() == apitypes.InviteApproveWorklogType && grouped {
+				msg := fmt.Sprintf("%s%s Approve invite for %s", promptui.ResetCode,
+					faint(item.ID.String()), subjectFor(&item))
+				err = AskPerform(msg, "  ")
+				switch err {
+				case nil:
+				case promptui.ErrAbort:
+					continue
+				default:
+					return err
+				}
+			} else if item.Type() == apitypes.SecretRotateWorklogType {
+				displayResult(&item, nil, grouped)
+				continue
+			}
+
+			res, err := client.Worklog.Resolve(c, org.ID, item.ID)
+			if err == nil && res.State != apitypes.SuccessWorklogResult {
+				err = errors.New(res.Message)
+			}
+			displayResult(&item, err, grouped)
+		}
+	}
 
 	return nil
+}
+
+func displayResult(item *apitypes.WorklogItem, err error, grouped bool) {
+	icon := promptui.IconGood
+
+	if item.Type() == apitypes.SecretRotateWorklogType {
+		icon = promptui.IconWarn
+	}
+
+	indent := ""
+	idFmt := yellow
+
+	if grouped {
+		indent = "  "
+		idFmt = faint
+	}
+
+	var message string
+	if err != nil {
+		icon = promptui.IconBad
+
+		var typ string
+		switch item.Type() {
+		case apitypes.MissingKeypairsWorklogType:
+			typ = "generating keypairs"
+		case apitypes.InviteApproveWorklogType:
+			typ = "approving invite"
+		case apitypes.UserKeyringMembersWorklogType:
+			fallthrough
+		case apitypes.MachineKeyringMembersWorklogType:
+			typ = "reconciling secret access"
+		case apitypes.SecretRotateWorklogType:
+			typ = "rotating secret" // this one will never happen; its manual.
+		}
+
+		message = fmt.Sprintf("Error %s: %s", typ, err)
+	} else {
+		switch item.Type() {
+		case apitypes.MissingKeypairsWorklogType:
+			message = "Keypairs generated for %s"
+		case apitypes.InviteApproveWorklogType:
+			message = "Invite approved for %s"
+		case apitypes.UserKeyringMembersWorklogType:
+			message = "Secret access for user %s has been reconciled."
+		case apitypes.MachineKeyringMembersWorklogType:
+			message = "Secret access for machine %s has been reconciled."
+		case apitypes.SecretRotateWorklogType:
+			message = "Please set a new value for\n" + indent + "    %s"
+		}
+
+		message = fmt.Sprintf(message, subjectFor(item))
+	}
+
+	fmt.Printf("%s%s %s %s\n", indent, icon, idFmt(item.ID.String()), message)
 }
