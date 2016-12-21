@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	"sort"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -202,14 +203,16 @@ func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Org) ([
 	if encClaimed == nil || sigClaimed == nil {
 		item := apitypes.WorklogItem{
 			Subject: org.Body.Name,
-			Summary: "Signing and Encryption keypairs missing for org.",
+			Summary: "Signing and encryption keypairs missing for org %s.",
 		}
 
 		if encClaimed != nil {
-			item.Summary = "Signing keypair missing for org."
+			item.Summary = "Signing keypair missing for org %s."
 		} else if sigClaimed != nil {
-			item.Summary = "Encryption keypair missing for org."
+			item.Summary = "Encryption keypair missing for org %s."
 		}
+
+		item.Summary = fmt.Sprintf(item.Summary, org.Body.Name)
 
 		item.CreateID(apitypes.MissingKeypairsWorklogType)
 
@@ -255,9 +258,11 @@ func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Org) ([]a
 
 	var items []apitypes.WorklogItem
 	for _, invite := range invites {
+		summary := fmt.Sprintf("The invite for %s to org %s is ready for approval.",
+			invite.Body.Email, org.Body.Name)
 		item := apitypes.WorklogItem{
 			Subject:   invite.Body.Email,
-			Summary:   "Org invite ready for approval",
+			Summary:   summary,
 			SubjectID: invite.ID,
 		}
 		item.CreateID(apitypes.InviteApproveWorklogType)

@@ -7,6 +7,7 @@ _Unreleased_
 **Notable Changes**
 
 - Publish release details to GitHub as proper releases.
+- Show more details in the summary of invite and keypairs worklog items.
 
 ## v0.21.1
 
