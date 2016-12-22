@@ -11,10 +11,10 @@ import (
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
 	"github.com/manifoldco/torus-cli/daemon/observer"
-	"github.com/manifoldco/torus-cli/daemon/registry"
 )
 
 // Worklog holds the logic for discovering and acting on worklog items.
