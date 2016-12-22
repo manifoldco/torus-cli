@@ -12,7 +12,7 @@ import (
 // CredentialsClient provides access to unencrypted credentials for viewing,
 // and encrypts credentials when setting.
 type CredentialsClient struct {
-	client *Client
+	client *apiRoundTripper
 }
 
 // Search returns all credentials at the given pathexp.

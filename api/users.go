@@ -15,11 +15,11 @@ type upstreamUsersClient struct {
 // UsersClient makes requests to the registry's and daemon's users endpoints
 type UsersClient struct {
 	upstreamUsersClient
-	client *Client
+	client *apiRoundTripper
 }
 
-func newUsersClient(c *Client) *UsersClient {
-	return &UsersClient{upstreamUsersClient{c}, c}
+func newUsersClient(rt *apiRoundTripper) *UsersClient {
+	return &UsersClient{upstreamUsersClient{rt}, rt}
 }
 
 // Signup will have the daemon create a new user request

@@ -21,11 +21,11 @@ type upstreamMachinesClient struct {
 // manipulate Machine resources.
 type MachinesClient struct {
 	upstreamMachinesClient
-	client *Client
+	client *apiRoundTripper
 }
 
-func newMachinesClient(c *Client) *MachinesClient {
-	return &MachinesClient{upstreamMachinesClient{c}, c}
+func newMachinesClient(rt *apiRoundTripper) *MachinesClient {
+	return &MachinesClient{upstreamMachinesClient{rt}, rt}
 }
 
 // Create a new machine in the given org

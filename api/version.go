@@ -14,11 +14,11 @@ type upstreamVersionClient struct {
 // inspecting the daemon's release version.
 type VersionClient struct {
 	upstreamVersionClient
-	client *Client
+	client *apiRoundTripper
 }
 
-func newVersionClient(c *Client) *VersionClient {
-	return &VersionClient{upstreamVersionClient{c}, c}
+func newVersionClient(rt *apiRoundTripper) *VersionClient {
+	return &VersionClient{upstreamVersionClient{rt}, rt}
 }
 
 // GetDaemon returns the daemon's release version.

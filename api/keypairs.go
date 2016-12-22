@@ -19,11 +19,11 @@ type upstreamKeypairsClient struct {
 // endpoints
 type KeypairsClient struct {
 	upstreamKeypairsClient
-	client *Client
+	client *apiRoundTripper
 }
 
-func newKeypairsClient(c *Client) *KeypairsClient {
-	return &KeypairsClient{upstreamKeypairsClient{c}, c}
+func newKeypairsClient(rt *apiRoundTripper) *KeypairsClient {
+	return &KeypairsClient{upstreamKeypairsClient{rt}, rt}
 }
 
 // KeypairResult is the payload returned for a keypair object

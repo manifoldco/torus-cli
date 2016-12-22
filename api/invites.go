@@ -21,11 +21,11 @@ type upstreamOrgInvitesClient struct {
 // endpoints
 type OrgInvitesClient struct {
 	upstreamOrgInvitesClient
-	client *Client
+	client *apiRoundTripper
 }
 
-func newOrgInvitesClient(c *Client) *OrgInvitesClient {
-	return &OrgInvitesClient{upstreamOrgInvitesClient{c}, c}
+func newOrgInvitesClient(rt *apiRoundTripper) *OrgInvitesClient {
+	return &OrgInvitesClient{upstreamOrgInvitesClient{rt}, rt}
 }
 
 // List all invites for a given org

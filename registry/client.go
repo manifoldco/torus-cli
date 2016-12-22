@@ -2,34 +2,21 @@
 package registry
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/manifoldco/torus-cli/apitypes"
-
-	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
-// RoundTripper is the interface used to construct and send requests to
-// the torus registry.
-type RoundTripper interface {
-	NewRequest(method, path string, query *url.Values, body interface{}) (*http.Request, error)
-	Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error)
+// TokenHolder holds an authorization token
+type TokenHolder interface {
+	Token() string
 }
 
 // Client exposes the registry REST API.
 type Client struct {
-	client     *http.Client
-	prefix     string
-	apiVersion string
-	version    string
-	sess       session.Session
-
 	KeyPairs        *KeyPairs
 	Tokens          *Tokens
 	Users           *Users
@@ -49,90 +36,80 @@ type Client struct {
 }
 
 // NewClient returns a new Client.
-func NewClient(prefix string, apiVersion string, version string, sess session.Session, t *http.Transport) *Client {
-	c := &Client{
-		client:     &http.Client{Transport: t},
-		prefix:     prefix,
+func NewClient(prefix string, apiVersion string, version string,
+	token TokenHolder, t *http.Transport) *Client {
+
+	rt := &registryRoundTripper{
+		DefaultRoundTripper: DefaultRoundTripper{
+			Client: &http.Client{Transport: t},
+			Host:   prefix,
+		},
+
 		apiVersion: apiVersion,
 		version:    version,
-		sess:       sess,
+		holder:     token,
 	}
 
-	c.KeyPairs = &KeyPairs{client: c}
-	c.Tokens = &Tokens{client: c}
-	c.Users = &Users{client: c}
-	c.Teams = &TeamsClient{client: c}
-	c.Memberships = &MembershipsClient{client: c}
-	c.Credentials = &Credentials{client: c}
-	c.Orgs = &Orgs{client: c}
-	c.OrgInvite = &OrgInviteClient{client: c}
-	c.Projects = &ProjectsClient{client: c}
-	c.Claims = &ClaimsClient{client: c}
-	c.ClaimTree = &ClaimTreeClient{client: c}
-	c.Keyring = &KeyringClient{client: c}
-	c.Keyring.Members = &KeyringMembersClient{client: c}
-	c.KeyringMember = &KeyringMemberClientV1{client: c}
-	c.CredentialGraph = &CredentialGraphClient{client: c}
-	c.Machines = &MachinesClient{client: c}
-	c.Self = &SelfClient{client: c}
+	c := &Client{}
+
+	c.KeyPairs = &KeyPairs{client: rt}
+	c.Tokens = &Tokens{client: rt}
+	c.Users = &Users{client: rt}
+	c.Teams = &TeamsClient{client: rt}
+	c.Memberships = &MembershipsClient{client: rt}
+	c.Credentials = &Credentials{client: rt}
+	c.Orgs = &Orgs{client: rt}
+	c.OrgInvite = &OrgInviteClient{client: rt}
+	c.Projects = &ProjectsClient{client: rt}
+	c.Claims = &ClaimsClient{client: rt}
+	c.ClaimTree = &ClaimTreeClient{client: rt}
+	c.Keyring = &KeyringClient{client: rt}
+	c.Keyring.Members = &KeyringMembersClient{client: rt}
+	c.KeyringMember = &KeyringMemberClientV1{client: rt}
+	c.CredentialGraph = &CredentialGraphClient{client: rt}
+	c.Machines = &MachinesClient{client: rt}
+	c.Self = &SelfClient{client: rt}
 
 	return c
 }
 
-// NewRequest constructs a new http.Request, with a body containing the json
-// representation of body, if provided.
-func (c *Client) NewRequest(method, path string, query *url.Values,
-	body interface{}) (*http.Request, error) {
+type registryRoundTripper struct {
+	DefaultRoundTripper
 
-	b := &bytes.Buffer{}
-	if body != nil {
-		enc := json.NewEncoder(b)
-		err := enc.Encode(body)
-		if err != nil {
-			return nil, err
-		}
-	}
+	apiVersion string
+	version    string
+	holder     TokenHolder
+}
 
-	if query == nil {
-		query = &url.Values{}
-	}
+// Augment the default NewRequest to set additional required headers
+func (rt *registryRoundTripper) NewRequest(method, path string,
+	query *url.Values, body interface{}) (*http.Request, error) {
 
-	fullPath := c.prefix + path
-	if q := query.Encode(); q != "" {
-		fullPath += "?" + q
-	}
+	req, err := rt.DefaultRoundTripper.NewRequest(method, path, query, body)
 
-	req, err := http.NewRequest(method, fullPath, b)
 	if err != nil {
 		return nil, err
 	}
 
-	if tok := c.sess.Token(); tok != "" {
+	if tok := rt.holder.Token(); tok != "" {
 		req.Header.Set("Authorization", "Bearer "+tok)
 	}
 
-	req.Header.Set("Host", c.prefix)
-	req.Header.Set("User-Agent", "Torus-Daemon/"+c.version)
-	req.Header.Set("X-Registry-Version", c.apiVersion)
-
-	if body != nil {
-		req.Header.Set("Content-type", "application/json")
-	}
+	req.Header.Set("User-Agent", "Torus-Daemon/"+rt.version)
+	req.Header.Set("X-Registry-Version", rt.apiVersion)
 
 	return req, nil
 }
 
-// Do executes an http.Request, populating v with the JSON response
-// on success.
-//
-// If the request errors with a JSON formatted response body, it will be
-// unmarshaled into the returned error.
-func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error) {
+// Augment the default Do to set a timeout.
+func (rt *registryRoundTripper) Do(ctx context.Context, r *http.Request,
+	v interface{}) (*http.Response, error) {
+
 	ctx, cancelFunc := context.WithTimeout(ctx, 6*time.Second)
 	r = r.WithContext(ctx)
 	defer cancelFunc()
 
-	resp, err := c.client.Do(r)
+	resp, err := rt.DefaultRoundTripper.Do(ctx, r, v)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			err = &apitypes.Error{
@@ -145,39 +122,5 @@ func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}) (*http.
 		return nil, err
 	}
 
-	defer resp.Body.Close()
-
-	err = checkResponseCode(resp)
-	if err != nil {
-		return resp, err
-	}
-
-	if v != nil {
-		dec := json.NewDecoder(resp.Body)
-		err = dec.Decode(v)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return resp, nil
-}
-
-func checkResponseCode(r *http.Response) error {
-	if r.StatusCode >= 200 && r.StatusCode < 300 {
-		return nil
-	}
-
-	rErr := &apitypes.Error{StatusCode: r.StatusCode}
-	if r.ContentLength != 0 {
-		dec := json.NewDecoder(r.Body)
-		err := dec.Decode(rErr)
-		if err != nil {
-			return errors.New("Malformed error response from registry")
-		}
-
-		return rErr
-	}
-
-	return errors.New("Error from registry. Check status code")
 }

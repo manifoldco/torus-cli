@@ -2,10 +2,8 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,8 +11,8 @@ import (
 	"github.com/donovanhide/eventsource"
 	"github.com/satori/go.uuid"
 
-	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/registry"
 )
 
 const daemonAPIVersion = "v1"
@@ -28,8 +26,6 @@ type RoundTripper interface {
 
 // Client exposes the daemon API.
 type Client struct {
-	client *http.Client
-
 	Orgs         *OrgsClient
 	Users        *UsersClient
 	Machines     *MachinesClient
@@ -50,125 +46,90 @@ type Client struct {
 
 // NewClient returns a new Client.
 func NewClient(cfg *config.Config) *Client {
-	c := &Client{
-		client: &http.Client{
-			Transport: &http.Transport{
-				Dial: func(network, address string) (net.Conn, error) {
-					return net.Dial("unix", cfg.SocketPath)
+	rt := &apiRoundTripper{
+		DefaultRoundTripper: registry.DefaultRoundTripper{
+			Client: &http.Client{
+				Transport: &http.Transport{
+					Dial: func(network, address string) (net.Conn, error) {
+						return net.Dial("unix", cfg.SocketPath)
+					},
 				},
 			},
+
+			Host: "http://localhost",
 		},
 	}
 
-	c.Orgs = &OrgsClient{client: c}
-	c.Users = newUsersClient(c)
-	c.Machines = newMachinesClient(c)
-	c.Profiles = &ProfilesClient{client: c}
-	c.Teams = &TeamsClient{client: c}
-	c.Memberships = &MembershipsClient{client: c}
-	c.OrgInvites = newOrgInvitesClient(c)
-	c.Keypairs = newKeypairsClient(c)
-	c.Session = &SessionClient{client: c}
-	c.Projects = &ProjectsClient{client: c}
-	c.Services = &ServicesClient{client: c}
-	c.Environments = &EnvironmentsClient{client: c}
-	c.Credentials = &CredentialsClient{client: c}
-	c.Policies = &PoliciesClient{client: c}
-	c.Worklog = &WorklogClient{client: c}
-	c.Version = newVersionClient(c)
+	c := &Client{}
+
+	c.Orgs = &OrgsClient{client: rt}
+	c.Users = newUsersClient(rt)
+	c.Machines = newMachinesClient(rt)
+	c.Profiles = &ProfilesClient{client: rt}
+	c.Teams = &TeamsClient{client: rt}
+	c.Memberships = &MembershipsClient{client: rt}
+	c.OrgInvites = newOrgInvitesClient(rt)
+	c.Keypairs = newKeypairsClient(rt)
+	c.Session = &SessionClient{client: rt}
+	c.Projects = &ProjectsClient{client: rt}
+	c.Services = &ServicesClient{client: rt}
+	c.Environments = &EnvironmentsClient{client: rt}
+	c.Credentials = &CredentialsClient{client: rt}
+	c.Policies = &PoliciesClient{client: rt}
+	c.Worklog = &WorklogClient{client: rt}
+	c.Version = &VersionClient{client: rt}
+	c.Version = newVersionClient(rt)
 
 	return c
+}
+
+type apiRoundTripper struct {
+	registry.DefaultRoundTripper
 }
 
 // NewDaemonRequest constructs a new http.Request, with a body containing the json
 // representation of body, if provided. Daemon requests are handled directly
 // by the torus daemon.
-func (c *Client) NewDaemonRequest(method, path string, query *url.Values, body interface{}) (*http.Request, string, error) {
-	return c.newRequest(method, daemonAPIVersion, path, query, body)
+func (rt *apiRoundTripper) NewDaemonRequest(method, path string,
+	query *url.Values, body interface{}) (*http.Request, string, error) {
+
+	return rt.newRequest(method, daemonAPIVersion, path, query, body)
 }
 
-// NewRequest constructs a new http.Request, with a body containing the json
-// representation of body, if provided.
-func (c *Client) NewRequest(method string, path string, query *url.Values, body interface{}) (*http.Request, error) {
-	req, _, err := c.newRequest(method, "proxy", path, query, body)
+func (rt *apiRoundTripper) NewRequest(method string, path string,
+	query *url.Values, body interface{}) (*http.Request, error) {
+
+	req, _, err := rt.newRequest(method, "proxy", path, query, body)
 	return req, err
 }
 
-func (c *Client) newRequest(method, prefix, path string, query *url.Values, body interface{}) (*http.Request, string, error) {
+// newRequest augments the default to set a unique request id
+func (rt *apiRoundTripper) newRequest(method, prefix, path string,
+	query *url.Values, body interface{}) (*http.Request, string, error) {
+
 	requestID := uuid.NewV4().String()
 
-	b := &bytes.Buffer{}
-	if body != nil {
-		enc := json.NewEncoder(b)
-		err := enc.Encode(body)
-		if err != nil {
-			return nil, requestID, err
-		}
-	}
-
-	if query == nil {
-		query = &url.Values{}
-	}
-
-	fullPath := "http://localhost/" + prefix + path
-	if q := query.Encode(); q != "" {
-		fullPath += "?" + q
-	}
-
-	req, err := http.NewRequest(method, fullPath, b)
+	prefixed := "/" + prefix + path
+	req, err := rt.DefaultRoundTripper.NewRequest(method, prefixed, query, body)
 	if err != nil {
 		return nil, requestID, err
 	}
 
-	req.Header.Set("Host", "localhost")
 	req.Header.Set("X-Request-ID", requestID)
 
-	if body != nil {
-		req.Header.Set("Content-type", "application/json")
-	}
-
 	return req, requestID, nil
-}
-
-// Do executes an http.Request, populating v with the JSON response
-// on success.
-//
-// If the request errors with a JSON formatted response body, it will be
-// unmarshaled into the returned error.
-func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error) {
-	resp, err := c.client.Do(r)
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	err = checkResponseCode(resp)
-	if err != nil {
-		return resp, err
-	}
-
-	if v != nil {
-		dec := json.NewDecoder(resp.Body)
-		err = dec.Decode(v)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return resp, nil
 }
 
 // DoWithProgress executes the HTTP request like Do, in addition to
 // connecting the provided ProgressFunc to any server-sent event progress
 // messages.
-func (c *Client) DoWithProgress(ctx context.Context, r *http.Request, v interface{}, reqID string, progress ProgressFunc) (*http.Response, error) {
+func (rt *apiRoundTripper) DoWithProgress(ctx context.Context, r *http.Request, v interface{}, reqID string, progress ProgressFunc) (*http.Response, error) {
 	done := make(chan bool)
-	req, _, err := c.newRequest("GET", daemonAPIVersion, "/observe", nil, nil)
+	req, _, err := rt.newRequest("GET", daemonAPIVersion, "/observe", nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	stream, err := eventsource.SubscribeWith("", c.client, req)
+	stream, err := eventsource.SubscribeWith("", rt.Client, req)
 	if err != nil {
 		return nil, err
 	}
@@ -203,24 +164,5 @@ func (c *Client) DoWithProgress(ctx context.Context, r *http.Request, v interfac
 
 	defer func() { done <- true }()
 
-	return c.Do(ctx, r, v)
-}
-
-func checkResponseCode(r *http.Response) error {
-	if r.StatusCode >= 200 && r.StatusCode < 300 {
-		return nil
-	}
-
-	rErr := &apitypes.Error{StatusCode: r.StatusCode}
-	if r.ContentLength != 0 {
-		dec := json.NewDecoder(r.Body)
-		err := dec.Decode(rErr)
-		if err != nil {
-			return errors.New("malformed error response from daemon")
-		}
-
-		return apitypes.FormatError(rErr)
-	}
-
-	return errors.New("error from daemon. Check status code")
+	return rt.Do(ctx, r, v)
 }

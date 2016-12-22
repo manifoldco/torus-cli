@@ -96,7 +96,7 @@ func NewSession(resp *apitypes.Self) (*Session, error) {
 // SessionClient provides access to the daemon's user session related endpoints,
 // for logging in/out, and checking your session status.
 type SessionClient struct {
-	client *Client
+	client *apiRoundTripper
 }
 
 type rawSelf struct {

@@ -10,7 +10,7 @@ import (
 
 // WorklogClient views and resolves worklog items in the daemon.
 type WorklogClient struct {
-	client *Client
+	client *apiRoundTripper
 }
 
 // List returns the list of all worklog items in the given org.
