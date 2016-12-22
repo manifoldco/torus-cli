@@ -88,7 +88,7 @@ func daemonStatus(ctx *cli.Context) error {
 	}
 
 	client := api.NewClient(cfg)
-	v, err := client.Version.Get(context.Background())
+	v, err := client.Version.GetDaemon(context.Background())
 	if err != nil {
 		return errs.NewErrorExitError("Error communicating with the daemon", err)
 	}

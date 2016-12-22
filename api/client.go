@@ -47,7 +47,7 @@ type Client struct {
 	Profiles     *ProfilesClient
 	Teams        *TeamsClient
 	Memberships  *MembershipsClient
-	Invites      *InvitesClient
+	OrgInvites   *OrgInvitesClient
 	Keypairs     *KeypairsClient
 	Session      *SessionClient
 	Services     *ServicesClient
@@ -74,13 +74,13 @@ func NewClient(cfg *config.Config) *Client {
 	p := &proxy{c: c}
 
 	c.Orgs = &OrgsClient{client: p}
-	c.Users = &UsersClient{client: c}
-	c.Machines = &MachinesClient{client: c}
+	c.Users = newUsersClient(c)
+	c.Machines = newMachinesClient(c)
 	c.Profiles = &ProfilesClient{client: p}
 	c.Teams = &TeamsClient{client: p}
 	c.Memberships = &MembershipsClient{client: p}
-	c.Invites = &InvitesClient{client: c}
-	c.Keypairs = &KeypairsClient{client: c}
+	c.OrgInvites = newOrgInvitesClient(c)
+	c.Keypairs = newKeypairsClient(c)
 	c.Session = &SessionClient{client: c}
 	c.Projects = &ProjectsClient{client: p}
 	c.Services = &ServicesClient{client: p}
@@ -88,7 +88,7 @@ func NewClient(cfg *config.Config) *Client {
 	c.Credentials = &CredentialsClient{client: c}
 	c.Policies = &PoliciesClient{client: p}
 	c.Worklog = &WorklogClient{client: c}
-	c.Version = &VersionClient{client: c}
+	c.Version = newVersionClient(c)
 
 	return c
 }

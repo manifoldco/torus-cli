@@ -37,7 +37,7 @@ func invitesApprove(ctx *cli.Context) error {
 	}
 
 	states := []string{"accepted"}
-	invites, err := client.Invites.List(context.Background(), org.ID, states)
+	invites, err := client.OrgInvites.List(context.Background(), org.ID, states)
 	if err != nil {
 		return errs.NewExitError("Failed to retrieve invites, please try again.")
 	}
@@ -53,7 +53,7 @@ func invitesApprove(ctx *cli.Context) error {
 		return errs.NewExitError("Invite not found.")
 	}
 
-	err = client.Invites.Approve(context.Background(), *targetInvite, &progress)
+	err = client.OrgInvites.Approve(context.Background(), *targetInvite, &progress)
 	if err != nil {
 		return err
 	}

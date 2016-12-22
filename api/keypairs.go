@@ -9,9 +9,21 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 )
 
-// KeypairsClient makes proxied requests to the registry's keypairs endpoints
+// upstreamKeypairsClient makes proxied requests to the registry's keypairs
+// endpoints
+type upstreamKeypairsClient struct {
+	client RoundTripper
+}
+
+// KeypairsClient makes requests to the registry's and daemon's keypairs
+// endpoints
 type KeypairsClient struct {
+	upstreamKeypairsClient
 	client *Client
+}
+
+func newKeypairsClient(c *Client) *KeypairsClient {
+	return &KeypairsClient{upstreamKeypairsClient{proxy{c}}, c}
 }
 
 // KeypairResult is the payload returned for a keypair object
@@ -53,19 +65,19 @@ func (k *KeypairsClient) Generate(ctx context.Context, orgID *identity.ID,
 }
 
 // List retrieves relevant keypairs by orgID
-func (k *KeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]KeypairResult, error) {
+func (k *upstreamKeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]KeypairResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := k.client.NewRequest("GET", "/keypairs", v, nil, true)
+	req, err := k.client.NewRequest("GET", "/keypairs", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var keypairs []KeypairResult
-	_, err = k.client.Do(ctx, req, &keypairs, nil, nil)
+	_, err = k.client.Do(ctx, req, &keypairs)
 	if err != nil {
 		return nil, err
 	}

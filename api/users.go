@@ -7,9 +7,19 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 )
 
-// UsersClient makes proxied requests to the registry's users endpoints
+// upstreamUsersClient makes proxied requests to the registry's users endpoints
+type upstreamUsersClient struct {
+	client RoundTripper
+}
+
+// UsersClient makes requests to the registry's and daemon's users endpoints
 type UsersClient struct {
+	upstreamUsersClient
 	client *Client
+}
+
+func newUsersClient(c *Client) *UsersClient {
+	return &UsersClient{upstreamUsersClient{&proxy{c}}, c}
 }
 
 // Signup will have the daemon create a new user request
@@ -25,16 +35,16 @@ func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, outpu
 }
 
 // VerifyEmail will confirm the user's email with the registry
-func (u *UsersClient) VerifyEmail(ctx context.Context, verifyCode string) error {
+func (u *upstreamUsersClient) VerifyEmail(ctx context.Context, verifyCode string) error {
 	verify := apitypes.VerifyEmail{
 		Code: verifyCode,
 	}
-	req, _, err := u.client.NewRequest("POST", "/users/verify", nil, &verify, true)
+	req, err := u.client.NewRequest("POST", "/users/verify", nil, &verify)
 	if err != nil {
 		return err
 	}
 
-	_, err = u.client.Do(ctx, req, nil, nil, nil)
+	_, err = u.client.Do(ctx, req, nil)
 	return err
 }
 
