@@ -14,13 +14,13 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/crypto"
 )
 
-// Users represents the  registry `/users` endpoints.
-type Users struct {
+// UsersClient represents the  registry `/users` endpoints.
+type UsersClient struct {
 	client RoundTripper
 }
 
 // Create attempts to register a new user
-func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Signup) (*envelope.User, error) {
+func (u *UsersClient) Create(ctx context.Context, userObj Signup, signup apitypes.Signup) (*envelope.User, error) {
 	v := &url.Values{}
 	if signup.InviteCode != "" {
 		v.Set("code", signup.InviteCode)
@@ -54,7 +54,7 @@ func (u *Users) Create(ctx context.Context, userObj Signup, signup apitypes.Sign
 }
 
 // Update patches the user object with whitelisted fields
-func (u *Users) Update(ctx context.Context, userObj interface{}) (*envelope.User, error) {
+func (u *UsersClient) Update(ctx context.Context, userObj interface{}) (*envelope.User, error) {
 	req, err := u.client.NewRequest("PATCH", "/users/self", nil, userObj)
 	if err != nil {
 		log.Printf("Error making api request: %s", err)

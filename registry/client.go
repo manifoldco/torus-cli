@@ -17,14 +17,14 @@ type TokenHolder interface {
 
 // Client exposes the registry REST API.
 type Client struct {
-	KeyPairs        *KeyPairs
-	Tokens          *Tokens
-	Users           *Users
+	KeyPairs        *KeyPairsClient
+	Tokens          *TokensClient
+	Users           *UsersClient
 	Teams           *TeamsClient
 	Memberships     *MembershipsClient
 	Credentials     *Credentials
-	Orgs            *Orgs
-	OrgInvite       *OrgInviteClient
+	Orgs            *OrgsClient
+	OrgInvite       *OrgInvitesClient
 	Projects        *ProjectsClient
 	Keyring         *KeyringClient
 	KeyringMember   *KeyringMemberClientV1
@@ -52,14 +52,14 @@ func NewClient(prefix string, apiVersion string, version string,
 
 	c := &Client{}
 
-	c.KeyPairs = &KeyPairs{client: rt}
-	c.Tokens = &Tokens{client: rt}
-	c.Users = &Users{client: rt}
+	c.KeyPairs = &KeyPairsClient{client: rt}
+	c.Tokens = &TokensClient{client: rt}
+	c.Users = &UsersClient{client: rt}
 	c.Teams = &TeamsClient{client: rt}
 	c.Memberships = &MembershipsClient{client: rt}
 	c.Credentials = &Credentials{client: rt}
-	c.Orgs = &Orgs{client: rt}
-	c.OrgInvite = &OrgInviteClient{client: rt}
+	c.Orgs = &OrgsClient{client: rt}
+	c.OrgInvite = &OrgInvitesClient{client: rt}
 	c.Projects = &ProjectsClient{client: rt}
 	c.Claims = &ClaimsClient{client: rt}
 	c.ClaimTree = &ClaimTreeClient{client: rt}
