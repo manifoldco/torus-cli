@@ -10,7 +10,7 @@ import (
 // ClaimsClient represents the `/claims` registry endpoint for making claims
 // against keypairs. Claims can either be a signature or a revocation.
 type ClaimsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // Create creates a a new signed claim on the server

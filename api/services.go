@@ -12,7 +12,7 @@ import (
 
 // ServicesClient makes proxied requests to the registry's services endpoints
 type ServicesClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // List retrieves relevant services by name and/or orgID and/or projectID
@@ -34,13 +34,13 @@ func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs *[]*identi
 		}
 	}
 
-	req, _, err := s.client.NewRequest("GET", "/services", v, nil, true)
+	req, err := s.client.NewRequest("GET", "/services", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	services := []envelope.Service{}
-	_, err = s.client.Do(ctx, req, &services, nil, nil)
+	_, err = s.client.Do(ctx, req, &services)
 	return services, err
 }
 
@@ -67,11 +67,11 @@ func (s *ServicesClient) Create(ctx context.Context, orgID, projectID *identity.
 		Body:    &serviceBody,
 	}
 
-	req, _, err := s.client.NewRequest("POST", "/services", nil, service, true)
+	req, err := s.client.NewRequest("POST", "/services", nil, service)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.client.Do(ctx, req, nil, nil, nil)
+	_, err = s.client.Do(ctx, req, nil)
 	return err
 }

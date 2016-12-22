@@ -13,7 +13,7 @@ import (
 // MembershipsClient makes proxied requests to the registry's team memberships
 // endpoints.
 type MembershipsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // List returns all team membership associations for the given user id within
@@ -28,13 +28,13 @@ func (m *MembershipsClient) List(ctx context.Context, org, user, team *identity.
 		v.Set("team_id", team.String())
 	}
 
-	req, _, err := m.client.NewRequest("GET", "/memberships", v, nil, true)
+	req, err := m.client.NewRequest("GET", "/memberships", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	memberships := []envelope.Membership{}
-	_, err = m.client.Do(ctx, req, &memberships, nil, nil)
+	_, err = m.client.Do(ctx, req, &memberships)
 	return memberships, err
 }
 
@@ -67,22 +67,22 @@ func (m *MembershipsClient) Create(ctx context.Context, userID, orgID, teamID *i
 		Body:    &membershipBody,
 	}
 
-	req, _, err := m.client.NewRequest("POST", "/memberships", nil, membership, true)
+	req, err := m.client.NewRequest("POST", "/memberships", nil, membership)
 	if err != nil {
 		return err
 	}
 
-	_, err = m.client.Do(ctx, req, nil, nil, nil)
+	_, err = m.client.Do(ctx, req, nil)
 	return err
 }
 
 // Delete requests deletion of a specific membership row by ID
 func (m *MembershipsClient) Delete(ctx context.Context, membership *identity.ID) error {
-	req, _, err := m.client.NewRequest("DELETE", "/memberships/"+membership.String(), nil, nil, true)
+	req, err := m.client.NewRequest("DELETE", "/memberships/"+membership.String(), nil, nil)
 	if err != nil {
 		return err
 	}
 
-	_, err = m.client.Do(ctx, req, nil, nil, nil)
+	_, err = m.client.Do(ctx, req, nil)
 	return err
 }

@@ -16,7 +16,7 @@ import (
 
 // Users represents the  registry `/users` endpoints.
 type Users struct {
-	client *Client
+	client RoundTripper
 }
 
 // Create attempts to register a new user

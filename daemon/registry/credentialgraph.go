@@ -17,7 +17,7 @@ import (
 // user for retrieving keyrings, keyring members, and credentials associated
 // with claims.
 type CredentialGraphClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // CredentialGraph is the shared interface between different credential graph

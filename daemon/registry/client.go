@@ -15,6 +15,13 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
+// RoundTripper is the interface used to construct and send requests to
+// the torus registry.
+type RoundTripper interface {
+	NewRequest(method, path string, query *url.Values, body interface{}) (*http.Request, error)
+	Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error)
+}
+
 // Client exposes the registry REST API.
 type Client struct {
 	client     *http.Client
@@ -76,15 +83,6 @@ func NewClient(prefix string, apiVersion string, version string, sess session.Se
 // representation of body, if provided.
 func (c *Client) NewRequest(method, path string, query *url.Values,
 	body interface{}) (*http.Request, error) {
-	return c.NewTokenRequest(c.sess.Token(), method, path, query, body)
-}
-
-// NewTokenRequest constructs a new http.Request, with a body containing the
-// json representation of body, if provided.
-//
-// The request will be authorized with the provided token.
-func (c *Client) NewTokenRequest(token, method, path string, query *url.Values,
-	body interface{}) (*http.Request, error) {
 
 	b := &bytes.Buffer{}
 	if body != nil {
@@ -109,14 +107,17 @@ func (c *Client) NewTokenRequest(token, method, path string, query *url.Values,
 		return nil, err
 	}
 
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
+	if tok := c.sess.Token(); tok != "" {
+		req.Header.Set("Authorization", "Bearer "+tok)
 	}
 
 	req.Header.Set("Host", c.prefix)
 	req.Header.Set("User-Agent", "Torus-Daemon/"+c.version)
-	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("X-Registry-Version", c.apiVersion)
+
+	if body != nil {
+		req.Header.Set("Content-type", "application/json")
+	}
 
 	return req, nil
 }

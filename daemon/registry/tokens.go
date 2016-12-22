@@ -50,7 +50,7 @@ type authTokenResponse struct {
 // This token is then HMAC'd and returned to the server, exchanging it for
 // an auth token, which is used for all other operations.
 type Tokens struct {
-	client *Client
+	client RoundTripper
 }
 
 // PostLogin requests a login token from the registry for the provided email
@@ -93,8 +93,9 @@ func (t *Tokens) PostLogin(ctx context.Context, creds apitypes.LoginCredential) 
 func (t *Tokens) PostAuth(ctx context.Context, token, hmac string) (string, error) {
 	auth := authTokenResponse{}
 
-	req, err := t.client.NewTokenRequest(token, "POST", "/tokens", nil,
+	req, err := t.client.NewRequest("POST", "/tokens", nil,
 		&authTokenHMACRequest{Type: tokenTypeAuth, TokenHMAC: hmac})
+	replaceAuthToken(req, token)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return auth.Token, err
@@ -113,8 +114,9 @@ func (t *Tokens) PostAuth(ctx context.Context, token, hmac string) (string, erro
 func (t *Tokens) PostPDPKAuth(ctx context.Context, token string, sig *base64.Value) (string, error) {
 	auth := authTokenResponse{}
 
-	req, err := t.client.NewTokenRequest(token, "POST", "/tokens", nil,
+	req, err := t.client.NewRequest("POST", "/tokens", nil,
 		&authTokenPDPKARequest{Type: tokenTypeAuth, TokenSig: sig})
+	replaceAuthToken(req, token)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return auth.Token, err
@@ -131,7 +133,8 @@ func (t *Tokens) PostPDPKAuth(ctx context.Context, token string, sig *base64.Val
 // Delete deletes the token with the provided value from the registry. This
 // effectively logs a user out.
 func (t *Tokens) Delete(ctx context.Context, token string) error {
-	req, err := t.client.NewTokenRequest(token, "DELETE", "/tokens/"+token, nil, nil)
+	req, err := t.client.NewRequest("DELETE", "/tokens/"+token, nil, nil)
+	replaceAuthToken(req, token)
 	if err != nil {
 		log.Printf("Error building http request: %s", err)
 		return err

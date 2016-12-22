@@ -13,7 +13,7 @@ import (
 // endpoint, used for accessing the relationship between users,
 // organization, and teams.
 type MembershipsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // List returns all memberships for a given organization, team, or user/machine

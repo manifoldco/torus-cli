@@ -11,7 +11,7 @@ import (
 // Orgs represents the `/orgs` registry endpoint, used for accessing
 // organizations stored in Torus.
 type Orgs struct {
-	client *Client
+	client RoundTripper
 }
 
 // Get returns the organization with the given ID.

@@ -11,7 +11,7 @@ import (
 
 // PoliciesClient makes proxied requests to the registry's policies endpoints
 type PoliciesClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // Create creates a new policy
@@ -28,13 +28,13 @@ func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (
 		Body:    policy,
 	}
 
-	req, _, err := p.client.NewRequest("POST", "/policies", nil, env, true)
+	req, err := p.client.NewRequest("POST", "/policies", nil, env)
 	if err != nil {
 		return nil, err
 	}
 
 	res := envelope.Policy{}
-	_, err = p.client.Do(ctx, req, &res, nil, nil)
+	_, err = p.client.Do(ctx, req, &res)
 	return &res, err
 }
 
@@ -48,13 +48,13 @@ func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name stri
 		v.Set("name", name)
 	}
 
-	req, _, err := p.client.NewRequest("GET", "/policies", v, nil, true)
+	req, err := p.client.NewRequest("GET", "/policies", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	policies := []envelope.Policy{}
-	_, err = p.client.Do(ctx, req, &policies, nil, nil)
+	_, err = p.client.Do(ctx, req, &policies)
 	return policies, err
 }
 
@@ -77,21 +77,21 @@ func (p *PoliciesClient) Attach(ctx context.Context, org, policy, team *identity
 		Body:    &attachment,
 	}
 
-	req, _, err := p.client.NewRequest("POST", "/policy-attachments", nil, &env, true)
+	req, err := p.client.NewRequest("POST", "/policy-attachments", nil, &env)
 	if err != nil {
 		return err
 	}
-	_, err = p.client.Do(ctx, req, nil, nil, nil)
+	_, err = p.client.Do(ctx, req, nil)
 	return err
 }
 
 // Detach deletes a specific attachment
 func (p *PoliciesClient) Detach(ctx context.Context, attachmentID *identity.ID) error {
-	req, _, err := p.client.NewRequest("DELETE", "/policy-attachments/"+attachmentID.String(), nil, nil, true)
+	req, err := p.client.NewRequest("DELETE", "/policy-attachments/"+attachmentID.String(), nil, nil)
 	if err != nil {
 		return err
 	}
-	_, err = p.client.Do(ctx, req, nil, nil, nil)
+	_, err = p.client.Do(ctx, req, nil)
 	return err
 }
 
@@ -108,12 +108,12 @@ func (p *PoliciesClient) AttachmentsList(ctx context.Context, orgID, ownerID, po
 		v.Set("policy_id", policyID.String())
 	}
 
-	req, _, err := p.client.NewRequest("GET", "/policy-attachments", v, nil, true)
+	req, err := p.client.NewRequest("GET", "/policy-attachments", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	attachments := []envelope.PolicyAttachment{}
-	_, err = p.client.Do(ctx, req, &attachments, nil, nil)
+	_, err = p.client.Do(ctx, req, &attachments)
 	return attachments, err
 }

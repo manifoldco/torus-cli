@@ -13,7 +13,7 @@ import (
 // ClaimTreeClient represents the `/claimtree` registry endpoint, used for
 // retrieving the public keys and their associated claims for an organization.
 type ClaimTreeClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // ClaimTree represents an organizations claim tree which contains public

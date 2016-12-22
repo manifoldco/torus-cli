@@ -17,6 +17,26 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 )
 
+// RoundTripper is the interface used to construct and send requests to
+// the torus registry.
+type RoundTripper interface {
+	NewRequest(method, path string, query *url.Values, body interface{}) (*http.Request, error)
+	Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error)
+}
+
+type proxy struct {
+	c *Client
+}
+
+func (p proxy) NewRequest(method string, path string, query *url.Values, body interface{}) (*http.Request, error) {
+	req, _, err := p.c.NewRequest(method, path, query, body, true)
+	return req, err
+}
+
+func (p proxy) Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error) {
+	return p.c.Do(ctx, r, v, nil, nil)
+}
+
 // Client exposes the daemon API.
 type Client struct {
 	client *http.Client
@@ -51,20 +71,22 @@ func NewClient(cfg *config.Config) *Client {
 		},
 	}
 
-	c.Orgs = &OrgsClient{client: c}
+	p := &proxy{c: c}
+
+	c.Orgs = &OrgsClient{client: p}
 	c.Users = &UsersClient{client: c}
 	c.Machines = &MachinesClient{client: c}
-	c.Profiles = &ProfilesClient{client: c}
-	c.Teams = &TeamsClient{client: c}
-	c.Memberships = &MembershipsClient{client: c}
+	c.Profiles = &ProfilesClient{client: p}
+	c.Teams = &TeamsClient{client: p}
+	c.Memberships = &MembershipsClient{client: p}
 	c.Invites = &InvitesClient{client: c}
 	c.Keypairs = &KeypairsClient{client: c}
 	c.Session = &SessionClient{client: c}
-	c.Projects = &ProjectsClient{client: c}
-	c.Services = &ServicesClient{client: c}
-	c.Environments = &EnvironmentsClient{client: c}
+	c.Projects = &ProjectsClient{client: p}
+	c.Services = &ServicesClient{client: p}
+	c.Environments = &EnvironmentsClient{client: p}
 	c.Credentials = &CredentialsClient{client: c}
-	c.Policies = &PoliciesClient{client: c}
+	c.Policies = &PoliciesClient{client: p}
 	c.Worklog = &WorklogClient{client: c}
 	c.Version = &VersionClient{client: c}
 

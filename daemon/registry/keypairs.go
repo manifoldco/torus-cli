@@ -20,7 +20,7 @@ type ClaimedKeyPair struct {
 // KeyPairs represents the `/keypairs` registry endpoint, used for accessing
 // users' signing and encryption keypairs.
 type KeyPairs struct {
-	client *Client
+	client RoundTripper
 }
 
 // Post creates a new keypair on the registry.

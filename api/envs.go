@@ -12,7 +12,7 @@ import (
 
 // EnvironmentsClient makes proxied requests to the registry's envs endpoints
 type EnvironmentsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // Create generates a new env object for an org/project ID
@@ -38,12 +38,12 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 		Body:    &envBody,
 	}
 
-	req, _, err := e.client.NewRequest("POST", "/envs", nil, env, true)
+	req, err := e.client.NewRequest("POST", "/envs", nil, env)
 	if err != nil {
 		return err
 	}
 
-	_, err = e.client.Do(ctx, req, nil, nil, nil)
+	_, err = e.client.Do(ctx, req, nil)
 	return err
 }
 
@@ -66,12 +66,12 @@ func (e *EnvironmentsClient) List(ctx context.Context, orgIDs, projectIDs *[]*id
 		}
 	}
 
-	req, _, err := e.client.NewRequest("GET", "/envs", v, nil, true)
+	req, err := e.client.NewRequest("GET", "/envs", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	envs := []envelope.Environment{}
-	_, err = e.client.Do(ctx, req, &envs, nil, nil)
+	_, err = e.client.Do(ctx, req, &envs)
 	return envs, err
 }

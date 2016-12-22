@@ -10,7 +10,7 @@ import (
 // KeyringMemberClientV1 represents the `/keyring-members` registry endpoint
 // for creating memberships related to a set of Keyrings.
 type KeyringMemberClientV1 struct {
-	client *Client
+	client RoundTripper
 }
 
 // Post sends a creation requests for a set of KeyringMember objects to the
@@ -36,7 +36,7 @@ func (k *KeyringMemberClientV1) Post(ctx context.Context, members []envelope.Key
 // KeyringMembersClient represents the `/keyring/:id/members` registry endpoint
 // for creating memberships in a keyring.
 type KeyringMembersClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // Post sends a creation requests for a set of KeyringMember objects to the

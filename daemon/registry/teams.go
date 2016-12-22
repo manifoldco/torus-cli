@@ -13,7 +13,7 @@ import (
 // TeamsClient represents the `/teams` registry endpoint, used for
 // accessing teams stored in Torus.
 type TeamsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // List returns all teams for an organization

@@ -13,7 +13,7 @@ import (
 // OrgInviteClient represents the `/org-invites` registry endpoint, used for
 // sending, accepting, and approving invitations to organizations in Torus.
 type OrgInviteClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // Approve sends an approval notification to the registry regarding a specific
