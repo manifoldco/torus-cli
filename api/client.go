@@ -28,15 +28,11 @@ type RoundTripper interface {
 type Client struct {
 	registry.Client
 
-	Orgs        *OrgsClient
 	Users       *UsersClient
 	Machines    *MachinesClient
-	Teams       *TeamsClient
-	Memberships *MembershipsClient
 	OrgInvites  *OrgInvitesClient
 	Keypairs    *KeypairsClient
 	Session     *SessionClient
-	Projects    *ProjectsClient
 	Credentials *CredentialsClient
 	Worklog     *WorklogClient
 	Version     *VersionClient
@@ -60,15 +56,11 @@ func NewClient(cfg *config.Config) *Client {
 
 	c := &Client{Client: *registry.NewClientWithRoundTripper(rt)}
 
-	c.Orgs = &OrgsClient{client: rt}
 	c.Users = newUsersClient(rt)
 	c.Machines = newMachinesClient(rt)
-	c.Teams = &TeamsClient{client: rt}
-	c.Memberships = &MembershipsClient{client: rt}
 	c.OrgInvites = newOrgInvitesClient(rt)
 	c.Keypairs = newKeypairsClient(rt)
 	c.Session = &SessionClient{client: rt}
-	c.Projects = &ProjectsClient{client: rt}
 	c.Credentials = &CredentialsClient{client: rt}
 	c.Worklog = &WorklogClient{client: rt}
 	c.Version = newVersionClient(rt)

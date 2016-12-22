@@ -14,6 +14,7 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/pathexp"
+	"github.com/manifoldco/torus-cli/registry"
 )
 
 var targetMap = []string{"orgs", "projects", "envs", "services"}
@@ -81,7 +82,7 @@ func listObjects(ctx *cli.Context) error {
 	}
 
 	var orgName string
-	var projectTree api.ProjectTreeSegment
+	var projectTree registry.ProjectTreeSegment
 	var projectMap map[string]envelope.Project
 	if target != "orgs" {
 		tree, err := projectTreeForOrg(c, client, cpathExp)
@@ -175,7 +176,7 @@ func listObjects(ctx *cli.Context) error {
 }
 
 // return a map of the projects which match the supplied pathexp
-func matchingProjects(pexp *pathexp.PathExp, tree api.ProjectTreeSegment) map[string]envelope.Project {
+func matchingProjects(pexp *pathexp.PathExp, tree registry.ProjectTreeSegment) map[string]envelope.Project {
 	projectMap := make(map[string]envelope.Project)
 	for _, p := range tree.Projects {
 		if pexp.Project.Contains(p.Body.Name) || matchPathSegment(pexp.Project.String(), p.Body.Name) {
@@ -254,7 +255,7 @@ func identifyTarget(args []string, recursive bool) (*pathexp.PathExp, string, er
 }
 
 // retrieve the projecttree for non-recursive operations
-func projectTreeForOrg(c context.Context, client *api.Client, cpathExp *pathexp.PathExp) (*api.ProjectTreeSegment, error) {
+func projectTreeForOrg(c context.Context, client *api.Client, cpathExp *pathexp.PathExp) (*registry.ProjectTreeSegment, error) {
 	org, err := client.Orgs.GetByName(c, cpathExp.Org.String())
 	if err != nil {
 		return nil, err

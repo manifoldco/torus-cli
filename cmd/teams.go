@@ -139,7 +139,7 @@ func teamsListCmd(ctx *cli.Context) error {
 		getMemberships.Wait()
 		var memberships []envelope.Membership
 		if oErr == nil && sErr == nil {
-			memberships, sErr = client.Memberships.List(c, org.ID, session.ID(), nil)
+			memberships, sErr = client.Memberships.List(c, org.ID, nil, session.ID())
 		}
 
 		for _, m := range memberships {
@@ -234,7 +234,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		}
 
 		// Pull all memberships for supplied org/team
-		memberships, mErr = client.Memberships.List(c, org.ID, nil, team.ID)
+		memberships, mErr = client.Memberships.List(c, org.ID, team.ID, nil)
 		getMembers.Done()
 	}()
 
@@ -446,7 +446,7 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 	}
 
 	// Lookup their membership row
-	memberships, mErr := client.Memberships.List(c, org.ID, user.ID, team.ID)
+	memberships, mErr := client.Memberships.List(c, org.ID, team.ID, user.ID)
 	if mErr != nil || len(memberships) < 1 {
 		return errs.NewExitError("Memberships not found.")
 	}

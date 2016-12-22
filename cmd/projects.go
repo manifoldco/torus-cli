@@ -88,7 +88,7 @@ func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, 
 		projectNames = []string{*name}
 	}
 
-	return client.Projects.List(c, &orgIDs, &projectNames)
+	return client.Projects.Search(c, &orgIDs, &projectNames)
 }
 
 func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []*identity.ID) ([]envelope.Project, error) {
@@ -97,7 +97,7 @@ func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []*ide
 		return nil, cli.NewExitError(projectListFailed, -1)
 	}
 
-	return client.Projects.List(c, &orgIDs, nil)
+	return client.Projects.Search(c, &orgIDs, nil)
 }
 
 func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName string) ([]envelope.Project, error) {
