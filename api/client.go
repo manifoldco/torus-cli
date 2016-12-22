@@ -26,6 +26,8 @@ type RoundTripper interface {
 
 // Client exposes the daemon API.
 type Client struct {
+	registry.Client
+
 	Orgs         *OrgsClient
 	Users        *UsersClient
 	Machines     *MachinesClient
@@ -60,7 +62,7 @@ func NewClient(cfg *config.Config) *Client {
 		},
 	}
 
-	c := &Client{}
+	c := &Client{Client: *registry.NewClientWithRoundTripper(rt)}
 
 	c.Orgs = &OrgsClient{client: rt}
 	c.Users = newUsersClient(rt)

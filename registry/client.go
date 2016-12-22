@@ -50,6 +50,12 @@ func NewClient(prefix string, apiVersion string, version string,
 		holder:     token,
 	}
 
+	return NewClientWithRoundTripper(rt)
+}
+
+// NewClientWithRoundTripper returns a new Client using the provided
+// RoundTripper. This is used in the api package to embed registry endpoints.
+func NewClientWithRoundTripper(rt RoundTripper) *Client {
 	c := &Client{}
 
 	c.KeyPairs = &KeyPairsClient{client: rt}
