@@ -25,7 +25,7 @@ type OrgInvitesClient struct {
 }
 
 func newOrgInvitesClient(c *Client) *OrgInvitesClient {
-	return &OrgInvitesClient{upstreamOrgInvitesClient{proxy{c}}, c}
+	return &OrgInvitesClient{upstreamOrgInvitesClient{c}, c}
 }
 
 // List all invites for a given org
@@ -121,12 +121,12 @@ func (i *upstreamOrgInvitesClient) Associate(ctx context.Context, org, email, co
 }
 
 // Approve executes the approve invite request
-func (i *OrgInvitesClient) Approve(ctx context.Context, inviteID identity.ID, output *ProgressFunc) error {
-	req, reqID, err := i.client.NewRequest("POST", "/org-invites/"+inviteID.String()+"/approve", nil, nil, false)
+func (i *OrgInvitesClient) Approve(ctx context.Context, inviteID identity.ID, output ProgressFunc) error {
+	req, reqID, err := i.client.NewDaemonRequest("POST", "/org-invites/"+inviteID.String()+"/approve", nil, nil)
 	if err != nil {
 		return err
 	}
 
-	_, err = i.client.Do(ctx, req, nil, &reqID, output)
+	_, err = i.client.DoWithProgress(ctx, req, nil, reqID, output)
 	return err
 }

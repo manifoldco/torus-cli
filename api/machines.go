@@ -25,12 +25,12 @@ type MachinesClient struct {
 }
 
 func newMachinesClient(c *Client) *MachinesClient {
-	return &MachinesClient{upstreamMachinesClient{proxy{c}}, c}
+	return &MachinesClient{upstreamMachinesClient{c}, c}
 }
 
 // Create a new machine in the given org
 func (m *MachinesClient) Create(ctx context.Context, orgID, teamID *identity.ID,
-	name string, output *ProgressFunc) (*apitypes.MachineSegment, *base64.Value, error) {
+	name string, output ProgressFunc) (*apitypes.MachineSegment, *base64.Value, error) {
 
 	secret, err := createTokenSecret()
 	if err != nil {
@@ -44,13 +44,13 @@ func (m *MachinesClient) Create(ctx context.Context, orgID, teamID *identity.ID,
 		Secret: secret,
 	}
 
-	req, reqID, err := m.client.NewRequest("POST", "/machines", nil, &mcr, false)
+	req, reqID, err := m.client.NewDaemonRequest("POST", "/machines", nil, &mcr)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	result := &apitypes.MachineSegment{}
-	_, err = m.client.Do(ctx, req, result, &reqID, output)
+	_, err = m.client.DoWithProgress(ctx, req, result, reqID, output)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -23,7 +23,7 @@ type KeypairsClient struct {
 }
 
 func newKeypairsClient(c *Client) *KeypairsClient {
-	return &KeypairsClient{upstreamKeypairsClient{proxy{c}}, c}
+	return &KeypairsClient{upstreamKeypairsClient{c}, c}
 }
 
 // KeypairResult is the payload returned for a keypair object
@@ -51,16 +51,16 @@ type keypairsRequest struct {
 
 // Generate generates new keypairs for the user in the given org.
 func (k *KeypairsClient) Generate(ctx context.Context, orgID *identity.ID,
-	output *ProgressFunc) error {
+	output ProgressFunc) error {
 
 	kpr := keypairsRequest{OrgID: orgID}
 
-	req, reqID, err := k.client.NewRequest("POST", "/keypairs/generate", nil, &kpr, false)
+	req, reqID, err := k.client.NewDaemonRequest("POST", "/keypairs/generate", nil, &kpr)
 	if err != nil {
 		return err
 	}
 
-	_, err = k.client.Do(ctx, req, nil, &reqID, output)
+	_, err = k.client.DoWithProgress(ctx, req, nil, reqID, output)
 	return err
 }
 
@@ -86,14 +86,14 @@ func (k *upstreamKeypairsClient) List(ctx context.Context, orgID *identity.ID) (
 }
 
 // Revoke revokes the existing keypairs for the user in the given org.
-func (k *KeypairsClient) Revoke(ctx context.Context, orgID *identity.ID, output *ProgressFunc) error {
+func (k *KeypairsClient) Revoke(ctx context.Context, orgID *identity.ID, output ProgressFunc) error {
 	kpr := keypairsRequest{OrgID: orgID}
 
-	req, reqID, err := k.client.NewRequest("POST", "/keypairs/revoke", nil, &kpr, false)
+	req, reqID, err := k.client.NewDaemonRequest("POST", "/keypairs/revoke", nil, &kpr)
 	if err != nil {
 		return err
 	}
 
-	_, err = k.client.Do(ctx, req, nil, &reqID, output)
+	_, err = k.client.DoWithProgress(ctx, req, nil, reqID, output)
 	return err
 }

@@ -19,18 +19,18 @@ type UsersClient struct {
 }
 
 func newUsersClient(c *Client) *UsersClient {
-	return &UsersClient{upstreamUsersClient{&proxy{c}}, c}
+	return &UsersClient{upstreamUsersClient{c}, c}
 }
 
 // Signup will have the daemon create a new user request
 func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, output *ProgressFunc) (*envelope.User, error) {
-	req, _, err := u.client.NewRequest("POST", "/signup", nil, &signup, false)
+	req, _, err := u.client.NewDaemonRequest("POST", "/signup", nil, &signup)
 	if err != nil {
 		return nil, err
 	}
 
 	user := envelope.User{}
-	_, err = u.client.Do(ctx, req, &user, nil, output)
+	_, err = u.client.Do(ctx, req, &user)
 	return &user, err
 }
 
@@ -50,12 +50,12 @@ func (u *upstreamUsersClient) VerifyEmail(ctx context.Context, verifyCode string
 
 // Update performs a profile update to the user object
 func (u *UsersClient) Update(ctx context.Context, delta apitypes.ProfileUpdate) (*envelope.User, error) {
-	req, _, err := u.client.NewRequest("PATCH", "/self", nil, &delta, false)
+	req, _, err := u.client.NewDaemonRequest("PATCH", "/self", nil, &delta)
 	if err != nil {
 		return nil, err
 	}
 
 	user := envelope.User{}
-	_, err = u.client.Do(ctx, req, &user, nil, nil)
+	_, err = u.client.Do(ctx, req, &user)
 	return &user, err
 }

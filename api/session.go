@@ -109,13 +109,13 @@ type rawSelf struct {
 
 // Who returns the Session object for the current authenticated user or machine
 func (s *SessionClient) Who(ctx context.Context) (*Session, error) {
-	req, _, err := s.client.NewRequest("GET", "/self", nil, nil, false)
+	req, _, err := s.client.NewDaemonRequest("GET", "/self", nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	raw := &rawSelf{}
-	_, err = s.client.Do(ctx, req, raw, nil, nil)
+	_, err = s.client.Do(ctx, req, raw)
 	if err != nil {
 		return nil, err
 	}
@@ -147,13 +147,13 @@ func (s *SessionClient) Who(ctx context.Context) (*Session, error) {
 
 // Get returns the status of the user's session.
 func (s *SessionClient) Get(ctx context.Context) (*apitypes.SessionStatus, error) {
-	req, _, err := s.client.NewRequest("GET", "/session", nil, nil, false)
+	req, _, err := s.client.NewDaemonRequest("GET", "/session", nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := &apitypes.SessionStatus{}
-	_, err = s.client.Do(ctx, req, resp, nil, nil)
+	_, err = s.client.Do(ctx, req, resp)
 	if err != nil {
 		return nil, err
 	}
@@ -208,22 +208,22 @@ func performLogin(ctx context.Context, s *SessionClient, loginType apitypes.Sess
 		Credentials: rawLogin,
 	}
 
-	req, _, err := s.client.NewRequest("POST", "/login", nil, &wrapper, false)
+	req, _, err := s.client.NewDaemonRequest("POST", "/login", nil, &wrapper)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.client.Do(ctx, req, nil, nil, nil)
+	_, err = s.client.Do(ctx, req, nil)
 	return err
 }
 
 // Logout logs the user out of their session
 func (s *SessionClient) Logout(ctx context.Context) error {
-	req, _, err := s.client.NewRequest("POST", "/logout", nil, nil, false)
+	req, _, err := s.client.NewDaemonRequest("POST", "/logout", nil, nil)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.client.Do(ctx, req, nil, nil, nil)
+	_, err = s.client.Do(ctx, req, nil)
 	return err
 }

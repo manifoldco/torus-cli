@@ -20,14 +20,14 @@ func (w *WorklogClient) List(ctx context.Context, orgID *identity.ID) ([]apitype
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := w.client.NewRequest("GET", "/worklog", v, nil, false)
+	req, _, err := w.client.NewDaemonRequest("GET", "/worklog", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var resp []apitypes.WorklogItem
 
-	_, err = w.client.Do(ctx, req, &resp, nil, nil)
+	_, err = w.client.Do(ctx, req, &resp)
 	return resp, err
 }
 
@@ -38,14 +38,14 @@ func (w *WorklogClient) Get(ctx context.Context, orgID *identity.ID, ident *apit
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := w.client.NewRequest("GET", "/worklog/"+ident.String(), v, nil, false)
+	req, _, err := w.client.NewDaemonRequest("GET", "/worklog/"+ident.String(), v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var entry apitypes.WorklogItem
 
-	_, err = w.client.Do(ctx, req, &entry, nil, nil)
+	_, err = w.client.Do(ctx, req, &entry)
 	return &entry, err
 }
 
@@ -56,13 +56,13 @@ func (w *WorklogClient) Resolve(ctx context.Context, orgID *identity.ID, ident *
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := w.client.NewRequest("POST", "/worklog/"+ident.String(), v, nil, false)
+	req, _, err := w.client.NewDaemonRequest("POST", "/worklog/"+ident.String(), v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var res apitypes.WorklogResult
 
-	_, err = w.client.Do(ctx, req, &res, nil, nil)
+	_, err = w.client.Do(ctx, req, &res)
 	return &res, err
 }

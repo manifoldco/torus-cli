@@ -602,7 +602,7 @@ func createMachineByName(c context.Context, client *api.Client,
 	orgID, teamID *identity.ID, name string) (*apitypes.MachineSegment, *base64.Value, error) {
 
 	machine, tokenSecret, err := client.Machines.Create(
-		c, orgID, teamID, name, &progress)
+		c, orgID, teamID, name, progress)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return nil, nil, errs.NewExitError("Machine already exists")

@@ -53,7 +53,7 @@ func invitesApprove(ctx *cli.Context) error {
 		return errs.NewExitError("Invite not found.")
 	}
 
-	err = client.OrgInvites.Approve(context.Background(), *targetInvite, &progress)
+	err = client.OrgInvites.Approve(context.Background(), *targetInvite, progress)
 	if err != nil {
 		return err
 	}
