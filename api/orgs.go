@@ -22,7 +22,7 @@ type orgCreateRequest struct {
 	} `json:"body"`
 }
 
-// OrgTreeSegment is the payload returns for an org tree
+// OrgTreeSegment is the payload returned for an org tree
 type OrgTreeSegment struct {
 	Org      *primitive.Org      `json:"org"`
 	Policies []primitive.Policy  `json:"policies"`
