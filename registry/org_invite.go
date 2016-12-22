@@ -10,15 +10,15 @@ import (
 	"github.com/manifoldco/torus-cli/identity"
 )
 
-// OrgInviteClient represents the `/org-invites` registry endpoint, used for
+// OrgInvitesClient represents the `/org-invites` registry endpoint, used for
 // sending, accepting, and approving invitations to organizations in Torus.
-type OrgInviteClient struct {
-	client *Client
+type OrgInvitesClient struct {
+	client RoundTripper
 }
 
 // Approve sends an approval notification to the registry regarding a specific
 // invitation.
-func (o *OrgInviteClient) Approve(ctx context.Context, inviteID *identity.ID) (*envelope.OrgInvite, error) {
+func (o *OrgInvitesClient) Approve(ctx context.Context, inviteID *identity.ID) (*envelope.OrgInvite, error) {
 
 	path := "/org-invites/" + inviteID.String() + "/approve"
 	req, err := o.client.NewRequest("POST", path, nil, nil)
@@ -39,7 +39,7 @@ func (o *OrgInviteClient) Approve(ctx context.Context, inviteID *identity.ID) (*
 }
 
 // Get returns a specific Org Invite based on it's ID
-func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*envelope.OrgInvite, error) {
+func (o *OrgInvitesClient) Get(ctx context.Context, inviteID *identity.ID) (*envelope.OrgInvite, error) {
 	if inviteID == nil {
 		return nil, errors.New("an inviteID must be provided")
 	}
@@ -62,7 +62,7 @@ func (o *OrgInviteClient) Get(ctx context.Context, inviteID *identity.ID) (*enve
 }
 
 // List lists all invites for a given org with the given states
-func (o *OrgInviteClient) List(ctx context.Context, orgID *identity.ID, states []string, email string) ([]envelope.OrgInvite, error) {
+func (o *OrgInvitesClient) List(ctx context.Context, orgID *identity.ID, states []string, email string) ([]envelope.OrgInvite, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 

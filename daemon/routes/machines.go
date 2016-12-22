@@ -10,13 +10,14 @@ import (
 	"time"
 
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/daemon/logic"
-	"github.com/manifoldco/torus-cli/daemon/observer"
-	"github.com/manifoldco/torus-cli/daemon/registry"
-	"github.com/manifoldco/torus-cli/daemon/session"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/registry"
+
+	"github.com/manifoldco/torus-cli/daemon/logic"
+	"github.com/manifoldco/torus-cli/daemon/observer"
+	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
 func machinesCreateRoute(client *registry.Client, session session.Session,

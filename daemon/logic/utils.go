@@ -14,9 +14,9 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
-	"github.com/manifoldco/torus-cli/daemon/registry"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
 

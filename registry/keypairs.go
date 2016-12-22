@@ -17,10 +17,10 @@ type ClaimedKeyPair struct {
 	PrivateKey *envelope.PrivateKey `json:"private_key"`
 }
 
-// KeyPairs represents the `/keypairs` registry endpoint, used for accessing
-// users' signing and encryption keypairs.
-type KeyPairs struct {
-	client *Client
+// KeyPairsClient represents the `/keypairs` registry endpoint, used for
+// accessing users' signing and encryption keypairs.
+type KeyPairsClient struct {
+	client RoundTripper
 }
 
 // Post creates a new keypair on the registry.
@@ -29,7 +29,7 @@ type KeyPairs struct {
 // claim on the public key.
 //
 // keys may be either signing or encryption keys.
-func (k *KeyPairs) Post(ctx context.Context, pubKey *envelope.PublicKey,
+func (k *KeyPairsClient) Post(ctx context.Context, pubKey *envelope.PublicKey,
 	privKey *envelope.PrivateKey, claim *envelope.Claim) (*envelope.PublicKey,
 	*envelope.PrivateKey, []envelope.Claim, error) {
 
@@ -58,7 +58,7 @@ func (k *KeyPairs) Post(ctx context.Context, pubKey *envelope.PublicKey,
 
 // List returns all KeyPairs for the logged in user in the given, or all orgs
 // if orgID is nil.
-func (k *KeyPairs) List(ctx context.Context, orgID *identity.ID) ([]ClaimedKeyPair, error) {
+func (k *KeyPairsClient) List(ctx context.Context, orgID *identity.ID) ([]ClaimedKeyPair, error) {
 	query := &url.Values{}
 	if orgID != nil {
 		query.Set("org_id", orgID.String())

@@ -18,7 +18,7 @@ var ErrMemberNotFound = errors.New("keyring membership not found")
 // KeyringClient represents the `/keyrings` registry end point for accessing
 // keyrings the user or machine belong too.
 type KeyringClient struct {
-	client  *Client
+	client  RoundTripper
 	Members *KeyringMembersClient
 }
 

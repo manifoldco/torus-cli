@@ -11,7 +11,7 @@ import (
 
 // ProjectsClient makes proxied requests to the registry's projects endpoints
 type ProjectsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 type projectCreateRequest struct {
@@ -36,13 +36,13 @@ func (p *ProjectsClient) Create(ctx context.Context, org *identity.ID, name stri
 	project.Body.OrgID = org
 	project.Body.Name = name
 
-	req, _, err := p.client.NewRequest("POST", "/projects", nil, &project, true)
+	req, err := p.client.NewRequest("POST", "/projects", nil, &project)
 	if err != nil {
 		return nil, err
 	}
 
 	res := envelope.Project{}
-	_, err = p.client.Do(ctx, req, &res, nil, nil)
+	_, err = p.client.Do(ctx, req, &res)
 	return &res, err
 }
 
@@ -60,13 +60,13 @@ func (p *ProjectsClient) List(ctx context.Context, orgIDs *[]*identity.ID, names
 		}
 	}
 
-	req, _, err := p.client.NewRequest("GET", "/projects", v, nil, true)
+	req, err := p.client.NewRequest("GET", "/projects", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	projects := []envelope.Project{}
-	_, err = p.client.Do(ctx, req, &projects, nil, nil)
+	_, err = p.client.Do(ctx, req, &projects)
 	return projects, err
 }
 
@@ -74,12 +74,12 @@ func (p *ProjectsClient) List(ctx context.Context, orgIDs *[]*identity.ID, names
 func (p *ProjectsClient) GetTree(ctx context.Context, orgID *identity.ID) ([]ProjectTreeSegment, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
-	req, _, err := p.client.NewRequest("GET", "/projecttree", v, nil, true)
+	req, err := p.client.NewRequest("GET", "/projecttree", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	segments := []ProjectTreeSegment{}
-	_, err = p.client.Do(ctx, req, &segments, nil, nil)
+	_, err = p.client.Do(ctx, req, &segments)
 	return segments, err
 }

@@ -11,7 +11,7 @@ import (
 // ProjectsClient represents the `/projects` registry endpoint, for
 // manipulating projects.
 type ProjectsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // List returns a list of all Projects within the given org.

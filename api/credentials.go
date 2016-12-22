@@ -12,7 +12,7 @@ import (
 // CredentialsClient provides access to unencrypted credentials for viewing,
 // and encrypts credentials when setting.
 type CredentialsClient struct {
-	client *Client
+	client *apiRoundTripper
 }
 
 // Search returns all credentials at the given pathexp.
@@ -20,14 +20,14 @@ func (c *CredentialsClient) Search(ctx context.Context, pathexp string) ([]apity
 	v := &url.Values{}
 	v.Set("pathexp", pathexp)
 
-	req, _, err := c.client.NewRequest("GET", "/credentials", v, nil, false)
+	req, _, err := c.client.NewDaemonRequest("GET", "/credentials", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := []apitypes.CredentialResp{}
 
-	_, err = c.client.Do(ctx, req, &resp, nil, nil)
+	_, err = c.client.Do(ctx, req, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -49,14 +49,14 @@ func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.Cr
 	v := &url.Values{}
 	v.Set("path", path)
 
-	req, _, err := c.client.NewRequest("GET", "/credentials", v, nil, false)
+	req, _, err := c.client.NewDaemonRequest("GET", "/credentials", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := []apitypes.CredentialResp{}
 
-	_, err = c.client.Do(ctx, req, &resp, nil, nil)
+	_, err = c.client.Do(ctx, req, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -75,16 +75,16 @@ func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.Cr
 
 // Create creates the given credential
 func (c *CredentialsClient) Create(ctx context.Context, cred *apitypes.Credential,
-	progress *ProgressFunc) (*apitypes.CredentialEnvelope, error) {
+	progress ProgressFunc) (*apitypes.CredentialEnvelope, error) {
 
 	env := apitypes.CredentialEnvelope{Version: 2, Body: cred}
-	req, reqID, err := c.client.NewRequest("POST", "/credentials", nil, &env, false)
+	req, reqID, err := c.client.NewDaemonRequest("POST", "/credentials", nil, &env)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := apitypes.CredentialResp{}
-	_, err = c.client.Do(ctx, req, &resp, &reqID, progress)
+	_, err = c.client.DoWithProgress(ctx, req, &resp, reqID, progress)
 	if err != nil {
 		return nil, err
 	}

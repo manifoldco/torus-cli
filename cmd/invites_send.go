@@ -93,7 +93,7 @@ TeamSearch:
 		return errs.NewExitError(orgInviteFailed)
 	}
 
-	err = client.Invites.Send(context.Background(), email, *org.ID, *session.ID(), teamIDs)
+	err = client.OrgInvites.Send(context.Background(), email, *org.ID, *session.ID(), teamIDs)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError(email + " has already been invited to the " + org.Body.Name + " org")

@@ -9,9 +9,21 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 )
 
-// KeypairsClient makes proxied requests to the registry's keypairs endpoints
+// upstreamKeypairsClient makes proxied requests to the registry's keypairs
+// endpoints
+type upstreamKeypairsClient struct {
+	client RoundTripper
+}
+
+// KeypairsClient makes requests to the registry's and daemon's keypairs
+// endpoints
 type KeypairsClient struct {
-	client *Client
+	upstreamKeypairsClient
+	client *apiRoundTripper
+}
+
+func newKeypairsClient(rt *apiRoundTripper) *KeypairsClient {
+	return &KeypairsClient{upstreamKeypairsClient{rt}, rt}
 }
 
 // KeypairResult is the payload returned for a keypair object
@@ -39,33 +51,33 @@ type keypairsRequest struct {
 
 // Generate generates new keypairs for the user in the given org.
 func (k *KeypairsClient) Generate(ctx context.Context, orgID *identity.ID,
-	output *ProgressFunc) error {
+	output ProgressFunc) error {
 
 	kpr := keypairsRequest{OrgID: orgID}
 
-	req, reqID, err := k.client.NewRequest("POST", "/keypairs/generate", nil, &kpr, false)
+	req, reqID, err := k.client.NewDaemonRequest("POST", "/keypairs/generate", nil, &kpr)
 	if err != nil {
 		return err
 	}
 
-	_, err = k.client.Do(ctx, req, nil, &reqID, output)
+	_, err = k.client.DoWithProgress(ctx, req, nil, reqID, output)
 	return err
 }
 
 // List retrieves relevant keypairs by orgID
-func (k *KeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]KeypairResult, error) {
+func (k *upstreamKeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]KeypairResult, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := k.client.NewRequest("GET", "/keypairs", v, nil, true)
+	req, err := k.client.NewRequest("GET", "/keypairs", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var keypairs []KeypairResult
-	_, err = k.client.Do(ctx, req, &keypairs, nil, nil)
+	_, err = k.client.Do(ctx, req, &keypairs)
 	if err != nil {
 		return nil, err
 	}
@@ -74,14 +86,14 @@ func (k *KeypairsClient) List(ctx context.Context, orgID *identity.ID) ([]Keypai
 }
 
 // Revoke revokes the existing keypairs for the user in the given org.
-func (k *KeypairsClient) Revoke(ctx context.Context, orgID *identity.ID, output *ProgressFunc) error {
+func (k *KeypairsClient) Revoke(ctx context.Context, orgID *identity.ID, output ProgressFunc) error {
 	kpr := keypairsRequest{OrgID: orgID}
 
-	req, reqID, err := k.client.NewRequest("POST", "/keypairs/revoke", nil, &kpr, false)
+	req, reqID, err := k.client.NewDaemonRequest("POST", "/keypairs/revoke", nil, &kpr)
 	if err != nil {
 		return err
 	}
 
-	_, err = k.client.Do(ctx, req, nil, &reqID, output)
+	_, err = k.client.DoWithProgress(ctx, req, nil, reqID, output)
 	return err
 }

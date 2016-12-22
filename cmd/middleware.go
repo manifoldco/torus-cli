@@ -66,7 +66,7 @@ func ensureDaemon(ctx *cli.Context) error {
 	var v *apitypes.Version
 	increment := 5 * time.Millisecond
 	for d := increment; d < 1*time.Second; d += increment {
-		v, err = client.Version.Get(context.Background())
+		v, err = client.Version.GetDaemon(context.Background())
 		if err == nil {
 			break
 		}

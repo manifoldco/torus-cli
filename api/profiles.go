@@ -10,18 +10,18 @@ import (
 
 // ProfilesClient makes proxied requests to the registry's profiles endpoints
 type ProfilesClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // ListByName returns profiles looked up by username
 func (p *ProfilesClient) ListByName(ctx context.Context, name string) (*apitypes.Profile, error) {
-	req, _, err := p.client.NewRequest("GET", "/profiles/"+name, nil, nil, true)
+	req, err := p.client.NewRequest("GET", "/profiles/"+name, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &apitypes.Profile{}
-	_, err = p.client.Do(ctx, req, result, nil, nil)
+	_, err = p.client.Do(ctx, req, result)
 	if err != nil {
 		return nil, err
 	}
@@ -36,13 +36,13 @@ func (p *ProfilesClient) ListByID(ctx context.Context, userIDs []identity.ID) (*
 		v.Add("id", id.String())
 	}
 
-	req, _, err := p.client.NewRequest("GET", "/profiles", v, nil, true)
+	req, err := p.client.NewRequest("GET", "/profiles", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	results := []apitypes.Profile{}
-	_, err = p.client.Do(ctx, req, &results, nil, nil)
+	_, err = p.client.Do(ctx, req, &results)
 	if err != nil {
 		return nil, err
 	}

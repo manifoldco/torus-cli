@@ -10,7 +10,7 @@ import (
 // Credentials represents the `/credentials` registry endpoint, used for
 // accessing encrypted credentials/secrets.
 type Credentials struct {
-	client *Client
+	client RoundTripper
 }
 
 // Create creates the provided credential in the registry.

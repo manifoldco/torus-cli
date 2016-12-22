@@ -168,5 +168,5 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 	}
 	cred = &cBodyV2
 
-	return client.Credentials.Create(c, &cred, &progress)
+	return client.Credentials.Create(c, &cred, progress)
 }

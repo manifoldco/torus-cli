@@ -58,7 +58,7 @@ func retrieveVersions(c context.Context, client *api.Client) (*apitypes.Version,
 
 	go func() {
 		var dErr error
-		daemonVersion, dErr = client.Version.Get(c)
+		daemonVersion, dErr = client.Version.GetDaemon(c)
 		if dErr != nil {
 			daemonVersion = &apitypes.Version{
 				Version: "unknown (" + dErr.Error() + ")",
@@ -67,7 +67,7 @@ func retrieveVersions(c context.Context, client *api.Client) (*apitypes.Version,
 		wg.Done()
 	}()
 
-	registryVersion, rErr := client.Version.GetRegistry(c)
+	registryVersion, rErr := client.Version.Get(c)
 	if rErr != nil {
 		registryVersion = &apitypes.Version{
 			Version: "unknown (" + rErr.Error() + ")",

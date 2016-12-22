@@ -71,7 +71,7 @@ func invitesAccept(ctx *cli.Context) error {
 		return err
 	}
 
-	invite, err := client.Invites.Associate(c, ctx.String("org"), email, code)
+	invite, err := client.OrgInvites.Associate(c, ctx.String("org"), email, code)
 	if err != nil || invite == nil {
 		return errs.NewExitError(acceptInviteFailed)
 	}
@@ -82,7 +82,7 @@ func invitesAccept(ctx *cli.Context) error {
 		return errs.NewExitError(acceptInviteFailed)
 	}
 
-	err = client.Invites.Accept(c, ctx.String("org"), email, code)
+	err = client.OrgInvites.Accept(c, ctx.String("org"), email, code)
 	if err != nil {
 		return errs.NewExitError(acceptInviteFailed)
 	}

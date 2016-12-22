@@ -39,7 +39,7 @@ func invitesList(ctx *cli.Context) error {
 		states = []string{"pending", "associated", "accepted"}
 	}
 
-	invites, err := client.Invites.List(context.Background(), org.ID, states)
+	invites, err := client.OrgInvites.List(context.Background(), org.ID, states)
 	if err != nil {
 		return errs.NewExitError("Failed to retrieve invites, please try again.")
 	}

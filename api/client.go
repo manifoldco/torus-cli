@@ -2,10 +2,8 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -13,13 +11,22 @@ import (
 	"github.com/donovanhide/eventsource"
 	"github.com/satori/go.uuid"
 
-	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/registry"
 )
+
+const daemonAPIVersion = "v1"
+
+// RoundTripper is the interface used to construct and send requests to
+// the torus registry.
+type RoundTripper interface {
+	NewRequest(method, path string, query *url.Values, body interface{}) (*http.Request, error)
+	Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error)
+}
 
 // Client exposes the daemon API.
 type Client struct {
-	client *http.Client
+	registry.Client
 
 	Orgs         *OrgsClient
 	Users        *UsersClient
@@ -27,7 +34,7 @@ type Client struct {
 	Profiles     *ProfilesClient
 	Teams        *TeamsClient
 	Memberships  *MembershipsClient
-	Invites      *InvitesClient
+	OrgInvites   *OrgInvitesClient
 	Keypairs     *KeypairsClient
 	Session      *SessionClient
 	Services     *ServicesClient
@@ -41,165 +48,123 @@ type Client struct {
 
 // NewClient returns a new Client.
 func NewClient(cfg *config.Config) *Client {
-	c := &Client{
-		client: &http.Client{
-			Transport: &http.Transport{
-				Dial: func(network, address string) (net.Conn, error) {
-					return net.Dial("unix", cfg.SocketPath)
+	rt := &apiRoundTripper{
+		DefaultRoundTripper: registry.DefaultRoundTripper{
+			Client: &http.Client{
+				Transport: &http.Transport{
+					Dial: func(network, address string) (net.Conn, error) {
+						return net.Dial("unix", cfg.SocketPath)
+					},
 				},
 			},
+
+			Host: "http://localhost",
 		},
 	}
 
-	c.Orgs = &OrgsClient{client: c}
-	c.Users = &UsersClient{client: c}
-	c.Machines = &MachinesClient{client: c}
-	c.Profiles = &ProfilesClient{client: c}
-	c.Teams = &TeamsClient{client: c}
-	c.Memberships = &MembershipsClient{client: c}
-	c.Invites = &InvitesClient{client: c}
-	c.Keypairs = &KeypairsClient{client: c}
-	c.Session = &SessionClient{client: c}
-	c.Projects = &ProjectsClient{client: c}
-	c.Services = &ServicesClient{client: c}
-	c.Environments = &EnvironmentsClient{client: c}
-	c.Credentials = &CredentialsClient{client: c}
-	c.Policies = &PoliciesClient{client: c}
-	c.Worklog = &WorklogClient{client: c}
-	c.Version = &VersionClient{client: c}
+	c := &Client{Client: *registry.NewClientWithRoundTripper(rt)}
+
+	c.Orgs = &OrgsClient{client: rt}
+	c.Users = newUsersClient(rt)
+	c.Machines = newMachinesClient(rt)
+	c.Profiles = &ProfilesClient{client: rt}
+	c.Teams = &TeamsClient{client: rt}
+	c.Memberships = &MembershipsClient{client: rt}
+	c.OrgInvites = newOrgInvitesClient(rt)
+	c.Keypairs = newKeypairsClient(rt)
+	c.Session = &SessionClient{client: rt}
+	c.Projects = &ProjectsClient{client: rt}
+	c.Services = &ServicesClient{client: rt}
+	c.Environments = &EnvironmentsClient{client: rt}
+	c.Credentials = &CredentialsClient{client: rt}
+	c.Policies = &PoliciesClient{client: rt}
+	c.Worklog = &WorklogClient{client: rt}
+	c.Version = &VersionClient{client: rt}
+	c.Version = newVersionClient(rt)
 
 	return c
 }
 
-// NewRequest constructs a new http.Request, with a body containing the json
-// representation of body, if provided.
-func (c *Client) NewRequest(method, path string, query *url.Values, body interface{}, proxied bool) (*http.Request, string, error) {
+type apiRoundTripper struct {
+	registry.DefaultRoundTripper
+}
+
+// NewDaemonRequest constructs a new http.Request, with a body containing the json
+// representation of body, if provided. Daemon requests are handled directly
+// by the torus daemon.
+func (rt *apiRoundTripper) NewDaemonRequest(method, path string,
+	query *url.Values, body interface{}) (*http.Request, string, error) {
+
+	return rt.newRequest(method, daemonAPIVersion, path, query, body)
+}
+
+func (rt *apiRoundTripper) NewRequest(method string, path string,
+	query *url.Values, body interface{}) (*http.Request, error) {
+
+	req, _, err := rt.newRequest(method, "proxy", path, query, body)
+	return req, err
+}
+
+// newRequest augments the default to set a unique request id
+func (rt *apiRoundTripper) newRequest(method, prefix, path string,
+	query *url.Values, body interface{}) (*http.Request, string, error) {
+
 	requestID := uuid.NewV4().String()
 
-	b := &bytes.Buffer{}
-	if body != nil {
-		enc := json.NewEncoder(b)
-		err := enc.Encode(body)
-		if err != nil {
-			return nil, requestID, err
-		}
-	}
-
-	if query == nil {
-		query = &url.Values{}
-	}
-
-	version := "v1"
-	if proxied {
-		version = "proxy"
-	}
-
-	fullPath := "http://localhost/" + version + path
-	if q := query.Encode(); q != "" {
-		fullPath += "?" + q
-	}
-
-	req, err := http.NewRequest(method, fullPath, b)
+	prefixed := "/" + prefix + path
+	req, err := rt.DefaultRoundTripper.NewRequest(method, prefixed, query, body)
 	if err != nil {
 		return nil, requestID, err
 	}
 
-	req.Header.Set("Host", "localhost")
 	req.Header.Set("X-Request-ID", requestID)
-	req.Header.Set("Content-type", "application/json")
 
 	return req, requestID, nil
 }
 
-// Do executes an http.Request, populating v with the JSON response
-// on success.
-//
-// If the request errors with a JSON formatted response body, it will be
-// unmarshaled into the returned error.
-func (c *Client) Do(ctx context.Context, r *http.Request, v interface{}, reqID *string, progress *ProgressFunc) (*http.Response, error) {
+// DoWithProgress executes the HTTP request like Do, in addition to
+// connecting the provided ProgressFunc to any server-sent event progress
+// messages.
+func (rt *apiRoundTripper) DoWithProgress(ctx context.Context, r *http.Request, v interface{}, reqID string, progress ProgressFunc) (*http.Response, error) {
 	done := make(chan bool)
-	if progress != nil {
-		version := "v1"
-		req, err := http.NewRequest("GET", "http://localhost/"+version+"/observe", nil)
-		if err != nil {
-			return nil, err
-		}
-		stream, err := eventsource.SubscribeWith("", c.client, req)
-		if err != nil {
-			return nil, err
-		}
-
-		output := *progress
-		go func() {
-			for {
-				select {
-				case <-done:
-					return
-				case ev := <-stream.Events:
-					data := ev.Data()
-					raw := []byte(data)
-
-					event := Event{}
-					event.MessageType = "message"
-					err = json.Unmarshal(raw, &event)
-					if err != nil {
-						output(nil, err)
-						go func() {
-							<-done
-						}()
-						return
-					}
-					if event.ID == *reqID {
-						output(&event, nil)
-					}
-				case err := <-stream.Errors:
-					output(nil, err)
-				}
-			}
-		}()
+	req, _, err := rt.newRequest("GET", daemonAPIVersion, "/observe", nil, nil)
+	if err != nil {
+		return nil, err
 	}
-
-	resp, err := c.client.Do(r)
-	if progress != nil {
-		done <- true
-	}
+	stream, err := eventsource.SubscribeWith("", rt.Client, req)
 	if err != nil {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case ev := <-stream.Events:
+				data := ev.Data()
+				raw := []byte(data)
 
-	err = checkResponseCode(resp)
-	if err != nil {
-		return resp, err
-	}
-
-	if v != nil {
-		dec := json.NewDecoder(resp.Body)
-		err = dec.Decode(v)
-		if err != nil {
-			return nil, err
+				event := Event{}
+				event.MessageType = "message"
+				err = json.Unmarshal(raw, &event)
+				if err != nil {
+					progress(nil, err)
+					go func() {
+						<-done
+					}()
+					return
+				}
+				if event.ID == reqID {
+					progress(&event, nil)
+				}
+			case err := <-stream.Errors:
+				progress(nil, err)
+			}
 		}
-	}
+	}()
 
-	return resp, nil
-}
+	defer func() { done <- true }()
 
-func checkResponseCode(r *http.Response) error {
-	if r.StatusCode >= 200 && r.StatusCode < 300 {
-		return nil
-	}
-
-	rErr := &apitypes.Error{StatusCode: r.StatusCode}
-	if r.ContentLength != 0 {
-		dec := json.NewDecoder(r.Body)
-		err := dec.Decode(rErr)
-		if err != nil {
-			return errors.New("malformed error response from daemon")
-		}
-
-		return apitypes.FormatError(rErr)
-	}
-
-	return errors.New("error from daemon. Check status code")
+	return rt.Do(ctx, r, v)
 }

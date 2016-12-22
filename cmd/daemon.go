@@ -88,7 +88,7 @@ func daemonStatus(ctx *cli.Context) error {
 	}
 
 	client := api.NewClient(cfg)
-	v, err := client.Version.Get(context.Background())
+	v, err := client.Version.GetDaemon(context.Background())
 	if err != nil {
 		return errs.NewErrorExitError("Error communicating with the daemon", err)
 	}
@@ -160,6 +160,9 @@ func startDaemon(ctx *cli.Context) error {
 			MaxBackups: 3,
 			MaxAge:     28, // days
 		})
+	} else {
+		// re-enable logging, as by default its silenced for foreground use.
+		log.SetOutput(os.Stdout)
 	}
 
 	cfg, err := config.NewConfig(torusRoot)

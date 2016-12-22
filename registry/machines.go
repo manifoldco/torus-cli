@@ -12,7 +12,7 @@ import (
 // MachinesClient represents the `/machines` registry endpoint, used for
 // creating, listing, authorizing, and destroying machines and their tokens.
 type MachinesClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // MachineCreationSegment represents the request sent to create the registry to

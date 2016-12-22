@@ -12,7 +12,7 @@ import (
 
 // TeamsClient makes proxied requests to the registry's teams endpoints
 type TeamsClient struct {
-	client *Client
+	client RoundTripper
 }
 
 // List retrieves all teams for an org based on the filtered values
@@ -29,13 +29,13 @@ func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name string,
 		v.Set("type", string(teamType))
 	}
 
-	req, _, err := t.client.NewRequest("GET", "/teams", v, nil, true)
+	req, err := t.client.NewRequest("GET", "/teams", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	teams := []envelope.Team{}
-	_, err = t.client.Do(ctx, req, &teams, nil, nil)
+	_, err = t.client.Do(ctx, req, &teams)
 	return teams, err
 }
 
@@ -44,13 +44,13 @@ func (t *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]envel
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
 
-	req, _, err := t.client.NewRequest("GET", "/teams", v, nil, true)
+	req, err := t.client.NewRequest("GET", "/teams", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	teams := []envelope.Team{}
-	_, err = t.client.Do(ctx, req, &teams, nil, nil)
+	_, err = t.client.Do(ctx, req, &teams)
 	return teams, err
 }
 
@@ -60,13 +60,13 @@ func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name st
 	v.Set("org_id", orgID.String())
 	v.Set("name", name)
 
-	req, _, err := t.client.NewRequest("GET", "/teams", v, nil, true)
+	req, err := t.client.NewRequest("GET", "/teams", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	teams := []envelope.Team{}
-	_, err = t.client.Do(ctx, req, &teams, nil, nil)
+	_, err = t.client.Do(ctx, req, &teams)
 	return teams, err
 }
 
@@ -94,12 +94,12 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 		Body:    &teamBody,
 	}
 
-	req, _, err := t.client.NewRequest("POST", "/teams", nil, team, true)
+	req, err := t.client.NewRequest("POST", "/teams", nil, team)
 	if err != nil {
 		return nil, err
 	}
 
 	teamResult := &envelope.Team{}
-	_, err = t.client.Do(ctx, req, teamResult, nil, nil)
+	_, err = t.client.Do(ctx, req, teamResult)
 	return teamResult, err
 }

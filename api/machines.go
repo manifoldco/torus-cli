@@ -12,15 +12,25 @@ import (
 
 const tokenSecretSize = 18
 
+// upstreamMachinesClient makes requests to the registry's machine's endpoints
+type upstreamMachinesClient struct {
+	client RoundTripper
+}
+
 // MachinesClient makes requests to the Daemon on behalf of the user to
 // manipulate Machine resources.
 type MachinesClient struct {
-	client *Client
+	upstreamMachinesClient
+	client *apiRoundTripper
+}
+
+func newMachinesClient(rt *apiRoundTripper) *MachinesClient {
+	return &MachinesClient{upstreamMachinesClient{rt}, rt}
 }
 
 // Create a new machine in the given org
 func (m *MachinesClient) Create(ctx context.Context, orgID, teamID *identity.ID,
-	name string, output *ProgressFunc) (*apitypes.MachineSegment, *base64.Value, error) {
+	name string, output ProgressFunc) (*apitypes.MachineSegment, *base64.Value, error) {
 
 	secret, err := createTokenSecret()
 	if err != nil {
@@ -34,13 +44,13 @@ func (m *MachinesClient) Create(ctx context.Context, orgID, teamID *identity.ID,
 		Secret: secret,
 	}
 
-	req, reqID, err := m.client.NewRequest("POST", "/machines", nil, &mcr, false)
+	req, reqID, err := m.client.NewDaemonRequest("POST", "/machines", nil, &mcr)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	result := &apitypes.MachineSegment{}
-	_, err = m.client.Do(ctx, req, result, &reqID, output)
+	_, err = m.client.DoWithProgress(ctx, req, result, reqID, output)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -59,7 +69,7 @@ func createTokenSecret() (*base64.Value, error) {
 }
 
 // List machines in the given org and state
-func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *string, name *string, teamID *identity.ID) ([]*apitypes.MachineSegment, error) {
+func (m *upstreamMachinesClient) List(ctx context.Context, orgID *identity.ID, state *string, name *string, teamID *identity.ID) ([]*apitypes.MachineSegment, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Add("org_id", (*orgID).String())
@@ -74,13 +84,13 @@ func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *st
 		v.Add("name", *name)
 	}
 
-	req, reqID, err := m.client.NewRequest("GET", "/machines", v, nil, true)
+	req, err := m.client.NewRequest("GET", "/machines", v, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var results []*apitypes.MachineSegment
-	_, err = m.client.Do(ctx, req, &results, &reqID, nil)
+	_, err = m.client.Do(ctx, req, &results)
 	if err != nil {
 		return nil, err
 	}
@@ -89,26 +99,26 @@ func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *st
 }
 
 // Destroy machine by ID
-func (m *MachinesClient) Destroy(ctx context.Context, machineID *identity.ID) error {
-	req, reqID, err := m.client.NewRequest("DELETE", "/machines/"+machineID.String(), nil, nil, true)
+func (m *upstreamMachinesClient) Destroy(ctx context.Context, machineID *identity.ID) error {
+	req, err := m.client.NewRequest("DELETE", "/machines/"+machineID.String(), nil, nil)
 	if err != nil {
 		return err
 	}
 
-	_, err = m.client.Do(ctx, req, nil, &reqID, nil)
+	_, err = m.client.Do(ctx, req, nil)
 
 	return err
 }
 
 // Get machine by ID
-func (m *MachinesClient) Get(ctx context.Context, machineID *identity.ID) (*apitypes.MachineSegment, error) {
-	req, reqID, err := m.client.NewRequest("GET", "/machines/"+machineID.String(), nil, nil, true)
+func (m *upstreamMachinesClient) Get(ctx context.Context, machineID *identity.ID) (*apitypes.MachineSegment, error) {
+	req, err := m.client.NewRequest("GET", "/machines/"+machineID.String(), nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &apitypes.MachineSegment{}
-	_, err = m.client.Do(ctx, req, result, &reqID, nil)
+	_, err = m.client.Do(ctx, req, result)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/urfave/cli"
@@ -17,6 +18,10 @@ func main() {
 		cmd.VersionLookup(ctx)
 	}
 
+	// For command line usage, we hide any log messages; our regular error
+	// flow will catch them. Logging is only used with the daemon.
+	log.SetOutput(devnull{})
+
 	preferences, _ := prefs.NewPreferences()
 	ui.Init(preferences)
 	hints.Init()
@@ -29,3 +34,8 @@ func main() {
 	app.Commands = cmd.Cmds
 	app.Run(os.Args)
 }
+
+// devnull swallows up all log output.
+type devnull struct{}
+
+func (devnull) Write(p []byte) (n int, err error) { return len(p), nil }
