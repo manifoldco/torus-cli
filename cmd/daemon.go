@@ -160,6 +160,9 @@ func startDaemon(ctx *cli.Context) error {
 			MaxBackups: 3,
 			MaxAge:     28, // days
 		})
+	} else {
+		// re-enable logging, as by default its silenced for foreground use.
+		log.SetOutput(os.Stdout)
 	}
 
 	cfg, err := config.NewConfig(torusRoot)
