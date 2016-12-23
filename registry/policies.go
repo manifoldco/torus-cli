@@ -1,4 +1,4 @@
-package api
+package registry
 
 import (
 	"context"

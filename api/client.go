@@ -28,22 +28,14 @@ type RoundTripper interface {
 type Client struct {
 	registry.Client
 
-	Orgs         *OrgsClient
-	Users        *UsersClient
-	Machines     *MachinesClient
-	Profiles     *ProfilesClient
-	Teams        *TeamsClient
-	Memberships  *MembershipsClient
-	OrgInvites   *OrgInvitesClient
-	Keypairs     *KeypairsClient
-	Session      *SessionClient
-	Services     *ServicesClient
-	Policies     *PoliciesClient
-	Environments *EnvironmentsClient
-	Projects     *ProjectsClient
-	Credentials  *CredentialsClient
-	Worklog      *WorklogClient
-	Version      *VersionClient
+	Users       *UsersClient
+	Machines    *MachinesClient
+	OrgInvites  *OrgInvitesClient
+	Keypairs    *KeypairsClient
+	Session     *SessionClient
+	Credentials *CredentialsClient
+	Worklog     *WorklogClient
+	Version     *VersionClient
 }
 
 // NewClient returns a new Client.
@@ -64,22 +56,13 @@ func NewClient(cfg *config.Config) *Client {
 
 	c := &Client{Client: *registry.NewClientWithRoundTripper(rt)}
 
-	c.Orgs = &OrgsClient{client: rt}
 	c.Users = newUsersClient(rt)
 	c.Machines = newMachinesClient(rt)
-	c.Profiles = &ProfilesClient{client: rt}
-	c.Teams = &TeamsClient{client: rt}
-	c.Memberships = &MembershipsClient{client: rt}
 	c.OrgInvites = newOrgInvitesClient(rt)
 	c.Keypairs = newKeypairsClient(rt)
 	c.Session = &SessionClient{client: rt}
-	c.Projects = &ProjectsClient{client: rt}
-	c.Services = &ServicesClient{client: rt}
-	c.Environments = &EnvironmentsClient{client: rt}
 	c.Credentials = &CredentialsClient{client: rt}
-	c.Policies = &PoliciesClient{client: rt}
 	c.Worklog = &WorklogClient{client: rt}
-	c.Version = &VersionClient{client: rt}
 	c.Version = newVersionClient(rt)
 
 	return c

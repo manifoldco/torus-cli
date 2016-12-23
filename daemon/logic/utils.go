@@ -617,7 +617,7 @@ func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 func getKeyringMembers(ctx context.Context, client *registry.Client,
 	orgID *identity.ID) ([]identity.ID, error) {
 
-	teams, err := client.Teams.List(ctx, orgID)
+	teams, err := client.Teams.GetByOrg(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
