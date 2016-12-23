@@ -17,21 +17,15 @@ import (
 
 const daemonAPIVersion = "v1"
 
-// RoundTripper is the interface used to construct and send requests to
-// the torus registry.
-type RoundTripper interface {
-	NewRequest(method, path string, query *url.Values, body interface{}) (*http.Request, error)
-	Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error)
-}
-
 // Client exposes the daemon API.
 type Client struct {
 	registry.Client
 
+	KeyPairs   *KeyPairsClient
+	Machines   *MachinesClient
+	OrgInvites *OrgInvitesClient
+
 	Users       *UsersClient
-	Machines    *MachinesClient
-	OrgInvites  *OrgInvitesClient
-	Keypairs    *KeypairsClient
 	Session     *SessionClient
 	Credentials *CredentialsClient
 	Worklog     *WorklogClient
@@ -56,14 +50,15 @@ func NewClient(cfg *config.Config) *Client {
 
 	c := &Client{Client: *registry.NewClientWithRoundTripper(rt)}
 
-	c.Users = newUsersClient(rt)
-	c.Machines = newMachinesClient(rt)
-	c.OrgInvites = newOrgInvitesClient(rt)
-	c.Keypairs = newKeypairsClient(rt)
+	c.Users = newUsersClient(c.Client.Users, rt)
+	c.KeyPairs = newKeyPairsClient(c.Client.KeyPairs, rt)
+	c.Machines = newMachinesClient(c.Client.Machines, rt)
+	c.OrgInvites = newOrgInvitesClient(c.Client.OrgInvites, rt)
+	c.Version = newVersionClient(c.Client.Version, rt)
+
 	c.Session = &SessionClient{client: rt}
 	c.Credentials = &CredentialsClient{client: rt}
 	c.Worklog = &WorklogClient{client: rt}
-	c.Version = newVersionClient(rt)
 
 	return c
 }

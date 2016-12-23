@@ -312,7 +312,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n := notifier.Notifier(3)
 
-	invite, err := e.client.OrgInvite.Get(ctx, InviteID)
+	invite, err := e.client.OrgInvites.Get(ctx, InviteID)
 	if err != nil {
 		log.Printf("could not fetch org invitation: %s", err)
 		return nil, err
@@ -336,7 +336,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n.Notify(observer.Progress, "Keyring memberships created", true)
 
-	invite, err = e.client.OrgInvite.Approve(ctx, InviteID)
+	invite, err = e.client.OrgInvites.Approve(ctx, InviteID)
 	if err != nil {
 		log.Printf("could not approve org invite: %s", err)
 		return nil, err

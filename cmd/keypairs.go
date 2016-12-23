@@ -88,7 +88,7 @@ func listKeypairs(ctx *cli.Context) error {
 		return errs.NewExitError("Org not found.")
 	}
 
-	keypairs, err := client.Keypairs.List(c, org.ID)
+	keypairs, err := client.KeyPairs.List(c, org.ID)
 	if err != nil {
 		return errs.NewExitError(keypairListFailed)
 	}
@@ -156,7 +156,7 @@ func generateKeypairs(ctx *cli.Context) error {
 	var pErr error
 	hasKey := make(map[identity.ID]map[primitive.KeyType]bool, len(subjectOrgs))
 	for orgID := range subjectOrgs {
-		keypairs, err := client.Keypairs.List(c, orgID)
+		keypairs, err := client.KeyPairs.List(c, orgID)
 		if err != nil {
 			pErr = err
 			break
@@ -190,7 +190,7 @@ func generateKeypairs(ctx *cli.Context) error {
 
 	for orgID, name := range regenOrgs {
 		fmt.Println("Generating signing and encryption keypairs for org: " + name)
-		err := client.Keypairs.Generate(c, orgID, progress)
+		err := client.KeyPairs.Generate(c, orgID, progress)
 		if err != nil && rErr == nil {
 			rErr = err
 			break
@@ -228,7 +228,7 @@ func generateKeypairsForOrg(c context.Context, ctx *cli.Context, client *api.Cli
 		orgID = org.ID
 	}
 
-	err = client.Keypairs.Generate(c, orgID, progress)
+	err = client.KeyPairs.Generate(c, orgID, progress)
 	if err != nil {
 		return outputErr
 	}
@@ -256,7 +256,7 @@ func revokeKeypairs(ctx *cli.Context) error {
 	}
 
 	// Iterate over target orgs and identify which keys exist
-	keypairs, err := client.Keypairs.List(c, org.ID)
+	keypairs, err := client.KeyPairs.List(c, org.ID)
 	if err != nil {
 		return errs.NewErrorExitError("Error fetching keypairs.", err)
 	}
@@ -276,7 +276,7 @@ func revokeKeypairs(ctx *cli.Context) error {
 		return nil
 	}
 
-	err = client.Keypairs.Revoke(c, org.ID, progress)
+	err = client.KeyPairs.Revoke(c, org.ID, progress)
 	if err != nil {
 		return errs.NewErrorExitError("Error while revoking keypairs.", err)
 	}

@@ -24,7 +24,7 @@ type Client struct {
 	Memberships     *MembershipsClient
 	Credentials     *Credentials
 	Orgs            *OrgsClient
-	OrgInvite       *OrgInvitesClient
+	OrgInvites      *OrgInvitesClient
 	Policies        *PoliciesClient
 	Projects        *ProjectsClient
 	Environments    *EnvironmentsClient
@@ -37,6 +37,7 @@ type Client struct {
 	Machines        *MachinesClient
 	Profiles        *ProfilesClient
 	Self            *SelfClient
+	Version         *VersionClient
 }
 
 // NewClient returns a new Client.
@@ -69,7 +70,7 @@ func NewClientWithRoundTripper(rt RoundTripper) *Client {
 	c.Memberships = &MembershipsClient{client: rt}
 	c.Credentials = &Credentials{client: rt}
 	c.Orgs = &OrgsClient{client: rt}
-	c.OrgInvite = &OrgInvitesClient{client: rt}
+	c.OrgInvites = &OrgInvitesClient{client: rt}
 	c.Policies = &PoliciesClient{client: rt}
 	c.Projects = &ProjectsClient{client: rt}
 	c.Environments = &EnvironmentsClient{client: rt}
@@ -83,6 +84,7 @@ func NewClientWithRoundTripper(rt RoundTripper) *Client {
 	c.Machines = &MachinesClient{client: rt}
 	c.Profiles = &ProfilesClient{client: rt}
 	c.Self = &SelfClient{client: rt}
+	c.Version = &VersionClient{client: rt}
 
 	return c
 }
