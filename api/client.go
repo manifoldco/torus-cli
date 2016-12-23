@@ -79,7 +79,6 @@ func NewClient(cfg *config.Config) *Client {
 	c.Credentials = &CredentialsClient{client: rt}
 	c.Policies = &PoliciesClient{client: rt}
 	c.Worklog = &WorklogClient{client: rt}
-	c.Version = &VersionClient{client: rt}
 	c.Version = newVersionClient(rt)
 
 	return c
