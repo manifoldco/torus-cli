@@ -190,7 +190,7 @@ func generateKeypairs(ctx *cli.Context) error {
 
 	for orgID, name := range regenOrgs {
 		fmt.Println("Generating signing and encryption keypairs for org: " + name)
-		err := client.KeyPairs.Generate(c, orgID, progress)
+		err := client.KeyPairs.Create(c, orgID, progress)
 		if err != nil && rErr == nil {
 			rErr = err
 			break
@@ -228,7 +228,7 @@ func generateKeypairsForOrg(c context.Context, ctx *cli.Context, client *api.Cli
 		orgID = org.ID
 	}
 
-	err = client.KeyPairs.Generate(c, orgID, progress)
+	err = client.KeyPairs.Create(c, orgID, progress)
 	if err != nil {
 		return outputErr
 	}

@@ -23,13 +23,13 @@ type KeyPairsClient struct {
 	client RoundTripper
 }
 
-// Post creates a new keypair on the registry.
+// Create creates a new keypair on the registry.
 //
 // The keypair includes the user's public key, private key, and a self-signed
 // claim on the public key.
 //
 // keys may be either signing or encryption keys.
-func (k *KeyPairsClient) Post(ctx context.Context, pubKey *envelope.PublicKey,
+func (k *KeyPairsClient) Create(ctx context.Context, pubKey *envelope.PublicKey,
 	privKey *envelope.PrivateKey, claim *envelope.Claim) (*envelope.PublicKey,
 	*envelope.PrivateKey, []envelope.Claim, error) {
 

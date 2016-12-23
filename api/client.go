@@ -17,19 +17,32 @@ import (
 
 const daemonAPIVersion = "v1"
 
+type blacklisted struct{}
+
 // Client exposes the daemon API.
 type Client struct {
 	registry.Client
 
-	KeyPairs   *KeyPairsClient
+	// Endpoints with daemon specific overrides
+	Users      *UsersClient
 	Machines   *MachinesClient
+	KeyPairs   *KeyPairsClient
 	OrgInvites *OrgInvitesClient
+	Version    *VersionClient
 
-	Users       *UsersClient
+	// Daemon only endpoints
 	Session     *SessionClient
-	Credentials *CredentialsClient
+	Credentials *CredentialsClient // this replaces the registry endpoint
 	Worklog     *WorklogClient
-	Version     *VersionClient
+
+	// Cryptography related registry endpoints that should be accessed
+	// via the daemon.
+	Tokens          blacklisted
+	Keyring         blacklisted
+	KeyringMember   blacklisted
+	Claims          blacklisted
+	ClaimTree       blacklisted
+	CredentialGraph blacklisted
 }
 
 // NewClient returns a new Client.
@@ -51,8 +64,8 @@ func NewClient(cfg *config.Config) *Client {
 	c := &Client{Client: *registry.NewClientWithRoundTripper(rt)}
 
 	c.Users = newUsersClient(c.Client.Users, rt)
-	c.KeyPairs = newKeyPairsClient(c.Client.KeyPairs, rt)
 	c.Machines = newMachinesClient(c.Client.Machines, rt)
+	c.KeyPairs = newKeyPairsClient(c.Client.KeyPairs, rt)
 	c.OrgInvites = newOrgInvitesClient(c.Client.OrgInvites, rt)
 	c.Version = newVersionClient(c.Client.Version, rt)
 

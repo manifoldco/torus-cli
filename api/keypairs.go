@@ -22,8 +22,8 @@ type keyPairsRequest struct {
 	OrgID *identity.ID `json:"org_id"`
 }
 
-// Generate generates new keypairs for the user in the given org.
-func (k *KeyPairsClient) Generate(ctx context.Context, orgID *identity.ID,
+// Create generates new keypairs for the user in the given org.
+func (k *KeyPairsClient) Create(ctx context.Context, orgID *identity.ID,
 	output ProgressFunc) error {
 
 	kpr := keyPairsRequest{OrgID: orgID}

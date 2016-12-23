@@ -395,7 +395,7 @@ func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Signing keys signed", true)
 
-	pubsig, privsig, claims, err := e.client.KeyPairs.Post(ctx, pubsig,
+	pubsig, privsig, claims, err := e.client.KeyPairs.Create(ctx, pubsig,
 		privsig, sigclaim)
 	if err != nil {
 		log.Printf("Error uploading signature keypair: %s", err)
@@ -432,7 +432,7 @@ func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Encryption keys signed", true)
 
-	pubenc, privenc, claims, err = e.client.KeyPairs.Post(ctx, pubenc,
+	pubenc, privenc, claims, err = e.client.KeyPairs.Create(ctx, pubenc,
 		privenc, encclaim)
 	if err != nil {
 		log.Printf("Error uploading encryption keypair: %s", err)
