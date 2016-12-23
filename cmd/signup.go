@@ -121,7 +121,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	c := context.Background()
 
 	fmt.Println("")
-	user, err := client.Users.Signup(c, &signup, &progress)
+	user, err := client.Users.Create(c, &signup, &progress)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Username or email address in use.")

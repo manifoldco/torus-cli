@@ -5,9 +5,12 @@ import (
 	"errors"
 	"log"
 	"net/url"
+	"time"
 
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 // OrgInvitesClient represents the `/org-invites` registry endpoint, used for
@@ -82,4 +85,77 @@ func (o *OrgInvitesClient) List(ctx context.Context, orgID *identity.ID, states 
 	var invites []envelope.OrgInvite
 	_, err = o.client.Do(ctx, req, &invites)
 	return invites, err
+}
+
+// Accept executes the accept invite request
+func (o *OrgInvitesClient) Accept(ctx context.Context, org, email, code string) error {
+	data := apitypes.InviteAccept{
+		Org:   org,
+		Email: email,
+		Code:  code,
+	}
+
+	req, err := o.client.NewRequest("POST", "/org-invites/accept", nil, data)
+	if err != nil {
+		return err
+	}
+
+	_, err = o.client.Do(ctx, req, nil)
+	return err
+}
+
+// Send creates a new org invitation
+func (o *OrgInvitesClient) Send(ctx context.Context, email string, orgID, inviterID identity.ID, teamIDs []identity.ID) error {
+	now := time.Now()
+
+	inviteBody := primitive.OrgInvite{
+		OrgID:        &orgID,
+		InviterID:    &inviterID,
+		PendingTeams: teamIDs,
+		Email:        email,
+		Created:      &now,
+		// Null values below
+		InviteeID:  nil,
+		ApproverID: nil,
+		Accepted:   nil,
+		Approved:   nil,
+	}
+
+	ID, err := identity.NewMutable(&inviteBody)
+	if err != nil {
+		return err
+	}
+
+	invite := envelope.OrgInvite{
+		ID:      &ID,
+		Version: 1,
+		Body:    &inviteBody,
+	}
+
+	req, err := o.client.NewRequest("POST", "/org-invites", nil, &invite)
+	if err != nil {
+		return err
+	}
+
+	_, err = o.client.Do(ctx, req, nil)
+	return err
+}
+
+// Associate executes the associate invite request
+func (o *OrgInvitesClient) Associate(ctx context.Context, org, email, code string) (*envelope.OrgInvite, error) {
+	// Same payload as accept, re-use type
+	data := apitypes.InviteAccept{
+		Org:   org,
+		Email: email,
+		Code:  code,
+	}
+
+	req, err := o.client.NewRequest("POST", "/org-invites/associate", nil, data)
+	if err != nil {
+		return nil, err
+	}
+
+	invite := envelope.OrgInvite{}
+	_, err = o.client.Do(ctx, req, &invite)
+	return &invite, err
 }

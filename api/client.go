@@ -17,25 +17,32 @@ import (
 
 const daemonAPIVersion = "v1"
 
-// RoundTripper is the interface used to construct and send requests to
-// the torus registry.
-type RoundTripper interface {
-	NewRequest(method, path string, query *url.Values, body interface{}) (*http.Request, error)
-	Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error)
-}
+type blacklisted struct{}
 
 // Client exposes the daemon API.
 type Client struct {
 	registry.Client
 
-	Users       *UsersClient
-	Machines    *MachinesClient
-	OrgInvites  *OrgInvitesClient
-	Keypairs    *KeypairsClient
+	// Endpoints with daemon specific overrides
+	Users      *UsersClient
+	Machines   *MachinesClient
+	KeyPairs   *KeyPairsClient
+	OrgInvites *OrgInvitesClient
+	Version    *VersionClient
+
+	// Daemon only endpoints
 	Session     *SessionClient
-	Credentials *CredentialsClient
+	Credentials *CredentialsClient // this replaces the registry endpoint
 	Worklog     *WorklogClient
-	Version     *VersionClient
+
+	// Cryptography related registry endpoints that should be accessed
+	// via the daemon.
+	Tokens          blacklisted
+	Keyring         blacklisted
+	KeyringMember   blacklisted
+	Claims          blacklisted
+	ClaimTree       blacklisted
+	CredentialGraph blacklisted
 }
 
 // NewClient returns a new Client.
@@ -56,14 +63,15 @@ func NewClient(cfg *config.Config) *Client {
 
 	c := &Client{Client: *registry.NewClientWithRoundTripper(rt)}
 
-	c.Users = newUsersClient(rt)
-	c.Machines = newMachinesClient(rt)
-	c.OrgInvites = newOrgInvitesClient(rt)
-	c.Keypairs = newKeypairsClient(rt)
+	c.Users = newUsersClient(c.Client.Users, rt)
+	c.Machines = newMachinesClient(c.Client.Machines, rt)
+	c.KeyPairs = newKeyPairsClient(c.Client.KeyPairs, rt)
+	c.OrgInvites = newOrgInvitesClient(c.Client.OrgInvites, rt)
+	c.Version = newVersionClient(c.Client.Version, rt)
+
 	c.Session = &SessionClient{client: rt}
 	c.Credentials = &CredentialsClient{client: rt}
 	c.Worklog = &WorklogClient{client: rt}
-	c.Version = newVersionClient(rt)
 
 	return c
 }

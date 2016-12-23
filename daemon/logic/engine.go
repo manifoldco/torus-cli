@@ -312,7 +312,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n := notifier.Notifier(3)
 
-	invite, err := e.client.OrgInvite.Get(ctx, InviteID)
+	invite, err := e.client.OrgInvites.Get(ctx, InviteID)
 	if err != nil {
 		log.Printf("could not fetch org invitation: %s", err)
 		return nil, err
@@ -336,7 +336,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 
 	n.Notify(observer.Progress, "Keyring memberships created", true)
 
-	invite, err = e.client.OrgInvite.Approve(ctx, InviteID)
+	invite, err = e.client.OrgInvites.Approve(ctx, InviteID)
 	if err != nil {
 		log.Printf("could not approve org invite: %s", err)
 		return nil, err
@@ -395,7 +395,7 @@ func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Signing keys signed", true)
 
-	pubsig, privsig, claims, err := e.client.KeyPairs.Post(ctx, pubsig,
+	pubsig, privsig, claims, err := e.client.KeyPairs.Create(ctx, pubsig,
 		privsig, sigclaim)
 	if err != nil {
 		log.Printf("Error uploading signature keypair: %s", err)
@@ -432,7 +432,7 @@ func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Encryption keys signed", true)
 
-	pubenc, privenc, claims, err = e.client.KeyPairs.Post(ctx, pubenc,
+	pubenc, privenc, claims, err = e.client.KeyPairs.Create(ctx, pubenc,
 		privenc, encclaim)
 	if err != nil {
 		log.Printf("Error uploading encryption keypair: %s", err)

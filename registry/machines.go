@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"log"
+	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
@@ -18,9 +19,8 @@ type MachinesClient struct {
 // MachineCreationSegment represents the request sent to create the registry to
 // create a machine and it's first token
 type MachineCreationSegment struct {
-	Machine     *envelope.Machine             `json:"machine"`
-	Memberships []envelope.Membership         `json:"memberships"`
-	Tokens      []MachineTokenCreationSegment `json:"tokens"`
+	apitypes.MachineSegment
+	Tokens []MachineTokenCreationSegment `json:"tokens"`
 }
 
 // MachineTokenCreationSegment represents the request send to the registry to
@@ -38,9 +38,11 @@ func (m *MachinesClient) Create(ctx context.Context, machine *envelope.Machine,
 	memberships []envelope.Membership, token *MachineTokenCreationSegment) (*apitypes.MachineSegment, error) {
 
 	segment := MachineCreationSegment{
-		Machine:     machine,
-		Memberships: memberships,
-		Tokens:      []MachineTokenCreationSegment{*token},
+		MachineSegment: apitypes.MachineSegment{
+			Machine:     machine,
+			Memberships: memberships,
+		},
+		Tokens: []MachineTokenCreationSegment{*token},
 	}
 
 	req, err := m.client.NewRequest("POST", "/machines", nil, &segment)
@@ -75,4 +77,46 @@ func (m *MachinesClient) Get(ctx context.Context, machineID *identity.ID) (*apit
 	}
 
 	return resp, nil
+}
+
+// List machines in the given org and state
+func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *string, name *string, teamID *identity.ID) ([]*apitypes.MachineSegment, error) {
+	v := &url.Values{}
+	if orgID != nil {
+		v.Add("org_id", (*orgID).String())
+	}
+	if state != nil {
+		v.Add("state", *state)
+	}
+	if teamID != nil {
+		v.Add("team_id", (*teamID).String())
+	}
+	if name != nil {
+		v.Add("name", *name)
+	}
+
+	req, err := m.client.NewRequest("GET", "/machines", v, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apitypes.MachineSegment
+	_, err = m.client.Do(ctx, req, &results)
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+// Destroy machine by ID
+func (m *MachinesClient) Destroy(ctx context.Context, machineID *identity.ID) error {
+	req, err := m.client.NewRequest("DELETE", "/machines/"+machineID.String(), nil, nil)
+	if err != nil {
+		return err
+	}
+
+	_, err = m.client.Do(ctx, req, nil)
+
+	return err
 }

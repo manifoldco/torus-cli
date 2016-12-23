@@ -5,25 +5,21 @@ import (
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/registry"
 )
-
-// upstreamUsersClient makes proxied requests to the registry's users endpoints
-type upstreamUsersClient struct {
-	client RoundTripper
-}
 
 // UsersClient makes requests to the registry's and daemon's users endpoints
 type UsersClient struct {
-	upstreamUsersClient
+	*registry.UsersClient
 	client *apiRoundTripper
 }
 
-func newUsersClient(rt *apiRoundTripper) *UsersClient {
-	return &UsersClient{upstreamUsersClient{rt}, rt}
+func newUsersClient(upstream *registry.UsersClient, rt *apiRoundTripper) *UsersClient {
+	return &UsersClient{upstream, rt}
 }
 
-// Signup will have the daemon create a new user request
-func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, output *ProgressFunc) (*envelope.User, error) {
+// Create will have the daemon create a new user request
+func (u *UsersClient) Create(ctx context.Context, signup *apitypes.Signup, output *ProgressFunc) (*envelope.User, error) {
 	req, _, err := u.client.NewDaemonRequest("POST", "/signup", nil, &signup)
 	if err != nil {
 		return nil, err
@@ -32,20 +28,6 @@ func (u *UsersClient) Signup(ctx context.Context, signup *apitypes.Signup, outpu
 	user := envelope.User{}
 	_, err = u.client.Do(ctx, req, &user)
 	return &user, err
-}
-
-// VerifyEmail will confirm the user's email with the registry
-func (u *upstreamUsersClient) VerifyEmail(ctx context.Context, verifyCode string) error {
-	verify := apitypes.VerifyEmail{
-		Code: verifyCode,
-	}
-	req, err := u.client.NewRequest("POST", "/users/verify", nil, &verify)
-	if err != nil {
-		return err
-	}
-
-	_, err = u.client.Do(ctx, req, nil)
-	return err
 }
 
 // Update performs a profile update to the user object

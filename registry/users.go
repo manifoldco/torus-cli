@@ -20,7 +20,9 @@ type UsersClient struct {
 }
 
 // Create attempts to register a new user
-func (u *UsersClient) Create(ctx context.Context, userObj Signup, signup apitypes.Signup) (*envelope.User, error) {
+func (u *UsersClient) Create(ctx context.Context, userObj *SignupEnvelope,
+	signup apitypes.Signup) (*envelope.User, error) {
+
 	v := &url.Values{}
 	if signup.InviteCode != "" {
 		v.Set("code", signup.InviteCode)
@@ -51,6 +53,20 @@ func (u *UsersClient) Create(ctx context.Context, userObj Signup, signup apitype
 	}
 
 	return &user, nil
+}
+
+// VerifyEmail will confirm the user's email with the registry
+func (u *UsersClient) VerifyEmail(ctx context.Context, verifyCode string) error {
+	verify := apitypes.VerifyEmail{
+		Code: verifyCode,
+	}
+	req, err := u.client.NewRequest("POST", "/users/verify", nil, &verify)
+	if err != nil {
+		return err
+	}
+
+	_, err = u.client.Do(ctx, req, nil)
+	return err
 }
 
 // Update patches the user object with whitelisted fields
@@ -106,32 +122,17 @@ func validateSelf(s *envelope.User) error {
 	return nil
 }
 
-// Signup contains fields for signup
-type Signup struct {
-	ID      string      `json:"id"`
-	Version int         `json:"version"`
-	Body    *SignupBody `json:"body"`
+type omit struct{}
+
+// SignupEnvelope contains fields for signup
+type SignupEnvelope struct {
+	envelope.User
+	Body *SignupBody `json:"body"`
 }
 
 // SignupBody contains fields for Signup object body during signup
 type SignupBody struct {
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	// State is not a field because the server determines it, client cannot
-	Password *primitive.UserPassword `json:"password"`
-	Master   *primitive.MasterKey    `json:"master"`
-}
+	primitive.User
 
-// Version returns the object version
-func (SignupBody) Version() int {
-	return 1
+	State omit `json:"state,omitempty"`
 }
-
-// Type returns the User byte
-func (SignupBody) Type() byte {
-	return 0x01
-}
-
-// Mutable indicates this object is Mutable type
-func (SignupBody) Mutable() {}

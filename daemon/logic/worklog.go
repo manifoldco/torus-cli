@@ -245,7 +245,7 @@ func (inviteApproveHandler) resolveErr() string {
 }
 
 func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Org) ([]apitypes.WorklogItem, error) {
-	invites, err := h.engine.client.OrgInvite.List(ctx, org.ID, []string{"accepted"}, "")
+	invites, err := h.engine.client.OrgInvites.List(ctx, org.ID, []string{"accepted"}, "")
 	if err != nil {
 		// The user can be unauthorized because they don't have access to
 		// invites, so they'll have nothing to do here.
