@@ -169,3 +169,18 @@ func (rt *apiRoundTripper) RoundTrip(ctx context.Context, method, path string, q
 	_, err = rt.Do(ctx, req, response)
 	return err
 }
+
+func (rt *apiRoundTripper) DaemonRoundTrip(ctx context.Context, method, path string, query *url.Values, body, response interface{}, progress ProgressFunc) error {
+	req, reqID, err := rt.NewDaemonRequest(method, path, query, body)
+	if err != nil {
+		return err
+	}
+
+	if progress == nil {
+		_, err = rt.Do(ctx, req, response)
+	} else {
+		_, err = rt.DoWithProgress(ctx, req, response, reqID, progress)
+	}
+
+	return err
+}

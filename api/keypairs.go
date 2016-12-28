@@ -34,12 +34,5 @@ func (k *KeyPairsClient) Revoke(ctx context.Context, orgID *identity.ID, output 
 
 func (k *KeyPairsClient) worker(ctx context.Context, action string, orgID *identity.ID, output ProgressFunc) error {
 	kpr := keyPairsRequest{OrgID: orgID}
-
-	req, reqID, err := k.client.NewDaemonRequest("POST", "/keypairs/"+action, nil, &kpr)
-	if err != nil {
-		return err
-	}
-
-	_, err = k.client.DoWithProgress(ctx, req, nil, reqID, output)
-	return err
+	return k.client.DaemonRoundTrip(ctx, "POST", "/keypairs/"+action, nil, &kpr, nil, output)
 }

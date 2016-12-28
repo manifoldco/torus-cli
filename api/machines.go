@@ -39,18 +39,9 @@ func (m *MachinesClient) Create(ctx context.Context, orgID, teamID *identity.ID,
 		Secret: secret,
 	}
 
-	req, reqID, err := m.client.NewDaemonRequest("POST", "/machines", nil, &mcr)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	result := &apitypes.MachineSegment{}
-	_, err = m.client.DoWithProgress(ctx, req, result, reqID, output)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return result, secret, nil
+	err = m.client.DaemonRoundTrip(ctx, "POST", "/machines", nil, &mcr, &result, output)
+	return result, secret, err
 }
 
 func createTokenSecret() (*base64.Value, error) {

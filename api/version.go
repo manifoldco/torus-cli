@@ -20,12 +20,7 @@ func newVersionClient(upstream *registry.VersionClient, rt *apiRoundTripper) *Ve
 
 // GetDaemon returns the daemon's release version.
 func (v *VersionClient) GetDaemon(ctx context.Context) (*apitypes.Version, error) {
-	req, _, err := v.client.NewDaemonRequest("GET", "/version", nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	version := &apitypes.Version{}
-	_, err = v.client.Do(ctx, req, version)
+	err := v.client.DaemonRoundTrip(ctx, "GET", "/version", nil, nil, version, nil)
 	return version, err
 }

@@ -32,14 +32,8 @@ func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.Cr
 }
 
 func (c *CredentialsClient) listWorker(ctx context.Context, v *url.Values) ([]apitypes.CredentialEnvelope, error) {
-	req, _, err := c.client.NewDaemonRequest("GET", "/credentials", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := []apitypes.CredentialResp{}
-
-	_, err = c.client.Do(ctx, req, &resp)
+	var resp []apitypes.CredentialResp
+	err := c.client.DaemonRoundTrip(ctx, "GET", "/credentials", v, nil, &resp, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,13 +55,8 @@ func (c *CredentialsClient) Create(ctx context.Context, cred *apitypes.Credentia
 	progress ProgressFunc) (*apitypes.CredentialEnvelope, error) {
 
 	env := apitypes.CredentialEnvelope{Version: 2, Body: cred}
-	req, reqID, err := c.client.NewDaemonRequest("POST", "/credentials", nil, &env)
-	if err != nil {
-		return nil, err
-	}
-
 	resp := apitypes.CredentialResp{}
-	_, err = c.client.DoWithProgress(ctx, req, &resp, reqID, progress)
+	err := c.client.DaemonRoundTrip(ctx, "POST", "/credentials", nil, &env, &resp, progress)
 	if err != nil {
 		return nil, err
 	}

@@ -20,14 +20,8 @@ func (w *WorklogClient) List(ctx context.Context, orgID *identity.ID) ([]apitype
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := w.client.NewDaemonRequest("GET", "/worklog", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var resp []apitypes.WorklogItem
-
-	_, err = w.client.Do(ctx, req, &resp)
+	err := w.client.DaemonRoundTrip(ctx, "GET", "/worklog", v, nil, &resp, nil)
 	return resp, err
 }
 
@@ -51,11 +45,5 @@ func (w *WorklogClient) singleItemWorker(ctx context.Context, verb string, orgID
 		v.Set("org_id", orgID.String())
 	}
 
-	req, _, err := w.client.NewDaemonRequest(verb, "/worklog/"+ident.String(), v, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = w.client.Do(ctx, req, res)
-	return err
+	return w.client.DaemonRoundTrip(ctx, verb, "/worklog/"+ident.String(), v, nil, res, nil)
 }
