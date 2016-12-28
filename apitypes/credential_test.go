@@ -23,39 +23,32 @@ func interfaceToCredentialValue(t *testing.T, i interface{}) (*CredentialValue, 
 }
 
 func TestCredentialValueUnmarshalJSON(t *testing.T) {
-	t.Run("undefined", func(t *testing.T) {
-		v := map[string]interface{}{
-			"version": 1,
-			"body": map[string]interface{}{
-				"type":  "undefined",
-				"value": "",
-			},
-		}
+	tc := func(typ, val string, check func(*testing.T, *CredentialValue)) {
+		t.Run(typ, func(t *testing.T) {
+			v := map[string]interface{}{
+				"version": 1,
+				"body": map[string]interface{}{
+					"type":  typ,
+					"value": val,
+				},
+			}
 
-		c, err := interfaceToCredentialValue(t, v)
-		if err != nil {
-			t.Error("Unable to decode credential value: " + err.Error())
-		}
+			c, err := interfaceToCredentialValue(t, v)
+			if err != nil {
+				t.Error("Unable to decode credential value: " + err.Error())
+			}
 
+			check(t, c)
+		})
+	}
+
+	tc("undefined", "", func(t *testing.T, c *CredentialValue) {
 		if !c.IsUnset() {
 			t.Error("value was not considered unset")
 		}
 	})
 
-	t.Run("string", func(t *testing.T) {
-		v := map[string]interface{}{
-			"version": 1,
-			"body": map[string]interface{}{
-				"type":  "string",
-				"value": "test string",
-			},
-		}
-
-		c, err := interfaceToCredentialValue(t, v)
-		if err != nil {
-			t.Error("Unable to decode credential value: " + err.Error())
-		}
-
+	tc("string", "test string", func(t *testing.T, c *CredentialValue) {
 		if c.IsUnset() {
 			t.Error("value is unset")
 		}
@@ -66,20 +59,7 @@ func TestCredentialValueUnmarshalJSON(t *testing.T) {
 		}
 	})
 
-	t.Run("number (float)", func(t *testing.T) {
-		v := map[string]interface{}{
-			"version": 1,
-			"body": map[string]interface{}{
-				"type":  "number",
-				"value": 108.5,
-			},
-		}
-
-		c, err := interfaceToCredentialValue(t, v)
-		if err != nil {
-			t.Error("Unable to decode credential value: " + err.Error())
-		}
-
+	tc("number", "108.5", func(t *testing.T, c *CredentialValue) {
 		if c.IsUnset() {
 			t.Error("value is unset")
 		}
@@ -91,20 +71,7 @@ func TestCredentialValueUnmarshalJSON(t *testing.T) {
 
 	})
 
-	t.Run("number (int)", func(t *testing.T) {
-		v := map[string]interface{}{
-			"version": 1,
-			"body": map[string]interface{}{
-				"type":  "number",
-				"value": 108,
-			},
-		}
-
-		c, err := interfaceToCredentialValue(t, v)
-		if err != nil {
-			t.Error("Unable to decode credential value: " + err.Error())
-		}
-
+	tc("number", "108", func(t *testing.T, c *CredentialValue) {
 		if c.IsUnset() {
 			t.Error("value is unset")
 		}

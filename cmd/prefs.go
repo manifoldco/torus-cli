@@ -40,6 +40,24 @@ func init() {
 	Cmds = append(Cmds, prefs)
 }
 
+func listSection(name string, count int, section interface{}) error {
+	if count <= 0 {
+		return nil
+	}
+
+	fmt.Println(name)
+	fc := ini.Empty()
+	err := ini.ReflectFrom(fc, section)
+	if err != nil {
+		return err
+	}
+
+	spacer := "    "
+	fc.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
+
+	return nil
+}
+
 func listPref(ctx *cli.Context) error {
 	const loadErr = "Failed to load prefs."
 	preferences, err := prefs.NewPreferences()
@@ -47,31 +65,19 @@ func listPref(ctx *cli.Context) error {
 		return errs.NewErrorExitError(loadErr, err)
 	}
 
-	spacer := "    "
 	filepath, _ := prefs.RcPath()
 	fmt.Println("\n" + filepath + "\n")
 
 	coreCount := preferences.CountFields("Core")
-	defaultsCount := preferences.CountFields("Defaults")
-
-	if coreCount > 0 {
-		fmt.Println("[core]")
-		fc := ini.Empty()
-		err = ini.ReflectFrom(fc, &preferences.Core)
-		if err != nil {
-			return errs.NewErrorExitError(loadErr, err)
-		}
-		fc.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
+	err = listSection("[core]", coreCount, &preferences.Core)
+	if err != nil {
+		return errs.NewErrorExitError(loadErr, err)
 	}
 
-	if defaultsCount > 0 {
-		fmt.Println("[defaults]")
-		fd := ini.Empty()
-		err = ini.ReflectFrom(fd, &preferences.Defaults)
-		if err != nil {
-			return errs.NewErrorExitError(loadErr, err)
-		}
-		fd.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
+	defaultsCount := preferences.CountFields("Defaults")
+	err = listSection("[defaults]", defaultsCount, &preferences.Defaults)
+	if err != nil {
+		return errs.NewErrorExitError(loadErr, err)
 	}
 
 	if defaultsCount < 1 && coreCount < 1 {
