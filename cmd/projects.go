@@ -78,9 +78,9 @@ func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, 
 		return nil, cli.NewExitError(projectListFailed, -1)
 	}
 
-	var orgIDs []*identity.ID
+	var orgIDs []identity.ID
 	if orgID != nil {
-		orgIDs = []*identity.ID{orgID}
+		orgIDs = []identity.ID{*orgID}
 	}
 
 	var projectNames []string
@@ -88,16 +88,16 @@ func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, 
 		projectNames = []string{*name}
 	}
 
-	return client.Projects.Search(c, &orgIDs, &projectNames)
+	return client.Projects.Search(c, orgIDs, projectNames)
 }
 
-func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []*identity.ID) ([]envelope.Project, error) {
+func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []identity.ID) ([]envelope.Project, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(projectListFailed, -1)
 	}
 
-	return client.Projects.Search(c, &orgIDs, nil)
+	return client.Projects.Search(c, orgIDs, nil)
 }
 
 func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName string) ([]envelope.Project, error) {
@@ -117,7 +117,7 @@ func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName str
 	}
 
 	// Pull all projects for the given orgID
-	orgIDs := []*identity.ID{org.ID}
+	orgIDs := []identity.ID{*org.ID}
 	projects, err := listProjectsByOrgID(&c, client, orgIDs)
 	if err != nil {
 		return nil, errs.NewExitError(projectListFailed)

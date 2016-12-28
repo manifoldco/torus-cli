@@ -16,22 +16,16 @@ type ServicesClient struct {
 }
 
 // List retrieves relevant services by name and/or orgID and/or projectID
-func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs *[]*identity.ID, names *[]string) ([]envelope.Service, error) {
+func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs []identity.ID, names []string) ([]envelope.Service, error) {
 	v := &url.Values{}
-	if orgIDs != nil {
-		for _, id := range *orgIDs {
-			v.Add("org_id", id.String())
-		}
+	for _, id := range orgIDs {
+		v.Add("org_id", id.String())
 	}
-	if projectIDs != nil {
-		for _, id := range *projectIDs {
-			v.Add("project_id", id.String())
-		}
+	for _, id := range projectIDs {
+		v.Add("project_id", id.String())
 	}
-	if names != nil {
-		for _, n := range *names {
-			v.Add("name", n)
-		}
+	for _, n := range names {
+		v.Add("name", n)
 	}
 
 	var services []envelope.Service
