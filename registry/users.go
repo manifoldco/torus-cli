@@ -9,7 +9,6 @@ import (
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
-	"github.com/manifoldco/torus-cli/primitive"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
 )
@@ -20,7 +19,7 @@ type UsersClient struct {
 }
 
 // Create attempts to register a new user
-func (u *UsersClient) Create(ctx context.Context, userObj *SignupEnvelope,
+func (u *UsersClient) Create(ctx context.Context, userObj *envelope.User,
 	signup apitypes.Signup) (*envelope.User, error) {
 
 	v := &url.Values{}
@@ -120,19 +119,4 @@ func validateSelf(s *envelope.User) error {
 	}
 
 	return nil
-}
-
-type omit struct{}
-
-// SignupEnvelope contains fields for signup
-type SignupEnvelope struct {
-	envelope.User
-	Body *SignupBody `json:"body"`
-}
-
-// SignupBody contains fields for Signup object body during signup
-type SignupBody struct {
-	primitive.User
-
-	State omit `json:"state,omitempty"`
 }

@@ -229,14 +229,13 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			return
 		}
 
-		userBody := registry.SignupBody{
-			User: primitive.User{
-				Username: signup.Username,
-				Name:     signup.Name,
-				Email:    signup.Email,
-				Password: passwordObj,
-				Master:   masterObj,
-			},
+		userBody := primitive.User{
+			Username: signup.Username,
+			Name:     signup.Name,
+			Email:    signup.Email,
+			Password: passwordObj,
+			Master:   masterObj,
+			State:    "unverified",
 		}
 
 		ID, err := identity.NewMutable(&userBody)
@@ -245,12 +244,10 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			return
 		}
 
-		userObj := registry.SignupEnvelope{
-			User: envelope.User{
-				ID:      &ID,
-				Version: 1,
-			},
-			Body: &userBody,
+		userObj := envelope.User{
+			ID:      &ID,
+			Version: 1,
+			Body:    &userBody,
 		}
 
 		user, err := client.Users.Create(ctx, &userObj, signup)
