@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"log"
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -33,23 +32,16 @@ func (k *KeyPairsClient) Create(ctx context.Context, pubKey *envelope.PublicKey,
 	privKey *envelope.PrivateKey, claim *envelope.Claim) (*envelope.PublicKey,
 	*envelope.PrivateKey, []envelope.Claim, error) {
 
-	req, err := k.client.NewRequest("POST", "/keypairs", nil,
-		ClaimedKeyPair{
-			PublicKeySegment: apitypes.PublicKeySegment{
-				PublicKey: pubKey,
-				Claims:    []envelope.Claim{*claim},
-			},
-			PrivateKey: privKey,
-		})
-	if err != nil {
-		log.Printf("Error building http request: %s", err)
-		return nil, nil, nil, err
+	req := ClaimedKeyPair{
+		PublicKeySegment: apitypes.PublicKeySegment{
+			PublicKey: pubKey,
+			Claims:    []envelope.Claim{*claim},
+		},
+		PrivateKey: privKey,
 	}
-
 	resp := ClaimedKeyPair{}
-	_, err = k.client.Do(ctx, req, &resp)
+	err := k.client.RoundTrip(ctx, "POST", "/keypairs", nil, &req, &resp)
 	if err != nil {
-		log.Printf("Failed to create signing keypair: %s", err)
 		return nil, nil, nil, err
 	}
 
@@ -64,18 +56,7 @@ func (k *KeyPairsClient) List(ctx context.Context, orgID *identity.ID) ([]Claime
 		query.Set("org_id", orgID.String())
 	}
 
-	req, err := k.client.NewRequest("GET", "/keypairs", query, nil)
-	if err != nil {
-		log.Printf("Error building http request: %s", err)
-		return nil, err
-	}
-
-	resp := []ClaimedKeyPair{}
-	_, err = k.client.Do(ctx, req, &resp)
-	if err != nil {
-		log.Printf("Failed to retrieve keypairs: %s", err)
-		return nil, err
-	}
-
-	return resp, nil
+	var resp []ClaimedKeyPair
+	err := k.client.RoundTrip(ctx, "GET", "/keypairs", query, nil, &resp)
+	return resp, err
 }

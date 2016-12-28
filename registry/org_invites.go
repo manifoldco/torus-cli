@@ -3,7 +3,6 @@ package registry
 import (
 	"context"
 	"errors"
-	"log"
 	"net/url"
 	"time"
 
@@ -22,23 +21,10 @@ type OrgInvitesClient struct {
 // Approve sends an approval notification to the registry regarding a specific
 // invitation.
 func (o *OrgInvitesClient) Approve(ctx context.Context, inviteID *identity.ID) (*envelope.OrgInvite, error) {
-
-	path := "/org-invites/" + inviteID.String() + "/approve"
-	req, err := o.client.NewRequest("POST", path, nil, nil)
-	if err != nil {
-		log.Printf(
-			"Error building POST /org-invites/:id/approve api request: %s", err)
-		return nil, err
-	}
-
 	invite := envelope.OrgInvite{}
-	_, err = o.client.Do(ctx, req, &invite)
-	if err != nil {
-		log.Printf("Error performing POST /org-invites/:id/accept: %s", err)
-		return nil, err
-	}
-
-	return &invite, nil
+	path := "/org-invites/" + inviteID.String() + "/approve"
+	err := o.client.RoundTrip(ctx, "POST", path, nil, nil, &invite)
+	return &invite, err
 }
 
 // Get returns a specific Org Invite based on it's ID
@@ -47,21 +33,10 @@ func (o *OrgInvitesClient) Get(ctx context.Context, inviteID *identity.ID) (*env
 		return nil, errors.New("an inviteID must be provided")
 	}
 
-	path := "/org-invites/" + inviteID.String()
-	req, err := o.client.NewRequest("GET", path, nil, nil)
-	if err != nil {
-		log.Printf("Error building GET /org-invites/:id request: %s", err)
-		return nil, err
-	}
-
 	invite := envelope.OrgInvite{}
-	_, err = o.client.Do(ctx, req, &invite)
-	if err != nil {
-		log.Printf("Error performing GET /org-invites/:id request: %s", err)
-		return nil, err
-	}
-
-	return &invite, nil
+	path := "/org-invites/" + inviteID.String()
+	err := o.client.RoundTrip(ctx, "GET", path, nil, nil, &invite)
+	return &invite, err
 }
 
 // List lists all invites for a given org with the given states
@@ -77,13 +52,8 @@ func (o *OrgInvitesClient) List(ctx context.Context, orgID *identity.ID, states 
 		v.Add("email", email)
 	}
 
-	req, err := o.client.NewRequest("GET", "/org-invites", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var invites []envelope.OrgInvite
-	_, err = o.client.Do(ctx, req, &invites)
+	err := o.client.RoundTrip(ctx, "GET", "/org-invites", v, nil, &invites)
 	return invites, err
 }
 
@@ -95,13 +65,7 @@ func (o *OrgInvitesClient) Accept(ctx context.Context, org, email, code string) 
 		Code:  code,
 	}
 
-	req, err := o.client.NewRequest("POST", "/org-invites/accept", nil, data)
-	if err != nil {
-		return err
-	}
-
-	_, err = o.client.Do(ctx, req, nil)
-	return err
+	return o.client.RoundTrip(ctx, "POST", "/org-invites/accept", nil, &data, nil)
 }
 
 // Send creates a new org invitation
@@ -132,13 +96,7 @@ func (o *OrgInvitesClient) Send(ctx context.Context, email string, orgID, invite
 		Body:    &inviteBody,
 	}
 
-	req, err := o.client.NewRequest("POST", "/org-invites", nil, &invite)
-	if err != nil {
-		return err
-	}
-
-	_, err = o.client.Do(ctx, req, nil)
-	return err
+	return o.client.RoundTrip(ctx, "POST", "/org-invites", nil, &invite, nil)
 }
 
 // Associate executes the associate invite request
@@ -150,12 +108,7 @@ func (o *OrgInvitesClient) Associate(ctx context.Context, org, email, code strin
 		Code:  code,
 	}
 
-	req, err := o.client.NewRequest("POST", "/org-invites/associate", nil, data)
-	if err != nil {
-		return nil, err
-	}
-
 	invite := envelope.OrgInvite{}
-	_, err = o.client.Do(ctx, req, &invite)
+	err := o.client.RoundTrip(ctx, "POST", "/org-invites/associate", nil, &data, &invite)
 	return &invite, err
 }

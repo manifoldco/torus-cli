@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
@@ -14,7 +13,7 @@ var errUnknownSessionType = errors.New("Unknown session type")
 
 // SelfClient represents the registry `/self` endpoints.
 type SelfClient struct {
-	client RoundTripper
+	client RequestDoer
 }
 
 type rawSelf struct {
@@ -27,15 +26,8 @@ type rawSelf struct {
 
 // Get returns the current identities associated with this token
 func (s *SelfClient) Get(ctx context.Context, token string) (*apitypes.Self, error) {
-	req, err := s.client.NewRequest("GET", "/self", nil, nil)
-	replaceAuthToken(req, token)
-	if err != nil {
-		log.Printf("Error making Self request: %s", err)
-		return nil, err
-	}
-
 	raw := &rawSelf{}
-	_, err = s.client.Do(ctx, req, raw)
+	err := tokenRoundTrip(ctx, s.client, token, "GET", "/self", nil, nil, raw)
 	if err != nil {
 		return nil, err
 	}

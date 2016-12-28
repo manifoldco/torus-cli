@@ -34,13 +34,8 @@ func (s *ServicesClient) List(ctx context.Context, orgIDs, projectIDs *[]*identi
 		}
 	}
 
-	req, err := s.client.NewRequest("GET", "/services", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	services := []envelope.Service{}
-	_, err = s.client.Do(ctx, req, &services)
+	var services []envelope.Service
+	err := s.client.RoundTrip(ctx, "GET", "/services", v, nil, &services)
 	return services, err
 }
 
@@ -67,11 +62,5 @@ func (s *ServicesClient) Create(ctx context.Context, orgID, projectID *identity.
 		Body:    &serviceBody,
 	}
 
-	req, err := s.client.NewRequest("POST", "/services", nil, service)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.client.Do(ctx, req, nil)
-	return err
+	return s.client.RoundTrip(ctx, "POST", "/services", nil, service, nil)
 }

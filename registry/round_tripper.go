@@ -14,23 +14,30 @@ import (
 
 var errBadResponse = errors.New("bad error response body received from server")
 
-// RoundTripper is the interface used to construct and send requests to
+// RequestDoer is the interface used to construct and send requests to
 // the torus registry.
-type RoundTripper interface {
+type RequestDoer interface {
 	NewRequest(method, path string, query *url.Values, body interface{}) (*http.Request, error)
 	Do(ctx context.Context, r *http.Request, v interface{}) (*http.Response, error)
 }
 
-// DefaultRoundTripper is a default implementation of the RoundTripper
+// RoundTripper is a RequestDoer with a convenience method for doing a
+// request/response round trip in a single call.
+type RoundTripper interface {
+	RequestDoer
+	RoundTrip(ctx context.Context, method, path string, query *url.Values, body, response interface{}) error
+}
+
+// DefaultRequestDoer is a default implementation of the RequestDoer
 // interface. It is shared and extended by the registry and api clients.
-type DefaultRoundTripper struct {
+type DefaultRequestDoer struct {
 	Client *http.Client
 	Host   string
 }
 
 // NewRequest constructs a new http.Request, with a body containing the json
 // representation of body, if provided.
-func (rt *DefaultRoundTripper) NewRequest(method, path string,
+func (rt *DefaultRequestDoer) NewRequest(method, path string,
 	query *url.Values, body interface{}) (*http.Request, error) {
 
 	b := &bytes.Buffer{}
@@ -69,7 +76,7 @@ func (rt *DefaultRoundTripper) NewRequest(method, path string,
 //
 // If the request errors with a JSON formatted response body, it will be
 // unmarshaled into the returned error.
-func (rt *DefaultRoundTripper) Do(ctx context.Context, r *http.Request,
+func (rt *DefaultRequestDoer) Do(ctx context.Context, r *http.Request,
 	v interface{}) (*http.Response, error) {
 
 	resp, err := rt.Client.Do(r)

@@ -14,12 +14,7 @@ type VersionClient struct {
 
 // Get returns the registry's release version.
 func (v *VersionClient) Get(ctx context.Context) (*apitypes.Version, error) {
-	req, err := v.client.NewRequest("GET", "/version", nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	version := &apitypes.Version{}
-	_, err = v.client.Do(ctx, req, version)
-	return version, err
+	version := apitypes.Version{}
+	err := v.client.RoundTrip(ctx, "GET", "/version", nil, nil, &version)
+	return &version, err
 }

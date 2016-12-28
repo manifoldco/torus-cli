@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"log"
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -41,17 +40,7 @@ func (c *ClaimTreeClient) List(ctx context.Context, orgID *identity.ID,
 		query.Set("owner_id", ownerID.String())
 	}
 
-	req, err := c.client.NewRequest("GET", "/claimtree", query, nil)
-	if err != nil {
-		log.Printf("Error building http request: %s", err)
-		return nil, err
-	}
-
-	resp := []ClaimTree{}
-	_, err = c.client.Do(ctx, req, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	var resp []ClaimTree
+	err := c.client.RoundTrip(ctx, "GET", "/claimtree", query, nil, &resp)
+	return resp, err
 }

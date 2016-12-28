@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/envelope"
@@ -55,20 +54,9 @@ func (c *CredentialGraphV2) GetCredentials() []envelope.CredentialInf {
 //
 // The CredentialGraph includes the keyring, it's members, and credentials.
 func (c *CredentialGraphClient) Post(ctx context.Context, t *CredentialGraph) (*CredentialGraphV2, error) {
-	req, err := c.client.NewRequest("POST", "/credentialgraph", nil, t)
-	if err != nil {
-		log.Printf("Error building http request: %s", err)
-		return nil, err
-	}
-
 	resp := CredentialGraphV2{}
-	_, err = c.client.Do(ctx, req, &resp)
-	if err != nil {
-		log.Printf("Failed to create credential graph: %s", err)
-		return nil, err
-	}
-
-	return &resp, nil
+	err := c.client.RoundTrip(ctx, "POST", "/credentialgraph", nil, t, &resp)
+	return &resp, err
 }
 
 // List returns back all segments of the CredentialGraph (Keyring, Keyring
@@ -111,12 +99,6 @@ func (c *CredentialGraphClient) Search(ctx context.Context, pathExp string,
 }
 
 func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) ([]CredentialGraph, error) {
-	req, err := c.client.NewRequest("GET", "/credentialgraph", &query, nil)
-	if err != nil {
-		log.Printf("Error building http request: %s", err)
-		return nil, err
-	}
-
 	resp := []struct {
 		Keyring     *envelope.Signed              `json:"keyring"`
 		Members     json.RawMessage               `json:"members"`
@@ -124,7 +106,7 @@ func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) 
 		Claims      []envelope.KeyringMemberClaim `json:"claims"`
 	}{}
 
-	_, err = c.client.Do(ctx, req, &resp)
+	err := c.client.RoundTrip(ctx, "GET", "/credentialgraph", &query, nil, &resp)
 	if err != nil {
 		return nil, err
 	}

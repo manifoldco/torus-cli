@@ -29,45 +29,19 @@ func (t *TeamsClient) List(ctx context.Context, orgID *identity.ID, name string,
 		v.Set("type", string(teamType))
 	}
 
-	req, err := t.client.NewRequest("GET", "/teams", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	teams := []envelope.Team{}
-	_, err = t.client.Do(ctx, req, &teams)
+	var teams []envelope.Team
+	err := t.client.RoundTrip(ctx, "GET", "/teams", v, nil, &teams)
 	return teams, err
 }
 
 // GetByOrg retrieves all teams for an org id
 func (t *TeamsClient) GetByOrg(ctx context.Context, orgID *identity.ID) ([]envelope.Team, error) {
-	v := &url.Values{}
-	v.Set("org_id", orgID.String())
-
-	req, err := t.client.NewRequest("GET", "/teams", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	teams := []envelope.Team{}
-	_, err = t.client.Do(ctx, req, &teams)
-	return teams, err
+	return t.List(ctx, orgID, "", primitive.AnyTeamType)
 }
 
 // GetByName retrieves the team with the specified name
 func (t *TeamsClient) GetByName(ctx context.Context, orgID *identity.ID, name string) ([]envelope.Team, error) {
-	v := &url.Values{}
-	v.Set("org_id", orgID.String())
-	v.Set("name", name)
-
-	req, err := t.client.NewRequest("GET", "/teams", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	teams := []envelope.Team{}
-	_, err = t.client.Do(ctx, req, &teams)
-	return teams, err
+	return t.List(ctx, orgID, name, primitive.AnyTeamType)
 }
 
 // Create performs a request to create a new team object
@@ -94,12 +68,7 @@ func (t *TeamsClient) Create(ctx context.Context, orgID *identity.ID, name strin
 		Body:    &teamBody,
 	}
 
-	req, err := t.client.NewRequest("POST", "/teams", nil, team)
-	if err != nil {
-		return nil, err
-	}
-
-	teamResult := &envelope.Team{}
-	_, err = t.client.Do(ctx, req, teamResult)
-	return teamResult, err
+	result := &envelope.Team{}
+	err = t.client.RoundTrip(ctx, "POST", "/teams", nil, &team, result)
+	return result, err
 }

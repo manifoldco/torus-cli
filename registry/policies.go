@@ -28,13 +28,8 @@ func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (
 		Body:    policy,
 	}
 
-	req, err := p.client.NewRequest("POST", "/policies", nil, env)
-	if err != nil {
-		return nil, err
-	}
-
 	res := envelope.Policy{}
-	_, err = p.client.Do(ctx, req, &res)
+	err = p.client.RoundTrip(ctx, "POST", "/policies", nil, env, &res)
 	return &res, err
 }
 
@@ -48,13 +43,8 @@ func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name stri
 		v.Set("name", name)
 	}
 
-	req, err := p.client.NewRequest("GET", "/policies", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	policies := []envelope.Policy{}
-	_, err = p.client.Do(ctx, req, &policies)
+	err := p.client.RoundTrip(ctx, "GET", "/policies", v, nil, &policies)
 	return policies, err
 }
 
@@ -77,22 +67,12 @@ func (p *PoliciesClient) Attach(ctx context.Context, org, policy, team *identity
 		Body:    &attachment,
 	}
 
-	req, err := p.client.NewRequest("POST", "/policy-attachments", nil, &env)
-	if err != nil {
-		return err
-	}
-	_, err = p.client.Do(ctx, req, nil)
-	return err
+	return p.client.RoundTrip(ctx, "POST", "/policy-attachments", nil, &env, nil)
 }
 
 // Detach deletes a specific attachment
 func (p *PoliciesClient) Detach(ctx context.Context, attachmentID *identity.ID) error {
-	req, err := p.client.NewRequest("DELETE", "/policy-attachments/"+attachmentID.String(), nil, nil)
-	if err != nil {
-		return err
-	}
-	_, err = p.client.Do(ctx, req, nil)
-	return err
+	return p.client.RoundTrip(ctx, "DELETE", "/policy-attachments/"+attachmentID.String(), nil, nil, nil)
 }
 
 // AttachmentsList retrieves all policy attachments for an org
@@ -108,12 +88,7 @@ func (p *PoliciesClient) AttachmentsList(ctx context.Context, orgID, ownerID, po
 		v.Set("policy_id", policyID.String())
 	}
 
-	req, err := p.client.NewRequest("GET", "/policy-attachments", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	attachments := []envelope.PolicyAttachment{}
-	_, err = p.client.Do(ctx, req, &attachments)
+	err := p.client.RoundTrip(ctx, "GET", "/policy-attachments", v, nil, &attachments)
 	return attachments, err
 }

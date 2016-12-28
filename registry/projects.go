@@ -36,13 +36,8 @@ func (p *ProjectsClient) Create(ctx context.Context, org *identity.ID, name stri
 	project.Body.OrgID = org
 	project.Body.Name = name
 
-	req, err := p.client.NewRequest("POST", "/projects", nil, &project)
-	if err != nil {
-		return nil, err
-	}
-
 	res := envelope.Project{}
-	_, err = p.client.Do(ctx, req, &res)
+	err := p.client.RoundTrip(ctx, "POST", "/projects", nil, &project, &res)
 	return &res, err
 }
 
@@ -60,13 +55,8 @@ func (p *ProjectsClient) Search(ctx context.Context, orgIDs *[]*identity.ID, nam
 		}
 	}
 
-	req, err := p.client.NewRequest("GET", "/projects", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	projects := []envelope.Project{}
-	_, err = p.client.Do(ctx, req, &projects)
+	var projects []envelope.Project
+	err := p.client.RoundTrip(ctx, "GET", "/projects", v, nil, &projects)
 	return projects, err
 }
 
@@ -80,12 +70,8 @@ func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID) ([]envelo
 func (p *ProjectsClient) GetTree(ctx context.Context, orgID *identity.ID) ([]ProjectTreeSegment, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
-	req, err := p.client.NewRequest("GET", "/projecttree", v, nil)
-	if err != nil {
-		return nil, err
-	}
 
-	segments := []ProjectTreeSegment{}
-	_, err = p.client.Do(ctx, req, &segments)
+	var segments []ProjectTreeSegment
+	err := p.client.RoundTrip(ctx, "GET", "/projecttree", v, nil, &segments)
 	return segments, err
 }
