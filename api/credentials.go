@@ -20,28 +20,7 @@ func (c *CredentialsClient) Search(ctx context.Context, pathexp string) ([]apity
 	v := &url.Values{}
 	v.Set("pathexp", pathexp)
 
-	req, _, err := c.client.NewDaemonRequest("GET", "/credentials", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := []apitypes.CredentialResp{}
-
-	_, err = c.client.Do(ctx, req, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	creds := make([]apitypes.CredentialEnvelope, len(resp))
-	for i, c := range resp {
-		v, err := createEnvelopeFromResp(c)
-		if err != nil {
-			return nil, err
-		}
-		creds[i] = *v
-	}
-
-	return creds, err
+	return c.listWorker(ctx, v)
 }
 
 // Get returns all credentials at the given path.
@@ -49,6 +28,10 @@ func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.Cr
 	v := &url.Values{}
 	v.Set("path", path)
 
+	return c.listWorker(ctx, v)
+}
+
+func (c *CredentialsClient) listWorker(ctx context.Context, v *url.Values) ([]apitypes.CredentialEnvelope, error) {
 	req, _, err := c.client.NewDaemonRequest("GET", "/credentials", v, nil)
 	if err != nil {
 		return nil, err
