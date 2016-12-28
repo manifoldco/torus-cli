@@ -236,14 +236,14 @@ func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.
 		return nil, cli.NewExitError(envListFailed, -1)
 	}
 
-	var orgIDs []*identity.ID
+	var orgIDs []identity.ID
 	if orgID != nil {
-		orgIDs = []*identity.ID{orgID}
+		orgIDs = []identity.ID{*orgID}
 	}
 
-	var projectIDs []*identity.ID
+	var projectIDs []identity.ID
 	if projID != nil {
-		projectIDs = []*identity.ID{projID}
+		projectIDs = []identity.ID{*projID}
 	}
 
 	var names []string
@@ -251,5 +251,5 @@ func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.
 		names = []string{*name}
 	}
 
-	return client.Environments.List(c, &orgIDs, &projectIDs, &names)
+	return client.Environments.List(c, orgIDs, projectIDs, names)
 }

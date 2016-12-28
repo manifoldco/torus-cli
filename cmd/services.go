@@ -150,14 +150,14 @@ func listServices(ctx *context.Context, client *api.Client, orgID, projID *ident
 		return nil, cli.NewExitError(serviceListFailed, -1)
 	}
 
-	var orgIDs []*identity.ID
+	var orgIDs []identity.ID
 	if orgID != nil {
-		orgIDs = []*identity.ID{orgID}
+		orgIDs = []identity.ID{*orgID}
 	}
 
-	var projectIDs []*identity.ID
+	var projectIDs []identity.ID
 	if projID != nil {
-		projectIDs = []*identity.ID{projID}
+		projectIDs = []identity.ID{*projID}
 	}
 
 	var names []string
@@ -165,7 +165,7 @@ func listServices(ctx *context.Context, client *api.Client, orgID, projID *ident
 		names = []string{*name}
 	}
 
-	return client.Services.List(c, &orgIDs, &projectIDs, &names)
+	return client.Services.List(c, orgIDs, projectIDs, names)
 }
 
 const serviceCreateFailed = "Could not create service."

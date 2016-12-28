@@ -42,17 +42,13 @@ func (p *ProjectsClient) Create(ctx context.Context, org *identity.ID, name stri
 }
 
 // Search retrieves relevant projects by name and/or orgID
-func (p *ProjectsClient) Search(ctx context.Context, orgIDs *[]*identity.ID, names *[]string) ([]envelope.Project, error) {
+func (p *ProjectsClient) Search(ctx context.Context, orgIDs []identity.ID, names []string) ([]envelope.Project, error) {
 	v := &url.Values{}
-	if orgIDs != nil {
-		for _, id := range *orgIDs {
-			v.Add("org_id", id.String())
-		}
+	for _, id := range orgIDs {
+		v.Add("org_id", id.String())
 	}
-	if names != nil {
-		for _, n := range *names {
-			v.Add("name", n)
-		}
+	for _, n := range names {
+		v.Add("name", n)
 	}
 
 	var projects []envelope.Project
@@ -62,8 +58,8 @@ func (p *ProjectsClient) Search(ctx context.Context, orgIDs *[]*identity.ID, nam
 
 // List returns a list of all Projects within the given org.
 func (p *ProjectsClient) List(ctx context.Context, orgID *identity.ID) ([]envelope.Project, error) {
-	orgs := []*identity.ID{orgID}
-	return p.Search(ctx, &orgs, nil)
+	orgs := []identity.ID{*orgID}
+	return p.Search(ctx, orgs, nil)
 }
 
 // GetTree returns a project tree
