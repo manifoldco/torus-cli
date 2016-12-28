@@ -45,7 +45,7 @@ func NewClient(prefix string, apiVersion string, version string,
 	token TokenHolder, t *http.Transport) *Client {
 
 	rt := &registryRoundTripper{
-		DefaultRoundTripper: DefaultRoundTripper{
+		DefaultRequestDoer: DefaultRequestDoer{
 			Client: &http.Client{Transport: t},
 			Host:   prefix,
 		},
@@ -90,7 +90,7 @@ func NewClientWithRoundTripper(rt RoundTripper) *Client {
 }
 
 type registryRoundTripper struct {
-	DefaultRoundTripper
+	DefaultRequestDoer
 
 	apiVersion string
 	version    string
@@ -101,7 +101,7 @@ type registryRoundTripper struct {
 func (rt *registryRoundTripper) NewRequest(method, path string,
 	query *url.Values, body interface{}) (*http.Request, error) {
 
-	req, err := rt.DefaultRoundTripper.NewRequest(method, path, query, body)
+	req, err := rt.DefaultRequestDoer.NewRequest(method, path, query, body)
 
 	if err != nil {
 		return nil, err
@@ -125,7 +125,7 @@ func (rt *registryRoundTripper) Do(ctx context.Context, r *http.Request,
 	r = r.WithContext(ctx)
 	defer cancelFunc()
 
-	resp, err := rt.DefaultRoundTripper.Do(ctx, r, v)
+	resp, err := rt.DefaultRequestDoer.Do(ctx, r, v)
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			err = &apitypes.Error{
@@ -139,4 +139,14 @@ func (rt *registryRoundTripper) Do(ctx context.Context, r *http.Request,
 	}
 
 	return resp, nil
+}
+
+func (rt *registryRoundTripper) RoundTrip(ctx context.Context, method, path string, query *url.Values, body, response interface{}) error {
+	req, err := rt.NewRequest(method, path, query, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = rt.Do(ctx, req, response)
+	return err
 }

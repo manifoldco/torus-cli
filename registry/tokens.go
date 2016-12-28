@@ -50,7 +50,7 @@ type authTokenResponse struct {
 // This token is then HMAC'd and returned to the server, exchanging it for
 // an auth token, which is used for all other operations.
 type TokensClient struct {
-	client RoundTripper
+	client RequestDoer
 }
 
 // PostLogin requests a login token from the registry for the provided email

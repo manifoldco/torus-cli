@@ -38,13 +38,7 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 		Body:    &envBody,
 	}
 
-	req, err := e.client.NewRequest("POST", "/envs", nil, env)
-	if err != nil {
-		return err
-	}
-
-	_, err = e.client.Do(ctx, req, nil)
-	return err
+	return e.client.RoundTrip(ctx, "POST", "/envs", nil, env, nil)
 }
 
 // List retrieves relevant envs by name and/or orgID and/or projectID
@@ -66,12 +60,7 @@ func (e *EnvironmentsClient) List(ctx context.Context, orgIDs, projectIDs *[]*id
 		}
 	}
 
-	req, err := e.client.NewRequest("GET", "/envs", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	envs := []envelope.Environment{}
-	_, err = e.client.Do(ctx, req, &envs)
+	var envs []envelope.Environment
+	err := e.client.RoundTrip(ctx, "GET", "/envs", v, nil, &envs)
 	return envs, err
 }

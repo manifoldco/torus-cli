@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"log"
 
 	"github.com/manifoldco/torus-cli/envelope"
 )
@@ -15,17 +14,7 @@ type Credentials struct {
 
 // Create creates the provided credential in the registry.
 func (c *Credentials) Create(ctx context.Context, credential *envelope.Credential) (*envelope.Credential, error) {
-	req, err := c.client.NewRequest("POST", "/credentials", nil, credential)
-	if err != nil {
-		log.Printf("Error building http request: %s", err)
-		return nil, err
-	}
-
 	resp := &envelope.Credential{}
-	_, err = c.client.Do(ctx, req, resp)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	err := c.client.RoundTrip(ctx, "POST", "/credentials", nil, credential, &resp)
+	return resp, err
 }

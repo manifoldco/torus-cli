@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/envelope"
@@ -170,19 +169,13 @@ func (k *KeyringClient) List(ctx context.Context, orgID *identity.ID,
 		query.Set("owner_id", ownerID.String())
 	}
 
-	req, err := k.client.NewRequest("GET", "/keyrings", query, nil)
-	if err != nil {
-		log.Printf("Error building http request for GET /keyrings: %s", err)
-		return nil, err
-	}
-
 	resp := []struct {
 		Keyring *envelope.Signed              `json:"keyring"`
 		Members json.RawMessage               `json:"members"`
 		Claims  []envelope.KeyringMemberClaim `json:"claims"`
 	}{}
 
-	_, err = k.client.Do(ctx, req, &resp)
+	err := k.client.RoundTrip(ctx, "GET", "/keyrings", query, nil, &resp)
 	if err != nil {
 		return nil, err
 	}

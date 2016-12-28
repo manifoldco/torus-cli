@@ -14,7 +14,7 @@ var errUnknownSessionType = errors.New("Unknown session type")
 
 // SelfClient represents the registry `/self` endpoints.
 type SelfClient struct {
-	client RoundTripper
+	client RequestDoer
 }
 
 type rawSelf struct {

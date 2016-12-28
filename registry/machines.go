@@ -2,7 +2,6 @@ package registry
 
 import (
 	"context"
-	"log"
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -45,42 +44,20 @@ func (m *MachinesClient) Create(ctx context.Context, machine *envelope.Machine,
 		Tokens: []MachineTokenCreationSegment{*token},
 	}
 
-	req, err := m.client.NewRequest("POST", "/machines", nil, &segment)
-	if err != nil {
-		log.Printf("Error building POST Machines Request: %s", err)
-		return nil, err
-	}
-
 	resp := &apitypes.MachineSegment{}
-	_, err = m.client.Do(ctx, req, resp)
-	if err != nil {
-		log.Printf("Failed to create machine: %s", err)
-		return nil, err
-	}
-
-	return resp, nil
+	err := m.client.RoundTrip(ctx, "POST", "/machines", nil, &segment, &resp)
+	return resp, err
 }
 
 // Get requests a single machine from the registry
 func (m *MachinesClient) Get(ctx context.Context, machineID *identity.ID) (*apitypes.MachineSegment, error) {
-	req, err := m.client.NewRequest("GET", "/machines/"+(*machineID).String(), nil, nil)
-	if err != nil {
-		log.Printf("Error building GET Machines Request: %s", err)
-		return nil, err
-	}
-
 	resp := &apitypes.MachineSegment{}
-	_, err = m.client.Do(ctx, req, resp)
-	if err != nil {
-		log.Printf("Failed to retrieve machine: %s", err)
-		return nil, err
-	}
-
-	return resp, nil
+	err := m.client.RoundTrip(ctx, "GET", "/machines/"+(*machineID).String(), nil, nil, &resp)
+	return resp, err
 }
 
 // List machines in the given org and state
-func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *string, name *string, teamID *identity.ID) ([]*apitypes.MachineSegment, error) {
+func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *string, name *string, teamID *identity.ID) ([]apitypes.MachineSegment, error) {
 	v := &url.Values{}
 	if orgID != nil {
 		v.Add("org_id", (*orgID).String())
@@ -95,28 +72,12 @@ func (m *MachinesClient) List(ctx context.Context, orgID *identity.ID, state *st
 		v.Add("name", *name)
 	}
 
-	req, err := m.client.NewRequest("GET", "/machines", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var results []*apitypes.MachineSegment
-	_, err = m.client.Do(ctx, req, &results)
-	if err != nil {
-		return nil, err
-	}
-
-	return results, nil
+	var results []apitypes.MachineSegment
+	err := m.client.RoundTrip(ctx, "GET", "/machines", v, nil, &results)
+	return results, err
 }
 
 // Destroy machine by ID
 func (m *MachinesClient) Destroy(ctx context.Context, machineID *identity.ID) error {
-	req, err := m.client.NewRequest("DELETE", "/machines/"+machineID.String(), nil, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = m.client.Do(ctx, req, nil)
-
-	return err
+	return m.client.RoundTrip(ctx, "DELETE", "/machines/"+machineID.String(), nil, nil, nil)
 }

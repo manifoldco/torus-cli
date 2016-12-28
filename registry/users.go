@@ -32,16 +32,10 @@ func (u *UsersClient) Create(ctx context.Context, userObj *envelope.User,
 	if signup.Email != "" {
 		v.Set("email", signup.Email)
 	}
-	req, err := u.client.NewRequest("POST", "/users", v, userObj)
-	if err != nil {
-		log.Printf("Error making api request: %s", err)
-		return nil, err
-	}
 
 	user := envelope.User{}
-	_, err = u.client.Do(ctx, req, &user)
+	err := u.client.RoundTrip(ctx, "POST", "/users", v, &userObj, &user)
 	if err != nil {
-		log.Printf("Error making api request: %s", err)
 		return nil, err
 	}
 
@@ -59,27 +53,14 @@ func (u *UsersClient) VerifyEmail(ctx context.Context, verifyCode string) error 
 	verify := apitypes.VerifyEmail{
 		Code: verifyCode,
 	}
-	req, err := u.client.NewRequest("POST", "/users/verify", nil, &verify)
-	if err != nil {
-		return err
-	}
-
-	_, err = u.client.Do(ctx, req, nil)
-	return err
+	return u.client.RoundTrip(ctx, "POST", "/users/verify", nil, &verify, nil)
 }
 
 // Update patches the user object with whitelisted fields
 func (u *UsersClient) Update(ctx context.Context, userObj interface{}) (*envelope.User, error) {
-	req, err := u.client.NewRequest("PATCH", "/users/self", nil, userObj)
-	if err != nil {
-		log.Printf("Error making api request: %s", err)
-		return nil, err
-	}
-
 	user := envelope.User{}
-	_, err = u.client.Do(ctx, req, &user)
+	err := u.client.RoundTrip(ctx, "PATCH", "/users/self", nil, userObj, &user)
 	if err != nil {
-		log.Printf("Error making api request: %s", err)
 		return nil, err
 	}
 

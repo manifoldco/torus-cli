@@ -3,7 +3,6 @@ package registry
 import (
 	"context"
 	"errors"
-	"log"
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/envelope"
@@ -33,20 +32,9 @@ func (m *MembershipsClient) List(ctx context.Context, orgID *identity.ID,
 		query.Set("owner_id", ownerID.String())
 	}
 
-	req, err := m.client.NewRequest("GET", "/memberships", query, nil)
-	if err != nil {
-		log.Printf("could not build GET /memberships request: %s", err)
-		return nil, err
-	}
-
-	memberships := []envelope.Membership{}
-	_, err = m.client.Do(ctx, req, &memberships)
-	if err != nil {
-		log.Printf("could not perform GET /memberships: %s", err)
-		return nil, err
-	}
-
-	return memberships, nil
+	var memberships []envelope.Membership
+	err := m.client.RoundTrip(ctx, "GET", "/memberships", query, nil, &memberships)
+	return memberships, err
 }
 
 // Create requests addition of a user to a team
@@ -78,22 +66,10 @@ func (m *MembershipsClient) Create(ctx context.Context, userID, orgID, teamID *i
 		Body:    &membershipBody,
 	}
 
-	req, err := m.client.NewRequest("POST", "/memberships", nil, membership)
-	if err != nil {
-		return err
-	}
-
-	_, err = m.client.Do(ctx, req, nil)
-	return err
+	return m.client.RoundTrip(ctx, "POST", "/memberships", nil, &membership, nil)
 }
 
 // Delete requests deletion of a specific membership row by ID
 func (m *MembershipsClient) Delete(ctx context.Context, membership *identity.ID) error {
-	req, err := m.client.NewRequest("DELETE", "/memberships/"+membership.String(), nil, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = m.client.Do(ctx, req, nil)
-	return err
+	return m.client.RoundTrip(ctx, "DELETE", "/memberships/"+membership.String(), nil, nil, nil)
 }

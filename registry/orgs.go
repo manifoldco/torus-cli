@@ -3,7 +3,6 @@ package registry
 import (
 	"context"
 	"errors"
-	"log"
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -40,32 +39,16 @@ func (o *OrgsClient) Create(ctx context.Context, name string) (*envelope.Org, er
 	org := orgCreateRequest{}
 	org.Body.Name = name
 
-	req, err := o.client.NewRequest("POST", "/orgs", nil, &org)
-	if err != nil {
-		return nil, err
-	}
-
 	res := envelope.Org{}
-	_, err = o.client.Do(ctx, req, &res)
+	err := o.client.RoundTrip(ctx, "POST", "/orgs", nil, &org, &res)
 	return &res, err
 }
 
 // Get returns the organization with the given ID.
 func (o *OrgsClient) Get(ctx context.Context, orgID *identity.ID) (*envelope.Org, error) {
-	req, err := o.client.NewRequest("GET", "/orgs/"+orgID.String(), nil, nil)
-	if err != nil {
-		log.Printf("Error building GET /orgs api request: %s", err)
-		return nil, err
-	}
-
 	org := envelope.Org{}
-	_, err = o.client.Do(ctx, req, &org)
-	if err != nil {
-		log.Printf("Error performing api request: %s", err)
-		return nil, err
-	}
-
-	return &org, nil
+	err := o.client.RoundTrip(ctx, "GET", "/orgs/"+orgID.String(), nil, nil, &org)
+	return &org, err
 }
 
 // GetByName retrieves an org by its name
@@ -76,13 +59,8 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*envelope.Org,
 	}
 	v.Set("name", name)
 
-	req, err := o.client.NewRequest("GET", "/orgs", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var orgs []envelope.Org
-	_, err = o.client.Do(ctx, req, &orgs)
+	err := o.client.RoundTrip(ctx, "GET", "/orgs", v, nil, &orgs)
 	if err != nil {
 		return nil, err
 	}
@@ -95,13 +73,8 @@ func (o *OrgsClient) GetByName(ctx context.Context, name string) (*envelope.Org,
 
 // List returns all organizations that the signed-in user has access to
 func (o *OrgsClient) List(ctx context.Context) ([]envelope.Org, error) {
-	req, err := o.client.NewRequest("GET", "/orgs", nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var orgs []envelope.Org
-	_, err = o.client.Do(ctx, req, &orgs)
+	err := o.client.RoundTrip(ctx, "GET", "/orgs", nil, nil, &orgs)
 	return orgs, err
 }
 
@@ -109,26 +82,16 @@ func (o *OrgsClient) List(ctx context.Context) ([]envelope.Org, error) {
 func (o *OrgsClient) RemoveMember(ctx context.Context, orgID identity.ID,
 	userID identity.ID) error {
 
-	req, err := o.client.NewRequest("DELETE",
-		"/orgs/"+orgID.String()+"/members/"+userID.String(), nil, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = o.client.Do(ctx, req, nil)
-	return err
+	path := "/orgs/" + orgID.String() + "/members/" + userID.String()
+	return o.client.RoundTrip(ctx, "DELETE", path, nil, nil, nil)
 }
 
 // GetTree returns an org tree
 func (o *OrgsClient) GetTree(ctx context.Context, orgID identity.ID) ([]OrgTreeSegment, error) {
 	v := &url.Values{}
 	v.Set("org_id", orgID.String())
-	req, err := o.client.NewRequest("GET", "/orgtree", v, nil)
-	if err != nil {
-		return nil, err
-	}
 
 	var segments []OrgTreeSegment
-	_, err = o.client.Do(ctx, req, &segments)
+	err := o.client.RoundTrip(ctx, "GET", "/orgtree", v, nil, &segments)
 	return segments, err
 }

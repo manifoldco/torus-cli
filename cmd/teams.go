@@ -286,7 +286,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	for _, profile := range *profiles {
+	for _, profile := range profiles {
 		me := ""
 		if session.Username() == profile.Body.Username {
 			me = "*"

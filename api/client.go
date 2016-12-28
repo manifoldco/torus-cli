@@ -48,7 +48,7 @@ type Client struct {
 // NewClient returns a new Client.
 func NewClient(cfg *config.Config) *Client {
 	rt := &apiRoundTripper{
-		DefaultRoundTripper: registry.DefaultRoundTripper{
+		DefaultRequestDoer: registry.DefaultRequestDoer{
 			Client: &http.Client{
 				Transport: &http.Transport{
 					Dial: func(network, address string) (net.Conn, error) {
@@ -77,7 +77,7 @@ func NewClient(cfg *config.Config) *Client {
 }
 
 type apiRoundTripper struct {
-	registry.DefaultRoundTripper
+	registry.DefaultRequestDoer
 }
 
 // NewDaemonRequest constructs a new http.Request, with a body containing the json
@@ -103,7 +103,7 @@ func (rt *apiRoundTripper) newRequest(method, prefix, path string,
 	requestID := uuid.NewV4().String()
 
 	prefixed := "/" + prefix + path
-	req, err := rt.DefaultRoundTripper.NewRequest(method, prefixed, query, body)
+	req, err := rt.DefaultRequestDoer.NewRequest(method, prefixed, query, body)
 	if err != nil {
 		return nil, requestID, err
 	}
@@ -158,4 +158,14 @@ func (rt *apiRoundTripper) DoWithProgress(ctx context.Context, r *http.Request, 
 	defer func() { done <- true }()
 
 	return rt.Do(ctx, r, v)
+}
+
+func (rt *apiRoundTripper) RoundTrip(ctx context.Context, method, path string, query *url.Values, body, response interface{}) error {
+	req, err := rt.NewRequest(method, path, query, body)
+	if err != nil {
+		return err
+	}
+
+	_, err = rt.Do(ctx, req, response)
+	return err
 }
