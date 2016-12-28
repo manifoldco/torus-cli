@@ -20,28 +20,7 @@ func (c *CredentialsClient) Search(ctx context.Context, pathexp string) ([]apity
 	v := &url.Values{}
 	v.Set("pathexp", pathexp)
 
-	req, _, err := c.client.NewDaemonRequest("GET", "/credentials", v, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := []apitypes.CredentialResp{}
-
-	_, err = c.client.Do(ctx, req, &resp)
-	if err != nil {
-		return nil, err
-	}
-
-	creds := make([]apitypes.CredentialEnvelope, len(resp))
-	for i, c := range resp {
-		v, err := createEnvelopeFromResp(c)
-		if err != nil {
-			return nil, err
-		}
-		creds[i] = *v
-	}
-
-	return creds, err
+	return c.listWorker(ctx, v)
 }
 
 // Get returns all credentials at the given path.
@@ -49,14 +28,12 @@ func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.Cr
 	v := &url.Values{}
 	v.Set("path", path)
 
-	req, _, err := c.client.NewDaemonRequest("GET", "/credentials", v, nil)
-	if err != nil {
-		return nil, err
-	}
+	return c.listWorker(ctx, v)
+}
 
-	resp := []apitypes.CredentialResp{}
-
-	_, err = c.client.Do(ctx, req, &resp)
+func (c *CredentialsClient) listWorker(ctx context.Context, v *url.Values) ([]apitypes.CredentialEnvelope, error) {
+	var resp []apitypes.CredentialResp
+	err := c.client.DaemonRoundTrip(ctx, "GET", "/credentials", v, nil, &resp, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -78,13 +55,8 @@ func (c *CredentialsClient) Create(ctx context.Context, cred *apitypes.Credentia
 	progress ProgressFunc) (*apitypes.CredentialEnvelope, error) {
 
 	env := apitypes.CredentialEnvelope{Version: 2, Body: cred}
-	req, reqID, err := c.client.NewDaemonRequest("POST", "/credentials", nil, &env)
-	if err != nil {
-		return nil, err
-	}
-
 	resp := apitypes.CredentialResp{}
-	_, err = c.client.DoWithProgress(ctx, req, &resp, reqID, progress)
+	err := c.client.DaemonRoundTrip(ctx, "POST", "/credentials", nil, &env, &resp, progress)
 	if err != nil {
 		return nil, err
 	}

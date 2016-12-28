@@ -20,11 +20,5 @@ func newOrgInvitesClient(upstream *registry.OrgInvitesClient, rt *apiRoundTrippe
 
 // Approve executes the approve invite request
 func (i *OrgInvitesClient) Approve(ctx context.Context, inviteID identity.ID, output ProgressFunc) error {
-	req, reqID, err := i.client.NewDaemonRequest("POST", "/org-invites/"+inviteID.String()+"/approve", nil, nil)
-	if err != nil {
-		return err
-	}
-
-	_, err = i.client.DoWithProgress(ctx, req, nil, reqID, output)
-	return err
+	return i.client.DaemonRoundTrip(ctx, "POST", "/org-invites/"+inviteID.String()+"/approve", nil, nil, nil, output)
 }

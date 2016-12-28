@@ -23,29 +23,16 @@ type keyPairsRequest struct {
 }
 
 // Create generates new keypairs for the user in the given org.
-func (k *KeyPairsClient) Create(ctx context.Context, orgID *identity.ID,
-	output ProgressFunc) error {
-
-	kpr := keyPairsRequest{OrgID: orgID}
-
-	req, reqID, err := k.client.NewDaemonRequest("POST", "/keypairs/generate", nil, &kpr)
-	if err != nil {
-		return err
-	}
-
-	_, err = k.client.DoWithProgress(ctx, req, nil, reqID, output)
-	return err
+func (k *KeyPairsClient) Create(ctx context.Context, orgID *identity.ID, output ProgressFunc) error {
+	return k.worker(ctx, "generate", orgID, output)
 }
 
 // Revoke revokes the existing keypairs for the user in the given org.
 func (k *KeyPairsClient) Revoke(ctx context.Context, orgID *identity.ID, output ProgressFunc) error {
+	return k.worker(ctx, "revoke", orgID, output)
+}
+
+func (k *KeyPairsClient) worker(ctx context.Context, action string, orgID *identity.ID, output ProgressFunc) error {
 	kpr := keyPairsRequest{OrgID: orgID}
-
-	req, reqID, err := k.client.NewDaemonRequest("POST", "/keypairs/revoke", nil, &kpr)
-	if err != nil {
-		return err
-	}
-
-	_, err = k.client.DoWithProgress(ctx, req, nil, reqID, output)
-	return err
+	return k.client.DaemonRoundTrip(ctx, "POST", "/keypairs/"+action, nil, &kpr, nil, output)
 }
