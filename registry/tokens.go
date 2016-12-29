@@ -2,45 +2,41 @@ package registry
 
 import (
 	"context"
-	"log"
-
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/base64"
-)
-
-// token types that can be requested from the registry
-const (
-	tokenTypeLogin = "login"
-	tokenTypeAuth  = "auth"
+	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 type loginTokenUserRequest struct {
-	Type  string `json:"type"`
-	Email string `json:"email"`
+	Type  primitive.TokenType `json:"type"`
+	Email string              `json:"email"`
 }
 
 type loginTokenMachineRequest struct {
-	Type    string `json:"type"`
-	TokenID string `json:"machine_token_id"`
+	Type    primitive.TokenType `json:"type"`
+	TokenID string              `json:"machine_token_id"`
 }
 
 type loginTokenResponse struct {
-	Salt  *base64.Value `json:"salt"`
-	Token string        `json:"login_token"`
+	Token *envelope.Token `json:"token"`
+	Salt  *base64.Value   `json:"salt"`
 }
 
-type authTokenHMACRequest struct {
-	Type      string `json:"type"`
-	TokenHMAC string `json:"login_token_hmac"`
+type authTokenEdDSARequest struct {
+	Type     primitive.TokenType `json:"type"`
+	TokenSig *base64.Value       `json:"login_token_sig"`
 }
 
-type authTokenPDPKARequest struct {
-	Type     string        `json:"type"`
-	TokenSig *base64.Value `json:"login_token_sig"`
+type authTokenUpgradeEdDSARequest struct {
+	Type      primitive.TokenType `json:"type"`
+	TokenSig  *base64.Value       `json:"login_token_sig"`
+	TokenHMAC string              `json:"login_token_hmac"`
+	PublicKey *base64.Value       `json:"login_public_key"`
 }
 
 type authTokenResponse struct {
-	Token string `json:"auth_token"`
+	Token *envelope.Token `json:"token"`
 }
 
 // TokensClient represents the registry '/tokens' endpoints, used for session
@@ -55,56 +51,62 @@ type TokensClient struct {
 
 // PostLogin requests a login token from the registry for the provided email
 // address.
-func (t *TokensClient) PostLogin(ctx context.Context, creds apitypes.LoginCredential) (*base64.Value, string, error) {
-	salt := loginTokenResponse{}
+func (t *TokensClient) PostLogin(ctx context.Context, creds apitypes.LoginCredential) (
+	*base64.Value, *envelope.Token, error) {
+	respBody := loginTokenResponse{}
 
 	var body interface{}
 	switch creds.Type() {
 	case apitypes.UserSession:
 		body = &loginTokenUserRequest{
-			Type:  tokenTypeLogin,
+			Type:  primitive.LoginToken,
 			Email: creds.Identifier(),
 		}
 	case apitypes.MachineSession:
 		body = &loginTokenMachineRequest{
-			Type:    tokenTypeLogin,
+			Type:    primitive.LoginToken,
 			TokenID: creds.Identifier(),
 		}
 	}
 
-	req, err := t.client.NewRequest("POST", "/tokens", nil, body)
+	err := tokenRoundTrip(ctx, t.client, "", "POST", "/tokens", nil, body, &respBody)
 	if err != nil {
-		log.Printf("Error building http request: %s", err)
-		return salt.Salt, salt.Token, err
+		return nil, nil, err
 	}
 
-	resp, err := t.client.Do(ctx, req, &salt)
-	if err != nil && resp != nil && resp.StatusCode != 201 {
-		log.Printf("Failed to get login token from server: %s", err)
-	} else if err != nil {
-		log.Printf("Error making api request: %s", err)
-	}
-
-	return salt.Salt, salt.Token, err
+	return respBody.Salt, respBody.Token, nil
 }
 
-// PostAuth requests an auth token from the registry for the provided login
-// token value, and it's HMAC.
-func (t *TokensClient) PostAuth(ctx context.Context, token, hmac string) (string, error) {
-	authReq := authTokenHMACRequest{Type: tokenTypeAuth, TokenHMAC: hmac}
-	return t.postAuthWorker(ctx, token, &authReq)
-}
-
-// PostPDPKAuth requests an auth token from the registry for the provided login
+// PostEdDSAAuth requests an auth token from the registry for the provided login
 // token value, and it's signature.
-func (t *TokensClient) PostPDPKAuth(ctx context.Context, token string, sig *base64.Value) (string, error) {
-	authReq := authTokenPDPKARequest{Type: tokenTypeAuth, TokenSig: sig}
+func (t *TokensClient) PostEdDSAAuth(ctx context.Context, token string,
+	sig *base64.Value) (*envelope.Token, error) {
+	authReq := authTokenEdDSARequest{Type: primitive.AuthToken, TokenSig: sig}
 	return t.postAuthWorker(ctx, token, &authReq)
 }
 
-func (t *TokensClient) postAuthWorker(ctx context.Context, token string, authReq interface{}) (string, error) {
+// PostUpgradeEdDSAAuth requests an auth token from the registry while
+// upgrading the user from HMAC based authentication to EdDSA
+func (t *TokensClient) PostUpgradeEdDSAAuth(ctx context.Context, token, hmac string,
+	sig, publicKey *base64.Value) (*envelope.Token, error) {
+	authReq := authTokenUpgradeEdDSARequest{
+		Type:      primitive.AuthToken,
+		TokenSig:  sig,
+		PublicKey: publicKey,
+		TokenHMAC: hmac,
+	}
+
+	return t.postAuthWorker(ctx, token, &authReq)
+}
+
+func (t *TokensClient) postAuthWorker(ctx context.Context, token string,
+	authReq interface{}) (*envelope.Token, error) {
 	auth := authTokenResponse{}
 	err := tokenRoundTrip(ctx, t.client, token, "POST", "/tokens", nil, authReq, &auth)
+	if err != nil {
+		return nil, err
+	}
+
 	return auth.Token, err
 }
 

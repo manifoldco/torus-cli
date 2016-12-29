@@ -202,10 +202,10 @@ func CreateMasterKeyObject(ctx context.Context, password []byte, masterKey *[]by
 
 // DeriveLoginKeypair dervies the ed25519 login keypair used for machine
 // authentication from the given salt and secret values.
-func DeriveLoginKeypair(ctx context.Context, secret, salt *base64url.Value) (
+func DeriveLoginKeypair(ctx context.Context, secret []byte, salt *base64url.Value) (
 	*LoginKeypair, error) {
 
-	key, err := deriveHash(ctx, *secret, salt.String())
+	key, err := deriveHash(ctx, secret, salt.String())
 	if err != nil {
 		return nil, err
 	}

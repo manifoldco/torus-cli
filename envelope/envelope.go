@@ -3,6 +3,8 @@
 package envelope
 
 import (
+	"fmt"
+
 	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
@@ -40,6 +42,96 @@ type Unsigned struct {
 // GetID returns the ID of the object encapsulated in this envelope.
 func (e *Unsigned) GetID() *identity.ID {
 	return e.ID
+}
+
+// GetVersion returns the Schema version of the object encapsulated in this
+// envelope.
+func (e *Unsigned) GetVersion() uint8 {
+	return e.Version
+}
+
+// UserInf is the common interface for all user schema versions.
+type UserInf interface {
+	Envelope
+	Username() string
+	Name() string
+	Email() string
+	Password() *primitive.UserPassword
+	Master() *primitive.MasterKey
+}
+
+// Username returns the username owned by this User.
+func (u *UserV1) Username() string {
+	return u.Body.Username
+}
+
+// Name returns the Full Name of this User.
+func (u *UserV1) Name() string {
+	return u.Body.Name
+}
+
+// Email returns the current Email Address for this User.
+func (u *UserV1) Email() string {
+	return u.Body.Email
+}
+
+// Password returns the UserPassword for this User.
+func (u *UserV1) Password() *primitive.UserPassword {
+	return u.Body.Password
+}
+
+// Master returns the MasterKey for this User.
+func (u *UserV1) Master() *primitive.MasterKey {
+	return u.Body.Master
+}
+
+// Username returns the username owned by this User.
+func (u *User) Username() string {
+	return u.Body.Username
+}
+
+// Name returns the Full Name of this User.
+func (u *User) Name() string {
+	return u.Body.Name
+}
+
+// Email returns the current Email Address for this User.
+func (u *User) Email() string {
+	return u.Body.Email
+}
+
+// Password returns the UserPassword for this User.
+func (u *User) Password() *primitive.UserPassword {
+	return u.Body.Password
+}
+
+// Master returns the MasterKey for this User.
+func (u *User) Master() *primitive.MasterKey {
+	return u.Body.Master
+}
+
+// ConvertUser converts an unsigned envelope to a UserInf interface which
+// provides a common interface for all user versions.
+func ConvertUser(e *Unsigned) (UserInf, error) {
+	var user UserInf
+	switch e.Version {
+	case 1:
+		user = &UserV1{
+			ID:      e.ID,
+			Version: e.Version,
+			Body:    e.Body.(*primitive.UserV1),
+		}
+	case 2:
+		user = &User{
+			ID:      e.ID,
+			Version: e.Version,
+			Body:    e.Body.(*primitive.User),
+		}
+	default:
+		return nil, fmt.Errorf("Unknown User Schema Version: %d", e.Version)
+	}
+
+	return user, nil
 }
 
 // KeyringInf is the common interface for all keyring schema versions.

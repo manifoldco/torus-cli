@@ -8,6 +8,11 @@ _Unreleased_
 
 - Publish release details to GitHub as proper releases.
 - Show more details in the summary of invite and keypairs worklog items.
+- Passphrase derived public key authentication (PDPKA) is now used to
+  authenticate users. Old users will be upgraded to support this auth method on
+  their next login once they've upgraded to the latest version of Torus. New
+  users will support PDPKA out of the box. Once a user has upgraded to support
+  PDPKA, HMAC authentication is no longer supported.
 
 ## v0.21.1
 

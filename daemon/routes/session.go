@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -143,7 +144,7 @@ func updateSelfRoute(client *registry.Client, s session.Session, e *logic.Engine
 		}
 
 		// The fresh user object
-		var result *envelope.User
+		var result envelope.UserInf
 
 		if req.Email != "" {
 			envelope, err := client.Users.Update(c, updateEmail{Email: req.Email})
@@ -229,13 +230,35 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			return
 		}
 
+		b64Salt, err := base64.NewValueFromString(passwordObj.Salt)
+		if err != nil {
+			log.Printf("Error casting Salt into Base64: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
+		bPassphrase := []byte(signup.Passphrase)
+		keypair, err := crypto.DeriveLoginKeypair(ctx, bPassphrase, b64Salt)
+		if err != nil {
+			log.Printf("Error deriving login keypair: %s", err)
+			encodeResponseErr(w, err)
+			return
+		}
+
 		userBody := primitive.User{
-			Username: signup.Username,
-			Name:     signup.Name,
-			Email:    signup.Email,
-			Password: passwordObj,
-			Master:   masterObj,
-			State:    "unverified",
+			BaseUser: primitive.BaseUser{
+				Username: signup.Username,
+				Name:     signup.Name,
+				Email:    signup.Email,
+				Password: passwordObj,
+				Master:   masterObj,
+				State:    "unverified",
+			},
+			PublicKey: &primitive.LoginPublicKey{
+				Salt:  keypair.Salt(),
+				Value: keypair.PublicKey(),
+				Alg:   crypto.EdDSA,
+			},
 		}
 
 		ID, err := identity.NewMutable(&userBody)
@@ -246,7 +269,7 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 
 		userObj := envelope.User{
 			ID:      &ID,
-			Version: 1,
+			Version: 2,
 			Body:    &userBody,
 		}
 

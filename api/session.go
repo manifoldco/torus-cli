@@ -42,7 +42,7 @@ func (s *Session) Username() string {
 		return s.identity.(*envelope.Machine).Body.Name
 	}
 
-	return s.identity.(*envelope.User).Body.Username
+	return s.identity.(envelope.UserInf).Username()
 }
 
 // Name returns the fullname of the user or the machine name
@@ -51,7 +51,7 @@ func (s *Session) Name() string {
 		return s.identity.(*envelope.Machine).Body.Name
 	}
 
-	return s.identity.(*envelope.User).Body.Name
+	return s.identity.(envelope.UserInf).Name()
 }
 
 // Email returns none for a machine or the users email address
@@ -60,7 +60,7 @@ func (s *Session) Email() string {
 		return "none"
 	}
 
-	return s.identity.(*envelope.User).Body.Email
+	return s.identity.(envelope.UserInf).Email()
 }
 
 // NewSession returns a new session constructed from the payload of the current
@@ -68,10 +68,10 @@ func (s *Session) Email() string {
 func NewSession(resp *apitypes.Self) (*Session, error) {
 	switch resp.Type {
 	case apitypes.UserSession:
-		if _, ok := resp.Identity.(*envelope.User); !ok {
+		if _, ok := resp.Identity.(envelope.UserInf); !ok {
 			return nil, errors.New("Identity must be a user object")
 		}
-		if _, ok := resp.Auth.(*envelope.User); !ok {
+		if _, ok := resp.Auth.(envelope.UserInf); !ok {
 			return nil, errors.New("Auth must be a user object")
 		}
 	case apitypes.MachineSession:

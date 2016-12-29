@@ -2,14 +2,15 @@ package logic
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/base64"
-	"github.com/manifoldco/torus-cli/registry"
+	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/primitive"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
-	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
 // Session represents the business logic for creating and managing tokens (and
@@ -28,19 +29,30 @@ func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) err
 		}
 	}
 
-	var authToken string
-	var err error
-	switch creds.Type() {
-	case apitypes.UserSession:
-		authToken, err = attemptHMACLogin(ctx, s.engine.client, s.engine.session, creds)
-	case apitypes.MachineSession:
-		authToken, err = attemptPDPKALogin(ctx, s.engine.client, s.engine.session, creds)
+	salt, loginToken, err := s.engine.client.Tokens.PostLogin(ctx, creds)
+	if err != nil {
+		return err
+	}
+
+	mechanism := loginToken.Body.Mechanism
+	var authToken *envelope.Token
+	switch mechanism {
+	case primitive.HMACAuth:
+		authToken, err = s.attemptEdDSAUpgrade(ctx, loginToken, salt, creds)
+	case primitive.EdDSAAuth:
+		authToken, err = s.attemptEdDSALogin(ctx, loginToken, salt, creds)
+	default:
+		err = &apitypes.Error{
+			Type: apitypes.InternalServerError,
+			Err:  []string{fmt.Sprintf("unrecognized auth mechanism: %s", mechanism)},
+		}
 	}
 	if err != nil {
 		return err
 	}
 
-	self, err := s.engine.client.Self.Get(ctx, authToken)
+	token := authToken.Body.Token
+	self, err := s.engine.client.Self.Get(ctx, authToken.Body.Token)
 	if err != nil {
 		return err
 	}
@@ -50,7 +62,42 @@ func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) err
 		s.engine.db.Set(self.Auth)
 	}
 
-	return s.engine.session.Set(self.Type, self.Identity, self.Auth, creds.Passphrase(), authToken)
+	return s.engine.session.Set(self.Type, self.Identity, self.Auth, creds.Passphrase(), token)
+}
+
+func (s *Session) attemptEdDSAUpgrade(ctx context.Context, loginToken *envelope.Token,
+	salt *base64.Value, creds apitypes.LoginCredential) (*envelope.Token, error) {
+
+	tokenString := loginToken.Body.Token
+	hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase(), salt.String(), tokenString)
+	if err != nil {
+		return nil, err
+	}
+
+	pw := []byte(creds.Passphrase())
+	keypair, err := crypto.DeriveLoginKeypair(ctx, pw, salt)
+	if err != nil {
+		return nil, err
+	}
+
+	sig := keypair.Sign([]byte(tokenString))
+	return s.engine.client.Tokens.PostUpgradeEdDSAAuth(ctx, tokenString, hmac,
+		sig, keypair.PublicKey())
+}
+
+func (s *Session) attemptEdDSALogin(ctx context.Context, loginToken *envelope.Token,
+	salt *base64.Value, creds apitypes.LoginCredential) (*envelope.Token, error) {
+
+	tokenString := loginToken.Body.Token
+	pw := []byte(creds.Passphrase())
+
+	keypair, err := crypto.DeriveLoginKeypair(ctx, pw, salt)
+	if err != nil {
+		return nil, err
+	}
+
+	sig := keypair.Sign([]byte(tokenString))
+	return s.engine.client.Tokens.PostEdDSAAuth(ctx, tokenString, sig)
 }
 
 // Logout destroys the current session if it exists, otherwise, it returns an
@@ -100,34 +147,4 @@ func (s *Session) Logout(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func attemptPDPKALogin(ctx context.Context, client *registry.Client, s session.Session, creds apitypes.LoginCredential) (string, error) {
-	salt, loginToken, err := client.Tokens.PostLogin(ctx, creds)
-	if err != nil {
-		return "", err
-	}
-
-	pw := base64.NewValue([]byte(creds.Passphrase()))
-	keypair, err := crypto.DeriveLoginKeypair(ctx, pw, salt)
-	if err != nil {
-		return "", err
-	}
-
-	loginTokenSig := keypair.Sign([]byte(loginToken))
-	return client.Tokens.PostPDPKAuth(ctx, loginToken, loginTokenSig)
-}
-
-func attemptHMACLogin(ctx context.Context, client *registry.Client, s session.Session, creds apitypes.LoginCredential) (string, error) {
-	salt, loginToken, err := client.Tokens.PostLogin(ctx, creds)
-	if err != nil {
-		return "", err
-	}
-
-	hmac, err := crypto.DeriveLoginHMAC(ctx, creds.Passphrase(), salt.String(), loginToken)
-	if err != nil {
-		return "", err
-	}
-
-	return client.Tokens.PostAuth(ctx, loginToken, hmac)
 }
