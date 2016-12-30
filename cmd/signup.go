@@ -130,7 +130,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	// Log the user in
-	err = performLogin(c, client, user.Body.Email, password, true)
+	err = performLogin(c, client, user.Email(), password, true)
 	if err != nil {
 		return err
 	}

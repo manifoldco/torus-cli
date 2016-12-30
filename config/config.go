@@ -17,7 +17,7 @@ import (
 
 // Version is the compiled version of our binary. It is set via the Makefile.
 var Version = "alpha"
-var apiVersion = "0.2.0"
+var apiVersion = "0.3.0"
 
 const requiredPermissions = 0700
 

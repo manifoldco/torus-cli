@@ -39,9 +39,17 @@ func (v2Schema) Version() int {
 	return 2
 }
 
-// User is the body of a user object
-type User struct { // type: 0x01
-	v1Schema
+// LoginPublicKey represents the public component of a asymmetric key used to
+// authenticate against the registry
+type LoginPublicKey struct {
+	Alg   string        `json:"alg"`
+	Salt  *base64.Value `json:"salt"`
+	Value *base64.Value `json:"value"`
+}
+
+// BaseUser represents the common properties shared between all user schema
+// versions.
+type BaseUser struct {
 	mutable
 	Username string        `json:"username"`
 	Name     string        `json:"name"`
@@ -49,6 +57,19 @@ type User struct { // type: 0x01
 	State    string        `json:"state"`
 	Password *UserPassword `json:"password"`
 	Master   *MasterKey    `json:"master"`
+}
+
+// User is the body of a user object
+type User struct { // type: 0x01
+	v2Schema
+	BaseUser
+	PublicKey *LoginPublicKey `json:"public_key"`
+}
+
+// UserV1 is the body of a user object
+type UserV1 struct { // type: 0x01
+	v1Schema
+	BaseUser
 }
 
 // MasterKey is the body.master object for a user and machine token
@@ -62,6 +83,36 @@ type UserPassword struct {
 	Salt  string        `json:"salt"`
 	Value *base64.Value `json:"value"`
 	Alg   string        `json:"alg"`
+}
+
+// TokenType represents the different types of tokens
+type TokenType string
+
+// Types of tokens which are created throughout the authentication flow
+const (
+	LoginToken TokenType = "login"
+	AuthToken  TokenType = "auth"
+)
+
+// AuthMechanism represents the different authentication mechanisms used for
+// granting Tokens of type AuthToken
+type AuthMechanism string
+
+// Types of mechanisms used to authenticate a user or machine
+const (
+	HMACAuth         AuthMechanism = "hmac"
+	EdDSAAuth        AuthMechanism = "eddsa"
+	UpgradeEdDSAAuth AuthMechanism = "upgrade-eddsa"
+)
+
+// Token is the body of a token object
+type Token struct { // type: 0x10
+	v2Schema
+	mutable
+	TokenType TokenType     `json:"type"`
+	Token     string        `json:"token"`
+	OwnerID   *identity.ID  `json:"owner_id"`
+	Mechanism AuthMechanism `json:"mechanism"`
 }
 
 // Signature is an immutable object, but not technically a payload.
@@ -367,23 +418,15 @@ const (
 type MachineToken struct { // type: 0x18
 	v1Schema
 	mutable
-	OrgID       *identity.ID           `json:"org_id"`
-	MachineID   *identity.ID           `json:"machine_id"`
-	PublicKey   *MachineTokenPublicKey `json:"public_key"`
-	Master      *MasterKey             `json:"master"`
-	CreatedBy   *identity.ID           `json:"created_by"`
-	Created     time.Time              `json:"created_at"`
-	DestroyedBy *identity.ID           `json:"destroyed_by"`
-	Destroyed   *time.Time             `json:"destroyed_at"`
-	State       string                 `json:"state"`
-}
-
-// MachineTokenPublicKey represents a public used by a machine to authenticate
-// against the registry
-type MachineTokenPublicKey struct {
-	Alg   string        `json:"alg"`
-	Salt  *base64.Value `json:"salt"`
-	Value *base64.Value `json:"value"`
+	OrgID       *identity.ID    `json:"org_id"`
+	MachineID   *identity.ID    `json:"machine_id"`
+	PublicKey   *LoginPublicKey `json:"public_key"`
+	Master      *MasterKey      `json:"master"`
+	CreatedBy   *identity.ID    `json:"created_by"`
+	Created     time.Time       `json:"created_at"`
+	DestroyedBy *identity.ID    `json:"destroyed_by"`
+	Destroyed   *time.Time      `json:"destroyed_at"`
+	State       string          `json:"state"`
 }
 
 // Project is an entity that represents a group of services

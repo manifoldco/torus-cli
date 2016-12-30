@@ -122,11 +122,11 @@ func checkSessionType(sessionType apitypes.SessionType, identity, auth envelope.
 
 	switch sessionType {
 	case apitypes.UserSession:
-		if _, ok := identity.(*envelope.User); !ok {
+		if _, ok := identity.(envelope.UserInf); !ok {
 			return errors.New("Identity must be a user object")
 		}
 
-		if _, ok := auth.(*envelope.User); !ok {
+		if _, ok := auth.(envelope.UserInf); !ok {
 			return errors.New("Auth must be a user object")
 		}
 	case apitypes.MachineSession:
@@ -206,7 +206,7 @@ func (s *session) MasterKey() (*base64.Value, error) {
 	}
 
 	if s.Type() == apitypes.UserSession {
-		return s.auth.(*envelope.User).Body.Master.Value, nil
+		return s.auth.(envelope.UserInf).Master().Value, nil
 	}
 
 	return s.auth.(*envelope.MachineToken).Body.Master.Value, nil

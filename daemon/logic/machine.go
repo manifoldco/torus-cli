@@ -39,7 +39,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 		return nil, err
 	}
 
-	keypair, err := crypto.DeriveLoginKeypair(ctx, secret, salt)
+	keypair, err := crypto.DeriveLoginKeypair(ctx, *secret, salt)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 	tokenBody := &primitive.MachineToken{
 		OrgID:     orgID,
 		MachineID: machine.ID,
-		PublicKey: &primitive.MachineTokenPublicKey{
+		PublicKey: &primitive.LoginPublicKey{
 			Salt:  keypair.Salt(),
 			Value: keypair.PublicKey(),
 			Alg:   crypto.EdDSA,

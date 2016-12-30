@@ -143,7 +143,7 @@ func profileEdit(ctx *cli.Context) error {
 	if err != nil {
 		return errs.NewErrorExitError("Failed to update profile.", err)
 	}
-	currentEmail := result.Body.Email
+	currentEmail := result.Email()
 
 	// If the password has changed, log the user in again
 	if newPassword != "" {
