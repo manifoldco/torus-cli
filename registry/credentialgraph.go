@@ -50,13 +50,81 @@ func (c *CredentialGraphV2) GetCredentials() []envelope.CredentialInf {
 	return c.Credentials
 }
 
+type rawGraph struct {
+	Keyring     *envelope.Signed              `json:"keyring"`
+	Members     json.RawMessage               `json:"members"`
+	Credentials []envelope.Signed             `json:"credentials"`
+	Claims      []envelope.KeyringMemberClaim `json:"claims"`
+}
+
+func (r *rawGraph) convert() (CredentialGraph, error) {
+	creds := make([]envelope.CredentialInf, len(r.Credentials))
+	for i, ec := range r.Credentials {
+		switch ec.Body.(type) {
+		case *primitive.CredentialV1:
+			creds[i] = &envelope.CredentialV1{
+				ID:        ec.ID,
+				Version:   ec.Version,
+				Signature: ec.Signature,
+				Body:      ec.Body.(*primitive.CredentialV1),
+			}
+		case *primitive.Credential:
+			creds[i] = &envelope.Credential{
+				ID:        ec.ID,
+				Version:   ec.Version,
+				Signature: ec.Signature,
+				Body:      ec.Body.(*primitive.Credential),
+			}
+		}
+	}
+
+	if r.Keyring.Version == 1 {
+		kre := &envelope.KeyringV1{
+			ID:        r.Keyring.ID,
+			Version:   r.Keyring.Version,
+			Signature: r.Keyring.Signature,
+			Body:      r.Keyring.Body.(*primitive.KeyringV1),
+		}
+
+		c := CredentialGraphV1{
+			KeyringSectionV1: KeyringSectionV1{
+				Keyring: kre,
+			},
+			Credentials: creds,
+		}
+		err := json.Unmarshal(r.Members, &c.Members)
+		return &c, err
+	}
+
+	kre := &envelope.Keyring{
+		ID:        r.Keyring.ID,
+		Version:   r.Keyring.Version,
+		Signature: r.Keyring.Signature,
+		Body:      r.Keyring.Body.(*primitive.Keyring),
+	}
+
+	c := CredentialGraphV2{
+		KeyringSectionV2: KeyringSectionV2{
+			Keyring: kre,
+			Claims:  r.Claims,
+		},
+		Credentials: creds,
+	}
+	err := json.Unmarshal(r.Members, &c.Members)
+	return &c, err
+}
+
 // Post creates a new CredentialGraph on the registry.
 //
 // The CredentialGraph includes the keyring, it's members, and credentials.
-func (c *CredentialGraphClient) Post(ctx context.Context, t *CredentialGraph) (*CredentialGraphV2, error) {
-	resp := CredentialGraphV2{}
+func (c *CredentialGraphClient) Post(ctx context.Context, t *CredentialGraph) (CredentialGraph, error) {
+	resp := rawGraph{}
 	err := c.client.RoundTrip(ctx, "POST", "/credentialgraph", nil, t, &resp)
-	return &resp, err
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.convert()
 }
 
 // List returns back all segments of the CredentialGraph (Keyring, Keyring
@@ -99,12 +167,7 @@ func (c *CredentialGraphClient) Search(ctx context.Context, pathExp string,
 }
 
 func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) ([]CredentialGraph, error) {
-	resp := []struct {
-		Keyring     *envelope.Signed              `json:"keyring"`
-		Members     json.RawMessage               `json:"members"`
-		Credentials []envelope.Signed             `json:"credentials"`
-		Claims      []envelope.KeyringMemberClaim `json:"claims"`
-	}{}
+	resp := []rawGraph{}
 
 	err := c.client.RoundTrip(ctx, "GET", "/credentialgraph", &query, nil, &resp)
 	if err != nil {
@@ -113,65 +176,9 @@ func (c *CredentialGraphClient) getGraph(ctx context.Context, query url.Values) 
 
 	converted := make([]CredentialGraph, len(resp))
 	for i, g := range resp {
-		creds := make([]envelope.CredentialInf, len(g.Credentials))
-		for i, ec := range g.Credentials {
-			switch ec.Body.(type) {
-			case *primitive.CredentialV1:
-				creds[i] = &envelope.CredentialV1{
-					ID:        ec.ID,
-					Version:   ec.Version,
-					Signature: ec.Signature,
-					Body:      ec.Body.(*primitive.CredentialV1),
-				}
-			case *primitive.Credential:
-				creds[i] = &envelope.Credential{
-					ID:        ec.ID,
-					Version:   ec.Version,
-					Signature: ec.Signature,
-					Body:      ec.Body.(*primitive.Credential),
-				}
-			}
-		}
-
-		if g.Keyring.Version == 1 {
-			kre := &envelope.KeyringV1{
-				ID:        g.Keyring.ID,
-				Version:   g.Keyring.Version,
-				Signature: g.Keyring.Signature,
-				Body:      g.Keyring.Body.(*primitive.KeyringV1),
-			}
-
-			c := CredentialGraphV1{
-				KeyringSectionV1: KeyringSectionV1{
-					Keyring: kre,
-				},
-				Credentials: creds,
-			}
-			err := json.Unmarshal(g.Members, &c.Members)
-			if err != nil {
-				return nil, err
-			}
-			converted[i] = &c
-		} else {
-			kre := &envelope.Keyring{
-				ID:        g.Keyring.ID,
-				Version:   g.Keyring.Version,
-				Signature: g.Keyring.Signature,
-				Body:      g.Keyring.Body.(*primitive.Keyring),
-			}
-
-			c := CredentialGraphV2{
-				KeyringSectionV2: KeyringSectionV2{
-					Keyring: kre,
-					Claims:  g.Claims,
-				},
-				Credentials: creds,
-			}
-			err := json.Unmarshal(g.Members, &c.Members)
-			if err != nil {
-				return nil, err
-			}
-			converted[i] = &c
+		converted[i], err = g.convert()
+		if err != nil {
+			return nil, err
 		}
 	}
 
