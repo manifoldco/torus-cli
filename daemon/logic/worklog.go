@@ -335,6 +335,11 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 		return nil, err
 	}
 
+	claimTrees, err := h.engine.client.ClaimTree.List(ctx, org.ID, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	// XXX: this logic will be much different when we selectively encode the
 	// members of a keyring based on ACLs.
 	members, err := getKeyringMembers(ctx, h.engine.client, org.ID)
@@ -351,6 +356,14 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 			}
 
 			if m != nil {
+				continue
+			}
+
+			// We now know the user/machine should have access to this keyring,
+			// but at the moment they do not. See if they do have a valid
+			// encryption key we can use to add them to the keyring.
+			targetPubKey, _ := findEncryptionPublicKey(claimTrees, org.ID, &member)
+			if targetPubKey == nil { // nothing we can do for this user right now
 				continue
 			}
 
