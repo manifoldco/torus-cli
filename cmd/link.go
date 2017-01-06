@@ -28,11 +28,6 @@ func init() {
 				Name:  "force, f",
 				Usage: "Overwrite existing organization and project links.",
 			},
-			cli.BoolFlag{
-				Name:   "bare",
-				Usage:  "Skip creation of default service.",
-				Hidden: true,
-			},
 		},
 		Action: chain(ensureDaemon, ensureSession, linkCmd),
 	}
@@ -114,22 +109,6 @@ func linkCmd(ctx *cli.Context) error {
 		if err != nil {
 			fmt.Println("")
 			return err
-		}
-	}
-
-	// Do not create default service if --bare is used or if existing project
-	// is selected from the prompt
-	createDefaultService := true
-	if ctx.Bool("bare") || !newProject {
-		createDefaultService = false
-	}
-
-	// Create the default service if necessary
-	if createDefaultService {
-		err = client.Services.Create(c, org.ID, project.ID, "default")
-		if err != nil {
-			fmt.Println("")
-			return errs.NewExitError("Service creation failed.")
 		}
 	}
 
