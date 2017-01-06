@@ -14,6 +14,12 @@ _Unreleased_
   users will support PDPKA out of the box. Once a user has upgraded to support
   PDPKA, HMAC authentication is no longer supported.
 
+**Fixes**
+
+- If a user is missing access to a keyring, but they do not yet have a valid
+  keypair, don't alert other users to add this user to the keyring; they won't
+  be able to!
+
 ## v0.21.1
 
 _2016-12-20_
