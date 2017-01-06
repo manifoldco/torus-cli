@@ -11,14 +11,16 @@ A project is a grouping of services, environments and secrets typically synonymo
 
 A project is given a unique name within the organization that adheres to the system naming scheme. If no name argument is supplied, the user will be prompted to enter the new project’s name.
 
+When a project is created, a `default` service is created as well.
+
 ### list
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
 `torus projects list` displays all projects for the specified organization.
 
 ## services
-A service is an entity synonymous with an application process.  
-  
+A service is an entity synonymous with an application process.
+
 With the advent of micro-service architectures, projects are having more than one application process and in a lot of cases these need unique configuration.
 
 ### create
@@ -26,7 +28,7 @@ With the advent of micro-service architectures, projects are having more than on
 
 `torus services create [name]` creates a new service for the specified organization.
 
-A service is given a unique name within the organization that adheres to the system naming scheme. If no name argument is supplied, the user will be prompted to enter the new service’s name.  
+A service is given a unique name within the organization that adheres to the system naming scheme. If no name argument is supplied, the user will be prompted to enter the new service’s name.
 
 ### list
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -38,7 +40,7 @@ An environment is a grouping of services that live within a project which have t
 
 By default every user in an organization is given a `dev-$username` environment (where $username is the user’s profile username). This is synonymous will a user’s local environment.
 
-Users are also given access to share credentials across all users using the `dev-*` environment. This is a paradigm that exists through the default [access controls](./access-control.md) (and doesn’t actually exist as an environment object for the organization).  
+Users are also given access to share credentials across all users using the `dev-*` environment. This is a paradigm that exists through the default [access controls](./access-control.md) (and doesn’t actually exist as an environment object for the organization).
 
 ### create
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -50,7 +52,7 @@ An environment is given a unique name within the organization that adheres to th
 ### list
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus envs list` displays all services for the specified organization.  
+`torus envs list` displays all services for the specified organization.
 
 ## link
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -63,7 +65,7 @@ If a user is operating the CLI in a directory which has not been linked, they wi
 
 In a linked directory the project and organization are inherited from the `.torus.json` file and do not need to be supplied; however, if they are present the command options will take precedence.
 
-The context features provided as a result of `torus link` can be disabled using [preferences](./system.md#prefs). 
+The context features provided as a result of `torus link` can be disabled using [preferences](./system.md#prefs).
 
 ## unlink
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)

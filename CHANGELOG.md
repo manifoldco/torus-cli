@@ -13,6 +13,8 @@ _Unreleased_
   their next login once they've upgraded to the latest version of Torus. New
   users will support PDPKA out of the box. Once a user has upgraded to support
   PDPKA, HMAC authentication is no longer supported.
+- When creating a project, a `default` service is always created as well. As a
+  result, the `--bare` option has been removed from `torus link`.
 
 **Fixes**
 
