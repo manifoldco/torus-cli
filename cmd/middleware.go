@@ -20,7 +20,7 @@ import (
 	"github.com/manifoldco/torus-cli/prefs"
 )
 
-const updateCheckUrl = "https://get.torus.sh/manifest.json"
+const downloadURL = "https://www.torus.sh/install"
 
 // chain allows easy sequential calling of BeforeFuncs and AfterFuncs.
 // chain will exit on the first error seen.
@@ -353,7 +353,7 @@ func checkUpdates(ctx *cli.Context) error {
 	defer w.Flush()
 
 	if updateInfo.NeedsUpdate {
-		fmt.Fprintf(w, "New version %s available! Visit %s to download\n", updateInfo.Version, updateCheckUrl)
+		fmt.Fprintf(w, "New version %s available! Visit %s to download\n", updateInfo.Version, downloadURL)
 	}
 
 	return nil
