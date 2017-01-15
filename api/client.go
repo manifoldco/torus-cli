@@ -37,6 +37,7 @@ type Client struct {
 	Credentials  *CredentialsClient
 	Worklog      *WorklogClient
 	Version      *VersionClient
+	Updates      *UpdatesClient
 }
 
 // NewClient returns a new Client.
@@ -67,6 +68,7 @@ func NewClient(cfg *config.Config) *Client {
 	c.Policies = &PoliciesClient{client: c}
 	c.Worklog = &WorklogClient{client: c}
 	c.Version = &VersionClient{client: c}
+	c.Updates = &UpdatesClient{client: c}
 
 	return c
 }

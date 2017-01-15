@@ -16,7 +16,7 @@ func init() {
 		Name:     "login",
 		Usage:    "Log in to a user account, authenticating the CLI",
 		Category: "ACCOUNT",
-		Action:   chain(ensureDaemon, login),
+		Action:   chain(ensureDaemon, login, checkUpdates),
 	}
 	Cmds = append(Cmds, login)
 }

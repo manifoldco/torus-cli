@@ -19,6 +19,7 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/registry"
 	"github.com/manifoldco/torus-cli/daemon/session"
 	"github.com/manifoldco/torus-cli/daemon/socket"
+	"github.com/manifoldco/torus-cli/daemon/updates"
 )
 
 // Daemon is the torus coprocess that contains session secrets, handles
@@ -30,6 +31,7 @@ type Daemon struct {
 	config      *config.Config
 	db          *db.DB
 	logic       *logic.Engine
+	updates     *updates.Engine
 	hasShutdown bool
 }
 
@@ -71,8 +73,9 @@ func New(cfg *config.Config, groupShared bool) (*Daemon, error) {
 	client := registry.NewClient(cfg.RegistryURI.String(), cfg.APIVersion,
 		cfg.Version, session, transport)
 	logic := logic.NewEngine(cfg, session, db, cryptoEngine, client)
+	updates := updates.NewEngine(cfg)
 
-	proxy, err := socket.NewAuthProxy(cfg, session, db, transport, client, logic, groupShared)
+	proxy, err := socket.NewAuthProxy(cfg, session, db, transport, client, logic, updates, groupShared)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create auth proxy: %s", err)
 	}
@@ -85,6 +88,7 @@ func New(cfg *config.Config, groupShared bool) (*Daemon, error) {
 		db:          db,
 		logic:       logic,
 		hasShutdown: false,
+		updates:     updates,
 	}
 
 	return daemon, nil
@@ -142,6 +146,10 @@ func (d *Daemon) Run() error {
 		}
 	}
 
+	if err := d.updates.Start(); err != nil {
+		log.Printf("cannot start updates checker: %s", err)
+	}
+
 	return d.proxy.Listen()
 }
 
@@ -162,6 +170,10 @@ func (d *Daemon) Shutdown() error {
 
 	if err := d.db.Close(); err != nil {
 		return fmt.Errorf("Could not close db: %s", err)
+	}
+
+	if err := d.updates.Stop(); err != nil {
+		return fmt.Errorf("Could not stop update checker: %s", err)
 	}
 
 	return nil

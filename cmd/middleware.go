@@ -6,6 +6,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/urfave/cli"
@@ -18,6 +19,8 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
 )
+
+const updateCheckUrl = "https://get.torus.sh/manifest.json"
 
 // chain allows easy sequential calling of BeforeFuncs and AfterFuncs.
 // chain will exit on the first error seen.
@@ -327,6 +330,30 @@ func checkRequiredFlags(ctx *cli.Context) error {
 	if len(missing) > 0 {
 		msg := "Missing flags: " + strings.Join(missing, ", ")
 		return errs.NewUsageExitError(msg, ctx)
+	}
+
+	return nil
+}
+
+func checkUpdates(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	updateInfo, err := client.Updates.Check(c)
+	if err != nil {
+		return err
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
+	defer w.Flush()
+
+	if updateInfo.NeedsUpdate {
+		fmt.Fprintf(w, "New version %s available! Visit %s to download\n", updateInfo.Version, updateCheckUrl)
 	}
 
 	return nil
