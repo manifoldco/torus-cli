@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## v0.23.0
+
+_Unreleased_
+
+**Notable Changes**
+
+- `keyring` type worklog items are now organized by user, not keyring. Keyrings
+  are internal structures that hold secrets; they shouild rarely appear in the
+  UI. Focusing on users that are missing access they should have is much more
+  understandable.
+
 ## v0.22.0
 
 _2017-01-17_

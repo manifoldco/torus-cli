@@ -367,14 +367,20 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 				continue
 			}
 
-			path := graph.GetKeyring().PathExp().String()
-			if _, ok := missing[path]; !ok {
+			users, err := h.engine.client.Profiles.ListByID(ctx, []identity.ID{member})
+			if err != nil {
+				return nil, err
+			}
+
+			name := users[0].Body.Username
+			if _, ok := missing[name]; !ok {
 				item := apitypes.WorklogItem{
-					Subject: path,
-					Summary: "One or more users are missing access to these secrets.",
+					Subject:   name,
+					Summary:   "This user is missing access to one or more secrets.",
+					SubjectID: &member,
 				}
 				item.CreateID(apitypes.KeyringMembersWorklogType)
-				missing[path] = item
+				missing[name] = item
 			}
 			// at least one member is missing. we can stop looking here.
 			break
@@ -411,36 +417,54 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 		return nil, err
 	}
 
-	// Get all the users that should be a member of this keyring.
-	members, err := getKeyringMembers(ctx, h.engine.client, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	pe, err := pathexp.Parse(item.Subject)
-	if err != nil {
-		return nil, err
-	}
-
+	// Get all keyrings and find the active ones. We can then add the user to
+	// the ones they're missing from.
 	cgs := newCredentialGraphSet()
-	graphs, err := h.engine.client.CredentialGraph.List(ctx, "", pe, nil)
+	paths := make(map[string]*pathexp.PathExp)
+	keyrings, err := h.engine.client.Keyring.List(ctx, orgID, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	err = cgs.Add(graphs...)
-	if err != nil {
-		return nil, err
+	for _, k := range keyrings {
+		path := k.GetKeyring().PathExp()
+		paths[path.String()] = path
 	}
 
-	graphs, err = cgs.Active()
+	for _, pe := range paths {
+		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", pe, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		err = cgs.Add(graphs...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	graphs, err := cgs.Active()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, graph := range graphs {
-		// The current user's mekshare info for this credential graph version
-		// will be the same across all missing users, so look it up first.
+		// See if the user in question is in this keyring
+		m, _, err := graph.FindMember(item.SubjectID)
+		if err != nil && err != registry.ErrMemberNotFound {
+			return nil, err
+		}
+
+		if m != nil {
+			continue
+		}
+
+		// We have a missing user.
+		// Get the existing user's share of the master encryption key, find the
+		// missing user's public key, clone the existing
+		// user's copy of the master encryption key for this keyring, and
+		// post the result. Now the user is a member!
+
 		krm, mekshare, err := graph.FindMember(h.engine.session.AuthID())
 		if err != nil {
 			return nil, err
@@ -451,63 +475,48 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 			return nil, err
 		}
 
-		for _, member := range members {
-			m, _, err := graph.FindMember(&member)
-			if err != nil && err != registry.ErrMemberNotFound {
-				return nil, err
-			}
+		targetPubKey, err := findEncryptionPublicKey(claimTrees, orgID, item.SubjectID)
+		if err != nil {
+			return nil, err
+		}
 
-			if m != nil {
-				continue
-			}
+		encMek, nonce, err := h.engine.crypto.CloneMembership(ctx,
+			*mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption,
+			*encPubKey.Body.Key.Value, *targetPubKey.Body.Key.Value)
+		if err != nil {
+			return nil, err
+		}
 
-			// We have a missing user. Find their public key, clone the existing
-			// user's copy of the master encryption key for this keyring, and
-			// post the result. Now the user is a member!
+		key := &primitive.KeyringMemberKey{
+			Algorithm: crypto.EasyBox,
+			Nonce:     base64.NewValue(nonce),
+			Value:     base64.NewValue(encMek),
+		}
 
-			targetPubKey, err := findEncryptionPublicKey(claimTrees, orgID, &member)
+		keyring := graph.GetKeyring()
+		switch k := keyring.(type) {
+		case *envelope.KeyringV1:
+			projectID := k.Body.ProjectID
+			membership, err := newV1KeyringMember(ctx, h.engine.crypto, orgID, projectID,
+				krm.KeyringID, item.SubjectID, targetPubKey.ID, encID, sigID, key, kp)
 			if err != nil {
 				return nil, err
 			}
 
-			encMek, nonce, err := h.engine.crypto.CloneMembership(ctx,
-				*mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption,
-				*encPubKey.Body.Key.Value, *targetPubKey.Body.Key.Value)
+			_, err = h.engine.client.KeyringMember.Post(ctx, []envelope.KeyringMemberV1{*membership})
 			if err != nil {
 				return nil, err
 			}
 
-			key := &primitive.KeyringMemberKey{
-				Algorithm: crypto.EasyBox,
-				Nonce:     base64.NewValue(nonce),
-				Value:     base64.NewValue(encMek),
+		case *envelope.Keyring:
+			membership, err := newV2KeyringMember(ctx, h.engine.crypto, orgID, krm.KeyringID,
+				item.SubjectID, targetPubKey.ID, encID, sigID, key, kp)
+			if err != nil {
+				return nil, err
 			}
-
-			keyring := graph.GetKeyring()
-			switch k := keyring.(type) {
-			case *envelope.KeyringV1:
-				projectID := k.Body.ProjectID
-				membership, err := newV1KeyringMember(ctx, h.engine.crypto, orgID, projectID,
-					krm.KeyringID, &member, targetPubKey.ID, encID, sigID, key, kp)
-				if err != nil {
-					return nil, err
-				}
-
-				_, err = h.engine.client.KeyringMember.Post(ctx, []envelope.KeyringMemberV1{*membership})
-				if err != nil {
-					return nil, err
-				}
-
-			case *envelope.Keyring:
-				membership, err := newV2KeyringMember(ctx, h.engine.crypto, orgID, krm.KeyringID,
-					&member, targetPubKey.ID, encID, sigID, key, kp)
-				if err != nil {
-					return nil, err
-				}
-				err = h.engine.client.Keyring.Members.Post(ctx, *membership)
-				if err != nil {
-					return nil, err
-				}
+			err = h.engine.client.Keyring.Members.Post(ctx, *membership)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
@@ -515,6 +524,6 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 	return &apitypes.WorklogResult{
 		ID:      item.ID,
 		State:   apitypes.SuccessWorklogResult,
-		Message: "Missing user(s) added to keyring.",
+		Message: "User added to missing keyring(s).",
 	}, nil
 }
