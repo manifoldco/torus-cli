@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/prefs"
 )
@@ -128,6 +129,9 @@ func (e *Engine) getLastCheck() error {
 
 	content, err := ioutil.ReadFile(e.config.LastUpdatePath)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -160,7 +164,19 @@ func (e *Engine) getLatestVersion() (string, error) {
 }
 
 func (e *Engine) needsUpdate() bool {
-	return e.targetVersion > e.config.Version
+	// must update if there's no current version stored or it's malformed
+	current, err := semver.Make(e.config.Version)
+	if err != nil {
+		return true
+	}
+
+	// refuse to update to an unknown/invalid target version
+	target, err := semver.Make(e.targetVersion)
+	if err != nil {
+		return false
+	}
+
+	return target.Compare(current) > 0
 }
 
 func (e *Engine) VersionInfo() (bool, string) {
