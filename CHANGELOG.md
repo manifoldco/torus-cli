@@ -2,7 +2,7 @@
 
 ## v0.22.0
 
-_Unreleased_
+_2017-01-17_
 
 **Notable Changes**
 
@@ -21,6 +21,7 @@ _Unreleased_
 - If a user is missing access to a keyring, but they do not yet have a valid
   keypair, don't alert other users to add this user to the keyring; they won't
   be able to!
+- Removed forgotten debug logs from appearing in `~/.torus/daemon.log`
 
 ## v0.21.1
 
