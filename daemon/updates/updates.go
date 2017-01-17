@@ -94,7 +94,8 @@ func (e *Engine) start() {
 // has passed. By default the check is performed at the `releaseHourCheck`-th hour
 // of the `releaseDay` weekday.
 func (e *Engine) nextCheck() time.Duration {
-	day := time.Now().Weekday()
+	now := time.Now().UTC()
+	day := now.Weekday()
 	if e.lastCheck.IsZero() || (day >= releaseDay && time.Since(e.lastCheck).Hours() > releaseHourCheck) {
 		return time.Second
 	}
@@ -105,14 +106,14 @@ func (e *Engine) nextCheck() time.Duration {
 	} else {
 		daysDue = 7 - daysDue
 	}
-	hoursDue := 24*(daysDue) - time.Now().Hour() + releaseHourCheck
+	hoursDue := 24*(daysDue) - now.Hour() + releaseHourCheck
 
 	log.Printf("checking updates in %d hours", hoursDue)
 	return time.Duration(hoursDue) * time.Hour
 }
 
 func (e *Engine) storeLastCheck() error {
-	e.lastCheck = time.Now()
+	e.lastCheck = time.Now().UTC()
 	data := []byte(e.lastCheck.Format(timeLayout))
 	return ioutil.WriteFile(e.config.LastUpdatePath, data, 0600)
 }
