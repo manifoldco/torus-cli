@@ -14,13 +14,13 @@ type UpdatesClient struct {
 
 // Check returns the latest updates check result, useful for detecting whether
 // a newer version of Torus is available for download.
-func (c *UpdatesClient) Check(ctx context.Context) (*apitypes.Updates, error) {
+func (c *UpdatesClient) Check(ctx context.Context) (*apitypes.UpdateInfo, error) {
 	req, _, err := c.client.NewRequest("GET", "/updates", nil, nil, false)
 	if err != nil {
 		return nil, err
 	}
 
-	var needsUpdate apitypes.Updates
+	var needsUpdate apitypes.UpdateInfo
 	if _, err := c.client.Do(ctx, req, &needsUpdate, nil, nil); err != nil {
 		return nil, err
 	}

@@ -267,3 +267,10 @@ type Membership struct {
 type VerifyEmail struct {
 	Code string `json:"code"`
 }
+
+// UpdateInfo contains info about the latest version of Torus available
+// for download and if that version is higher than the local running one.
+type UpdateInfo struct {
+	NeedsUpdate bool   `json:"needs_update"`
+	Version     string `json:"version"`
+}

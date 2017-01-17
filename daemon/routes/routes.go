@@ -58,7 +58,7 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 
 	mux.GetFunc("/updates", func(w http.ResponseWriter, r *http.Request) {
 		needsUpdate, version := uEngine.VersionInfo()
-		payload := &apitypes.Updates{
+		payload := &apitypes.UpdateInfo{
 			NeedsUpdate: needsUpdate,
 			Version:     version,
 		}
