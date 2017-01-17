@@ -160,7 +160,7 @@ func (s *session) Set(sessionType apitypes.SessionType, identity, auth envelope.
 		return errors.New("Passphrase must not be empty")
 	}
 
-	if len(token) == 0 {
+	if len(token) == 0 && sessionType == apitypes.UserSession {
 		return errors.New("Token must not be empty")
 	}
 
