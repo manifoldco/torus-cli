@@ -18,6 +18,7 @@ Preference | Description
 `core.auto_confirm` | Boolean determining if confirmation prompts should be automatically skipped (equivalent of always using `-y` command option)
 `core.vim` | Boolean determining if CLI input should use Vim bindings
 `core.hints` | Boolean determining if the "protip" hints are shown after command execution
+`core.check_updates` | Boolean determining if the daemon can check for updates in the background
 `defaults.org` | Organization name to be used with context
 `defaults.project` | Project name to be used with context
 `defaults.environment` | Environment name to be used with context
