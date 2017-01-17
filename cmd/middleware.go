@@ -6,7 +6,6 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"github.com/urfave/cli"
@@ -335,6 +334,8 @@ func checkRequiredFlags(ctx *cli.Context) error {
 	return nil
 }
 
+// checkUpdates checks if there's a torus update available. If so,
+// it prints a message to the stdout with the download URL if so.
 func checkUpdates(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -349,11 +350,8 @@ func checkUpdates(ctx *cli.Context) error {
 		return err
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
-	defer w.Flush()
-
 	if updateInfo.NeedsUpdate {
-		fmt.Fprintf(w, "New version %s available! Visit %s to download\n", updateInfo.Version, downloadURL)
+		fmt.Printf("New version %s available! Visit %s to download\n", updateInfo.Version, downloadURL)
 	}
 
 	return nil
