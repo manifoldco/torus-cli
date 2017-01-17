@@ -17,6 +17,9 @@ func (c *UpdatesClient) Check(ctx context.Context) (*apitypes.Updates, error) {
 	}
 
 	var needsUpdate apitypes.Updates
-	_, err = c.client.Do(ctx, req, &needsUpdate, nil, nil)
+	if _, err := c.client.Do(ctx, req, &needsUpdate, nil, nil); err != nil {
+		return nil, err
+	}
+
 	return &needsUpdate, nil
 }
