@@ -432,7 +432,7 @@ builds/npm/README.md builds/npm/LICENSE.md: builds/npm/%: builds/npm
 builds/npm/package.json: packaging/npm/package.json.in builds/npm
 	sed 's/VERSION/$(VERSION)/' < $< > $@
 
-builds/npm/bin/torus: packaging/npm/passthrough.js builds/npm/bin/
+builds/npm/bin/torus: packaging/npm/passthrough.js builds/npm/bin
 	cp $< $@
 
 builds/npm/bin/torus-darwin-amd64: builds/bin/$(VERSION)/darwin/amd64/torus builds/npm/bin
