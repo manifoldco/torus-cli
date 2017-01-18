@@ -20,15 +20,27 @@ const (
 )
 
 var (
-	timeLayout = time.RFC3339
-	releaseDay = time.Wednesday
+	timeLayout       = time.RFC3339
+	releaseDay       = time.Wednesday
+	minCheckDuration = time.Second
 )
+
+type TimeManager interface {
+	Now() time.Time
+}
+
+type defaultTimeManager struct{}
+
+func (m defaultTimeManager) Now() time.Time {
+	return time.Now().UTC()
+}
 
 type Engine struct {
 	config        *config.Config
 	stop          chan struct{}
 	lastCheck     time.Time
 	targetVersion string
+	timeManager   TimeManager
 }
 
 type VersionInfo struct {
@@ -36,11 +48,21 @@ type VersionInfo struct {
 	Released string `json:"released"`
 }
 
-func NewEngine(cfg *config.Config) *Engine {
-	return &Engine{
+func NewEngine(cfg *config.Config, options ...func(*Engine)) *Engine {
+	engine := &Engine{
 		config: cfg,
 		stop:   make(chan struct{}),
 	}
+
+	for _, opt := range options {
+		opt(engine)
+	}
+
+	if engine.timeManager == nil {
+		engine.timeManager = defaultTimeManager{}
+	}
+
+	return engine
 }
 
 func (e *Engine) Start() error {
@@ -59,6 +81,12 @@ func (e *Engine) Start() error {
 func (e *Engine) Stop() error {
 	close(e.stop)
 	return nil
+}
+
+func (e *Engine) SetTimeManager(manager TimeManager) func(*Engine) {
+	return func(engine *Engine) {
+		engine.timeManager = manager
+	}
 }
 
 func (e *Engine) start() {
@@ -95,26 +123,72 @@ func (e *Engine) start() {
 // has passed. By default the check is performed at the `releaseHourCheck`-th hour
 // of the `releaseDay` weekday.
 func (e *Engine) nextCheck() time.Duration {
-	now := time.Now().UTC()
-	day := now.Weekday()
-	if e.lastCheck.IsZero() || (day >= releaseDay && time.Since(e.lastCheck).Hours() > releaseHourCheck) {
-		return time.Second
+	if !e.lastCheckValid() {
+		return minCheckDuration
+	}
+	return e.hoursToNextRelease()
+}
+
+// lastCheckValid checks if the last update check contains the most recent
+// update info.
+func (e *Engine) lastCheckValid() bool {
+	if e.lastCheck.IsZero() {
+		return false
+	}
+	return e.lastCheck.Unix()-e.prevReleaseDay().Unix() >= 0
+}
+
+// prevReleaseDay returns the date of the last release day, calculated based on
+// the `releaseHourCheck`-th hour of the previous `releaseDay` weekday.
+func (e *Engine) prevReleaseDay() time.Time {
+	prevRelease := e.midnight(e.timeManager.Now())
+	day := prevRelease.Weekday()
+	var dayHours int
+	if day < releaseDay || (day == releaseDay && prevRelease.Hour() < releaseHourCheck) {
+		dayHours = 24 * (7 - int(releaseDay-day))
+	} else if day > releaseDay || (day == releaseDay && prevRelease.Hour() > releaseHourCheck) {
+		dayHours = 24 * int(day-releaseDay)
+	}
+	hours := releaseHourCheck - dayHours - prevRelease.Hour()
+	prevRelease = prevRelease.Add(time.Duration(hours) * time.Hour)
+	return prevRelease
+}
+
+// hoursToNextRelease returns the time delta before the next update check.
+func (e *Engine) hoursToNextRelease() time.Duration {
+	return e.nextReleaseDay().Sub(e.timeManager.Now())
+}
+
+// nextReleaseDay returns the date of the next release day, calculated based on
+// the `releaseHourCheck`-th hour of the next `releaseDay` weekday
+func (e *Engine) nextReleaseDay() time.Time {
+	now := e.timeManager.Now()
+	nextRelease := e.midnight(now).Add(releaseHourCheck * time.Hour)
+	if nextRelease.Weekday() == releaseDay {
+		if nextRelease.Unix() <= now.Unix() {
+			nextRelease = nextRelease.Add(24 * 7 * time.Hour)
+		}
+		return nextRelease
 	}
 
-	daysDue := int(day) - int(releaseDay)
-	if daysDue < 0 {
+	daysDue := int(nextRelease.Weekday()) - int(releaseDay)
+	if daysDue <= 0 {
 		daysDue = -daysDue
 	} else {
 		daysDue = 7 - daysDue
 	}
-	hoursDue := 24*(daysDue) - now.Hour() + releaseHourCheck
 
-	log.Printf("checking updates in %d hours", hoursDue)
-	return time.Duration(hoursDue) * time.Hour
+	return nextRelease.Add(time.Duration(daysDue*24) * time.Hour)
+}
+
+// midnight returns the date of the midnight of the provided time.
+func (e Engine) midnight(t time.Time) time.Time {
+	y, m, d := t.Date()
+	return time.Date(y, m, d, 0, 0, 0, 0, t.Location())
 }
 
 func (e *Engine) storeLastCheck() error {
-	e.lastCheck = time.Now().UTC()
+	e.lastCheck = e.timeManager.Now()
 	data := []byte(e.lastCheck.Format(timeLayout))
 	return ioutil.WriteFile(e.config.LastUpdatePath, data, 0600)
 }
