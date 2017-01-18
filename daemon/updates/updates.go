@@ -25,6 +25,8 @@ var (
 	minCheckDuration = time.Second
 )
 
+// TimeManager is a proxy interface with a Now() method which returns
+// the current time with the appropriate conventions.
 type TimeManager interface {
 	Now() time.Time
 }
@@ -35,6 +37,9 @@ func (m defaultTimeManager) Now() time.Time {
 	return time.Now().UTC()
 }
 
+// Engine is the deamon updates check engine which fetches updates status from Torus
+// repository. It can be asked for the latest version available upstream and if it's
+// higher than the current one.
 type Engine struct {
 	config        *config.Config
 	stop          chan struct{}
@@ -43,11 +48,16 @@ type Engine struct {
 	timeManager   TimeManager
 }
 
+// VersionInfo maps the JSON returned from the `url` endpoint, containing the latest
+// version available info.
 type VersionInfo struct {
 	Version  string `json:"version"`
 	Released string `json:"released"`
 }
 
+// NewEngine creates a new Engine based on the provided config structure.
+// It can be extended by passing specific options which alter the initialization
+// of the Engine itself.
 func NewEngine(cfg *config.Config, options ...func(*Engine)) *Engine {
 	engine := &Engine{
 		config: cfg,
@@ -65,6 +75,7 @@ func NewEngine(cfg *config.Config, options ...func(*Engine)) *Engine {
 	return engine
 }
 
+// Start starts the update checking loop.
 func (e *Engine) Start() error {
 	pref, err := prefs.NewPreferences()
 	if err != nil {
@@ -78,11 +89,20 @@ func (e *Engine) Start() error {
 	return nil
 }
 
+// Stop stops the update checking loop.
 func (e *Engine) Stop() error {
 	close(e.stop)
 	return nil
 }
 
+// VersionInfo returns a boolean representing if the current version
+// is behind the latest one available for download and the latest version available.
+func (e *Engine) VersionInfo() (bool, string) {
+	return e.needsUpdate(), e.targetVersion
+}
+
+// SetTimeManager is a configuration function for `NewEngine` which sets the
+// Engine's TimeManager instance to the `manager` argument.
 func (e *Engine) SetTimeManager(manager TimeManager) func(*Engine) {
 	return func(engine *Engine) {
 		engine.timeManager = manager
@@ -195,10 +215,8 @@ func (e *Engine) storeLastCheck() error {
 
 func (e *Engine) getLastCheck() error {
 	if _, err := os.Stat(e.config.LastUpdatePath); os.IsNotExist(err) {
-		if _, err := os.Create(e.config.LastUpdatePath); err != nil {
-			return err
-		}
-		return nil
+		_, err = os.Create(e.config.LastUpdatePath)
+		return err
 	}
 
 	content, err := ioutil.ReadFile(e.config.LastUpdatePath)
@@ -251,8 +269,4 @@ func (e *Engine) needsUpdate() bool {
 	}
 
 	return target.Compare(current) > 0
-}
-
-func (e *Engine) VersionInfo() (bool, string) {
-	return e.needsUpdate(), e.targetVersion
 }
