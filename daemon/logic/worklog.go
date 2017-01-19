@@ -164,7 +164,8 @@ func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Org) ([]ap
 	}
 
 	var items []apitypes.WorklogItem
-	for _, cred := range needRotation {
+	for _, reason := range needRotation {
+		cred := reason.Credential
 		item := apitypes.WorklogItem{
 			Subject: cred.PathExp().String() + "/" + cred.Name(),
 			Summary: "A user's access was revoked. This secret's value should be changed.",

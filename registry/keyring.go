@@ -28,6 +28,7 @@ type KeyringSection interface {
 	KeyringVersion() int
 	FindMember(*identity.ID) (*primitive.KeyringMember, *primitive.MEKShare, error)
 	HasRevocations() bool
+	GetClaims() []envelope.KeyringMemberClaim
 }
 
 // KeyringSectionV1 represents a section of the CredentialGraph only pertaining to
@@ -80,6 +81,12 @@ func (k *KeyringSectionV1) FindMember(id *identity.ID) (*primitive.KeyringMember
 // track in V1 so it is always false.
 func (KeyringSectionV1) HasRevocations() bool {
 	return false
+}
+
+// GetClaims returns the Member claims for this keyring. These don't exist in V1
+// so it is always an empty list.
+func (KeyringSectionV1) GetClaims() []envelope.KeyringMemberClaim {
+	return nil
 }
 
 // KeyringSectionV2 represents a Keyring and its members.
@@ -147,6 +154,11 @@ func (k *KeyringSectionV2) HasRevocations() bool {
 		}
 	}
 	return false
+}
+
+// GetClaims returns the list of Member claims for this keyring.
+func (k *KeyringSectionV2) GetClaims() []envelope.KeyringMemberClaim {
+	return k.Claims
 }
 
 // KeyringMember holds membership information for v2 keyrings. In v2, a user
