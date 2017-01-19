@@ -73,7 +73,7 @@ func (p *Prompt) Run() (string, error) {
 		p.Default = ""
 	}
 
-	state := iconInitial
+	state := IconInitial
 	prompt := p.Label + punctuation + suggestedAnswer + " "
 
 	c.Prompt = bold(state) + " " + bold(prompt)
@@ -126,15 +126,15 @@ func (p *Prompt) Run() (string, error) {
 		err := validFn(string(line))
 		if err != nil {
 			if _, ok := err.(*ValidationError); ok {
-				state = iconBad
+				state = IconBad
 			} else {
 				rl.Close()
 				return nil, 0, false
 			}
 		} else {
-			state = iconGood
+			state = IconGood
 			if p.IsConfirm {
-				state = iconInitial
+				state = IconInitial
 			}
 		}
 
@@ -155,14 +155,14 @@ func (p *Prompt) Run() (string, error) {
 			if verr, ok := oerr.(*ValidationError); ok {
 				msg = verr.msg
 				valid = false
-				state = iconBad
+				state = IconBad
 			} else {
 				return "", oerr
 			}
 		}
 
 		if valid {
-			state = iconGood
+			state = IconGood
 			break
 		}
 
@@ -207,10 +207,10 @@ func (p *Prompt) Run() (string, error) {
 
 	if p.IsConfirm {
 		if strings.ToLower(echo) != "y" {
-			state = iconBad
+			state = IconBad
 			err = ErrAbort
 		} else {
-			state = iconGood
+			state = IconGood
 		}
 	}
 

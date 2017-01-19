@@ -1,16 +1,17 @@
 package promptui
 
 var (
-	bold       = styler(fgBold)
-	faint      = styler(fgFaint)
-	underlined = styler(fgUnderline)
+	bold       = Styler(FGBold)
+	faint      = Styler(FGFaint)
+	underlined = Styler(FGUnderline)
 )
 
+// Icons used for displaying prompts or status
 var (
-	iconInitial = styler(fgBlue)("?")
-	iconGood    = styler(fgGreen)("✔")
-	_           = styler(fgYellow)("⚠") // iconWarn
-	iconBad     = styler(fgRed)("✗")
+	IconInitial = Styler(FGBlue)("?")
+	IconGood    = Styler(FGGreen)("✔")
+	IconWarn    = Styler(FGYellow)("⚠")
+	IconBad     = Styler(FGRed)("✗")
 )
 
-var red = styler(fgBold, fgRed)
+var red = Styler(FGBold, FGRed)
