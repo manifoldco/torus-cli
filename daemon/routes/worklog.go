@@ -99,22 +99,9 @@ func worklogResolveRoute(engine *logic.Engine, o *observer.Observer) http.Handle
 			return
 		}
 
-		res, err := engine.Worklog.Resolve(ctx, n, &orgID, &ident)
+		err = engine.Worklog.Resolve(ctx, n, &orgID, &ident)
 		if err != nil {
 			log.Printf("error resolving worklog item: %s", err)
-			encodeResponseErr(w, err)
-			return
-		}
-
-		if res == nil {
-			encodeResponseErr(w, notFoundError)
-			return
-		}
-
-		enc := json.NewEncoder(w)
-		err = enc.Encode(res)
-		if err != nil {
-			log.Printf("error encoding worklog resolve resp: %s", err)
 			encodeResponseErr(w, err)
 			return
 		}

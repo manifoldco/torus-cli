@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -17,6 +16,8 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/crypto"
 	"github.com/manifoldco/torus-cli/daemon/observer"
 )
+
+var errManualResolve = errors.New("must be resolved manually")
 
 // Worklog holds the logic for discovering and acting on worklog items.
 // A Worklog item is some action the user should take, either for
@@ -49,7 +50,7 @@ func newWorklog(e *Engine) Worklog {
 type worklogTypeHandler interface {
 	list(context.Context, *envelope.Org) ([]apitypes.WorklogItem, error)
 	resolve(context.Context, *observer.Notifier, *identity.ID,
-		*apitypes.WorklogItem) (*apitypes.WorklogResult, error)
+		*apitypes.WorklogItem) error
 	resolveErr() string
 }
 
@@ -99,15 +100,15 @@ func (w *Worklog) Get(ctx context.Context, orgID *identity.ID,
 // Resolve attempts to resolve the worklog item in the given org with the given
 // ident.
 func (w *Worklog) Resolve(ctx context.Context, n *observer.Notifier,
-	orgID *identity.ID, ident *apitypes.WorklogID) (*apitypes.WorklogResult, error) {
+	orgID *identity.ID, ident *apitypes.WorklogID) error {
 
 	item, err := w.Get(ctx, orgID, ident)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if item == nil {
-		return nil, nil
+		return nil
 	}
 
 	for t, h := range w.handlers {
@@ -115,21 +116,7 @@ func (w *Worklog) Resolve(ctx context.Context, n *observer.Notifier,
 			continue
 		}
 
-		result, err := h.resolve(ctx, n, orgID, item)
-
-		// We handle errors from the handler's resolve differently than regular
-		// errors; for every other part of the daemon code they're non-errors, sent
-		// back to the caller for display. The caller can then continue trying to
-		// resolve other worklog items.
-		if err != nil {
-			result = &apitypes.WorklogResult{
-				ID:      item.ID,
-				State:   apitypes.ErrorWorklogResult,
-				Message: h.resolveErr() + ": " + err.Error(),
-			}
-		}
-
-		return result, nil
+		return h.resolve(ctx, n, orgID, item)
 	}
 
 	panic("worklog handler not found for type")
@@ -210,13 +197,8 @@ func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Org) ([]ap
 }
 
 func (h *secretRotateHandler) resolve(ctx context.Context, n *observer.Notifier,
-	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
-
-	return &apitypes.WorklogResult{
-		ID:      item.ID,
-		State:   apitypes.ManualWorklogResult,
-		Message: "Please set a new value for the secret at " + item.Subject(),
-	}, nil
+	orgID *identity.ID, item *apitypes.WorklogItem) error {
+	return errManualResolve
 }
 
 type missingKeypairsHandler struct {
@@ -252,17 +234,8 @@ func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Org) ([
 }
 
 func (h *missingKeypairsHandler) resolve(ctx context.Context, n *observer.Notifier,
-	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
-	err := h.engine.GenerateKeypairs(ctx, n, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &apitypes.WorklogResult{
-		ID:      item.ID,
-		State:   apitypes.SuccessWorklogResult,
-		Message: "Keypairs generated.",
-	}, nil
+	orgID *identity.ID, item *apitypes.WorklogItem) error {
+	return h.engine.GenerateKeypairs(ctx, n, orgID)
 }
 
 type inviteApproveHandler struct {
@@ -326,17 +299,9 @@ func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Org) ([]a
 }
 
 func (h *inviteApproveHandler) resolve(ctx context.Context, n *observer.Notifier,
-	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
+	orgID *identity.ID, item *apitypes.WorklogItem) error {
 	_, err := h.engine.ApproveInvite(ctx, n, item.Details.(*apitypes.InviteApproveWorklogDetails).InviteID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &apitypes.WorklogResult{
-		ID:      item.ID,
-		State:   apitypes.SuccessWorklogResult,
-		Message: "User invite approved and finalized.",
-	}, nil
+	return err
 }
 
 type keyringMembersHandler struct {
@@ -489,18 +454,18 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 }
 
 func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifier,
-	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
+	orgID *identity.ID, item *apitypes.WorklogItem) error {
 
 	// Preamble. Get the current user's keypairs, and the org's claims for
 	// pubkey lookup.
 	sigID, encID, kp, err := fetchKeyPairs(ctx, h.engine.client, orgID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	claimTrees, err := h.engine.client.ClaimTree.List(ctx, orgID, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	cgs := newCredentialGraphSet()
@@ -508,18 +473,18 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 	for _, pe := range details.Keyrings {
 		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", &pe, nil)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		err = cgs.Add(graphs...)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
 	graphs, err := cgs.Active()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	for _, graph := range graphs {
@@ -527,7 +492,7 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 			// See if the user/machine token in question is in this keyring
 			m, _, err := graph.FindMember(&ownerID)
 			if err != nil && err != registry.ErrMemberNotFound {
-				return nil, err
+				return err
 			}
 
 			if m != nil {
@@ -539,27 +504,26 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 			// missing user/machine token's public key, clone the existing
 			// user's copy of the master encryption key for this keyring, and
 			// post the result. Now the user/machine token is a member!
-
 			krm, mekshare, err := graph.FindMember(h.engine.session.AuthID())
 
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			encPubKey, err := findEncryptionPublicKeyByID(claimTrees, orgID, krm.EncryptingKeyID)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			targetPubKey, err := findEncryptionPublicKey(claimTrees, orgID, &ownerID)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			encMek, nonce, err := h.engine.crypto.CloneMembership(ctx,
 				*mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption,
 				*encPubKey.Body.Key.Value, *targetPubKey.Body.Key.Value)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			key := &primitive.KeyringMemberKey{
@@ -575,36 +539,27 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 				membership, err := newV1KeyringMember(ctx, h.engine.crypto, orgID, projectID,
 					krm.KeyringID, &ownerID, targetPubKey.ID, encID, sigID, key, kp)
 				if err != nil {
-					return nil, err
+					return err
 				}
 
 				_, err = h.engine.client.KeyringMember.Post(ctx, []envelope.KeyringMemberV1{*membership})
 				if err != nil {
-					return nil, err
+					return err
 				}
 
 			case *envelope.Keyring:
 				membership, err := newV2KeyringMember(ctx, h.engine.crypto, orgID, krm.KeyringID,
 					&ownerID, targetPubKey.ID, encID, sigID, key, kp)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				err = h.engine.client.Keyring.Members.Post(ctx, *membership)
 				if err != nil {
-					return nil, err
+					return err
 				}
 			}
 		}
 	}
 
-	typ := "User"
-	if details.Type == "machine" {
-		typ = "Machine"
-	}
-
-	return &apitypes.WorklogResult{
-		ID:      item.ID,
-		State:   apitypes.SuccessWorklogResult,
-		Message: fmt.Sprintf("%s added to missing keyring(s).", typ),
-	}, nil
+	return nil
 }

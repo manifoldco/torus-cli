@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/urfave/cli"
@@ -324,10 +323,7 @@ func worklogResolve(ctx *cli.Context) error {
 				continue
 			}
 
-			res, err := client.Worklog.Resolve(c, org.ID, item.ID)
-			if err == nil && res.State != apitypes.SuccessWorklogResult {
-				err = errors.New(res.Message)
-			}
+			err := client.Worklog.Resolve(c, org.ID, item.ID)
 			displayResult(&item, err, grouped)
 		}
 	}

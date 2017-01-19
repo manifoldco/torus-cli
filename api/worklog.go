@@ -55,10 +55,8 @@ func (w *WorklogClient) Get(ctx context.Context, orgID *identity.ID, ident *apit
 }
 
 // Resolve resolves the worklog item with the given id in the given org.
-func (w *WorklogClient) Resolve(ctx context.Context, orgID *identity.ID, ident *apitypes.WorklogID) (*apitypes.WorklogResult, error) {
-	var res apitypes.WorklogResult
-	err := w.singleItemWorker(ctx, "POST", orgID, ident, &res)
-	return &res, err
+func (w *WorklogClient) Resolve(ctx context.Context, orgID *identity.ID, ident *apitypes.WorklogID) error {
+	return w.singleItemWorker(ctx, "POST", orgID, ident, nil)
 }
 
 func (w *WorklogClient) singleItemWorker(ctx context.Context, verb string, orgID *identity.ID, ident *apitypes.WorklogID, res interface{}) error {

@@ -26,17 +26,6 @@ const (
 	AnyWorklogType WorklogType = 0xff
 )
 
-// WorklogResultType is the string type of worklog results
-type WorklogResultType string
-
-// WorklogResult result states.
-const (
-	SuccessWorklogResult WorklogResultType = "success"
-	FailureWorklogResult WorklogResultType = "failure"
-	ErrorWorklogResult   WorklogResultType = "error"
-	ManualWorklogResult  WorklogResultType = "manual"
-)
-
 // ErrIncorrectWorklogIDLen is returned when a base32 encoded worklog id is the
 // wrong length.
 var ErrIncorrectWorklogIDLen = errors.New("Incorrect worklog ID length")
@@ -228,12 +217,4 @@ func (w *WorklogItem) CreateID(worklogType WorklogType) {
 	id := WorklogID{byte(worklogType)}
 	copy(id[1:], h.Sum(nil))
 	w.ID = &id
-}
-
-// WorklogResult is the result, either positive or negative, of attempting to
-// resolve a WorklogItem
-type WorklogResult struct {
-	ID      *WorklogID        `json:"id"`
-	State   WorklogResultType `json:"state"`
-	Message string            `json:"message"`
 }
