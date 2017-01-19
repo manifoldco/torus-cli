@@ -184,7 +184,7 @@ func worklogResolve(ctx *cli.Context) error {
 		if item.Type() == apitypes.InviteApproveWorklogType {
 			w.Flush()
 
-			err = AskPerform("Approve invite for " + item.Subject())
+			err = AskPerform("Approve invite for "+item.Subject(), "")
 			switch err {
 			case nil:
 			case promptui.ErrAbort:

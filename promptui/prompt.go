@@ -28,6 +28,9 @@ type Prompt struct {
 	IsVimMode bool
 	Preamble  *string
 
+	// Indent will be placed before the prompt's state symbol
+	Indent string
+
 	stdin  io.Reader
 	stdout io.Writer
 }
@@ -76,7 +79,7 @@ func (p *Prompt) Run() (string, error) {
 	state := IconInitial
 	prompt := p.Label + punctuation + suggestedAnswer + " "
 
-	c.Prompt = bold(state) + " " + bold(prompt)
+	c.Prompt = p.Indent + bold(state) + " " + bold(prompt)
 	c.HistoryLimit = -1
 	c.UniqueEditLine = true
 
@@ -138,7 +141,7 @@ func (p *Prompt) Run() (string, error) {
 			}
 		}
 
-		rl.SetPrompt(bold(state) + " " + bold(prompt))
+		rl.SetPrompt(p.Indent + bold(state) + " " + bold(prompt))
 		rl.Refresh()
 		wroteErr = false
 
@@ -184,7 +187,7 @@ func (p *Prompt) Run() (string, error) {
 
 		firstListen = true
 		wroteErr = true
-		rl.SetPrompt("\n" + red(">> ") + msg + upLine(1) + "\r" + bold(state) + " " + bold(prompt))
+		rl.SetPrompt("\n" + red(">> ") + msg + upLine(1) + "\r" + p.Indent + bold(state) + " " + bold(prompt))
 		rl.Refresh()
 	}
 
@@ -214,7 +217,7 @@ func (p *Prompt) Run() (string, error) {
 		}
 	}
 
-	rl.Write([]byte(state + " " + prompt + faint(echo) + "\n"))
+	rl.Write([]byte(p.Indent + state + " " + prompt + faint(echo) + "\n"))
 
 	return out, err
 }
