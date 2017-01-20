@@ -19,6 +19,8 @@ import (
 	"github.com/manifoldco/torus-cli/prefs"
 )
 
+const downloadURL = "https://www.torus.sh/install"
+
 // chain allows easy sequential calling of BeforeFuncs and AfterFuncs.
 // chain will exit on the first error seen.
 func chain(funcs ...func(*cli.Context) error) func(*cli.Context) error {
@@ -327,6 +329,29 @@ func checkRequiredFlags(ctx *cli.Context) error {
 	if len(missing) > 0 {
 		msg := "Missing flags: " + strings.Join(missing, ", ")
 		return errs.NewUsageExitError(msg, ctx)
+	}
+
+	return nil
+}
+
+// checkUpdates checks if there's a torus update available. If so,
+// it prints a message to the stdout with the download URL if so.
+func checkUpdates(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	updateInfo, err := client.Updates.Check(c)
+	if err != nil {
+		return err
+	}
+
+	if updateInfo.NeedsUpdate {
+		fmt.Printf("New version %s available! Visit %s to download\n", updateInfo.Version, downloadURL)
 	}
 
 	return nil

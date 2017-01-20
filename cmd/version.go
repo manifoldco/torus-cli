@@ -27,7 +27,7 @@ func init() {
 // VersionLookup ensures the environment is ready and then executes version cmd
 func VersionLookup(ctx *cli.Context) error {
 	return chain(
-		ensureDaemon, listVersionsCmd,
+		ensureDaemon, listVersionsCmd, checkUpdates,
 	)(ctx)
 }
 

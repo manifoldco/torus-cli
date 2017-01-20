@@ -34,6 +34,7 @@ type Client struct {
 	Session     *SessionClient
 	Credentials *CredentialsClient // this replaces the registry endpoint
 	Worklog     *WorklogClient
+	Updates     *UpdatesClient
 
 	// Cryptography related registry endpoints that should be accessed
 	// via the daemon.
@@ -72,6 +73,7 @@ func NewClient(cfg *config.Config) *Client {
 	c.Session = &SessionClient{client: rt}
 	c.Credentials = &CredentialsClient{client: rt}
 	c.Worklog = &WorklogClient{client: rt}
+	c.Updates = &UpdatesClient{client: rt}
 
 	return c
 }

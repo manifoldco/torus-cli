@@ -27,6 +27,7 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/observer"
 	"github.com/manifoldco/torus-cli/daemon/routes"
 	"github.com/manifoldco/torus-cli/daemon/session"
+	"github.com/manifoldco/torus-cli/daemon/updates"
 )
 
 // AuthProxy exposes an HTTP interface over a domain socket.
@@ -34,16 +35,17 @@ import (
 // directly proxy requests from the cli to the registry, and exposes an
 // interface over `/v1` for secure and composite operations.
 type AuthProxy struct {
-	u      *url.URL
-	l      net.Listener
-	s      httpdown.Server
-	c      *config.Config
-	db     *db.DB
-	sess   session.Session
-	o      *observer.Observer
-	t      *http.Transport
-	client *registry.Client
-	logic  *logic.Engine
+	u       *url.URL
+	l       net.Listener
+	s       httpdown.Server
+	c       *config.Config
+	db      *db.DB
+	sess    session.Session
+	o       *observer.Observer
+	t       *http.Transport
+	client  *registry.Client
+	logic   *logic.Engine
+	updates *updates.Engine
 }
 
 // NewAuthProxy returns a new AuthProxy. It will return an error if creation
@@ -54,7 +56,7 @@ type AuthProxy struct {
 // users). If false, the socket will only be readable and writable by the user
 // running the daemon.
 func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB, t *http.Transport,
-	client *registry.Client, logic *logic.Engine, groupShared bool) (*AuthProxy, error) {
+	client *registry.Client, logic *logic.Engine, updates *updates.Engine, groupShared bool) (*AuthProxy, error) {
 
 	l, err := makeSocket(c.SocketPath, groupShared)
 	if err != nil {
@@ -62,15 +64,16 @@ func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB, t *http.Tra
 	}
 
 	return &AuthProxy{
-		u:      c.RegistryURI,
-		l:      l,
-		c:      c,
-		db:     db,
-		sess:   sess,
-		o:      observer.New(),
-		t:      t,
-		client: client,
-		logic:  logic,
+		u:       c.RegistryURI,
+		l:       l,
+		c:       c,
+		db:      db,
+		sess:    sess,
+		o:       observer.New(),
+		t:       t,
+		client:  client,
+		logic:   logic,
+		updates: updates,
 	}, nil
 }
 
@@ -107,7 +110,7 @@ func (p *AuthProxy) Listen() error {
 	go p.o.Start()
 
 	mux.HandleFunc("/proxy/", proxyCanceler(proxy))
-	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, p.t, p.o, p.client, p.logic))
+	mux.SubRoute("/v1", routes.NewRouteMux(p.c, p.sess, p.db, p.t, p.o, p.client, p.logic, p.updates))
 
 	h := httpdown.HTTP{}
 	p.s = h.Serve(&http.Server{Handler: requestIDHandler(loggingHandler(mux))}, p.l)

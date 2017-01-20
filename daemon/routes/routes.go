@@ -14,12 +14,13 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/logic"
 	"github.com/manifoldco/torus-cli/daemon/observer"
 	"github.com/manifoldco/torus-cli/daemon/session"
+	"github.com/manifoldco/torus-cli/daemon/updates"
 )
 
 // NewRouteMux returns a *bone.Mux responsible for handling the cli to daemon
 // http api.
 func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
-	t *http.Transport, o *observer.Observer, client *registry.Client, lEngine *logic.Engine) *bone.Mux {
+	t *http.Transport, o *observer.Observer, client *registry.Client, lEngine *logic.Engine, uEngine *updates.Engine) *bone.Mux {
 
 	mux := bone.New()
 
@@ -50,6 +51,19 @@ func NewRouteMux(c *config.Config, s session.Session, db *db.DB,
 	mux.GetFunc("/version", func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
 		err := enc.Encode(&apitypes.Version{Version: c.Version})
+		if err != nil {
+			encodeResponseErr(w, err)
+		}
+	})
+
+	mux.GetFunc("/updates", func(w http.ResponseWriter, r *http.Request) {
+		needsUpdate, version := uEngine.VersionInfo()
+		payload := &apitypes.UpdateInfo{
+			NeedsUpdate: needsUpdate,
+			Version:     version,
+		}
+		enc := json.NewEncoder(w)
+		err := enc.Encode(payload)
 		if err != nil {
 			encodeResponseErr(w, err)
 		}

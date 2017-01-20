@@ -27,10 +27,11 @@ type Config struct {
 	APIVersion string
 	Version    string
 
-	TorusRoot  string
-	SocketPath string
-	PidPath    string
-	DBPath     string
+	TorusRoot      string
+	SocketPath     string
+	PidPath        string
+	DBPath         string
+	LastUpdatePath string
 
 	RegistryURI *url.URL
 	CABundle    *x509.CertPool
@@ -63,10 +64,11 @@ func NewConfig(torusRoot string) (*Config, error) {
 		APIVersion: apiVersion,
 		Version:    Version,
 
-		TorusRoot:  torusRoot,
-		SocketPath: path.Join(torusRoot, "daemon.socket"),
-		PidPath:    path.Join(torusRoot, "daemon.pid"),
-		DBPath:     path.Join(torusRoot, "daemon.db"),
+		TorusRoot:      torusRoot,
+		SocketPath:     path.Join(torusRoot, "daemon.socket"),
+		PidPath:        path.Join(torusRoot, "daemon.pid"),
+		DBPath:         path.Join(torusRoot, "daemon.db"),
+		LastUpdatePath: path.Join(torusRoot, "last_update"),
 
 		RegistryURI: registryURI,
 		CABundle:    caBundle,
