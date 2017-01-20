@@ -29,7 +29,6 @@ ci: binary $(LINTERS) cmdlint test
 #################################################
 
 BOOTSTRAP=\
-	github.com/Masterminds/glide \
 	github.com/golang/lint/golint \
 	honnef.co/go/simple/cmd/gosimple \
 	github.com/jteeuwen/go-bindata/... \
@@ -41,6 +40,7 @@ BOOTSTRAP=\
 $(BOOTSTRAP):
 	go get -u $@
 bootstrap: $(BOOTSTRAP)
+	curl http://glide.sh/get | sh
 
 .PHONY: bootstrap $(BOOTSTRAP)
 
