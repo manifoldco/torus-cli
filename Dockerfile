@@ -1,6 +1,6 @@
 FROM golang:1.7.4-alpine
 
-RUN apk add --no-cache git make
+RUN apk add --no-cache curl git make
 
 # Create work directory for the CLI and build output dest
 RUN mkdir -p /go/src/github.com/manifoldco/torus-cli \

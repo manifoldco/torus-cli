@@ -11,6 +11,7 @@ builds/*
 zz_generated_*.go
 
 # Our 3rd party deps
+.glide
 vendor/*
 
 # Code generators
