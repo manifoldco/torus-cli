@@ -4,6 +4,7 @@ package primitive
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 
@@ -343,13 +344,126 @@ type MEKShare struct { // type: 0x16
 type KeyringMemberClaim struct { // type: 0x15
 	v1Schema
 	immutable
-	OrgID           *identity.ID `json:"org_id"`
-	KeyringID       *identity.ID `json:"keyring_id"`
-	KeyringMemberID *identity.ID `json:"keyring_member_id"`
-	OwnerID         *identity.ID `json:"owner_id"`
-	Previous        *identity.ID `json:"previous"`
-	ClaimType       ClaimType    `json:"type"`
-	Created         time.Time    `json:"created_at"`
+	OrgID           *identity.ID              `json:"org_id"`
+	KeyringID       *identity.ID              `json:"keyring_id"`
+	KeyringMemberID *identity.ID              `json:"keyring_member_id"`
+	OwnerID         *identity.ID              `json:"owner_id"`
+	Previous        *identity.ID              `json:"previous"`
+	ClaimType       ClaimType                 `json:"type"`
+	Reason          *KeyringMemberClaimReason `json:"reason"`
+	Created         time.Time                 `json:"created_at"`
+}
+
+// KeyringMemberClaimReason holds the type and optional details of the reason
+// for a KeyringMember's revocation.
+type KeyringMemberClaimReason struct {
+	Type   KeyringMemberRevocationType   `json:"type"`
+	Params KeyringMemberRevocationParams `json:"params"`
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (k *KeyringMemberClaimReason) UnmarshalJSON(b []byte) error {
+
+	raw := struct {
+		Type   KeyringMemberRevocationType `json:"type"`
+		Params json.RawMessage             `json:"params"`
+	}{}
+
+	err := json.Unmarshal(b, &raw)
+	if err != nil {
+		return err
+	}
+
+	k.Type = raw.Type
+
+	switch k.Type {
+	case OrgRemovalRevocationType: // no params
+		return nil
+	case KeyRevocationRevocationType:
+		k.Params = &KeyRevocationRevocationParams{}
+	case MachineDestroyRevocationType:
+		k.Params = &MachineDestroyRevocationParams{}
+	case MachineTokenDestroyRevocationType:
+		k.Params = &MachineTokenDestroyRevocationParams{}
+	}
+
+	return json.Unmarshal(raw.Params, k.Params)
+}
+
+// KeyringMemberRevocationType is the enumerated byte type of keyring membership
+// revocation reasons.
+type KeyringMemberRevocationType byte
+
+// The keyring membership revocation reasons.
+const (
+	OrgRemovalRevocationType KeyringMemberRevocationType = iota
+	KeyRevocationRevocationType
+	MachineDestroyRevocationType
+	MachineTokenDestroyRevocationType
+)
+
+func (k KeyringMemberRevocationType) String() string {
+	switch k {
+	case OrgRemovalRevocationType:
+		return "org_removal"
+	case KeyRevocationRevocationType:
+		return "key_revocation"
+	case MachineDestroyRevocationType:
+		return "machine_destroy"
+	case MachineTokenDestroyRevocationType:
+		return "machine_token_destroy"
+	default:
+		panic("invalid revocation type value")
+	}
+}
+
+// MarshalText implements the encoding.TextMarshaler interface, used for JSON
+// marshaling.
+func (k KeyringMemberRevocationType) MarshalText() ([]byte, error) {
+	return []byte(k.String()), nil
+}
+
+var errBadRevocationType = errors.New("unknown revocation type")
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface, used for
+// JSON unmarshaling.
+func (k *KeyringMemberRevocationType) UnmarshalText(b []byte) error {
+	switch string(b) {
+	case "org_removal":
+		*k = OrgRemovalRevocationType
+	case "key_revocation":
+		*k = KeyRevocationRevocationType
+	case "machine_destroy":
+		*k = MachineDestroyRevocationType
+	case "machine_token_destroy":
+		*k = MachineTokenDestroyRevocationType
+	default:
+		return errBadRevocationType
+	}
+
+	return nil
+}
+
+// KeyringMemberRevocationParams is the interface for holding additional details
+// about a membership revocation, based on the reason type.
+type KeyringMemberRevocationParams interface{}
+
+// KeyRevocationRevocationParams holds details for a key_revocation revocation
+// type.
+type KeyRevocationRevocationParams struct {
+	PublicKeyID *identity.ID `json:"public_key_id"`
+}
+
+// MachineDestroyRevocationParams holds details for a machine_destroy revocation
+// type.
+type MachineDestroyRevocationParams struct {
+	MachineID *identity.ID `json:"machine_id"`
+}
+
+// MachineTokenDestroyRevocationParams holds details for a machine_token_destroy
+// revocation type.
+type MachineTokenDestroyRevocationParams struct {
+	MachineTokenID *identity.ID `json:"machine_token_id"`
 }
 
 // Org is a grouping of users that collaborate with each other
