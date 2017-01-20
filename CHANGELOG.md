@@ -10,6 +10,13 @@ _Unreleased_
   are internal structures that hold secrets; they shouild rarely appear in the
   UI. Focusing on users that are missing access they should have is much more
   understandable.
+- Torus now checks for available updates to itself, and reports on them during
+  the `login` and `version` commands. This behaviour can be disabled with
+  `torus prefs set core.check_updates false`.
+
+**Thanks**
+
+- Federico Ruggi
 
 ## v0.22.0
 
