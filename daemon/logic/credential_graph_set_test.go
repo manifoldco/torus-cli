@@ -92,6 +92,7 @@ func buildGraphWithRevocation(rawPathExp string, version int, secrets ...cred) r
 	cg.(*registry.CredentialGraphV2).Claims = []envelope.KeyringMemberClaim{
 		{Body: &primitive.KeyringMemberClaim{
 			ClaimType: primitive.RevocationClaimType,
+			OwnerID:   &identity.ID{0x00, 0x01},
 		}},
 	}
 
@@ -648,7 +649,7 @@ func TestCredentialGraphSetNeedRotation(t *testing.T) {
 			t.Fatal("Wrong number of credentials needing revision found")
 		}
 
-		if out[0].GetID() != id2 {
+		if out[0].Credential.GetID() != id2 {
 			t.Error("Wrong credential needing revision returned")
 		}
 	})

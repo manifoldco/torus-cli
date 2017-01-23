@@ -7,6 +7,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
+	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/registry"
 )
 
@@ -157,14 +158,22 @@ func (cgs *credentialGraphSet) Prune() ([]registry.CredentialGraph, error) {
 	return pruned, nil
 }
 
+// RotationReason contains a Credential, and the user ids that had access
+// changes to require the rotation.
+type RotationReason struct {
+	Credential envelope.CredentialInf
+	Reasons    []primitive.KeyringMemberClaim
+}
+
 // NeedRotation returns a slice of Credentials that need to be rotated.
 //
 // A Credential needs to be rotated if its most recent set version is in a
 // CredentialGraph version that contains a revocation of a user's share to
 // that Keyring.
-func (cgs *credentialGraphSet) NeedRotation() ([]envelope.CredentialInf, error) {
-	var needRotation []envelope.CredentialInf
+func (cgs *credentialGraphSet) NeedRotation() ([]RotationReason, error) {
+	var needRotation []RotationReason
 
+	typ := (&primitive.User{}).Type()
 	for _, graphs := range cgs.graphs {
 		var parents []identity.ID
 
@@ -177,8 +186,23 @@ func (cgs *credentialGraphSet) NeedRotation() ([]envelope.CredentialInf, error) 
 				return nil, err
 			}
 
-			if len(activeCreds) > 0 && graph.HasRevocations() {
-				needRotation = append(needRotation, activeCreds...)
+			var reasons []primitive.KeyringMemberClaim
+			for _, c := range graph.GetClaims() {
+				if c.Body.ClaimType == primitive.RevocationClaimType {
+					// Ignore machines
+					if c.Body.OwnerID.Type() == typ {
+						reasons = append(reasons, *c.Body)
+					}
+				}
+			}
+
+			if len(reasons) > 0 {
+				for _, c := range activeCreds {
+					needRotation = append(needRotation, RotationReason{
+						Credential: c,
+						Reasons:    reasons,
+					})
+				}
 			}
 		}
 	}

@@ -82,7 +82,7 @@ func worklogList(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "IDENTITY\tTYPE\tSUBJECT")
 	for _, item := range items {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", item.ID, item.Type(), item.Subject)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", item.ID, item.Type(), item.Subject())
 	}
 
 	w.Flush()
@@ -125,10 +125,10 @@ func worklogView(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	fmt.Fprintf(w, "Identity:\t%s\n", item.ID.String())
 	fmt.Fprintf(w, "Type:\t%s\n", item.Type())
-	fmt.Fprintf(w, "Subject:\t%s\n", item.Subject)
+	fmt.Fprintf(w, "Subject:\t%s\n", item.Subject())
 	w.Flush()
 	fmt.Println("Summary:")
-	fmt.Println(item.Summary)
+	fmt.Println(item.Details.Summary())
 
 	return nil
 }
@@ -184,7 +184,7 @@ func worklogResolve(ctx *cli.Context) error {
 		if item.Type() == apitypes.InviteApproveWorklogType {
 			w.Flush()
 
-			err = AskPerform("Approve invite for " + item.Subject)
+			err = AskPerform("Approve invite for " + item.Subject())
 			switch err {
 			case nil:
 			case promptui.ErrAbort:

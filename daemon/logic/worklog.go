@@ -164,10 +164,34 @@ func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Org) ([]ap
 	}
 
 	var items []apitypes.WorklogItem
-	for _, cred := range needRotation {
+	for _, reason := range needRotation {
+		var ids []identity.ID
+		claimsByOwner := make(map[identity.ID]primitive.KeyringMemberClaim, len(reason.Reasons))
+		for _, r := range reason.Reasons {
+			ids = append(ids, *r.OwnerID)
+			claimsByOwner[*r.OwnerID] = r
+		}
+
+		users, err := h.engine.client.Profiles.ListByID(ctx, ids)
+		if err != nil {
+			return nil, err
+		}
+
+		var reasons []apitypes.SecretRotateWorklogReason
+		for _, user := range users {
+			reasons = append(reasons, apitypes.SecretRotateWorklogReason{
+				Username: user.Body.Username,
+				Type:     claimsByOwner[*user.ID].Reason.Type,
+			})
+		}
+
+		cred := reason.Credential
 		item := apitypes.WorklogItem{
-			Subject: cred.PathExp().String() + "/" + cred.Name(),
-			Summary: "A user's access was revoked. This secret's value should be changed.",
+			Details: &apitypes.SecretRotateWorklogDetails{
+				PathExp: cred.PathExp(),
+				Name:    cred.Name(),
+				Reasons: reasons,
+			},
 		}
 		item.CreateID(apitypes.SecretRotateWorklogType)
 
@@ -179,10 +203,11 @@ func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Org) ([]ap
 
 func (h *secretRotateHandler) resolve(ctx context.Context, n *observer.Notifier,
 	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
+
 	return &apitypes.WorklogResult{
 		ID:      item.ID,
 		State:   apitypes.ManualWorklogResult,
-		Message: "Please set a new value for the secret at " + item.Subject,
+		Message: "Please set a new value for the secret at " + item.Subject(),
 	}, nil
 }
 
@@ -203,17 +228,12 @@ func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Org) ([
 	var items []apitypes.WorklogItem
 	if encClaimed == nil || sigClaimed == nil {
 		item := apitypes.WorklogItem{
-			Subject: org.Body.Name,
-			Summary: "Signing and encryption keypairs missing for org %s.",
+			Details: &apitypes.MissingKeypairsWorklogDetails{
+				Org:               org.Body.Name,
+				EncryptionMissing: encClaimed == nil,
+				SigningMissing:    sigClaimed == nil,
+			},
 		}
-
-		if encClaimed != nil {
-			item.Summary = "Signing keypair missing for org %s."
-		} else if sigClaimed != nil {
-			item.Summary = "Encryption keypair missing for org %s."
-		}
-
-		item.Summary = fmt.Sprintf(item.Summary, org.Body.Name)
 
 		item.CreateID(apitypes.MissingKeypairsWorklogType)
 
@@ -257,14 +277,37 @@ func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Org) ([]a
 		return nil, err
 	}
 
+	teams, err := h.engine.client.Teams.List(ctx, org.ID, "", primitive.AnyTeamType)
+	if err != nil {
+		return nil, err
+	}
+
+	teamsByID := make(map[identity.ID]string)
+	for _, t := range teams {
+		teamsByID[*t.ID] = t.Body.Name
+	}
+
 	var items []apitypes.WorklogItem
 	for _, invite := range invites {
-		summary := fmt.Sprintf("The invite for %s to org %s is ready for approval.",
-			invite.Body.Email, org.Body.Name)
+		users, err := h.engine.client.Profiles.ListByID(ctx, []identity.ID{*invite.Body.InviteeID})
+		if err != nil {
+			return nil, err
+		}
+
+		var teamNames []string
+		for _, t := range invite.Body.PendingTeams {
+			teamNames = append(teamNames, teamsByID[t])
+		}
+
 		item := apitypes.WorklogItem{
-			Subject:   invite.Body.Email,
-			Summary:   summary,
-			SubjectID: invite.ID,
+			Details: &apitypes.InviteApproveWorklogDetails{
+				InviteID: invite.ID,
+				Email:    invite.Body.Email,
+				Username: users[0].Body.Username,
+				Name:     users[0].Body.Name,
+				Org:      org.Body.Name,
+				Teams:    teamNames,
+			},
 		}
 		item.CreateID(apitypes.InviteApproveWorklogType)
 
@@ -276,7 +319,7 @@ func (h *inviteApproveHandler) list(ctx context.Context, org *envelope.Org) ([]a
 
 func (h *inviteApproveHandler) resolve(ctx context.Context, n *observer.Notifier,
 	orgID *identity.ID, item *apitypes.WorklogItem) (*apitypes.WorklogResult, error) {
-	_, err := h.engine.ApproveInvite(ctx, n, item.SubjectID)
+	_, err := h.engine.ApproveInvite(ctx, n, item.Details.(*apitypes.InviteApproveWorklogDetails).InviteID)
 	if err != nil {
 		return nil, err
 	}
@@ -352,6 +395,7 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 
 	missing := make(map[string]apitypes.WorklogItem)
 	for _, graph := range graphs {
+	MembersLoop:
 		for _, member := range members {
 			for _, owner := range member.KeyOwnerIDs() {
 				m, _, err := graph.FindMember(&owner)
@@ -396,15 +440,27 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 
 				if _, ok := missing[name]; !ok {
 					item := apitypes.WorklogItem{
-						Subject:   name,
-						Summary:   fmt.Sprintf("This %s is missing access to one or more secrets.", typ),
-						SubjectID: member.GetID(),
+						Details: &apitypes.KeyringMembersWorklogDetails{
+							EntityID: member.GetID(),
+							Name:     name,
+							Type:     typ,
+							OwnerIDs: member.KeyOwnerIDs(),
+						},
 					}
 					item.CreateID(apitypes.KeyringMembersWorklogType)
 					missing[name] = item
 				}
+				d := missing[name].Details.(*apitypes.KeyringMembersWorklogDetails)
 
-				break
+				path := *graph.GetKeyring().PathExp()
+				for _, o := range d.Keyrings {
+					if o.Equal(&path) {
+						continue MembersLoop
+					}
+				}
+				d.Keyrings = append(d.Keyrings, path)
+
+				continue MembersLoop
 			}
 		}
 	}
@@ -439,22 +495,10 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 		return nil, err
 	}
 
-	// Get all keyrings and find the active ones. We can then add the user to
-	// the ones they're missing from.
 	cgs := newCredentialGraphSet()
-	paths := make(map[string]*pathexp.PathExp)
-	keyrings, err := h.engine.client.Keyring.List(ctx, orgID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, k := range keyrings {
-		path := k.GetKeyring().PathExp()
-		paths[path.String()] = path
-	}
-
-	for _, pe := range paths {
-		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", pe, nil)
+	details := item.Details.(*apitypes.KeyringMembersWorklogDetails)
+	for _, pe := range details.Keyrings {
+		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", &pe, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -470,28 +514,8 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 		return nil, err
 	}
 
-	// XXX replace this with rich structured data on the worklog item
-	var typ string
-	var ownerIDs []identity.ID
-	if item.SubjectID.Type() == (&primitive.User{}).Type() {
-		ownerIDs = append(ownerIDs, *item.SubjectID)
-		typ = "User"
-	} else {
-		segment, err := h.engine.client.Machines.Get(ctx, item.SubjectID)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, token := range segment.Tokens {
-			if token.Token.Body.State == primitive.MachineTokenActiveState {
-				ownerIDs = append(ownerIDs, *token.Token.ID)
-			}
-		}
-		typ = "Machine"
-	}
-
 	for _, graph := range graphs {
-		for _, ownerID := range ownerIDs {
+		for _, ownerID := range details.OwnerIDs {
 			// See if the user/machine token in question is in this keyring
 			m, _, err := graph.FindMember(&ownerID)
 			if err != nil && err != registry.ErrMemberNotFound {
@@ -509,6 +533,7 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 			// post the result. Now the user/machine token is a member!
 
 			krm, mekshare, err := graph.FindMember(h.engine.session.AuthID())
+
 			if err != nil {
 				return nil, err
 			}
@@ -517,7 +542,6 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 			if err != nil {
 				return nil, err
 			}
-
 			targetPubKey, err := findEncryptionPublicKey(claimTrees, orgID, &ownerID)
 			if err != nil {
 				return nil, err
@@ -563,6 +587,11 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 				}
 			}
 		}
+	}
+
+	typ := "User"
+	if details.Type == "machine" {
+		typ = "Machine"
 	}
 
 	return &apitypes.WorklogResult{
