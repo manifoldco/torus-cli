@@ -87,7 +87,9 @@ func (w *rawWorklogItem) setDetails() error {
 		w.WorklogItem.Details = &apitypes.MissingKeypairsWorklogDetails{}
 	case apitypes.InviteApproveWorklogType:
 		w.WorklogItem.Details = &apitypes.InviteApproveWorklogDetails{}
-	case apitypes.KeyringMembersWorklogType:
+	case apitypes.UserKeyringMembersWorklogType:
+		fallthrough
+	case apitypes.MachineKeyringMembersWorklogType:
 		w.WorklogItem.Details = &apitypes.KeyringMembersWorklogDetails{}
 	default:
 		return errUnknownWorklogType

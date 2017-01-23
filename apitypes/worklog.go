@@ -20,7 +20,8 @@ const (
 	SecretRotateWorklogType WorklogType = 1 << iota
 	MissingKeypairsWorklogType
 	InviteApproveWorklogType
-	KeyringMembersWorklogType
+	UserKeyringMembersWorklogType
+	MachineKeyringMembersWorklogType
 
 	AnyWorklogType WorklogType = 0xff
 )
@@ -204,7 +205,9 @@ func (t WorklogType) String() string {
 		return "keypairs"
 	case InviteApproveWorklogType:
 		return "invite"
-	case KeyringMembersWorklogType:
+	case UserKeyringMembersWorklogType:
+		fallthrough
+	case MachineKeyringMembersWorklogType:
 		return "keyring"
 	default:
 		return "n/a"

@@ -32,13 +32,14 @@ type Worklog struct {
 }
 
 func newWorklog(e *Engine) Worklog {
+	membersType := apitypes.UserKeyringMembersWorklogType | apitypes.MachineKeyringMembersWorklogType
 	w := Worklog{
 		engine: e,
 		handlers: map[apitypes.WorklogType]worklogTypeHandler{
 			apitypes.SecretRotateWorklogType:    &secretRotateHandler{engine: e},
 			apitypes.MissingKeypairsWorklogType: &missingKeypairsHandler{engine: e},
 			apitypes.InviteApproveWorklogType:   &inviteApproveHandler{engine: e},
-			apitypes.KeyringMembersWorklogType:  &keyringMembersHandler{engine: e},
+			membersType:                         &keyringMembersHandler{engine: e},
 		},
 	}
 
@@ -109,22 +110,29 @@ func (w *Worklog) Resolve(ctx context.Context, n *observer.Notifier,
 		return nil, nil
 	}
 
-	handler := w.handlers[item.Type()]
-	result, err := handler.resolve(ctx, n, orgID, item)
-
-	// We handle errors from the handler's resolve differently than regular
-	// errors; for every other part of the daemon code they're non-errors, sent
-	// back to the caller for display. The caller can then continue trying to
-	// resolve other worklog items.
-	if err != nil {
-		result = &apitypes.WorklogResult{
-			ID:      item.ID,
-			State:   apitypes.ErrorWorklogResult,
-			Message: handler.resolveErr() + ": " + err.Error(),
+	for t, h := range w.handlers {
+		if t&item.Type() == 0 {
+			continue
 		}
+
+		result, err := h.resolve(ctx, n, orgID, item)
+
+		// We handle errors from the handler's resolve differently than regular
+		// errors; for every other part of the daemon code they're non-errors, sent
+		// back to the caller for display. The caller can then continue trying to
+		// resolve other worklog items.
+		if err != nil {
+			result = &apitypes.WorklogResult{
+				ID:      item.ID,
+				State:   apitypes.ErrorWorklogResult,
+				Message: h.resolveErr() + ": " + err.Error(),
+			}
+		}
+
+		return result, nil
 	}
 
-	return result, nil
+	panic("worklog handler not found for type")
 }
 
 type secretRotateHandler struct {
@@ -417,7 +425,8 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 
 				// This member is missing access (user, or one or more machine
 				// tokens).
-				var typ, name string
+				var name string
+				var typ apitypes.WorklogType
 				switch t := member.(type) {
 				case *userKeyringMember:
 					users, err := h.engine.client.Profiles.ListByID(ctx, []identity.ID{*member.GetID()})
@@ -430,10 +439,10 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 					}
 
 					name = users[0].Body.Username
-					typ = "user"
+					typ = apitypes.UserKeyringMembersWorklogType
 				case *machineKeyringMember:
 					name = t.Machine.Body.Name
-					typ = "machine"
+					typ = apitypes.MachineKeyringMembersWorklogType
 				default:
 					panic("Unknown keyring member type")
 				}
@@ -443,11 +452,10 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 						Details: &apitypes.KeyringMembersWorklogDetails{
 							EntityID: member.GetID(),
 							Name:     name,
-							Type:     typ,
 							OwnerIDs: member.KeyOwnerIDs(),
 						},
 					}
-					item.CreateID(apitypes.KeyringMembersWorklogType)
+					item.CreateID(typ)
 					missing[name] = item
 				}
 				d := missing[name].Details.(*apitypes.KeyringMembersWorklogDetails)
