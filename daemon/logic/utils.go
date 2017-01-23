@@ -107,32 +107,34 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	// use their public key to encrypt the mek with a random nonce.
 	members := []registry.KeyringMember{}
 	for _, subject := range subjects {
-		// For this user, find their public encryption key
-		encPubKey, err := findEncryptionPublicKey(claimTrees, credBody.OrgID, &subject)
-		if err != nil {
-			// If we didn't find an active key, don't encode this user in the
-			// keyring, but keep going.
-			continue
-		}
+		for _, id := range subject.KeyOwnerIDs() {
+			// For this user/mtoken, find their public encryption key
+			encPubKey, err := findEncryptionPublicKey(claimTrees, credBody.OrgID, &id)
+			if err != nil {
+				// If we didn't find an active key, don't encode this user/token
+				// in the keyring, but keep going.
+				continue
+			}
 
-		encmek, nonce, err := engine.Box(ctx, mek, &kp.Encryption, []byte(*encPubKey.Body.Key.Value))
-		if err != nil {
-			return nil, err
-		}
+			encmek, nonce, err := engine.Box(ctx, mek, &kp.Encryption, []byte(*encPubKey.Body.Key.Value))
+			if err != nil {
+				return nil, err
+			}
 
-		key := &primitive.KeyringMemberKey{
-			Algorithm: crypto.EasyBox,
-			Nonce:     base64.NewValue(nonce),
-			Value:     base64.NewValue(encmek),
-		}
+			key := &primitive.KeyringMemberKey{
+				Algorithm: crypto.EasyBox,
+				Nonce:     base64.NewValue(nonce),
+				Value:     base64.NewValue(encmek),
+			}
 
-		member, err := newV2KeyringMember(ctx, engine, credBody.OrgID, keyring.ID,
-			encPubKey.Body.OwnerID, encPubKey.ID, encID, sigID, key, kp)
-		if err != nil {
-			return nil, err
-		}
+			member, err := newV2KeyringMember(ctx, engine, credBody.OrgID, keyring.ID,
+				encPubKey.Body.OwnerID, encPubKey.ID, encID, sigID, key, kp)
+			if err != nil {
+				return nil, err
+			}
 
-		members = append(members, *member)
+			members = append(members, *member)
+		}
 	}
 
 	graph := registry.CredentialGraphV2{
@@ -610,12 +612,44 @@ func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	return engine.SignedPrivateKey(ctx, &body, sigID, sigKP)
 }
 
-// getKeyringMembers returns a slice of IDs of all subjects that should be
-// members of a keyring.
-// This includes both users, and the active tokens of machines.
+// keyringMember is the interface used to abstract user vs machine pubkey
+// ownership. A user directly owns their pubkeys, whereas a machine owns 0 or
+// more tokens that own pubkeys.
+type keyringMember interface {
+	// The ID of the user/machine
+	GetID() *identity.ID
+
+	// The IDs of either the user itself, or the machine's tokens.
+	KeyOwnerIDs() []identity.ID
+}
+
+type userKeyringMember struct {
+	id *identity.ID
+}
+
+func (m *userKeyringMember) GetID() *identity.ID {
+	return m.id
+}
+
+func (m *userKeyringMember) KeyOwnerIDs() []identity.ID {
+	return []identity.ID{*m.id}
+}
+
+type machineKeyringMember struct {
+	*envelope.Machine
+	tokens []identity.ID
+}
+
+func (m *machineKeyringMember) KeyOwnerIDs() []identity.ID {
+	return m.tokens
+}
+
+// getKeyringMembers returns a slice of keyringMembers of all subjects that
+// should be members of a keyring.
+// This includes both users and machines.
 // XXX: we need to filter the members down based on ACL
 func getKeyringMembers(ctx context.Context, client *registry.Client,
-	orgID *identity.ID) ([]identity.ID, error) {
+	orgID *identity.ID) ([]keyringMember, error) {
 
 	teams, err := client.Teams.GetByOrg(ctx, orgID)
 	if err != nil {
@@ -637,9 +671,9 @@ func getKeyringMembers(ctx context.Context, client *registry.Client,
 		return nil, err
 	}
 
-	var members []identity.ID
+	var members []keyringMember
 	for _, membership := range userMembers {
-		members = append(members, *membership.Body.OwnerID)
+		members = append(members, &userKeyringMember{id: membership.Body.OwnerID})
 	}
 
 	for _, membership := range machineMembers {
@@ -649,12 +683,13 @@ func getKeyringMembers(ctx context.Context, client *registry.Client,
 			return nil, err
 		}
 
+		m := machineKeyringMember{Machine: segment.Machine}
 		for _, token := range segment.Tokens {
 			if token.Token.Body.State == primitive.MachineTokenActiveState {
-				members = append(members, *token.Token.ID)
-				break
+				m.tokens = append(m.tokens, *token.Token.ID)
 			}
 		}
+		members = append(members, &m)
 	}
 
 	return members, nil
