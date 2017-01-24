@@ -1,7 +1,5 @@
 package: github.com/manifoldco/torus-cli
 ignore:
-# Imported by boltdb for solaris only, and causing issues with glide:
-# https://github.com/Masterminds/glide/issues/640
 - golang.org/x/sys/unix
 import:
 - package: github.com/satori/go.uuid
@@ -23,7 +21,7 @@ import:
   version: ^1.19.1
 - package: github.com/kardianos/osext
 - package: github.com/chzyer/readline
-  version: master # XXX: we need HEAD for now
+  version: master
 - package: github.com/asaskevich/govalidator
   version: ^5.0.0
 - package: github.com/kr/text
@@ -38,3 +36,5 @@ import:
 - package: github.com/blang/semver
   version: ^3.3.0
 - package: golang.org/x/oauth2
+- package: github.com/manifoldco/ansiwrap
+  version: ^1.0.0

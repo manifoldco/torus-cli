@@ -1,5 +1,5 @@
-hash: ed9edc1e79cec4131f4cdaa8df86520d42108422ad6207f53662af97640e9611
-updated: 2016-12-16T12:27:25.264571661-04:00
+hash: 7a11bf7b81b2b4d1f4fd40e25bab61518cbed99699c36614b7e23494eeed3a4e
+updated: 2017-01-26T09:46:41.568044759-04:00
 imports:
 - name: cloud.google.com/go
   version: cd98f454026dda47cbe1b8a189313207573f6d6b
@@ -10,7 +10,7 @@ imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: 0df2a7ae7e82d2643e4a8fed1b2e36a1cf0580bc
+  version: aa8704199ea17856a3f37852f16a6008aea97e81
   subpackages:
   - aws
   - aws/awserr
@@ -44,7 +44,7 @@ imports:
   - service/s3/s3manager
   - service/sts
 - name: github.com/blang/semver
-  version: 60ec3488bfea7cca02b021d106d9911120d25fe9
+  version: 57172d9388933074ce0fbba4e24fb287b6b57548
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/BurntSushi/toml
@@ -62,7 +62,7 @@ imports:
 - name: github.com/facebookgo/stats
   version: 1b76add642e42c6ffba7211ad7b3939ce654526e
 - name: github.com/go-ini/ini
-  version: 6e4869b434bd001f6983749881c7ead3545887d8
+  version: e3c2d47c61e5333f9aa2974695dd94396eb69c75
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/golang/glog
@@ -104,6 +104,8 @@ imports:
   version: 7cafcd837844e784b526369c9bce262804aebc60
   subpackages:
   - colwriter
+- name: github.com/manifoldco/ansiwrap
+  version: c0a8ca03bf663de63b9a3e4283986a5824c1850b
 - name: github.com/natefinch/lumberjack
   version: dd45e6a67c53f673bb49ca8a001fd3a63ceb640e
 - name: github.com/nbutton23/zxcvbn-go
