@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/manifoldco/ansiwrap"
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -13,6 +14,7 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 var catOrder = []apitypes.WorklogType{
@@ -140,7 +142,7 @@ func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) string {
 		}
 		return msg
 	default:
-		return item.Subject() + "\n"
+		return item.Subject()
 	}
 }
 
@@ -164,7 +166,7 @@ func worklogList(ctx *cli.Context) error {
 	}
 
 	if len(items) == 0 {
-		fmt.Println("Worklog complete! No items left to resolve. 👍")
+		ui.Line("Worklog complete! No items left to resolve. 👍")
 		return nil
 	}
 
@@ -187,9 +189,11 @@ func worklogList(ctx *cli.Context) error {
 		newlineNeeded = true
 
 		groupMsg := fmt.Sprintf(groupMsgFor(cat), underline(org.Body.Name))
-		fmt.Printf("%s %s\n", yellow(cat.String()), groupMsg)
+		ui.Line("%s %s\n", yellow(cat.String()), groupMsg)
 		for _, item := range items {
-			fmt.Printf("  %s %s\n", faint(item.ID.String()), subjectFor(&item))
+			indent := 2
+			l := fmt.Sprintf("%s %s", faint(item.ID.String()), subjectFor(&item))
+			fmt.Println(ansiwrap.WrapIndent(l, ui.Cols, indent, indent+2))
 		}
 	}
 
@@ -229,7 +233,7 @@ func worklogView(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("%s %s\n", yellow(item.ID.String()), subjectFor(item))
+	ui.Line("%s %s\n", yellow(item.ID.String()), subjectFor(item))
 	fmt.Printf(detailsFor(org, item))
 	return nil
 }
@@ -302,7 +306,7 @@ func worklogResolve(ctx *cli.Context) error {
 			newlineNeeded = true
 
 			groupMsg := fmt.Sprintf(groupMsgFor(cat), underline(org.Body.Name))
-			fmt.Printf("%s %s\n", yellow(cat.String()), groupMsg)
+			ui.Line("%s %s\n", yellow(cat.String()), groupMsg)
 		}
 
 		for _, item := range items {
@@ -338,11 +342,11 @@ func displayResult(item *apitypes.WorklogItem, err error, grouped bool) {
 		icon = promptui.IconWarn
 	}
 
-	indent := ""
+	indent := 0
 	idFmt := yellow
 
 	if grouped {
-		indent = "  "
+		indent = 2
 		idFmt = faint
 	}
 
@@ -376,11 +380,12 @@ func displayResult(item *apitypes.WorklogItem, err error, grouped bool) {
 		case apitypes.MachineKeyringMembersWorklogType:
 			message = "Secret access for machine %s has been reconciled."
 		case apitypes.SecretRotateWorklogType:
-			message = "Please set a new value for\n" + indent + "    %s"
+			message = "Please set a new value for %s"
 		}
 
 		message = fmt.Sprintf(message, subjectFor(item))
 	}
 
-	fmt.Printf("%s%s %s %s\n", indent, icon, idFmt(item.ID.String()), message)
+	l := fmt.Sprintf("%s %s %s", icon, idFmt(item.ID.String()), message)
+	fmt.Println(ansiwrap.WrapIndent(l, ui.Cols, indent, indent+4))
 }
