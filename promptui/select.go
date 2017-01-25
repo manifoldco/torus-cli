@@ -127,7 +127,7 @@ func (s *Select) innerRun(starting int, top rune) (int, string, error) {
 
 		prefix := ""
 		prefix += upLine(uint(len(list))) + "\r" + clearLine
-		p := prefix + bold(iconInitial) + " " + bold(prompt) + downLine(1) + strings.Join(list, downLine(1))
+		p := prefix + bold(IconInitial) + " " + bold(prompt) + downLine(1) + strings.Join(list, downLine(1))
 		rl.SetPrompt(p)
 		rl.Refresh()
 
@@ -157,7 +157,7 @@ func (s *Select) innerRun(starting int, top rune) (int, string, error) {
 	rl.Write([]byte("\r"))
 
 	out := s.Items[selected]
-	rl.Write([]byte(iconGood + " " + prompt + faint(out) + "\n"))
+	rl.Write([]byte(IconGood + " " + prompt + faint(out) + "\n"))
 
 	rl.Write([]byte(showCursor))
 	return selected, out, err

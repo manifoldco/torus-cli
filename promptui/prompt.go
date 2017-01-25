@@ -28,6 +28,9 @@ type Prompt struct {
 	IsVimMode bool
 	Preamble  *string
 
+	// Indent will be placed before the prompt's state symbol
+	Indent string
+
 	stdin  io.Reader
 	stdout io.Writer
 }
@@ -73,10 +76,10 @@ func (p *Prompt) Run() (string, error) {
 		p.Default = ""
 	}
 
-	state := iconInitial
+	state := IconInitial
 	prompt := p.Label + punctuation + suggestedAnswer + " "
 
-	c.Prompt = bold(state) + " " + bold(prompt)
+	c.Prompt = p.Indent + bold(state) + " " + bold(prompt)
 	c.HistoryLimit = -1
 	c.UniqueEditLine = true
 
@@ -126,19 +129,19 @@ func (p *Prompt) Run() (string, error) {
 		err := validFn(string(line))
 		if err != nil {
 			if _, ok := err.(*ValidationError); ok {
-				state = iconBad
+				state = IconBad
 			} else {
 				rl.Close()
 				return nil, 0, false
 			}
 		} else {
-			state = iconGood
+			state = IconGood
 			if p.IsConfirm {
-				state = iconInitial
+				state = IconInitial
 			}
 		}
 
-		rl.SetPrompt(bold(state) + " " + bold(prompt))
+		rl.SetPrompt(p.Indent + bold(state) + " " + bold(prompt))
 		rl.Refresh()
 		wroteErr = false
 
@@ -155,14 +158,14 @@ func (p *Prompt) Run() (string, error) {
 			if verr, ok := oerr.(*ValidationError); ok {
 				msg = verr.msg
 				valid = false
-				state = iconBad
+				state = IconBad
 			} else {
 				return "", oerr
 			}
 		}
 
 		if valid {
-			state = iconGood
+			state = IconGood
 			break
 		}
 
@@ -184,7 +187,7 @@ func (p *Prompt) Run() (string, error) {
 
 		firstListen = true
 		wroteErr = true
-		rl.SetPrompt("\n" + red(">> ") + msg + upLine(1) + "\r" + bold(state) + " " + bold(prompt))
+		rl.SetPrompt("\n" + red(">> ") + msg + upLine(1) + "\r" + p.Indent + bold(state) + " " + bold(prompt))
 		rl.Refresh()
 	}
 
@@ -207,14 +210,14 @@ func (p *Prompt) Run() (string, error) {
 
 	if p.IsConfirm {
 		if strings.ToLower(echo) != "y" {
-			state = iconBad
+			state = IconBad
 			err = ErrAbort
 		} else {
-			state = iconGood
+			state = IconGood
 		}
 	}
 
-	rl.Write([]byte(state + " " + prompt + faint(echo) + "\n"))
+	rl.Write([]byte(p.Indent + state + " " + prompt + faint(echo) + "\n"))
 
 	return out, err
 }

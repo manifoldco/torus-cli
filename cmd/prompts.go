@@ -41,7 +41,7 @@ func validateInviteCode(input string) error {
 }
 
 // AskPerform prompts the user if they want to do a specified action
-func AskPerform(label string) error {
+func AskPerform(label, indent string) error {
 	preferences, err := prefs.NewPreferences()
 	if err != nil {
 		return err
@@ -50,6 +50,7 @@ func AskPerform(label string) error {
 		Label:     label,
 		IsConfirm: true,
 		Preamble:  nil,
+		Indent:    indent,
 		IsVimMode: preferences.Core.Vim,
 	}
 	_, err = prompt.Run()
