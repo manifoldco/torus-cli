@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/chzyer/readline"
 	"github.com/manifoldco/ansiwrap"
@@ -96,6 +98,26 @@ func (u *UI) Child(indent int) *UI {
 		EnableProgress: u.EnableProgress,
 		EnableHints:    u.EnableHints,
 	}
+}
+
+// Write implements the io.Writer interface
+// The provided bytes are split on newlines, and written with the UI's
+// configured indent.
+func (u *UI) Write(p []byte) (n int, err error) {
+	parts := bytes.Split(p, []byte{'\n'})
+
+	indent := bytes.Repeat([]byte{' '}, u.Indent)
+	for i, part := range parts {
+		if len(part) > 0 {
+			part = append(indent, part...)
+		}
+		os.Stdout.Write(part)
+		if i < len(parts)-1 {
+			fmt.Println()
+		}
+	}
+
+	return len(p), nil
 }
 
 func screenWidth() int {

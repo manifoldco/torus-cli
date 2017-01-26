@@ -24,7 +24,6 @@ import:
   version: master
 - package: github.com/asaskevich/govalidator
   version: ^5.0.0
-- package: github.com/kr/text
 - package: gopkg.in/oleiade/reflections.v1
   version: ^1.0.0
 - package: github.com/donovanhide/eventsource

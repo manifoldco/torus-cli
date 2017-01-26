@@ -1,5 +1,5 @@
-hash: 7a11bf7b81b2b4d1f4fd40e25bab61518cbed99699c36614b7e23494eeed3a4e
-updated: 2017-01-26T09:46:41.568044759-04:00
+hash: b0cb91f397d6098435c0e307576149f036c3a087562c79a12b109a6ecc4912ae
+updated: 2017-01-26T11:12:27.479995477-04:00
 imports:
 - name: cloud.google.com/go
   version: cd98f454026dda47cbe1b8a189313207573f6d6b
@@ -50,7 +50,7 @@ imports:
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/chzyer/readline
-  version: c914be64f07d9998f52bf0d598ec26d457168c0f
+  version: eef24db1d59cac55d773312ab6efe1890187f2de
 - name: github.com/dchest/blake2b
   version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/donovanhide/eventsource
@@ -98,12 +98,6 @@ imports:
   version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
   subpackages:
   - sha3
-- name: github.com/kr/pty
-  version: ce7fa45920dc37a92de8377972e52bc55ffa8d57
-- name: github.com/kr/text
-  version: 7cafcd837844e784b526369c9bce262804aebc60
-  subpackages:
-  - colwriter
 - name: github.com/manifoldco/ansiwrap
   version: c0a8ca03bf663de63b9a3e4283986a5824c1850b
 - name: github.com/natefinch/lumberjack
