@@ -20,6 +20,10 @@ _Unreleased_
     rotation items include which users caused the need for rotation, and why
     (i.e. 'james was removed from the org.').
 
+**Fixes**
+
+- Correct the help message for `invites accept`'s org flag.
+
 **Thanks**
 
 - Federico Ruggi

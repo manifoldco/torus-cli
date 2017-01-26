@@ -53,7 +53,7 @@ func init() {
 				Usage:     "Accept an invitation to join an organization",
 				ArgsUsage: "<email> <code>",
 				Flags: []cli.Flag{
-					orgFlag("org to approve invite for", true),
+					orgFlag("org to accept invite for", true),
 				},
 				Action: chain(
 					ensureDaemon, loadDirPrefs,
