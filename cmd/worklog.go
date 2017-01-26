@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/manifoldco/ansiwrap"
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -105,28 +104,28 @@ func subjectFor(item *apitypes.WorklogItem) string {
 	}
 }
 
-func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) string {
+func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) {
+	u := ui.Child(2)
 	switch d := item.Details.(type) {
 	case *apitypes.MissingKeypairsWorklogDetails:
-		return underline(d.Org) + "\n"
+		u.Line("You are missing keypairs for the %s org", underline(d.Org))
 	case *apitypes.InviteApproveWorklogDetails:
-		msg := fmt.Sprintf("  The invite for %s to the %s org is ready for approval.\n",
+		u.Line("The invite for %s to the %s org is ready for approval. They will be invited to the following teams:",
 			d.Name, underline(org.Body.Name))
-		msg += "  They will be invited to the following teams:\n"
+		c := u.Child(2)
 		for _, t := range d.Teams {
-			msg += fmt.Sprintf("    %s\n", t)
+			c.LineIndent(2, t)
 		}
-		return msg
 	case *apitypes.KeyringMembersWorklogDetails:
-		msg := fmt.Sprintf("  %s is missing granted access to secrets in the %s org.\n",
+		u.Line("%s is missing granted access to secrets in the %s org. Secrets in the following paths are affected:",
 			underline(d.Name), underline(org.Body.Name))
-		msg += "  Secrets in the following paths are affected:\n"
+		c := u.Child(2)
 		for _, p := range d.Keyrings {
-			msg += fmt.Sprintf("    %s\n", p.String())
+			c.LineIndent(2, p.String())
 		}
-		return msg
 	case *apitypes.SecretRotateWorklogDetails:
-		msg := "  The value for this secret should be rotated for the following reasons:\n"
+		u.Line("The value for this secret should be rotated for the following reasons:")
+		c := u.Child(2)
 		for _, r := range d.Reasons {
 			var rm string
 			switch r.Type {
@@ -138,11 +137,10 @@ func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) string {
 				rm = "lost access."
 			}
 
-			msg += fmt.Sprintf("    %s %s\n", underline(r.Username), rm)
+			c.LineIndent(2, "%s %s", underline(r.Username), rm)
 		}
-		return msg
 	default:
-		return item.Subject()
+		u.Line(item.Subject())
 	}
 }
 
@@ -190,10 +188,9 @@ func worklogList(ctx *cli.Context) error {
 
 		groupMsg := fmt.Sprintf(groupMsgFor(cat), underline(org.Body.Name))
 		ui.Line("%s %s\n", yellow(cat.String()), groupMsg)
+		c := ui.Child(2)
 		for _, item := range items {
-			indent := 2
-			l := fmt.Sprintf("%s %s", faint(item.ID.String()), subjectFor(&item))
-			fmt.Println(ansiwrap.WrapIndent(l, ui.Cols, indent, indent+2))
+			c.LineIndent(2, "%s %s", faint(item.ID.String()), subjectFor(&item))
 		}
 	}
 
@@ -234,7 +231,7 @@ func worklogView(ctx *cli.Context) error {
 	}
 
 	ui.Line("%s %s\n", yellow(item.ID.String()), subjectFor(item))
-	fmt.Printf(detailsFor(org, item))
+	detailsFor(org, item)
 	return nil
 }
 
@@ -386,6 +383,6 @@ func displayResult(item *apitypes.WorklogItem, err error, grouped bool) {
 		message = fmt.Sprintf(message, subjectFor(item))
 	}
 
-	l := fmt.Sprintf("%s %s %s", icon, idFmt(item.ID.String()), message)
-	fmt.Println(ansiwrap.WrapIndent(l, ui.Cols, indent, indent+4))
+	u := ui.Child(indent)
+	u.LineIndent(4, "%s %s %s", icon, idFmt(item.ID.String()), message)
 }

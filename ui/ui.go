@@ -64,8 +64,19 @@ func Line(format string, a ...interface{}) { defUI.Line(format, a...) }
 // Line writes a formatted string followed by a newline to stdout. Output is
 // word wrapped, and terminated by a newline.
 func (u *UI) Line(format string, a ...interface{}) {
+	u.LineIndent(0, format, a...)
+}
+
+// LineIndent calls LineIndent on the default UI
+func LineIndent(indent int, format string, a ...interface{}) { defUI.LineIndent(indent, format, a...) }
+
+// LineIndent writes a formatted string followed by a newline to stdout. Output
+// is word wrapped, and terminated by a newline. All lines after the first are
+// indented by indent number of spaces (in addition to the indenting enforced
+// by this UI instance.
+func (u *UI) LineIndent(indent int, format string, a ...interface{}) {
 	o := fmt.Sprintf(format, a...)
-	fmt.Println(ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent))
+	fmt.Println(ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent+indent))
 }
 
 // Hint calls hint on the default UI
