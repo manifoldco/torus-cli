@@ -2,16 +2,15 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/go-ini/ini"
+	"github.com/urfave/cli"
+
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
-
-	"github.com/go-ini/ini"
-	"github.com/kr/text"
-	"github.com/urfave/cli"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -52,10 +51,8 @@ func listSection(name string, count int, section interface{}) error {
 		return err
 	}
 
-	spacer := "    "
-	fc.WriteToIndent(text.NewIndentWriter(os.Stdout, []byte(spacer)), spacer)
-
-	return nil
+	_, err = fc.WriteTo(ui.Child(4))
+	return err
 }
 
 func listPref(ctx *cli.Context) error {

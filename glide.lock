@@ -1,5 +1,5 @@
-hash: ed9edc1e79cec4131f4cdaa8df86520d42108422ad6207f53662af97640e9611
-updated: 2016-12-16T12:27:25.264571661-04:00
+hash: b0cb91f397d6098435c0e307576149f036c3a087562c79a12b109a6ecc4912ae
+updated: 2017-01-26T11:12:27.479995477-04:00
 imports:
 - name: cloud.google.com/go
   version: cd98f454026dda47cbe1b8a189313207573f6d6b
@@ -10,7 +10,7 @@ imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: 0df2a7ae7e82d2643e4a8fed1b2e36a1cf0580bc
+  version: aa8704199ea17856a3f37852f16a6008aea97e81
   subpackages:
   - aws
   - aws/awserr
@@ -44,13 +44,13 @@ imports:
   - service/s3/s3manager
   - service/sts
 - name: github.com/blang/semver
-  version: 60ec3488bfea7cca02b021d106d9911120d25fe9
+  version: 57172d9388933074ce0fbba4e24fb287b6b57548
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/chzyer/readline
-  version: c914be64f07d9998f52bf0d598ec26d457168c0f
+  version: eef24db1d59cac55d773312ab6efe1890187f2de
 - name: github.com/dchest/blake2b
   version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/donovanhide/eventsource
@@ -62,7 +62,7 @@ imports:
 - name: github.com/facebookgo/stats
   version: 1b76add642e42c6ffba7211ad7b3939ce654526e
 - name: github.com/go-ini/ini
-  version: 6e4869b434bd001f6983749881c7ead3545887d8
+  version: e3c2d47c61e5333f9aa2974695dd94396eb69c75
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/golang/glog
@@ -98,12 +98,8 @@ imports:
   version: b360b8252869a5ac88df3ed7897bc3b6d1e55dd2
   subpackages:
   - sha3
-- name: github.com/kr/pty
-  version: ce7fa45920dc37a92de8377972e52bc55ffa8d57
-- name: github.com/kr/text
-  version: 7cafcd837844e784b526369c9bce262804aebc60
-  subpackages:
-  - colwriter
+- name: github.com/manifoldco/ansiwrap
+  version: c0a8ca03bf663de63b9a3e4283986a5824c1850b
 - name: github.com/natefinch/lumberjack
   version: dd45e6a67c53f673bb49ca8a001fd3a63ceb640e
 - name: github.com/nbutton23/zxcvbn-go

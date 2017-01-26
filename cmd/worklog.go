@@ -13,6 +13,7 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 var catOrder = []apitypes.WorklogType{
@@ -103,28 +104,28 @@ func subjectFor(item *apitypes.WorklogItem) string {
 	}
 }
 
-func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) string {
+func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) {
+	u := ui.Child(2)
 	switch d := item.Details.(type) {
 	case *apitypes.MissingKeypairsWorklogDetails:
-		return underline(d.Org) + "\n"
+		u.Line("You are missing keypairs for the %s org", underline(d.Org))
 	case *apitypes.InviteApproveWorklogDetails:
-		msg := fmt.Sprintf("  The invite for %s to the %s org is ready for approval.\n",
+		u.Line("The invite for %s to the %s org is ready for approval. They will be invited to the following teams:",
 			d.Name, underline(org.Body.Name))
-		msg += "  They will be invited to the following teams:\n"
+		c := u.Child(2)
 		for _, t := range d.Teams {
-			msg += fmt.Sprintf("    %s\n", t)
+			c.LineIndent(2, t)
 		}
-		return msg
 	case *apitypes.KeyringMembersWorklogDetails:
-		msg := fmt.Sprintf("  %s is missing granted access to secrets in the %s org.\n",
+		u.Line("%s is missing granted access to secrets in the %s org. Secrets in the following paths are affected:",
 			underline(d.Name), underline(org.Body.Name))
-		msg += "  Secrets in the following paths are affected:\n"
+		c := u.Child(2)
 		for _, p := range d.Keyrings {
-			msg += fmt.Sprintf("    %s\n", p.String())
+			c.LineIndent(2, p.String())
 		}
-		return msg
 	case *apitypes.SecretRotateWorklogDetails:
-		msg := "  The value for this secret should be rotated for the following reasons:\n"
+		u.Line("The value for this secret should be rotated for the following reasons:")
+		c := u.Child(2)
 		for _, r := range d.Reasons {
 			var rm string
 			switch r.Type {
@@ -136,11 +137,10 @@ func detailsFor(org *envelope.Org, item *apitypes.WorklogItem) string {
 				rm = "lost access."
 			}
 
-			msg += fmt.Sprintf("    %s %s\n", underline(r.Username), rm)
+			c.LineIndent(2, "%s %s", underline(r.Username), rm)
 		}
-		return msg
 	default:
-		return item.Subject() + "\n"
+		u.Line(item.Subject())
 	}
 }
 
@@ -164,7 +164,7 @@ func worklogList(ctx *cli.Context) error {
 	}
 
 	if len(items) == 0 {
-		fmt.Println("Worklog complete! No items left to resolve. 👍")
+		ui.Line("Worklog complete! No items left to resolve. 👍")
 		return nil
 	}
 
@@ -187,9 +187,10 @@ func worklogList(ctx *cli.Context) error {
 		newlineNeeded = true
 
 		groupMsg := fmt.Sprintf(groupMsgFor(cat), underline(org.Body.Name))
-		fmt.Printf("%s %s\n", yellow(cat.String()), groupMsg)
+		ui.Line("%s %s\n", yellow(cat.String()), groupMsg)
+		c := ui.Child(2)
 		for _, item := range items {
-			fmt.Printf("  %s %s\n", faint(item.ID.String()), subjectFor(&item))
+			c.LineIndent(2, "%s %s", faint(item.ID.String()), subjectFor(&item))
 		}
 	}
 
@@ -229,8 +230,8 @@ func worklogView(ctx *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("%s %s\n", yellow(item.ID.String()), subjectFor(item))
-	fmt.Printf(detailsFor(org, item))
+	ui.Line("%s %s\n", yellow(item.ID.String()), subjectFor(item))
+	detailsFor(org, item)
 	return nil
 }
 
@@ -302,7 +303,7 @@ func worklogResolve(ctx *cli.Context) error {
 			newlineNeeded = true
 
 			groupMsg := fmt.Sprintf(groupMsgFor(cat), underline(org.Body.Name))
-			fmt.Printf("%s %s\n", yellow(cat.String()), groupMsg)
+			ui.Line("%s %s\n", yellow(cat.String()), groupMsg)
 		}
 
 		for _, item := range items {
@@ -338,11 +339,11 @@ func displayResult(item *apitypes.WorklogItem, err error, grouped bool) {
 		icon = promptui.IconWarn
 	}
 
-	indent := ""
+	indent := 0
 	idFmt := yellow
 
 	if grouped {
-		indent = "  "
+		indent = 2
 		idFmt = faint
 	}
 
@@ -376,11 +377,12 @@ func displayResult(item *apitypes.WorklogItem, err error, grouped bool) {
 		case apitypes.MachineKeyringMembersWorklogType:
 			message = "Secret access for machine %s has been reconciled."
 		case apitypes.SecretRotateWorklogType:
-			message = "Please set a new value for\n" + indent + "    %s"
+			message = "Please set a new value for %s"
 		}
 
 		message = fmt.Sprintf(message, subjectFor(item))
 	}
 
-	fmt.Printf("%s%s %s %s\n", indent, icon, idFmt(item.ID.String()), message)
+	u := ui.Child(indent)
+	u.LineIndent(4, "%s %s %s", icon, idFmt(item.ID.String()), message)
 }
