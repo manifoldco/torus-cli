@@ -7,9 +7,6 @@ torus
 travis/id_rsa*
 builds/*
 
-# Generated files for our binary
-zz_generated_*.go
-
 # Our 3rd party deps
 .glide
 vendor/*
