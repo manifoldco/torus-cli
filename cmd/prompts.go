@@ -15,21 +15,19 @@ import (
 	"github.com/manifoldco/torus-cli/prefs"
 	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/validate"
 )
 
-const slugPattern = "^[a-z][a-z0-9\\-\\_]{0,63}$"
-const namePattern = "^[a-zA-Z\\s,\\.'\\-pL]{1,64}$"
 const inviteCodePattern = "^[0-9a-ht-zjkmnpqr]{10}$"
 const verifyCodePattern = "^[0-9a-ht-zjkmnpqr]{9}$"
 
 func validateSlug(slugType string) promptui.ValidateFunc {
-	msg := slugType + " names can only use a-z, 0-9, hyphens and underscores"
-	err := promptui.NewValidationError(msg)
 	return func(input string) error {
-		if govalidator.StringMatches(input, slugPattern) {
+		err := validate.Slug(input, slugType, nil)
+		if err == nil {
 			return nil
 		}
-		return err
+		return promptui.NewValidationError(err.Error())
 	}
 }
 
@@ -391,15 +389,12 @@ func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
 		Label: label,
 		Mask:  PasswordMask,
 		Validate: func(input string) error {
-			length := len(input)
-			if length >= 8 {
+			err := validate.Password(input)
+			if err == nil {
 				return nil
 			}
-			if length > 0 {
-				return promptui.NewValidationError("Passwords must be at least 8 characters")
-			}
 
-			return promptui.NewValidationError("Please enter your password")
+			return promptui.NewValidationError(err.Error())
 		},
 		IsVimMode: preferences.Core.Vim,
 	}
@@ -446,7 +441,8 @@ func EmailPrompt(defaultValue string) (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Email",
 		Validate: func(input string) error {
-			if govalidator.IsEmail(input) {
+			err := validate.Email(input)
+			if err == nil {
 				return nil
 			}
 			return promptui.NewValidationError("Please enter a valid email address")
@@ -470,7 +466,8 @@ func UsernamePrompt(un string) (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Username",
 		Validate: func(input string) error {
-			if govalidator.StringMatches(input, slugPattern) {
+			err := validate.Username(input)
+			if err == nil {
 				return nil
 			}
 			return promptui.NewValidationError("Please enter a valid username")
@@ -494,7 +491,8 @@ func FullNamePrompt(name string) (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Name",
 		Validate: func(input string) error {
-			if govalidator.StringMatches(input, namePattern) {
+			err := validate.Name(input)
+			if err == nil {
 				return nil
 			}
 			return promptui.NewValidationError("Please enter a valid name")
