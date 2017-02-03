@@ -42,7 +42,7 @@ type Client struct {
 
 // NewClient returns a new Client.
 func NewClient(prefix string, apiVersion string, version string,
-	token TokenHolder, t *http.Transport) *Client {
+	token TokenHolder, t http.RoundTripper) *Client {
 
 	rt := &registryRoundTripper{
 		DefaultRequestDoer: DefaultRequestDoer{
