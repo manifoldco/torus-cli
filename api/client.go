@@ -4,7 +4,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"net"
 	"net/http"
 	"net/url"
 
@@ -51,13 +50,8 @@ func NewClient(cfg *config.Config) *Client {
 	rt := &apiRoundTripper{
 		DefaultRequestDoer: registry.DefaultRequestDoer{
 			Client: &http.Client{
-				Transport: &http.Transport{
-					Dial: func(network, address string) (net.Conn, error) {
-						return net.Dial("unix", cfg.SocketPath)
-					},
-				},
+				Transport: newTransport(cfg),
 			},
-
 			Host: "http://localhost",
 		},
 	}
