@@ -3,7 +3,6 @@ package promptui
 import (
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 const esc = "\033["
@@ -56,18 +55,5 @@ func movementCode(n uint, code rune) string {
 // Styler returns a func that applies the attributes given in the Styler call
 // to the provided string.
 func Styler(attrs ...attribute) func(string) string {
-	attrstrs := make([]string, len(attrs))
-	for i, v := range attrs {
-		attrstrs[i] = strconv.Itoa(int(v))
-	}
-
-	seq := strings.Join(attrstrs, ";")
-
-	return func(s string) string {
-		end := ""
-		if !strings.HasSuffix(s, ResetCode) {
-			end = ResetCode
-		}
-		return fmt.Sprintf("%s%sm%s%s", esc, seq, s, end)
-	}
+	return styler(attrs...)
 }
