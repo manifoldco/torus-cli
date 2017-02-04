@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path"
 	"runtime"
@@ -129,10 +128,7 @@ func spawnDaemon() error {
 		return errs.NewErrorExitError("Unable to find executable.", err)
 	}
 
-	cmd := exec.Command(executable, "daemon", "start", "--foreground", "--daemonize")
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setsid: true, // start a new session group, ie detach
-	}
+	cmd := daemonCommand(executable)
 
 	// Clone the current env, removing email and password if they exist.
 	// no need to keep those hanging around in a long lived-process!
