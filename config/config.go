@@ -19,8 +19,6 @@ import (
 var Version = "alpha"
 var apiVersion = "0.4.0"
 
-const requiredPermissions = 0700
-
 // Config represents the static and user defined configuration data
 // for Torus.
 type Config struct {
@@ -76,15 +74,6 @@ func NewConfig(torusRoot string) (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func torusRootPath() string {
-	torusRoot := os.Getenv("TORUS_ROOT")
-	if len(torusRoot) == 0 {
-		torusRoot = path.Join(os.Getenv("HOME"), ".torus")
-	}
-
-	return torusRoot
 }
 
 // CreateTorusRoot creates the root directory for the Torus daemon.
