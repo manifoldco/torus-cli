@@ -52,6 +52,9 @@ VERSION_FLAG=-X $(PKG)/config.Version=$(VERSION)
 STATIC_FLAGS=-w -s $(VERSION_FLAG)
 GO_BUILD=CGO_ENABLED=0 go build -i -v
 
+windows: generated vendor
+	GOOS=windows GOARCH=386 $(GO_BUILD) -o torus.exe -ldflags='$(VERSION_FLAG)' ${PKG}
+
 binary: generated vendor
 	$(GO_BUILD) -o ${OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
 

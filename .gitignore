@@ -1,6 +1,7 @@
 # Things we get while testing/developing
 ag
 torus
+torus.exe
 *.arigato.json
 *.torus.json
 
