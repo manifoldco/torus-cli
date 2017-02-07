@@ -72,7 +72,7 @@ func New(cfg *config.Config, groupShared bool) (*Daemon, error) {
 	transport := socket.CreateHTTPTransport(cfg)
 	client := registry.NewClient(cfg.RegistryURI.String(), cfg.APIVersion,
 		cfg.Version, session, transport)
-	logic := logic.NewEngine(cfg, session, db, cryptoEngine, client)
+	logic := logic.NewEngine(session, db, cryptoEngine, client)
 	updates := updates.NewEngine(cfg)
 
 	proxy, err := socket.NewAuthProxy(cfg, session, db, transport, client, logic, updates, groupShared)

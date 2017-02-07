@@ -9,14 +9,12 @@ import (
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/base64"
-	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
-	"github.com/manifoldco/torus-cli/daemon/db"
 	"github.com/manifoldco/torus-cli/daemon/observer"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
@@ -27,9 +25,8 @@ import (
 // All data passing in and out of the engine is unencrypted for the currently
 // logged in user.
 type Engine struct {
-	config  *config.Config
 	session session.Session
-	db      *db.DB
+	db      Database
 	crypto  *crypto.Engine
 	client  *registry.Client
 
@@ -38,11 +35,15 @@ type Engine struct {
 	Session Session
 }
 
+// Database interface for logic engine
+type Database interface {
+	Set(envs ...envelope.Envelope) error
+}
+
 // NewEngine returns a new Engine
-func NewEngine(c *config.Config, s session.Session, db *db.DB, e *crypto.Engine,
+func NewEngine(s session.Session, db Database, e *crypto.Engine,
 	client *registry.Client) *Engine {
 	engine := &Engine{
-		config:  c,
 		session: s,
 		db:      db,
 		crypto:  e,
