@@ -9,7 +9,6 @@ import (
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/base64"
-	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -27,7 +26,6 @@ import (
 // All data passing in and out of the engine is unencrypted for the currently
 // logged in user.
 type Engine struct {
-	config  *config.Config
 	session session.Session
 	db      *db.DB
 	crypto  *crypto.Engine
@@ -39,10 +37,9 @@ type Engine struct {
 }
 
 // NewEngine returns a new Engine
-func NewEngine(c *config.Config, s session.Session, db *db.DB, e *crypto.Engine,
+func NewEngine(s session.Session, db *db.DB, e *crypto.Engine,
 	client *registry.Client) *Engine {
 	engine := &Engine{
-		config:  c,
 		session: s,
 		db:      db,
 		crypto:  e,
