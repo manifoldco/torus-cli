@@ -62,6 +62,8 @@ func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) err
 		s.engine.db.Set(self.Auth)
 	}
 
+	log.Print("set the session type")
+	log.Print(self.Type)
 	return s.engine.session.Set(self.Type, self.Identity, self.Auth, creds.Passphrase(), token)
 }
 

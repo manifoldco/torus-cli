@@ -244,6 +244,10 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			encodeResponseErr(w, err)
 			return
 		}
+		log.Print("password:")
+		log.Printf("%+v", passwordObj)
+		log.Print("master:")
+		log.Printf("%+v", masterObj)
 
 		userBody := primitive.User{
 			BaseUser: primitive.BaseUser{

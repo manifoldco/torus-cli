@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha512"
 	"encoding/base64"
+	"log"
 
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/scrypt"
@@ -131,6 +132,7 @@ func EncryptPasswordObject(ctx context.Context, password string, currentMasterKe
 	pw := &primitive.UserPassword{
 		Alg: Scrypt,
 	}
+	log.Printf("plaintext pw: %s", password)
 
 	// Generate 128 bit (16 byte) salt for password
 	salt := make([]byte, saltBytes) // 16

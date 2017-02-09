@@ -4,6 +4,7 @@ package session
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -164,6 +165,8 @@ func (s *session) Set(sessionType apitypes.SessionType, identity, auth envelope.
 		return errors.New("Token must not be empty")
 	}
 
+	log.Print("session type to this:")
+	log.Printf("%+v", sessionType)
 	s.sessionType = sessionType
 	s.passphrase = passphrase
 	s.token = token
@@ -201,6 +204,8 @@ func (s *session) MasterKey() (*base64.Value, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
+	log.Print("which session type?")
+	log.Printf("%+v", s.Type())
 	if s.Type() == apitypes.NotLoggedIn {
 		return nil, createNotLoggedInError()
 	}
