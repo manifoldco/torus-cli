@@ -10,7 +10,7 @@ import (
 func newTransport(cfg *config.Config) *http.Transport {
 	return &http.Transport{
 		Dial: func(network, address string) (net.Conn, error) {
-			return net.Dial("tcp", "127.0.0.1:50")
+			return net.Dial("tcp", cfg.TransportAddress)
 		},
 	}
 }

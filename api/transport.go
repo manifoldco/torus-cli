@@ -12,7 +12,7 @@ import (
 func newTransport(cfg *config.Config) *http.Transport {
 	return &http.Transport{
 		Dial: func(network, address string) (net.Conn, error) {
-			return net.Dial("unix", cfg.SocketPath)
+			return net.Dial("unix", cfg.TransportAddress)
 		},
 	}
 }

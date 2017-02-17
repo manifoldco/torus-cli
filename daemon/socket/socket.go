@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 )
 
-func makeSocket(socketPath string, groupShared bool) (net.Listener, error) {
-	absPath, err := filepath.Abs(socketPath)
+func makeSocket(transportAddress string, groupShared bool) (net.Listener, error) {
+	absPath, err := filepath.Abs(transportAddress)
 	if err != nil {
-		fmt.Printf("Error getting absolute path: %s\n", socketPath)
+		fmt.Printf("Error getting absolute path: %s\n", transportAddress)
 		return nil, err
 	}
 
@@ -38,8 +38,8 @@ func makeSocket(socketPath string, groupShared bool) (net.Listener, error) {
 
 	// Does not guarantee security; BSD ignores file permissions for sockets
 	// see https://github.com/manifoldco/torus-cli/issues/76 for details
-	if err = os.Chmod(socketPath, mode); err != nil {
-		fmt.Printf("Error chmodding socket: %s:%s\n", socketPath, mode)
+	if err = os.Chmod(transportAddress, mode); err != nil {
+		fmt.Printf("Error chmodding socket: %s:%s\n", transportAddress, mode)
 		return nil, err
 	}
 

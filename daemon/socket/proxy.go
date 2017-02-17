@@ -56,7 +56,7 @@ type AuthProxy struct {
 func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB, t *http.Transport,
 	client *registry.Client, logic *logic.Engine, updates *updates.Engine, groupShared bool) (*AuthProxy, error) {
 
-	l, err := makeSocket(c.SocketPath, groupShared)
+	l, err := makeSocket(c.TransportAddress, groupShared)
 	if err != nil {
 		return nil, err
 	}
