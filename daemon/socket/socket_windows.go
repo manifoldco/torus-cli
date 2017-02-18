@@ -2,8 +2,12 @@
 
 package socket
 
-import "net"
+import (
+	"net"
+
+	"github.com/natefinch/npipe"
+)
 
 func makeSocket(transportAddress string, groupShared bool) (net.Listener, error) {
-	return net.Listen("tcp", transportAddress)
+	return npipe.Listen(transportAddress)
 }

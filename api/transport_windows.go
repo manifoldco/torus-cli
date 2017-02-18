@@ -5,12 +5,13 @@ import (
 	"net/http"
 
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/natefinch/npipe"
 )
 
 func newTransport(cfg *config.Config) *http.Transport {
 	return &http.Transport{
 		Dial: func(network, address string) (net.Conn, error) {
-			return net.Dial("tcp", cfg.TransportAddress)
+			return npipe.Dial(cfg.TransportAddress)
 		},
 	}
 }
