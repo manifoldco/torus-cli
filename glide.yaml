@@ -2,6 +2,8 @@ package: github.com/manifoldco/torus-cli
 ignore:
 - golang.org/x/sys/unix
 import:
+- package: github.com/natefinch/npipe
+  version: ^2
 - package: github.com/satori/go.uuid
   version: ^1.1.0
 - package: github.com/natefinch/lumberjack
