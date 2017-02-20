@@ -19,10 +19,13 @@ func EncodeToString(in []byte) string {
 // DecodeString decodes the given base32 encodeed bytes
 func DecodeString(raw string) ([]byte, error) {
 	pad := 8 - (len(raw) % 8)
-	nb := make([]byte, len(raw)+pad)
-	copy(nb, raw)
-	for i := 0; i < pad; i++ {
-		nb[len(raw)+i] = '='
+	nb := []byte(raw)
+	if pad != 8 {
+		nb = make([]byte, len(raw)+pad)
+		copy(nb, raw)
+		for i := 0; i < pad; i++ {
+			nb[len(raw)+i] = '='
+		}
 	}
 
 	return lowerBase32.DecodeString(string(nb))
