@@ -76,7 +76,7 @@ func LineIndent(indent int, format string, a ...interface{}) { defUI.LineIndent(
 // by this UI instance.
 func (u *UI) LineIndent(indent int, format string, a ...interface{}) {
 	o := fmt.Sprintf(format, a...)
-	fmt.Println(ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent+indent))
+	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent+indent))
 }
 
 // Hint calls hint on the default UI
@@ -93,7 +93,7 @@ func (u *UI) Hint(str string, noPadding bool) {
 
 	label := bold("Protip: ")
 	rc := ansiwrap.RuneCount(label)
-	fmt.Println(ansiwrap.WrapIndent(label+str, u.Cols, u.Indent, u.Indent+rc))
+	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(label+str, u.Cols, u.Indent, u.Indent+rc))
 }
 
 // Child calls Child on the default UI
