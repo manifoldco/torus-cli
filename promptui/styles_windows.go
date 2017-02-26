@@ -1,5 +1,3 @@
-// +build !windows
-
 package promptui
 
 var (
@@ -11,9 +9,9 @@ var (
 // Icons used for displaying prompts or status
 var (
 	IconInitial = Styler(FGBlue)("?")
-	IconGood    = Styler(FGGreen)("✔")
-	IconWarn    = Styler(FGYellow)("⚠")
-	IconBad     = Styler(FGRed)("✗")
+	IconGood    = Styler(FGGreen)("v")
+	IconWarn    = Styler(FGYellow)("!")
+	IconBad     = Styler(FGRed)("x")
 )
 
 var red = Styler(FGBold, FGRed)
