@@ -18,7 +18,7 @@ A secure, shared workspace for secrets.
 
 ## Installation & signup
 
-[Manifold](https://www.manifold.co) provides binaries of `torus-cli` for OS X and Linux on `amd64`.
+[Manifold](https://www.manifold.co) provides binaries of `torus-cli` for OS X, Linux and Windows on `amd64`.
 
 After installing, create an account with:
 ```
@@ -51,6 +51,12 @@ sudo tee /etc/apt/sources.list.d/torus.list <<< "deb https://get.torus.sh/$DISTR
 ```
 - [npm](https://www.npmjs.com): `npm install -g torus-cli`
 - bare zip archives per release version are available on https://get.torus.sh/
+
+### Windows
+
+- Get the desired version on [https://get.torus.sh/](https://get.torus.sh/)
+- Unzip the file
+- Put the `torus.exe` file in your path (**System Settings** -> **Advanced System Settings** -> **Advanced** -> **Environment Variables** -> Edit **Path** in **System Variables** and add the path to folder where your `torus.exe` file is)
 
 ## Security Disclosure
 
