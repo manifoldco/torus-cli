@@ -56,7 +56,12 @@ sudo tee /etc/apt/sources.list.d/torus.list <<< "deb https://get.torus.sh/$DISTR
 
 - Get the desired version on [https://get.torus.sh/](https://get.torus.sh/)
 - Unzip the file
-- Put the `torus.exe` file in your path (**System Settings** -> **Advanced System Settings** -> **Advanced** -> **Environment Variables** -> Edit **Path** in **System Variables** and add the path to folder where your `torus.exe` file is)
+- Put the `torus.exe` file in your path
+  - **System Settings**
+  - **Advanced System Settings**
+  - **Advanced**
+  - **Environment Variables**
+  - Edit **Path** in **System Variables** and add the full path to the folder where your `torus.exe` file is
 
 ## Security Disclosure
 
