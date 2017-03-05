@@ -11,7 +11,7 @@ import (
 func newTransport(cfg *config.Config) *http.Transport {
 	return &http.Transport{
 		Dial: func(network, address string) (net.Conn, error) {
-			return npipe.Dial(cfg.TransportAddress)
+			return npipe.DialTimeout(cfg.TransportAddress, dialTimeout)
 		},
 	}
 }
