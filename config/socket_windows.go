@@ -1,5 +1,5 @@
 package config
 
 func setTransportAddress(cfg *Config) {
-	cfg.TransportAddress = `\\.\pipe\manifoldco\torus`
+	cfg.TransportAddress = `\\.\pipe\manifoldco.torusd.sock`
 }
