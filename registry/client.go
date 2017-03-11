@@ -48,7 +48,7 @@ func NewClient(prefix string, apiVersion string, version string,
 		DefaultRequestDoer: DefaultRequestDoer{
 			Client: &http.Client{
 				Transport: t,
-				Timeout:   30 * time.Second,
+				Timeout:   time.Minute,
 			},
 			Host: prefix,
 		},

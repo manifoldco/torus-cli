@@ -55,7 +55,7 @@ func NewClient(cfg *config.Config) *Client {
 		DefaultRequestDoer: registry.DefaultRequestDoer{
 			Client: &http.Client{
 				Transport: newTransport(cfg),
-				Timeout:   30 * time.Second,
+				Timeout:   time.Minute,
 			},
 			Host: "http://localhost",
 		},
