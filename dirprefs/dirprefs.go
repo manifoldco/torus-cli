@@ -33,7 +33,7 @@ func Load(recurse bool) (*DirPreferences, error) {
 	for {
 		f, err = os.Open(filepath.Join(path, ".torus.json"))
 		if err != nil {
-			if len(path) == 1 && path == string(os.PathSeparator) || !recurse {
+			if isSystemRoot(path) || !recurse {
 				return prefs, nil
 			}
 
@@ -73,4 +73,14 @@ func (d *DirPreferences) Save() error {
 // Remove removes the backing file for this DirPreferences
 func (d *DirPreferences) Remove() error {
 	return os.Remove(d.Path)
+}
+
+// isSystemRoot validates if the given path is the root of the system for the
+// OS the application is running on.
+func isSystemRoot(path string) bool {
+	if len(path) != rootPathLength {
+		return false
+	}
+
+	return os.PathSeparator == path[rootPathLength-1]
 }

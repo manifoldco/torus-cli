@@ -1,12 +1,16 @@
-OUT=torus
+PKG_OUT="torus"
+GO_OUT=$(shell if [[ "${OUT}" != "" ]]; then echo ${OUT}; else if [[ "$(word 1, $(subst -, , $*))" == "windows" ]]; then echo ${PKG_OUT}".exe"; else echo ${PKG_OUT}; fi; fi)
 PKG=github.com/manifoldco/torus-cli
 
 GO_REQUIRED_VERSION=1.7.4
+WINDOWS=\
+	windows-amd64
 LINUX=\
 	linux-amd64
 TARGETS=\
 	darwin-amd64 \
-	$(LINUX)
+	$(LINUX) \
+	$(WINDOWS)
 
 VERSION?=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 
@@ -53,10 +57,10 @@ STATIC_FLAGS=-w -s $(VERSION_FLAG)
 GO_BUILD=CGO_ENABLED=0 go build -i -v
 
 binary: generated vendor
-	$(GO_BUILD) -o ${OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
+	$(GO_BUILD) -o ${GO_OUT} -ldflags='$(VERSION_FLAG)' ${PKG}
 
 static: generated vendor
-	$(GO_BUILD) -o ${OUT}-v${VERSION} -ldflags='$(STATIC_FLAGS)' ${PKG}
+	$(GO_BUILD) -o ${GO_OUT}-v${VERSION} -ldflags='$(STATIC_FLAGS)' ${PKG}
 
 .PHONY: binary static
 
@@ -92,7 +96,7 @@ $(TOOLS)/primitive-boilerplate: $(wildcard $(PRIMITIVE_BOILERPLATE)/*.go) $(wild
 #################################################
 
 clean:
-	@rm -f ${OUT} ${OUT}-v*
+	@rm -f ${GO_OUT} ${GO_OUT}-v*
 	@rm -f $(GENERATED_FILES)
 	@rm -f $(TOOLS)/*
 	@rm -rf builds/*
@@ -193,7 +197,7 @@ endif
 OS=$(word 1, $(subst -, ,$*))
 ARCH=$(word 2, $(subst -, ,$*))
 BUILD_DIR=builds/bin/$(VERSION)/$(OS)/$(ARCH)
-BINARY=-o $(BUILD_DIR)/$(OUT)
+BINARY=-o $(BUILD_DIR)/$(GO_OUT)
 
 TRIM_PATH='-trimpath $(subst /$(PKG),,$(shell pwd))'
 PATH_STRIP_FLAGS=-gcflags $(TRIM_PATH) -asmflags $(TRIM_PATH)
@@ -215,12 +219,12 @@ $(BUILD_DIRS):
 	@mkdir -p $@
 
 $(addprefix zip-,$(TARGETS)): zip-%: binary-% builds/dist/$(VERSION)
-	zip -j builds/dist/$(VERSION)/$(OUT)_$(VERSION)_$(OS)_$(ARCH).zip \
-		$(BUILD_DIR)/$(OUT)
+	zip -j builds/dist/$(VERSION)/$(PKG_OUT)_$(VERSION)_$(OS)_$(ARCH).zip \
+		$(BUILD_DIR)/$(GO_OUT)
 
 release-binary: $(addprefix zip-,$(TARGETS))
 	pushd builds/dist/$(VERSION) && \
-		shasum -a 256 *.zip > $(OUT)_$(VERSION)_SHA256SUMS
+		shasum -a 256 *.zip > $(PKG_OUT)_$(VERSION)_SHA256SUMS
 
 $(addprefix rpm-,$(LINUX)): rpm-%: binary-% builds/dist/rpm rpm-container
 	docker run -v $(PWD):/torus manifoldco/torus-rpm /bin/bash -c " \

@@ -1,16 +1,10 @@
-hash: b0cb91f397d6098435c0e307576149f036c3a087562c79a12b109a6ecc4912ae
-updated: 2017-01-26T11:12:27.479995477-04:00
+hash: b600f32392382344cc8d12adb14cdc71ff642e414677fa5c3c933516ed2512c0
+updated: 2017-02-18T16:32:02.423151964+01:00
 imports:
-- name: cloud.google.com/go
-  version: cd98f454026dda47cbe1b8a189313207573f6d6b
-  subpackages:
-  - compute/metadata
-  - internal
-  - internal/atomiccache
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: aa8704199ea17856a3f37852f16a6008aea97e81
+  version: b2852089fcfd0794d25d57f193e15121ab8a6d9e
   subpackages:
   - aws
   - aws/awserr
@@ -29,26 +23,18 @@ imports:
   - aws/session
   - aws/signer/v4
   - private/protocol
-  - private/protocol/json/jsonutil
-  - private/protocol/jsonrpc
   - private/protocol/query
   - private/protocol/query/queryutil
   - private/protocol/rest
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
   - private/waiter
-  - service/kms
-  - service/kms/kmsiface
   - service/s3
-  - service/s3/s3iface
-  - service/s3/s3manager
   - service/sts
 - name: github.com/blang/semver
-  version: 57172d9388933074ce0fbba4e24fb287b6b57548
+  version: b38d23b8782a487059e8fc8773e9a5b228a77cb6
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
-- name: github.com/BurntSushi/toml
-  version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/chzyer/readline
   version: eef24db1d59cac55d773312ab6efe1890187f2de
 - name: github.com/dchest/blake2b
@@ -65,15 +51,10 @@ imports:
   version: e3c2d47c61e5333f9aa2974695dd94396eb69c75
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
-- name: github.com/golang/glog
-  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/golang/protobuf
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - proto
-  - proto/testdata
-  - protoc-gen-go/descriptor
-  - ptypes/any
 - name: github.com/google/go-github
   version: 466070b0580728e63bd1a415e0019639e55d7148
   subpackages:
@@ -82,16 +63,8 @@ imports:
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
   - query
-- name: github.com/googleapis/gax-go
-  version: da06d194a00e19ce00d9011a13931c3f6f6887c7
-- name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
-- name: github.com/gorilla/mux
-  version: 757bef944d0f21880861c2dd9c871ca543023cba
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
-- name: github.com/julienschmidt/httprouter
-  version: 4563b0ba73e4db6c6423b60a26f3cadd2e9a1ec9
 - name: github.com/kardianos/osext
   version: c2c54e542fb797ad986b31721e1baedf214ca413
 - name: github.com/keybase/go-triplesec
@@ -102,32 +75,17 @@ imports:
   version: c0a8ca03bf663de63b9a3e4283986a5824c1850b
 - name: github.com/natefinch/lumberjack
   version: dd45e6a67c53f673bb49ca8a001fd3a63ceb640e
-- name: github.com/nbutton23/zxcvbn-go
-  version: a22cb81b2ecdde8b68e9ffb8824731cbf88e1de4
-  subpackages:
-  - adjacency
-  - data
-  - entropy
-  - frequency
-  - match
-  - matching
-  - scoring
-  - utils/math
+- name: github.com/natefinch/npipe
+  version: c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6
 - name: github.com/nightlyone/lockfile
   version: 1d49c987357a327b5b03aa84cbddd582c328615d
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/urfave/cli
   version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
-- name: go4.org
-  version: 09d86de304dc27e636298361bbfee4ac6ab04f21
-  subpackages:
-  - syncutil/singleflight
 - name: golang.org/x/crypto
   version: 8a549a1948fc5271eb24f36dcb0d3b47dec75a16
   subpackages:
-  - acme
-  - acme/autocert
   - curve25519
   - ed25519
   - ed25519/internal/edwards25519
@@ -138,92 +96,25 @@ imports:
   - salsa20
   - salsa20/salsa
   - scrypt
-  - ssh/terminal
   - twofish
 - name: golang.org/x/net
   version: 45e771701b814666a7eb299e6c7a57d0b1799e91
   subpackages:
   - context
-  - context/ctxhttp
-  - http2
-  - http2/hpack
-  - idna
-  - internal/timeseries
-  - lex/httplex
-  - trace
 - name: golang.org/x/oauth2
   version: 96382aa079b72d8c014eb0c50f6c223d1e6a2de0
   subpackages:
-  - clientcredentials
-  - google
   - internal
-  - jws
-  - jwt
-- name: google.golang.org/api
-  version: 55146ba61254fdb1c26d65ff3c04bc1611ad73fb
-  subpackages:
-  - compute/v1
-  - gensupport
-  - googleapi
-  - googleapi/internal/uritemplates
 - name: google.golang.org/appengine
   version: ca59ef35f409df61fa4a5f8290ff289b37eccfb8
   subpackages:
-  - datastore
   - internal
-  - internal/app_identity
   - internal/base
-  - internal/blobstore
-  - internal/capability
-  - internal/channel
   - internal/datastore
-  - internal/image
   - internal/log
-  - internal/mail
-  - internal/memcache
-  - internal/modules
   - internal/remote_api
-  - internal/search
-  - internal/socket
-  - internal/system
-  - internal/taskqueue
   - internal/urlfetch
-  - internal/user
-  - internal/xmpp
-  - log
-  - taskqueue
   - urlfetch
-  - user
-- name: google.golang.org/grpc
-  version: 8712952b7d646dbbbc6fb73a782174f3115060f3
-  subpackages:
-  - benchmark
-  - benchmark/grpc_testing
-  - benchmark/stats
-  - codes
-  - credentials
-  - credentials/oauth
-  - examples/helloworld/helloworld
-  - examples/route_guide/routeguide
-  - grpclb/grpc_lb_v1
-  - grpclog
-  - health/grpc_health_v1
-  - internal
-  - interop
-  - interop/grpc_testing
-  - metadata
-  - naming
-  - peer
-  - reflection
-  - reflection/grpc_reflection_v1alpha
-  - stats
-  - stress/grpc_testing
-  - tap
-  - transport
 - name: gopkg.in/oleiade/reflections.v1
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
-- name: gopkg.in/urfave/cli.v1
-  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
-- name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

@@ -19,19 +19,17 @@ import (
 var Version = "alpha"
 var apiVersion = "0.4.0"
 
-const requiredPermissions = 0700
-
 // Config represents the static and user defined configuration data
 // for Torus.
 type Config struct {
 	APIVersion string
 	Version    string
 
-	TorusRoot      string
-	SocketPath     string
-	PidPath        string
-	DBPath         string
-	LastUpdatePath string
+	TorusRoot        string
+	TransportAddress string
+	PidPath          string
+	DBPath           string
+	LastUpdatePath   string
 
 	RegistryURI *url.URL
 	CABundle    *x509.CertPool
@@ -65,7 +63,6 @@ func NewConfig(torusRoot string) (*Config, error) {
 		Version:    Version,
 
 		TorusRoot:      torusRoot,
-		SocketPath:     path.Join(torusRoot, "daemon.socket"),
 		PidPath:        path.Join(torusRoot, "daemon.pid"),
 		DBPath:         path.Join(torusRoot, "daemon.db"),
 		LastUpdatePath: path.Join(torusRoot, "last_update"),
@@ -75,16 +72,10 @@ func NewConfig(torusRoot string) (*Config, error) {
 		PublicKey:   publicKey,
 	}
 
+	// set OS specific transport address
+	setTransportAddress(cfg)
+
 	return cfg, nil
-}
-
-func torusRootPath() string {
-	torusRoot := os.Getenv("TORUS_ROOT")
-	if len(torusRoot) == 0 {
-		torusRoot = path.Join(os.Getenv("HOME"), ".torus")
-	}
-
-	return torusRoot
 }
 
 // CreateTorusRoot creates the root directory for the Torus daemon.
