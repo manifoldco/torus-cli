@@ -46,8 +46,11 @@ func NewClient(prefix string, apiVersion string, version string,
 
 	rt := &registryRoundTripper{
 		DefaultRequestDoer: DefaultRequestDoer{
-			Client: &http.Client{Transport: t},
-			Host:   prefix,
+			Client: &http.Client{
+				Transport: t,
+				Timeout:   time.Minute,
+			},
+			Host: prefix,
 		},
 
 		apiVersion: apiVersion,

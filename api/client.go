@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/donovanhide/eventsource"
 	"github.com/satori/go.uuid"
@@ -14,7 +15,10 @@ import (
 	"github.com/manifoldco/torus-cli/registry"
 )
 
-const daemonAPIVersion = "v1"
+const (
+	daemonAPIVersion = "v1"
+	dialTimeout      = time.Second
+)
 
 type blacklisted struct{}
 
@@ -51,6 +55,7 @@ func NewClient(cfg *config.Config) *Client {
 		DefaultRequestDoer: registry.DefaultRequestDoer{
 			Client: &http.Client{
 				Transport: newTransport(cfg),
+				Timeout:   time.Minute,
 			},
 			Host: "http://localhost",
 		},
