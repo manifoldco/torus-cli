@@ -3,7 +3,7 @@
 This template contains the "original body" for a "release" issue. Copy, paste,
 update, and submit!
 
-Example: https://github.com/manifoldco/torus-cli/issues/791
+Example: https://github.com/manifoldco/engineering/issues/1275
 
 For each RC (release candidate), append a new comment with a fresh copy of the
 [qa checklist](./qa.md).
