@@ -4,8 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/registry"
 )
@@ -51,5 +52,5 @@ func createTokenSecret() (*base64.Value, error) {
 		return nil, err
 	}
 
-	return base64.NewValue(value), nil
+	return base64.New(value), nil
 }

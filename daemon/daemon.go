@@ -8,8 +8,9 @@ import (
 
 	"github.com/nightlyone/lockfile"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/registry"
@@ -129,7 +130,7 @@ func (d *Daemon) Run() error {
 			return err
 		}
 
-		secret, err := base64.NewValueFromString(tokenSecret)
+		secret, err := base64.NewFromString(tokenSecret)
 		if err != nil {
 			log.Printf("Could not parse TORUS_TOKEN_SECRET")
 			return err

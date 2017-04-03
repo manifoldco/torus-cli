@@ -11,7 +11,7 @@ import (
 	"golang.org/x/crypto/ed25519"
 	"golang.org/x/crypto/scrypt"
 
-	base64url "github.com/manifoldco/torus-cli/base64"
+	base64url "github.com/manifoldco/go-base64"
 	"github.com/manifoldco/torus-cli/daemon/ctxutil"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -46,7 +46,7 @@ type LoginKeypair struct {
 
 // PublicKey returns the base64 value of the public key
 func (k *LoginKeypair) PublicKey() *base64url.Value {
-	return base64url.NewValue(k.public)
+	return base64url.New(k.public)
 }
 
 // Salt returns the base64 representation of the salt used to derive the
@@ -58,7 +58,7 @@ func (k *LoginKeypair) Salt() *base64url.Value {
 // Sign returns a signature of the given token as a base64 string
 func (k *LoginKeypair) Sign(token []byte) *base64url.Value {
 	sig := ed25519.Sign(k.private, token)
-	return base64url.NewValue(sig)
+	return base64url.New(sig)
 }
 
 // DeriveLoginHMAC HMACs the provided token with a key derived from password
@@ -122,7 +122,7 @@ func GenerateSalt(ctx context.Context) (*base64url.Value, error) {
 		return nil, err
 	}
 
-	return base64url.NewValue(salt), nil
+	return base64url.New(salt), nil
 }
 
 // EncryptPasswordObject derives the master key (if necessary) and password hash
@@ -149,7 +149,7 @@ func EncryptPasswordObject(ctx context.Context, password string, currentMasterKe
 	}
 
 	// Encode password value to base64url
-	pw.Value = base64url.NewValue(pwh)
+	pw.Value = base64url.New(pwh)
 
 	m, err := CreateMasterKeyObject(ctx, []byte(password), currentMasterKey)
 	if err != nil {
@@ -196,7 +196,7 @@ func CreateMasterKeyObject(ctx context.Context, password []byte, masterKey *[]by
 	}
 
 	// Encode the master key value to base64url
-	m.Value = base64url.NewValue(ct)
+	m.Value = base64url.New(ct)
 	return m, nil
 }
 

@@ -14,7 +14,8 @@ import (
 	"golang.org/x/crypto/nacl/box"
 	"golang.org/x/crypto/nacl/secretbox"
 
-	"github.com/manifoldco/torus-cli/base64"
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 
@@ -449,7 +450,7 @@ func (e *Engine) signAndID(ctx context.Context, body identity.Immutable,
 	sig := primitive.Signature{
 		PublicKeyID: sigID,
 		Algorithm:   EdDSA,
-		Value:       base64.NewValue(s),
+		Value:       base64.New(s),
 	}
 
 	id, err := identity.NewImmutable(body, &sig)
