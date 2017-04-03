@@ -39,3 +39,5 @@ import:
 - package: golang.org/x/oauth2
 - package: github.com/manifoldco/ansiwrap
   version: ^1.0.0
+- package: github.com/manifoldco/go-base64
+  version: ^1.0.0

@@ -7,7 +7,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/manifoldco/torus-cli/base64"
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/data"
 	"github.com/manifoldco/torus-cli/errs"
 )

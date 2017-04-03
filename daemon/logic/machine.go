@@ -5,8 +5,9 @@ import (
 	"log"
 	"time"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"

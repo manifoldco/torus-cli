@@ -7,8 +7,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -230,7 +231,7 @@ func signupRoute(client *registry.Client, s session.Session, db *db.DB) http.Han
 			return
 		}
 
-		b64Salt, err := base64.NewValueFromString(passwordObj.Salt)
+		b64Salt, err := base64.NewFromString(passwordObj.Salt)
 		if err != nil {
 			log.Printf("Error casting Salt into Base64: %s", err)
 			encodeResponseErr(w, err)

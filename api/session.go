@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -171,7 +172,7 @@ func (s *SessionClient) MachineLogin(ctx context.Context, tokenID, tokenSecret s
 		return err
 	}
 
-	secret, err := base64.NewValueFromString(tokenSecret)
+	secret, err := base64.NewFromString(tokenSecret)
 	if err != nil {
 		return err
 	}

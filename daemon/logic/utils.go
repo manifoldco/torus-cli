@@ -9,8 +9,9 @@ import (
 
 	"golang.org/x/crypto/ed25519"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -123,8 +124,8 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 
 			key := &primitive.KeyringMemberKey{
 				Algorithm: crypto.EasyBox,
-				Nonce:     base64.NewValue(nonce),
-				Value:     base64.NewValue(encmek),
+				Nonce:     base64.New(nonce),
+				Value:     base64.New(encmek),
 			}
 
 			member, err := newV2KeyringMember(ctx, engine, credBody.OrgID, keyring.ID,
@@ -297,8 +298,8 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 
 		key := &primitive.KeyringMemberKey{
 			Algorithm: crypto.EasyBox,
-			Nonce:     base64.NewValue(nonce),
-			Value:     base64.NewValue(encMek),
+			Nonce:     base64.New(nonce),
+			Value:     base64.New(encMek),
 		}
 
 		switch k := graph.GetKeyring().(type) {
@@ -583,7 +584,7 @@ func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
 		Algorithm: alg,
 
 		Key: primitive.PublicKeyValue{
-			Value: base64.NewValue(public),
+			Value: base64.New(public),
 		},
 
 		Created: now,
@@ -600,12 +601,12 @@ func packagePrivateKey(ctx context.Context, engine *crypto.Engine, ownerID,
 	body := primitive.PrivateKey{
 		OrgID:       orgID,
 		OwnerID:     ownerID,
-		PNonce:      base64.NewValue(pnonce),
+		PNonce:      base64.New(pnonce),
 		PublicKeyID: pubID,
 
 		Key: primitive.PrivateKeyValue{
 			Algorithm: crypto.Triplesec,
-			Value:     base64.NewValue(private),
+			Value:     base64.New(private),
 		},
 	}
 

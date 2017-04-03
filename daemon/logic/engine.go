@@ -7,8 +7,9 @@ import (
 	"context"
 	"log"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -162,10 +163,10 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		return nil, err
 	}
 
-	credBody.Nonce = base64.NewValue(cekNonce)
+	credBody.Nonce = base64.New(cekNonce)
 
-	credBody.Credential.Nonce = base64.NewValue(ctNonce)
-	credBody.Credential.Value = base64.NewValue(ct)
+	credBody.Credential.Nonce = base64.New(ctNonce)
+	credBody.Credential.Value = base64.New(ct)
 
 	signed, err := e.crypto.SignedCredential(ctx, &credBody, sigID, &kp.Signature)
 	if err != nil {

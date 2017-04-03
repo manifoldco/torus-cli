@@ -5,8 +5,9 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/manifoldco/go-base64"
+
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base64"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
@@ -528,8 +529,8 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 
 			key := &primitive.KeyringMemberKey{
 				Algorithm: crypto.EasyBox,
-				Nonce:     base64.NewValue(nonce),
-				Value:     base64.NewValue(encMek),
+				Nonce:     base64.New(nonce),
+				Value:     base64.New(encMek),
 			}
 
 			keyring := graph.GetKeyring()
