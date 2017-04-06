@@ -23,6 +23,8 @@ _Unreleased_
 **Fixes**
 
 - Correct the help message for `invites accept`'s org flag.
+- Fixed a problem where machine's with a name containing `machine-` (but as a
+  prefix) could not interact with credential.
 
 **Thanks**
 

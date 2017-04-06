@@ -183,7 +183,7 @@ func identityString(identityType, identity string) (string, error) {
 		return identity, nil
 	}
 
-	if strings.Contains(identity, "machine-") {
+	if strings.HasPrefix(identity, "machine-") {
 		return "", errs.NewExitError(
 			"Do not prepend 'machine-' when using --machine")
 	}
