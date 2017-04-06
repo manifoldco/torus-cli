@@ -10,7 +10,7 @@ import (
 
 	"github.com/dchest/blake2b"
 
-	"github.com/manifoldco/torus-cli/base32"
+	"github.com/manifoldco/go-base32"
 )
 
 const (

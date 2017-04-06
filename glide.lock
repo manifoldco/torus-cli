@@ -73,6 +73,8 @@ imports:
   - sha3
 - name: github.com/manifoldco/ansiwrap
   version: c0a8ca03bf663de63b9a3e4283986a5824c1850b
+- name: github.com/manifoldco/go-base32
+  version: b6687e64fc5e75d8bb58badb858d79c46b0eee96
 - name: github.com/manifoldco/go-base64
   version: bb5e620cf51d2bbe78e624a2c27117655ce73acc
 - name: github.com/natefinch/lumberjack
