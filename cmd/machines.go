@@ -11,11 +11,11 @@ import (
 
 	"github.com/urfave/cli"
 
+	"github.com/manifoldco/go-base32"
 	"github.com/manifoldco/go-base64"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/base32"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
