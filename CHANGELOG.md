@@ -26,6 +26,11 @@ _Unreleased_
 - Fixed a problem where machine's with a name containing `machine-` (but as a
   prefix) could not interact with credential.
 
+**Security**
+
+- Added documentation to the README.md regarding the default security profile
+  of Torus on Windows.
+
 **Thanks**
 
 - Federico Ruggi
