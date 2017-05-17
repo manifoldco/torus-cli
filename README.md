@@ -63,6 +63,12 @@ sudo tee /etc/apt/sources.list.d/torus.list <<< "deb https://get.torus.sh/$DISTR
   - **Environment Variables**
   - Edit **Path** in **System Variables** and add the full path to the folder where your `torus.exe` file is
 
+#### Security note
+
+Currently on Windows, the Daemon will create a named pipe using the default security attributes. This means, that the LocalSystem account, administrators, and the creator will be granted full control. All members of the Everyone group and the anonymous account are granted read access.
+
+More information can be found [here](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365150(v=vs.85).aspx).
+
 ## Security Disclosure
 
 Please follow our security disclosure document [found here](./internal/security.md).
