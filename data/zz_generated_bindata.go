@@ -84,7 +84,7 @@ func dataCa_bundlePem() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "data/ca_bundle.pem", size: 4798, mode: os.FileMode(420), modTime: time.Unix(1483106242, 0)}
+	info := bindataFileInfo{name: "data/ca_bundle.pem", size: 4798, mode: os.FileMode(420), modTime: time.Unix(1473707250, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -104,7 +104,7 @@ func dataPublic_keyJson() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "data/public_key.json", size: 61, mode: os.FileMode(420), modTime: time.Unix(1483106242, 0)}
+	info := bindataFileInfo{name: "data/public_key.json", size: 61, mode: os.FileMode(420), modTime: time.Unix(1476275586, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
