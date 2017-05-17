@@ -1,8 +1,12 @@
 # CHANGELOG
 
-## v0.23.0
+## v0.24.0
 
 _Unreleased_
+
+## v0.23.0
+
+_2017-05-17_
 
 **Notable Changes**
 
@@ -19,6 +23,8 @@ _Unreleased_
   - Each worklog item includes details visible with `view`. For example, secret
     rotation items include which users caused the need for rotation, and why
     (i.e. 'james was removed from the org.').
+- A beta version of the windows client is now available on
+  [get.torus.sh](https://get.torus.sh)!
 
 **Fixes**
 
@@ -34,6 +40,7 @@ _Unreleased_
 **Thanks**
 
 - Federico Ruggi
+- Jelmer Snoeck
 
 ## v0.22.0
 
