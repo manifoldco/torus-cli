@@ -219,12 +219,12 @@ func findProcess(pid int) (*os.Process, error) {
 
 // spawnListener spawns a detached Listener instance. Shutdown can be done by
 func spawnListener(listenerCmd func(string) *exec.Cmd) error {
-	exectuable, err := osext.Executable()
+	executable, err := osext.Executable()
 	if err != nil {
 		return errs.NewErrorExitError("Unable to find executable", err)
 	}
 
-	cmd := listenerCmd(exectuable)
+	cmd := listenerCmd(executable)
 	// Clone the current env, removing email and password if they exist.
 	// no need to keep those hanging around in a long lived-process!
 	cmd.Env = filterEnv()
