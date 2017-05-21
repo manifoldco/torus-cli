@@ -44,7 +44,7 @@ func spawnListenerCmd(procName, pidPath string, listenerCmd func(string) *exec.C
 	}
 
 	if proc != nil {
-		fmt.Println("%s is already running.", procName)
+		fmt.Printf("%s is already running.\n", procName)
 	}
 
 	if err := spawnListener(listenerCmd); err != nil {
@@ -52,7 +52,7 @@ func spawnListenerCmd(procName, pidPath string, listenerCmd func(string) *exec.C
 		return errs.NewErrorExitError(errMsg, err)
 	}
 
-	fmt.Printf("%s started.", procName)
+	fmt.Printf("%s started.\n", procName)
 	return nil
 }
 
@@ -112,7 +112,7 @@ func stopListenerCmd(procName, pidPath string) error {
 	}
 
 	if proc == nil {
-		fmt.Printf("%s not running", procName)
+		fmt.Printf("%s not running\n", procName)
 		return nil
 	}
 
@@ -122,9 +122,9 @@ func stopListenerCmd(procName, pidPath string) error {
 	}
 
 	if graceful {
-		fmt.Printf("%s stopped gracefully.", procName)
+		fmt.Printf("%s stopped gracefully.\n", procName)
 	} else {
-		fmt.Printf("%s stopped forcefully.", procName)
+		fmt.Printf("%s stopped forcefully.\n", procName)
 	}
 
 	return nil
@@ -139,7 +139,7 @@ func statusListenerCmd(procName, pidPath string) error {
 
 	proc, err := findListener(pidPath)
 	if err != nil {
-		fmt.Println("%s not running", procName)
+		fmt.Printf("%s not running\n", procName)
 		return nil
 	}
 
