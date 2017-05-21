@@ -32,7 +32,7 @@ func init() {
 	set := cli.Command{
 		Name:      "set",
 		Usage:     "Set a secret for a service and environment",
-		ArgsUsage: "<name|path> <value>",
+		ArgsUsage: "<name|path> <value> or <name|path>=<value>",
 		Category:  "SECRETS",
 		Flags:     setUnsetFlags,
 		Action: chain(
@@ -45,17 +45,13 @@ func init() {
 }
 
 func setCmd(ctx *cli.Context) error {
-	args := ctx.Args()
-	if len(args) != 2 {
-		msg := "name and value are required."
-		if len(args) > 2 {
-			msg = "Too many arguments provided."
-		}
-		return errs.NewUsageExitError(msg, ctx)
+	key, value, errMsg := parseSetArgs(ctx.Args())
+	if errMsg != "" {
+		return errs.NewUsageExitError(errMsg, ctx)
 	}
 
-	cred, err := setCredential(ctx, args[0], func() *apitypes.CredentialValue {
-		return apitypes.NewStringCredentialValue(args[1])
+	cred, err := setCredential(ctx, key, func() *apitypes.CredentialValue {
+		return apitypes.NewStringCredentialValue(value)
 	})
 
 	if err != nil {
@@ -68,6 +64,24 @@ func setCmd(ctx *cli.Context) error {
 
 	hints.Display([]string{"view", "run"})
 	return nil
+}
+
+func parseSetArgs(args []string) (key string, value string, errMsg string) {
+	// If there is only one argument, try to parse using env var syntax: KEY=value
+	if len(args) == 1 {
+		args = strings.SplitN(args[0], "=", 2)
+	}
+
+	switch len(args) {
+	case 0, 1:
+		errMsg = "name and value are required."
+	case 2:
+		key = args[0]
+		value = args[1]
+	default:
+		errMsg = "Too many arguments provided."
+	}
+	return key, value, errMsg
 }
 
 func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp, *string, error) {
