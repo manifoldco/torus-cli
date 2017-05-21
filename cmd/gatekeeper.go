@@ -4,9 +4,10 @@
 package cmd
 
 import (
+	"github.com/urfave/cli"
+
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/gatekeeper"
-	"github.com/urfave/cli"
 )
 
 func init() {
