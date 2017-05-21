@@ -47,7 +47,7 @@ func ensureDaemon(ctx *cli.Context) error {
 		return err
 	}
 
-	proc, err := findDaemon(cfg)
+	proc, err := findListener(cfg.PidPath)
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func ensureDaemon(ctx *cli.Context) error {
 	spawned := false
 
 	if proc == nil {
-		err := spawnDaemon()
+		err := spawnListener(daemonCommand)
 		if err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func ensureDaemon(ctx *cli.Context) error {
 	fmt.Println("The daemon version is out of date and is being restarted.")
 	fmt.Println("You will need to login again.")
 
-	_, err = stopDaemon(proc)
+	_, err = stopProcess(proc)
 	if err != nil {
 		return err
 	}
