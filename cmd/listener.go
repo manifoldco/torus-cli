@@ -25,7 +25,7 @@ import (
 // Listener is an interface for daemon co-processes that listen on some socket.
 type Listener interface {
 	// Addr returns the address of the running service. This is a socket in
-	// the case of a daemon, or an TCP port in the case of the Gateway.
+	// the case of a daemon, or an TCP port in the case of the Gatekeeper.
 	Addr() string
 
 	// Run starts the Service. This operation will block.

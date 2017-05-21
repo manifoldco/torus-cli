@@ -73,7 +73,7 @@ func NewConfig(torusRoot string) (*Config, error) {
 
 		TorusRoot:         torusRoot,
 		PidPath:           path.Join(torusRoot, "daemon.pid"),
-		GatekeeperPidPath: path.Join(torusRoot, "gateway.pid"),
+		GatekeeperPidPath: path.Join(torusRoot, "gatekeeper.pid"),
 		DBPath:            path.Join(torusRoot, "daemon.db"),
 		LastUpdatePath:    path.Join(torusRoot, "last_update"),
 
