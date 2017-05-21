@@ -93,12 +93,12 @@ func startListenerCmd(
 	go watch(l)
 	defer l.Shutdown()
 
+	log.Printf("v%s of the %s is now listening on %s", cfg.Version, procName, l.Addr())
+
 	err = l.Run()
 	if err != nil {
 		log.Printf("Error while running %s.\n%s", procName, err)
 	}
-
-	log.Printf("v%s of the %s is now listening on %s", cfg.Version, procName, l.Addr())
 
 	return err
 }
@@ -138,7 +138,7 @@ func statusListenerCmd(procName, pidPath string) error {
 	}
 
 	proc, err := findListener(pidPath)
-	if err != nil {
+	if err != nil || proc == nil {
 		fmt.Printf("%s not running\n", procName)
 		return nil
 	}
