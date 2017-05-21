@@ -70,6 +70,16 @@ func roleFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("role, r", "ROLE", usage, "", "TORUS_ROLE", required)
 }
 
+// urlFlag creates a new --bootstrap cli.Flag
+func urlFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("url, u", "URL", usage, "", "TORUS_BOOTSTRAP_URL", required)
+}
+
+// authProviderFlag creates a new --auth cli.Flag
+func authProviderFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("auth, a", "AUTHPROVIDER", usage, "", "TORUS_AUTHPROVIDER", required)
+}
+
 // destroyedFlag creates a new --destroyed cli.Flag with custom usage string.
 func destroyedFlag() cli.Flag {
 	return cli.BoolFlag{

@@ -76,7 +76,7 @@ GENERATED_FILES=\
 	primitive/zz_generated_primitive.go
 generated: $(GENERATED_FILES)
 
-data/zz_generated_bindata.go: data/ca_bundle.pem data/public_key.json
+data/zz_generated_bindata.go: data/ca_bundle.pem data/public_key.json data/aws_identity_cert.pem
 	go-bindata -pkg data -o $@ $^
 
 primitive/zz_generated_primitive.go envelope/zz_generated_envelope.go: $(TOOLS)/primitive-boilerplate primitive/primitive.go
