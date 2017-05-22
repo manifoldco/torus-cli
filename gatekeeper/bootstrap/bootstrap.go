@@ -19,7 +19,7 @@ type Type string
 // Provider is an interface that provides bootstrapping and verification of a role
 type Provider interface {
 	// Bootstrap provides the main bootstrapping functions for the auth Provider
-	Bootstrap(url, org, role string) (*apitypes.BootstrapResponse, error)
+	Bootstrap(url, name, org, role string) (*apitypes.BootstrapResponse, error)
 
 	// Verify does backend verification on the bootstrap Provider
 	Verify() error

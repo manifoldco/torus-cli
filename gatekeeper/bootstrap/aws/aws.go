@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -42,7 +43,7 @@ func New() *AWS {
 }
 
 // Bootstrap bootstraps a the AWS instance into a role to a given Gatekeeper instance
-func (aws *AWS) Bootstrap(url, org, role string) (*apitypes.BootstrapResponse, error) {
+func (aws *AWS) Bootstrap(url, name, org, role string) (*apitypes.BootstrapResponse, error) {
 	var err error
 	client := client.NewClient(url)
 
@@ -63,13 +64,17 @@ func (aws *AWS) Bootstrap(url, org, role string) (*apitypes.BootstrapResponse, e
 	var identityDoc identityDocument
 	json.Unmarshal(aws.Identity, &identityDoc)
 
+	if name == "" {
+		name = identityDoc.InstanceID
+	}
+
 	bootreq := apitypes.AWSBootstrapRequest{
 		Identity:      aws.Identity,
 		Signature:     aws.Signature,
 		ProvisionTime: identityDoc.PendingTime,
 
 		Machine: apitypes.MachineBootstrap{
-			Name: identityDoc.InstanceID,
+			Name: name,
 			Org:  org,
 			Team: role,
 		},
@@ -156,7 +161,7 @@ func awsPublicCert() (*x509.Certificate, error) {
 		return nil, err
 	}
 	if cert == nil {
-		fmt.Errorf("invalid cerficicate")
+		return nil, errors.New("invalid cerficicate")
 	}
 
 	return cert, nil
