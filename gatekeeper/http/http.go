@@ -6,28 +6,39 @@ import (
 
 	"github.com/facebookgo/httpdown"
 	"github.com/go-zoo/bone"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/gatekeeper/routes"
 )
 
+type gatekeeperDefaults struct {
+	Org  string
+	Team string
+}
+
 // Gatekeeper exposes an HTTP interface over a normal TCP socket. It handles
 // machine creation, for machines bootstrapped with `torus bootstrap`
 type Gatekeeper struct {
-	s   *http.Server
-	hd  httpdown.Server
-	c   *config.Config
-	api *api.Client
+	defaults gatekeeperDefaults
+	s        *http.Server
+	hd       httpdown.Server
+	c        *config.Config
+	api      *api.Client
 }
 
 // NewGatekeeper returns a new Gatekeeper.
-func NewGatekeeper(cfg *config.Config, api *api.Client) *Gatekeeper {
+func NewGatekeeper(ctx *cli.Context, cfg *config.Config, api *api.Client) *Gatekeeper {
 	server := &http.Server{
 		Addr: cfg.GatekeeperAddress,
 	}
 
 	g := &Gatekeeper{
+		defaults: gatekeeperDefaults{
+			Org:  ctx.String("org"),
+			Team: ctx.String("team"),
+		},
 		s:   server,
 		c:   cfg,
 		api: api,
@@ -40,7 +51,7 @@ func NewGatekeeper(cfg *config.Config, api *api.Client) *Gatekeeper {
 func (g *Gatekeeper) Listen() error {
 	mux := bone.New()
 
-	mux.SubRoute("/v0", routes.NewRoutesMux(g.api))
+	mux.SubRoute("/v0", routes.NewRoutesMux(g.defaults.Org, g.defaults.Team, g.api))
 
 	g.s.Handler = loggingHandler(mux)
 	h := httpdown.HTTP{}

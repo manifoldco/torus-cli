@@ -7,18 +7,18 @@ import (
 )
 
 // NewRoutesMux returns a new *box.Mux for handling Gatekeeper requests
-func NewRoutesMux(api *api.Client) *bone.Mux {
+func NewRoutesMux(org, team string, api *api.Client) *bone.Mux {
 	mux := bone.New()
 
-	mux.SubRoute("/machine", newMachineBootstrapRoutes(api))
+	mux.SubRoute("/machine", newMachineBootstrapRoutes(org, team, api))
 
 	return mux
 }
 
-func newMachineBootstrapRoutes(api *api.Client) *bone.Mux {
+func newMachineBootstrapRoutes(org, team string, api *api.Client) *bone.Mux {
 	mux := bone.New()
 
-	mux.PostFunc("/aws", awsBootstrapRoute(api))
+	mux.PostFunc("/aws", awsBootstrapRoute(org, team, api))
 
 	return mux
 }

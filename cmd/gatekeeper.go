@@ -87,7 +87,7 @@ func startGatekeeperCmd(ctx *cli.Context) error {
 		"Gatekeeper",
 		"gatekeeper.log",
 		func(cfg *config.Config, noPermissionCheck bool) (Listener, error) {
-			return gatekeeper.New(cfg, noPermissionCheck)
+			return gatekeeper.New(ctx, cfg, noPermissionCheck)
 		})
 }
 

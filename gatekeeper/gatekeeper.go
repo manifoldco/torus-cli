@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/nightlyone/lockfile"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
@@ -21,7 +22,7 @@ type Gatekeeper struct {
 }
 
 // New returns a new Gatekeeper
-func New(cfg *config.Config, groupShared bool) (g *Gatekeeper, err error) {
+func New(ctx *cli.Context, cfg *config.Config, groupShared bool) (g *Gatekeeper, err error) {
 	lock, err := lockfile.New(cfg.GatekeeperPidPath)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create lockfile object: %s", err)
@@ -48,7 +49,7 @@ func New(cfg *config.Config, groupShared bool) (g *Gatekeeper, err error) {
 	}
 
 	api := api.NewClient(cfg)
-	http := http.NewGatekeeper(cfg, api)
+	http := http.NewGatekeeper(ctx, cfg, api)
 
 	gatekeeper := &Gatekeeper{
 		lock: lock,

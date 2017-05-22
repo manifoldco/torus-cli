@@ -7,7 +7,7 @@ import (
 )
 
 // awsMachineBoot
-func awsBootstrapRoute(api *api.Client) http.HandlerFunc {
+func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
 	}
