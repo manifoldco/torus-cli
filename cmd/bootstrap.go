@@ -77,8 +77,8 @@ func writeEnvironmentFile(token *identity.ID, secret *base64.Value) error {
 	}
 
 	w := bufio.NewWriter(f)
-	w.WriteString(fmt.Sprintf("TORUS_TOKEN_ID=%s", token))
-	w.WriteString(fmt.Sprintf("TORUS_TOKEN_SECURE=%s", secret))
+	w.WriteString(fmt.Sprintf("TORUS_TOKEN_ID=%s\n", token))
+	w.WriteString(fmt.Sprintf("TORUS_TOKEN_SECURE=%s\n", secret))
 	w.Flush()
 
 	return nil
