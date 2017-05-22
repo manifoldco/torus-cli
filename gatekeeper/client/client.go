@@ -44,8 +44,8 @@ func NewClient(host string) *Client {
 }
 
 // Bootstrap bootstraps the machine with Gatekeeper
-func (c *Client) Bootstrap(bootreq interface{}) (*apitypes.BootstrapResponse, error) {
-	path := fmt.Sprintf("%s/%s", gatekeeperAPIVersion, "machine")
+func (c *Client) Bootstrap(provider string, bootreq interface{}) (*apitypes.BootstrapResponse, error) {
+	path := fmt.Sprintf("%s/%s/%s", gatekeeperAPIVersion, "machine", provider)
 	req, err := c.rt.NewRequest("POST", path, nil, bootreq)
 	if err != nil {
 		return nil, err

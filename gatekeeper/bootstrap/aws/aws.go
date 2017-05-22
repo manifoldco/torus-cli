@@ -80,7 +80,7 @@ func (aws *AWS) Bootstrap(url, name, org, role string) (*apitypes.BootstrapRespo
 		},
 	}
 
-	return client.Bootstrap(bootreq)
+	return client.Bootstrap("aws", bootreq)
 }
 
 // Verify verifies the instance metadata and isntance identity documents to provide a safe way
