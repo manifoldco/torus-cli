@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/manifoldco/torus-cli/gatekeeper/apitypes"
@@ -27,6 +28,9 @@ type Client struct {
 
 // NewClient returns a new client to a Gatekeeper host that can bootstrap this machine
 func NewClient(host string) *Client {
+	if !strings.HasSuffix(host, "/") {
+		host += "/"
+	}
 	return &Client{
 		rt: &clientRoundTripper{
 			DefaultRequestDoer: registry.DefaultRequestDoer{
