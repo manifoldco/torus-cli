@@ -85,7 +85,7 @@ func orgsCreate(ctx *cli.Context) error {
 		return err
 	}
 
-	hints.Display([]string{"invites send", "projects", "link"})
+	hints.Display(hints.InvitesSend, hints.Projects, hints.Link)
 	return nil
 }
 

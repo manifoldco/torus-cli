@@ -62,7 +62,7 @@ func setCmd(ctx *cli.Context) error {
 	pe := (*cred.Body).GetPathExp()
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
 
-	hints.Display([]string{"view", "run"})
+	hints.Display(hints.View, hints.Run)
 	return nil
 }
 

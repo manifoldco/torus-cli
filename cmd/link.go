@@ -142,6 +142,6 @@ func linkCmd(ctx *cli.Context) error {
 		fmt.Printf("Warning: context is disabled. Use '%s prefs' to enable it.\n", ctx.App.Name)
 	}
 
-	hints.Display([]string{"context", "set", "run", "view"})
+	hints.Display(hints.Context, hints.Set, hints.Run, hints.View)
 	return nil
 }

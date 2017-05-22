@@ -171,7 +171,7 @@ func listObjects(ctx *cli.Context) error {
 		fmt.Println(p)
 	}
 
-	hints.Display([]string{"path", "view"})
+	hints.Display(hints.Path, hints.View)
 	return nil
 }
 

@@ -364,7 +364,7 @@ func createTeamCmd(ctx *cli.Context) error {
 
 	fmt.Printf("Team %s created.\n", teamName)
 
-	hints.Display([]string{"allow", "deny"})
+	hints.Display(hints.Allow, hints.Deny)
 	return nil
 }
 
