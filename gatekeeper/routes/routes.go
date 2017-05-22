@@ -10,7 +10,15 @@ import (
 func NewRoutesMux(api *api.Client) *bone.Mux {
 	mux := bone.New()
 
-	mux.PostFunc("/machine", machineCreateRoute(api))
+	mux.SubRoute("/machine", newMachineBootstrapRoutes(api))
+
+	return mux
+}
+
+func newMachineBootstrapRoutes(api *api.Client) *bone.Mux {
+	mux := bone.New()
+
+	mux.PostFunc("/aws", awsBootstrapRoute(api))
 
 	return mux
 }
