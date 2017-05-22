@@ -123,6 +123,15 @@ func (aws *AWS) Verify() error {
 		return fmt.Errorf("failed to verify")
 	}
 
+	var givenIdentityDoc identityDocument
+	json.Unmarshal(aws.Identity, &givenIdentityDoc)
+	var signedIdentityDoc identityDocument
+	json.Unmarshal(sigData.Content, &signedIdentityDoc)
+
+	if givenIdentityDoc != signedIdentityDoc {
+		return fmt.Errorf("failed to validate instance metadata")
+	}
+
 	return nil
 }
 

@@ -89,6 +89,8 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 			team, err = api.Teams.Create(ctx, org.ID, teamName, primitive.MachineTeamType)
 			if err != nil {
 				log.Printf("Could not create team")
+				writeError(w, err)
+				return
 			}
 
 			log.Printf("Team %s created", teamName)
@@ -98,6 +100,7 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 		if err != nil {
 			log.Printf("Unable to create machine: %s", err)
 			writeError(w, err)
+			return
 		}
 
 		enc := json.NewEncoder(w)
