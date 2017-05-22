@@ -45,7 +45,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 
 	provider, err := bootstrap.New(cloud)
 	if err != nil {
-		return fmt.Errorf("bootstrap failed: %s", err)
+		return fmt.Errorf("bootstrap init failed: %s", err)
 	}
 
 	resp, err := provider.Bootstrap(
@@ -54,7 +54,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 		ctx.String("role"),
 	)
 	if err != nil {
-		return fmt.Errorf("bootstrap failed: %s", err)
+		return fmt.Errorf("bootstrap provision failed: %s", err)
 	}
 
 	envFile := filepath.Join(GlobalRoot, EnvironmentFile)
