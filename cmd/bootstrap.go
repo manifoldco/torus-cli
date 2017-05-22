@@ -5,7 +5,7 @@ import (
 
 	"github.com/urfave/cli"
 
-	"github.com/manifoldco/torus-cli/gatekeeper/auth"
+	"github.com/manifoldco/torus-cli/gatekeeper/bootstrap"
 )
 
 func init() {
@@ -27,9 +27,9 @@ func init() {
 
 // bootstrapCmd is the cli.Command for Bootstrapping machine configuration from the Gatekeeper
 func bootstrapCmd(ctx *cli.Context) error {
-	cloud := auth.Type(ctx.String("auth"))
+	cloud := bootstrap.Type(ctx.String("auth"))
 
-	provider, err := auth.New(cloud)
+	provider, err := bootstrap.New(cloud)
 	if err != nil {
 		fmt.Printf("Bootstrap failed: %s\n", err)
 	}
