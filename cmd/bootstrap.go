@@ -51,7 +51,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 
 	resp, err := provider.Bootstrap(
 		ctx.String("url"),
-		ctx.String("name"),
+		ctx.String("machine"),
 		ctx.String("org"),
 		ctx.String("role"),
 	)
