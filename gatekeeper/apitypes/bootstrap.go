@@ -9,7 +9,7 @@ import (
 // BoostrapRequest represents a request by a Gatekeeper bootstrap client to
 // create a machine with a given org based on AWS Bootstrap information
 type MachineBootstrap struct {
-	Name   string       `json:"name"`
+	Name string `json:"name"`
 	Org  string `json:"org_id"`
 	Team string `json:"team_id"`
 }
