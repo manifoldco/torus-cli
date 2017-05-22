@@ -20,6 +20,10 @@ import (
 const (
 	// MetadataURL is the metadata URL for AWS
 	MetadataURL = "http://169.254.169.254/latest/"
+
+	// BootstrapTime indicates the amount of time that a machine
+	// is able to register with Torus after being booted
+	BootstrapTime = 5
 )
 
 // AWS provides AWS bootstrapping and verification
@@ -130,6 +134,11 @@ func (aws *AWS) Verify() error {
 
 	if givenIdentityDoc != signedIdentityDoc {
 		return fmt.Errorf("failed to validate instance metadata")
+	}
+
+	elapsed := time.Since(signedIdentityDoc.PendingTime)
+	if elapsed.Minutes() > BootstrapTime {
+		return fmt.Errorf("failed validation - this server is ")
 	}
 
 	return nil
