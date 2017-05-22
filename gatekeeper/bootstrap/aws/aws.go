@@ -138,7 +138,10 @@ func (aws *AWS) Verify() error {
 
 	elapsed := time.Since(signedIdentityDoc.PendingTime)
 	if elapsed.Minutes() > BootstrapTime {
-		return fmt.Errorf("failed validation - this server is ")
+		return fmt.Errorf(
+			"failed validation - this server has beens started more than %d minutes ago",
+			BootstrapTime,
+		)
 	}
 
 	return nil
