@@ -40,7 +40,7 @@ func NewGatekeeper(cfg *config.Config, api *api.Client) *Gatekeeper {
 func (g *Gatekeeper) Listen() error {
 	mux := bone.New()
 
-	mux.SubRoute("/v0", routes.NewRoutesMux(g.c, g.api))
+	mux.SubRoute("/v0", routes.NewRoutesMux(g.api))
 
 	g.s.Handler = loggingHandler(mux)
 	h := httpdown.HTTP{}
