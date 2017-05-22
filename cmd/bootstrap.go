@@ -45,7 +45,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 
 	provider, err := bootstrap.New(cloud)
 	if err != nil {
-		return fmt.Errorf("Bootstrap failed: %s\n", err)
+		return fmt.Errorf("bootstrap failed: %s", err)
 	}
 
 	resp, err := provider.Bootstrap(
@@ -54,12 +54,12 @@ func bootstrapCmd(ctx *cli.Context) error {
 		ctx.String("role"),
 	)
 	if err != nil {
-		return fmt.Errorf("Bootstrap failed: %s\n", err)
+		return fmt.Errorf("bootstrap failed: %s", err)
 	}
 
 	envFile := filepath.Join(GlobalRoot, EnvironmentFile)
 	if err = writeEnvironmentFile(resp.Token, resp.Secret); err != nil {
-		fmt.Printf("Failed to write environment file[%s]: %s", envFile, err)
+		return fmt.Errorf("failed to write environment file[%s]: %s", envFile, err)
 	}
 
 	fmt.Printf("Machine bootstrapped. Environment configuration saved in %s", envFile)

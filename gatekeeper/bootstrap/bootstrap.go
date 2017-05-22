@@ -1,4 +1,4 @@
-// Package auth provides authentication actions for the bootstrap process
+// Package bootstrap provides authentication actions for the bootstrap process
 package bootstrap
 
 import (
@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	// AWS Public Cloud Provider
+	// AWSPubic is Amazon's Public Cloud Provider
 	AWSPublic = "aws"
 )
 
+// Type is the bootstrap Provider type
 type Type string
 
 // Provider is an interface that provides bootstrapping and verification of a role
@@ -33,6 +34,4 @@ func New(t Type) (Provider, error) {
 	default:
 		return nil, fmt.Errorf("Invalid Provider: %s", t)
 	}
-
-	return nil, nil
 }

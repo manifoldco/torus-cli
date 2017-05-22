@@ -7,7 +7,7 @@ import (
 	"github.com/manifoldco/torus-cli/identity"
 )
 
-// BoostrapRequest represents a request by a Gatekeeper bootstrap client to
+// MachineBootstrap represents a request by a Gatekeeper bootstrap client to
 // create a machine with a given org based on AWS Bootstrap information
 type MachineBootstrap struct {
 	Name string `json:"name"`
