@@ -1,5 +1,5 @@
 // Package client provides the Gatekeeper bootstrap API
-package bootstrap
+package client
 
 import (
 	"context"
