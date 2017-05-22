@@ -2,14 +2,13 @@
 package aws
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
-
-	"encoding/pem"
-
-	"crypto/x509"
 
 	"github.com/fullsailor/pkcs7"
 	"github.com/manifoldco/torus-cli/data"
@@ -172,8 +171,8 @@ func fetchMetadata(endpoint string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	var b []byte
-	if _, err := resp.Body.Read(b); err != nil {
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
 	return b, nil
