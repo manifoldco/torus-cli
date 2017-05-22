@@ -69,10 +69,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 }
 
 func writeEnvironmentFile(token *identity.ID, secret *base64.Value) error {
-	err := os.Mkdir(GlobalRoot, os.FileMode(0740))
-	if err != nil {
-		return err
-	}
+	os.Mkdir(GlobalRoot, os.FileMode(0740))
 
 	f, err := os.Create(filepath.Join(GlobalRoot, EnvironmentFile))
 	if err != nil {
