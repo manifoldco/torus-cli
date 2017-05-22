@@ -64,7 +64,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 		return fmt.Errorf("failed to write environment file[%s]: %s", envFile, err)
 	}
 
-	fmt.Printf("Machine bootstrapped. Environment configuration saved in %s", envFile)
+	fmt.Printf("Machine bootstrapped. Environment configuration saved in %s\n", envFile)
 	return nil
 }
 
@@ -82,6 +82,7 @@ func writeEnvironmentFile(token *identity.ID, secret *base64.Value) error {
 	w := bufio.NewWriter(f)
 	w.WriteString(fmt.Sprintf("TORUS_TOKEN_ID=%s", token))
 	w.WriteString(fmt.Sprintf("TORUS_TOKEN_SECURE=%s", secret))
+	w.Flush()
 
 	return nil
 }
