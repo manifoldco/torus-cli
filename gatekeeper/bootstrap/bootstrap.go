@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// AWSPubic is Amazon's Public Cloud Provider
+	// AWSPublic is Amazon's Public Cloud Provider
 	AWSPublic = "aws"
 )
 
