@@ -66,7 +66,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func writeEnvironmentFile(token identity.ID, secret base64.Value) error {
+func writeEnvironmentFile(token *identity.ID, secret *base64.Value) error {
 	err := os.Mkdir(GlobalRoot, os.FileMode(0740))
 	if err != nil {
 		return err
