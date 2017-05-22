@@ -2,10 +2,24 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/manifoldco/go-base64"
 	"github.com/urfave/cli"
 
+	"bufio"
+	"path/filepath"
+
 	"github.com/manifoldco/torus-cli/gatekeeper/bootstrap"
+	"github.com/manifoldco/torus-cli/identity"
+)
+
+const (
+	// GlobalRoot is the global root of the Torus config
+	GlobalRoot = "/etc/torus"
+
+	// EnvironmentFile is the environment file that stores machine information
+	EnvironmentFile = "token.environment"
 )
 
 func init() {
@@ -31,12 +45,41 @@ func bootstrapCmd(ctx *cli.Context) error {
 
 	provider, err := bootstrap.New(cloud)
 	if err != nil {
-		fmt.Printf("Bootstrap failed: %s\n", err)
+		return fmt.Errorf("Bootstrap failed: %s\n", err)
 	}
 
-	return provider.Bootstrap(
+	resp, err := provider.Bootstrap(
 		ctx.String("url"),
 		ctx.String("org"),
 		ctx.String("role"),
 	)
+	if err != nil {
+		return fmt.Errorf("Bootstrap failed: %s\n", err)
+	}
+
+	envFile := filepath.Join(GlobalRoot, EnvironmentFile)
+	if err = writeEnvironmentFile(resp.Token, resp.Secret); err != nil {
+		fmt.Printf("Failed to write environment file[%s]: %s", envFile, err)
+	}
+
+	fmt.Printf("Machine bootstrapped. Environment configuration saved in %s", envFile)
+	return nil
+}
+
+func writeEnvironmentFile(token identity.ID, secret base64.Value) error {
+	err := os.Mkdir(GlobalRoot, os.FileMode(0740))
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create(filepath.Join(GlobalRoot, EnvironmentFile))
+	if err != nil {
+		return err
+	}
+
+	w := bufio.NewWriter(f)
+	w.WriteString(fmt.Sprintf("TORUS_TOKEN_ID=%s", token))
+	w.WriteString(fmt.Sprintf("TORUS_TOKEN_SECURE=%s", secret))
+
+	return nil
 }
