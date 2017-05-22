@@ -29,6 +29,7 @@ func init() {
 		Category: "SYSTEM",
 		Flags: []cli.Flag{
 			authProviderFlag("Auth provider for bootstrapping", true),
+			machineFlag("Machine name to bootstrap", false),
 			urlFlag("Gatekeeper URL for bootstrapping", true),
 			orgFlag("Org the machine will belong to", false),
 			roleFlag("Role the machine will belong to", false),
@@ -50,6 +51,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 
 	resp, err := provider.Bootstrap(
 		ctx.String("url"),
+		ctx.String("name"),
 		ctx.String("org"),
 		ctx.String("role"),
 	)
