@@ -7,29 +7,57 @@ import (
 	"github.com/manifoldco/torus-cli/ui"
 )
 
-type Hint int
+// Cmd represents a command that has hints available
+type Cmd int
 
 const (
-	Allow Hint = iota
+	// Allow command adds hint to `torus allow`
+	Allow Cmd = iota
+
+	// Context adds hint to application context
 	Context
+
+	// Deny command adds hint to `torus deny`
 	Deny
+
+	// InvitesApprove command adds hint to `torus invites approve`
 	InvitesApprove
+
+	// InvitesSend command adds hint to `torus invites send`
 	InvitesSend
+
+	// Link command adds hint to `torus link`
 	Link
+
+	// Ls command adds hint to `torus ls`
 	Ls
+
+	// Path adds hint about the path expression
 	Path
+
+	// Policies command adds hint to `torus policies`
 	Policies
+
+	// Projects command adds hint to `torus projects`
 	Projects
+
+	// Run command adds hint to `torus run`
 	Run
+
+	// Set command adds hint to `torus set`
 	Set
+
+	// TeamMembers command adds hint to `torus members`
 	TeamMembers
+
+	// View command adds hint to `torus view`
 	View
 )
 
-var commandHints map[Hint][]string
+var commandHints map[Cmd][]string
 
 func init() {
-	commandHints = map[Hint][]string{
+	commandHints = map[Cmd][]string{
 		Allow: {
 			"Grant additional access to secrets for a team or role using `torus allow`",
 		},
@@ -76,7 +104,7 @@ func init() {
 }
 
 // Display chooses a random hint from the allotted commands and displays it
-func Display(possible ...Hint) {
+func Display(possible ...Cmd) {
 	hint := randHint(possible)
 	if hint != "" {
 		ui.Hint(hint, false)
@@ -84,7 +112,7 @@ func Display(possible ...Hint) {
 }
 
 // randHint returns random hint from chosen command's list
-func randHint(possible []Hint) string {
+func randHint(possible []Cmd) string {
 	l := len(possible)
 	if l == 0 {
 		return ""

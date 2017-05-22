@@ -7,16 +7,16 @@ import (
 func TestRandHint(t *testing.T) {
 	type tc struct {
 		desc string
-		cmds []Hint
+		cmds []Cmd
 		hint string
 	}
 
 	testCases := []tc{
-		{desc: "Empty command list", cmds: []Hint{}, hint: ""},
-		{desc: "Command without hint", cmds: []Hint{Set}, hint: ""},
+		{desc: "Empty command list", cmds: []Cmd{}, hint: ""},
+		{desc: "Command without hint", cmds: []Cmd{Set}, hint: ""},
 		{
 			desc: "Command with one hint",
-			cmds: []Hint{Allow},
+			cmds: []Cmd{Allow},
 			hint: "Grant additional access to secrets for a team or role using `torus allow`",
 		},
 	}
@@ -31,7 +31,7 @@ func TestRandHint(t *testing.T) {
 	}
 
 	t.Run("Command with multiple hints", func(t *testing.T) {
-		got := randHint([]Hint{View})
+		got := randHint([]Cmd{View})
 		exp1 := "View secret values which have been set using `torus view`"
 		exp2 := "See the exact path for each secret set using `torus view -v`"
 		if got != exp1 && got != exp2 {
@@ -40,7 +40,7 @@ func TestRandHint(t *testing.T) {
 	})
 
 	t.Run("Multiple commands", func(t *testing.T) {
-		got := randHint([]Hint{Allow, Deny})
+		got := randHint([]Cmd{Allow, Deny})
 		exp1 := "Grant additional access to secrets for a team or role using `torus allow`"
 		exp2 := "Restrict access to secrets for a team or role using `torus deny`"
 		if got != exp1 && got != exp2 {
