@@ -33,17 +33,11 @@ type AWS struct {
 
 	// Signature is the []bytes of the identity signature
 	Signature []byte
-
-	// VerifyInstance verifies that the instance is running in the account
-	// provided by the document in Identity
-	VerifyInstance bool
 }
 
 // New returns a new AWS bootstrap authentication Provider
 func New() *AWS {
-	return &AWS{
-		VerifyInstance: false,
-	}
+	return &AWS{}
 }
 
 // Bootstrap bootstraps a the AWS instance into a role to a given Gatekeeper instance
