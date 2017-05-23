@@ -11,6 +11,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/gatekeeper/apitypes"
+	"github.com/manifoldco/torus-cli/gatekeeper/bootstrap/aws"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 )
@@ -27,6 +28,15 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 			log.Printf("Error decoding request: %s", err)
 			writeError(w, err)
 			return
+		}
+
+		provider := aws.New()
+		provider.Identity = req.Identity
+		provider.Signature = req.Signature
+
+		if err := provider.Verify(); err != nil {
+			log.Printf("Instance verification failed: %s", err)
+			writeError(w, fmt.Errorf("instance verification failed: %s", err))
 		}
 
 		if req.Machine.Org != "" {
