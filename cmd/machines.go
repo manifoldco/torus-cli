@@ -9,16 +9,19 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/urfave/cli"
-
 	"github.com/manifoldco/go-base32"
 	"github.com/manifoldco/go-base64"
+	"github.com/urfave/cli"
+
+	"bufio"
+	"path/filepath"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/gatekeeper/bootstrap"
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
@@ -27,7 +30,23 @@ import (
 const (
 	machineRandomIDLength = 5 // 8 characters in base32
 	machineCreateFailed   = "Could not create machine, please try again."
+
+	// GlobalRoot is the global root of the Torus config
+	GlobalRoot = "/etc/torus"
+
+	// EnvironmentFile is the environment file that stores machine information
+	EnvironmentFile = "token.environment"
 )
+
+// urlFlag creates a new --bootstrap cli.Flag
+func urlFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("url, u", "URL", usage, "", "TORUS_BOOTSTRAP_URL", required)
+}
+
+// authProviderFlag creates a new --auth cli.Flag
+func authProviderFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("auth, a", "AUTHPROVIDER", usage, "", "TORUS_AUTH_PROVIDER", required)
+}
 
 func init() {
 	machines := cli.Command{
@@ -115,6 +134,18 @@ func init() {
 						),
 					},
 				},
+			},
+			{
+				Name:  "bootstrap",
+				Usage: "Bootstrap a new machine using Torus Gatekeeper",
+				Flags: []cli.Flag{
+					authProviderFlag("Auth provider for bootstrapping", true),
+					urlFlag("Gatekeeper URL for bootstrapping", true),
+					roleFlag("Role the machine will belong to", true),
+					machineFlag("Machine name to bootstrap", false),
+					orgFlag("Org the machine will belong to", false),
+				},
+				Action: chain(checkRequiredFlags, bootstrapCmd),
 			},
 		},
 	}
@@ -397,6 +428,35 @@ func listMachinesCmd(ctx *cli.Context) error {
 	return nil
 }
 
+// bootstrapCmd is the cli.Command for Bootstrapping machine configuration from the Gatekeeper
+func bootstrapCmd(ctx *cli.Context) error {
+	cloud := bootstrap.Type(ctx.String("auth"))
+
+	provider, err := bootstrap.New(cloud)
+	if err != nil {
+		return fmt.Errorf("bootstrap init failed: %s", err)
+	}
+
+	resp, err := provider.Bootstrap(
+		ctx.String("url"),
+		ctx.String("machine"),
+		ctx.String("org"),
+		ctx.String("role"),
+	)
+	if err != nil {
+		return fmt.Errorf("bootstrap provision failed: %s", err)
+	}
+
+	envFile := filepath.Join(GlobalRoot, EnvironmentFile)
+	err = writeEnvironmentFile(resp.Token, resp.Secret)
+	if err != nil {
+		return fmt.Errorf("failed to write environment file[%s]: %s", envFile, err)
+	}
+
+	fmt.Printf("Machine bootstrapped. Environment configuration saved in %s\n", envFile)
+	return nil
+}
+
 func listMachineRoles(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -643,4 +703,24 @@ func deriveMachineName(teamName string) (string, error) {
 
 	name := teamName + "-" + base32.EncodeToString(value)
 	return name, nil
+}
+
+func writeEnvironmentFile(token *identity.ID, secret *base64.Value) error {
+	if err := os.Mkdir(GlobalRoot, 0700); err != nil {
+		return err
+	}
+
+	envPath := filepath.Join(GlobalRoot, EnvironmentFile)
+	f, err := os.Create(envPath)
+	if err != nil {
+		return err
+	}
+	os.Chmod(envPath, 0600)
+
+	w := bufio.NewWriter(f)
+	w.WriteString(fmt.Sprintf("TORUS_TOKEN_ID=%s\n", token))
+	w.WriteString(fmt.Sprintf("TORUS_TOKEN_SECRET=%s\n", secret))
+	w.Flush()
+
+	return nil
 }

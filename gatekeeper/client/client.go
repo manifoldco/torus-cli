@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -57,6 +58,10 @@ func (c *Client) Bootstrap(provider string, bootreq interface{}) (*apitypes.Boot
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if bootresp.Error != "" {
+		return nil, errors.New(bootresp.Error)
+	}
 
 	return &bootresp, nil
 }

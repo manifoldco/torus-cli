@@ -4,9 +4,13 @@
 package cmd
 
 import (
+	"log"
+	"os"
+
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/config"
+	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/gatekeeper"
 )
 
@@ -17,42 +21,18 @@ func init() {
 		Category: "SYSTEM",
 		Subcommands: []cli.Command{
 			{
-				Name:   "status",
-				Usage:  "Display the gatekeeper status",
-				Action: gatekeeperStatus,
-			},
-			{
 				Name:  "start",
 				Usage: "Start the machine gatekeeper",
 				Flags: []cli.Flag{
 					cli.BoolFlag{
-						Name:  "foreground",
-						Usage: "Run the gatekeeper in the foreground",
-					},
-					cli.BoolFlag{
-						Name:   "daemonize",
-						Usage:  "Background the gatekeeper",
-						Hidden: true,
-					},
-					cli.BoolFlag{
-						Name:   "no-permissions-check",
+						Name:   "no-permission-check",
 						Usage:  "Skip Torus root dir permission checks",
-						Hidden: true,
+						Hidden: true, // Just for system daemon use
 					},
 				},
-				Action: chain(ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					func(ctx *cli.Context) error {
-						if ctx.Bool("foreground") {
-							return startGatekeeperCmd(ctx)
-						}
-						return spawnGatekeeperCmd()
-					},
+				Action: chain(ensureDaemon, ensureSession, loadDirPrefs,
+					loadPrefDefaults, startGatekeeperCmd,
 				),
-			},
-			{
-				Name:   "stop",
-				Usage:  "Stop the session daemon",
-				Action: stopGatekeeperCmd,
 			},
 		},
 	}
@@ -60,43 +40,28 @@ func init() {
 	Cmds = append(Cmds, gatekeeper)
 }
 
-// gatekeeperStatus returns the status of the gatekeeper server
-func gatekeeperStatus(ctx *cli.Context) error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return nil
-	}
-
-	return statusListenerCmd("Gatekeeper", cfg.GatekeeperPidPath)
-}
-
-// spawnGatekeeper spawns a new process for the Gatekeeper (in the background)
-func spawnGatekeeperCmd() error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
-
-	return spawnListenerCmd("Gatekeeper", cfg.GatekeeperPidPath, gatekeeperCommand)
-}
-
 // startGatekeeper starts the machine Gatekeeper
 func startGatekeeperCmd(ctx *cli.Context) error {
-	return startListenerCmd(
-		ctx,
-		"Gatekeeper",
-		"gatekeeper.log",
-		func(cfg *config.Config, noPermissionCheck bool) (Listener, error) {
-			return gatekeeper.New(ctx, cfg, noPermissionCheck)
-		})
-}
-
-// stopGatekeeper stops the Gatekeeper process
-func stopGatekeeperCmd(ctx *cli.Context) error {
-	cfg, err := config.LoadConfig()
+	noPermissionCheck := ctx.Bool("no-permission-check")
+	torusRoot, err := config.CreateTorusRoot(!noPermissionCheck)
 	if err != nil {
-		return err
+		return errs.NewErrorExitError("Failed to initialize Torus root dir.", err)
 	}
 
-	return stopListenerCmd("Gatekeeper", cfg.GatekeeperPidPath)
+	log.SetOutput(os.Stdout)
+
+	cfg, err := config.NewConfig(torusRoot)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to load config.", err)
+	}
+
+	gatekeeper, err := gatekeeper.New(ctx, cfg)
+
+	log.Printf("v%s of the Gatekeeper is now listeneing on %s", cfg.Version, gatekeeper.Addr())
+	err = gatekeeper.Run()
+	if err != nil {
+		log.Printf("Error while running the Gatekeeper.\n%s", err)
+	}
+
+	return err
 }
