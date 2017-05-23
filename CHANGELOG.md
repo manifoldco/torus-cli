@@ -4,6 +4,14 @@
 
 _Unreleased_
 
+**Notable Changes**
+
+- `torus set` now supports `name=path` syntax (e.g. `torus set foo=bar` or `torus set /org/project/env/*/*/*/foo=bar`)
+
+**Thanks**
+
+- Luiz Branco
+
 ## v0.23.0
 
 _2017-05-17_

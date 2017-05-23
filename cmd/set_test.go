@@ -11,9 +11,9 @@ func TestParseArgs(t *testing.T) {
 	}
 
 	testCases := []tc{
-		{args: []string{}, err: "name and value are required."},
-		{args: []string{"foo"}, err: "name and value are required."},
-		{args: []string{"foo", "bar", "baz"}, err: "Too many arguments provided."},
+		{args: []string{}, err: "A secret name and value must be supplied."},
+		{args: []string{"foo"}, err: "A secret name and value must be supplied."},
+		{args: []string{"foo", "bar", "baz"}, err: "Too many arguments were provided."},
 		{args: []string{"foo", "bar"}, key: "foo", val: "bar"},
 		{args: []string{"foo=bar"}, key: "foo", val: "bar"},
 		{args: []string{"foo=bar=="}, key: "foo", val: "bar=="},
