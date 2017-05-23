@@ -504,7 +504,7 @@ func createMachineRole(ctx *cli.Context) error {
 	}
 
 	fmt.Printf("Role %s created.\n", teamName)
-	hints.Display([]string{"allow", "deny", "policies"})
+	hints.Display(hints.Allow, hints.Deny, hints.Policies)
 	return nil
 }
 
@@ -595,7 +595,7 @@ func createMachine(ctx *cli.Context) error {
 	fmt.Fprintf(w, "Machine Token Secret:\t%s\n", tokenSecret)
 
 	w.Flush()
-	hints.Display([]string{"allow", "deny"})
+	hints.Display(hints.Allow, hints.Deny)
 	return nil
 }
 

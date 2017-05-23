@@ -72,7 +72,7 @@ func viewCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError("Unknown format: "+format, ctx)
 	}
 
-	hints.Display([]string{"link", "run"})
+	hints.Display(hints.Link, hints.Run)
 	return err
 }
 

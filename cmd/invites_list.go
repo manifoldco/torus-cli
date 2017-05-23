@@ -102,6 +102,6 @@ func invitesList(ctx *cli.Context) error {
 	w.Flush()
 	fmt.Println("")
 
-	hints.Display([]string{"invites approve", "teams members"})
+	hints.Display(hints.InvitesApprove, hints.TeamMembers)
 	return nil
 }

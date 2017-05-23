@@ -106,6 +106,6 @@ TeamSearch:
 	fmt.Println("\n\t" + strings.Join(matchTeams, "\n\t"))
 	fmt.Println("\nThey will receive an e-mail with instructions.")
 
-	hints.Display([]string{"invites approve", "teams members"})
+	hints.Display(hints.InvitesApprove, hints.TeamMembers)
 	return nil
 }
