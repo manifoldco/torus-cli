@@ -60,6 +60,19 @@ func init() {
 					setUserEnv, checkRequiredFlags, detachPolicies,
 				),
 			},
+
+			{
+				Name:      "test",
+				Usage:     "Test a user's access to a path",
+				ArgsUsage: "<c|r|u|d|l> <username> <path>",
+				Flags: []cli.Flag{
+					orgFlag("org to test policy for", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, testPolicies,
+				),
+			},
 		},
 	}
 	Cmds = append(Cmds, policies)
@@ -307,5 +320,9 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	}
 	w.Flush()
 
+	return nil
+}
+
+func testPolicies(ctx *cli.Context) error {
 	return nil
 }
