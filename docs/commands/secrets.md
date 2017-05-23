@@ -20,7 +20,8 @@ Torus exposes your decrypted secrets to your process through environment variabl
 ## set
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus set <name|path> <value>` sets a value for the specified name (or [path](../concepts/path.md)).
+`torus set <name|path> <value>` or `torus set <name|path>=<value>` sets a value
+for the specified name (or [path](../concepts/path.md)).
 
 This is how all secrets are stored in Torus.
 
