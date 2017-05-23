@@ -6,7 +6,7 @@ The Torus CLI can be used to manage your session and profile.
 
 `torus signup` is used to create a new Torus account.
 
-The user will be prompted to enter their name, username, email, and password (twice).
+The user will be prompted to enter their full name, username, email, and password (twice).
 
 After signup the user will be sent an email which contains a verification code, this code must then be pasted into the Verification Code prompt that occurs after signup. If this prompt is aborted, the user can use the verify command to complete verification.
 
@@ -30,14 +30,14 @@ If you have forgotten your password please contact [support@torus.sh](mailto:sup
 `torus logout` will destroy your current session, after doing so you must login again before performing any further actions within your organization.
 
 ## profile
-Your profile contains your name, email and password inside Torus.  
+Your profile contains your name, email and password inside Torus.
 
 ### update
 ###### Added [v0.17.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus profile update` enables you to modify the authenticated user’s name, email or password. 
+`torus profile update` enables you to modify the authenticated user’s full name, email or password.
 
-Currently accounts can only have one email attached to them. In the event of an email change, you will need to re-verify your account. 
+Currently accounts can only have one email attached to them. In the event of an email change, you will need to re-verify your account.
 
 ### view
 ###### Added [v0.17.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)

@@ -489,7 +489,7 @@ func FullNamePrompt(name string) (string, error) {
 	}
 
 	prompt := promptui.Prompt{
-		Label: "Name",
+		Label: "Full Name",
 		Validate: func(input string) error {
 			err := validate.Name(input)
 			if err == nil {

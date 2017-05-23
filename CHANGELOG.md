@@ -7,6 +7,8 @@ _Unreleased_
 **Notable Changes**
 
 - `torus set` now supports `name=path` syntax (e.g. `torus set foo=bar` or `torus set /org/project/env/*/*/*/foo=bar`)
+- We now refer to `Name` as `Full Name` to differentiate between a user's full
+  name and username.
 
 **Thanks**
 

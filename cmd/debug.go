@@ -108,8 +108,8 @@ func debugInfoCmd(ctx *cli.Context) error {
 			fmt.Fprintf(w, "%s\t%s\n", "Machine Name", session.Username())
 		} else {
 			fmt.Fprintf(w, "%s\t%s\n", "User ID", session.ID())
-			fmt.Fprintf(w, "%s\t%s <%s>\n", "Identity", session.Name(), session.Email())
-			fmt.Fprintf(w, "%s\t%s\n", "Username", session.Username())
+			fmt.Fprintf(w, "%s\t%s <%s>\n", "Full Name <Email>", session.Name(), session.Email())
+			fmt.Fprintf(w, "%s\t%s\n", "Identity", session.Username())
 		}
 	}
 
