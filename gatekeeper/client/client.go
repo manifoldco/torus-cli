@@ -10,6 +10,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/gatekeeper/apitypes"
 	"github.com/manifoldco/torus-cli/registry"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -57,6 +58,10 @@ func (c *Client) Bootstrap(provider string, bootreq interface{}) (*apitypes.Boot
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if bootresp.Error != "" {
+		return nil, errors.New(bootresp.Error)
+	}
 
 	return &bootresp, nil
 }
