@@ -3,6 +3,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/manifoldco/torus-cli/gatekeeper/apitypes"
 	"github.com/manifoldco/torus-cli/registry"
-	"github.com/pkg/errors"
 )
 
 const (
