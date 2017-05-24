@@ -78,9 +78,14 @@ func parseSetArgs(args []string) (key string, value string, errMsg string) {
 	case 2:
 		key = args[0]
 		value = args[1]
+
+		if key == "" || value == "" {
+			errMsg = "A secret must have a name and value."
+		}
 	default:
 		errMsg = "Too many arguments were provided."
 	}
+
 	return key, value, errMsg
 }
 

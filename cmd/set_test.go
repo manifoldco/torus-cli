@@ -17,6 +17,9 @@ func TestParseArgs(t *testing.T) {
 		{args: []string{"foo", "bar"}, key: "foo", val: "bar"},
 		{args: []string{"foo=bar"}, key: "foo", val: "bar"},
 		{args: []string{"foo=bar=="}, key: "foo", val: "bar=="},
+		{args: []string{"="}, err: "A secret must have a name and value."},
+		{args: []string{"key="}, key: "key", err: "A secret must have a name and value."},
+		{args: []string{"=sd"}, val: "sd", err: "A secret must have a name and value."},
 		{
 			args: []string{"/org/project/env/service/user/instance/foo", "bar"},
 			key:  "/org/project/env/service/user/instance/foo",
