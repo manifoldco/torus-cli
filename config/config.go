@@ -10,6 +10,8 @@ import (
 	"os"
 	"path"
 
+	"net"
+
 	"github.com/manifoldco/torus-cli/data"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
@@ -25,11 +27,13 @@ type Config struct {
 	APIVersion string
 	Version    string
 
-	TorusRoot        string
-	TransportAddress string
-	PidPath          string
-	DBPath           string
-	LastUpdatePath   string
+	TorusRoot         string
+	TransportAddress  string
+	GatekeeperAddress string
+	PidPath           string
+	GatekeeperPidPath string
+	DBPath            string
+	LastUpdatePath    string
 
 	RegistryURI *url.URL
 	CABundle    *x509.CertPool
@@ -58,18 +62,25 @@ func NewConfig(torusRoot string) (*Config, error) {
 		return nil, fmt.Errorf("invalid registry_uri")
 	}
 
+	_, _, err = net.SplitHostPort(preferences.Core.GatekeeperAddress)
+	if err != nil {
+		return nil, fmt.Errorf("invalid gatekeeper listener address")
+	}
+
 	cfg := &Config{
 		APIVersion: apiVersion,
 		Version:    Version,
 
-		TorusRoot:      torusRoot,
-		PidPath:        path.Join(torusRoot, "daemon.pid"),
-		DBPath:         path.Join(torusRoot, "daemon.db"),
-		LastUpdatePath: path.Join(torusRoot, "last_update"),
+		TorusRoot:         torusRoot,
+		PidPath:           path.Join(torusRoot, "daemon.pid"),
+		GatekeeperPidPath: path.Join(torusRoot, "gatekeeper.pid"),
+		DBPath:            path.Join(torusRoot, "daemon.db"),
+		LastUpdatePath:    path.Join(torusRoot, "last_update"),
 
-		RegistryURI: registryURI,
-		CABundle:    caBundle,
-		PublicKey:   publicKey,
+		RegistryURI:       registryURI,
+		GatekeeperAddress: preferences.Core.GatekeeperAddress,
+		CABundle:          caBundle,
+		PublicKey:         publicKey,
 	}
 
 	// set OS specific transport address
