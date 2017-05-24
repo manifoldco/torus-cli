@@ -6,11 +6,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/url"
 	"os"
 	"path"
-
-	"net"
 
 	"github.com/manifoldco/torus-cli/data"
 	"github.com/manifoldco/torus-cli/errs"

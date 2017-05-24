@@ -19,7 +19,6 @@ type MachineBootstrap struct {
 type BootstrapResponse struct {
 	Token  *identity.ID  `json:"token"`
 	Secret *base64.Value `json:"secret"`
-	Error  string        `json:"error"`
 }
 
 // AWSBootstrapRequest represents a Bootstrap request from an AWS client

@@ -3,7 +3,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,7 +18,9 @@ const (
 )
 
 type clientRoundTripper struct {
-	registry.DefaultRequestDoer // TODO: Could be a generic RequestDoer?
+	// TODO: Could abstract the registry RequestDoer into package other than
+	// registry to avoid confusion (since we're not talking to the registry here)
+	registry.DefaultRequestDoer
 }
 
 // Client is the Gatekeeper bootstrapping client
@@ -58,10 +59,6 @@ func (c *Client) Bootstrap(provider string, bootreq interface{}) (*apitypes.Boot
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if bootresp.Error != "" {
-		return nil, errors.New(bootresp.Error)
-	}
 
 	return &bootresp, nil
 }

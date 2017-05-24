@@ -6,7 +6,6 @@ import (
 
 	"github.com/facebookgo/httpdown"
 	"github.com/go-zoo/bone"
-	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
@@ -29,15 +28,15 @@ type Gatekeeper struct {
 }
 
 // NewGatekeeper returns a new Gatekeeper.
-func NewGatekeeper(ctx *cli.Context, cfg *config.Config, api *api.Client) *Gatekeeper {
+func NewGatekeeper(org, team string, cfg *config.Config, api *api.Client) *Gatekeeper {
 	server := &http.Server{
 		Addr: cfg.GatekeeperAddress,
 	}
 
 	g := &Gatekeeper{
 		defaults: gatekeeperDefaults{
-			Org:  ctx.String("org"),
-			Team: ctx.String("team"),
+			Org:  org,
+			Team: team,
 		},
 		s:   server,
 		c:   cfg,
@@ -51,7 +50,7 @@ func NewGatekeeper(ctx *cli.Context, cfg *config.Config, api *api.Client) *Gatek
 func (g *Gatekeeper) Listen() error {
 	mux := bone.New()
 
-	mux.SubRoute("/v0", routes.NewRoutesMux(g.defaults.Org, g.defaults.Team, g.api))
+	mux.Post("/v0/machine/aws", routes.AWSBootstrapRoute(g.defaults.Org, g.defaults.Team, g.api))
 
 	g.s.Handler = loggingHandler(mux)
 	h := httpdown.HTTP{}

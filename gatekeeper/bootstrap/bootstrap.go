@@ -13,23 +13,15 @@ const (
 	AWSPublic = "aws"
 )
 
-// Type is the bootstrap Provider type
-type Type string
-
-// Provider is an interface that provides bootstrapping and verification of a role
-type Provider interface {
-	// Bootstrap provides the main bootstrapping functions for the auth Provider
-	Bootstrap(url, name, org, role string) (*apitypes.BootstrapResponse, error)
-
-	// Verify does backend verification on the bootstrap Provider
-	Verify() error
-}
+// Handler the function returned by the Bootstrap server that can
+// be used to bootstrap some information (e.g. machine) for that service.
+type Handler func(url, name, org, role string) (*apitypes.BootstrapResponse, error)
 
 // New returns a new Provider based on the given bootstrap.Type
-func New(t Type) (Provider, error) {
-	switch string(t) {
+func New(t string) (Handler, error) {
+	switch t {
 	case AWSPublic:
-		return aws.New(), nil
+		return aws.Bootstrap, nil
 
 	default:
 		return nil, fmt.Errorf("Invalid Provider: %s", t)

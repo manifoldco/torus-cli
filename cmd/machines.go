@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"crypto/rand"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -12,9 +14,6 @@ import (
 	"github.com/manifoldco/go-base32"
 	"github.com/manifoldco/go-base64"
 	"github.com/urfave/cli"
-
-	"bufio"
-	"path/filepath"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -430,14 +429,14 @@ func listMachinesCmd(ctx *cli.Context) error {
 
 // bootstrapCmd is the cli.Command for Bootstrapping machine configuration from the Gatekeeper
 func bootstrapCmd(ctx *cli.Context) error {
-	cloud := bootstrap.Type(ctx.String("auth"))
+	cloud := ctx.String("auth")
 
-	provider, err := bootstrap.New(cloud)
+	bootstrapFunc, err := bootstrap.New(cloud)
 	if err != nil {
 		return fmt.Errorf("bootstrap init failed: %s", err)
 	}
 
-	resp, err := provider.Bootstrap(
+	resp, err := bootstrapFunc(
 		ctx.String("url"),
 		ctx.String("machine"),
 		ctx.String("org"),
@@ -706,8 +705,9 @@ func deriveMachineName(teamName string) (string, error) {
 }
 
 func writeEnvironmentFile(token *identity.ID, secret *base64.Value) error {
-	if err := os.Mkdir(GlobalRoot, 0700); err != nil {
-		return err
+	_, err := os.Stat(GlobalRoot)
+	if os.IsNotExist(err) {
+		os.Mkdir(GlobalRoot, 0700)
 	}
 
 	envPath := filepath.Join(GlobalRoot, EnvironmentFile)

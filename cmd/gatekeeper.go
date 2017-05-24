@@ -23,13 +23,6 @@ func init() {
 			{
 				Name:  "start",
 				Usage: "Start the machine gatekeeper",
-				Flags: []cli.Flag{
-					cli.BoolFlag{
-						Name:   "no-permission-check",
-						Usage:  "Skip Torus root dir permission checks",
-						Hidden: true, // Just for system daemon use
-					},
-				},
 				Action: chain(ensureDaemon, ensureSession, loadDirPrefs,
 					loadPrefDefaults, startGatekeeperCmd,
 				),
@@ -42,23 +35,20 @@ func init() {
 
 // startGatekeeper starts the machine Gatekeeper
 func startGatekeeperCmd(ctx *cli.Context) error {
-	noPermissionCheck := ctx.Bool("no-permission-check")
-	torusRoot, err := config.CreateTorusRoot(!noPermissionCheck)
-	if err != nil {
-		return errs.NewErrorExitError("Failed to initialize Torus root dir.", err)
-	}
-
 	log.SetOutput(os.Stdout)
 
-	cfg, err := config.NewConfig(torusRoot)
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return errs.NewErrorExitError("Failed to load config.", err)
 	}
 
-	gatekeeper, err := gatekeeper.New(ctx, cfg)
+	gatekeeper, err := gatekeeper.New(ctx.String("org"), ctx.String("team"), cfg)
+	if err != nil {
+		log.Printf("Error starting a new Gatekeeper instance: %s", err)
+	}
 
 	log.Printf("v%s of the Gatekeeper is now listeneing on %s", cfg.Version, gatekeeper.Addr())
-	err = gatekeeper.Run()
+	err = gatekeeper.Listen()
 	if err != nil {
 		log.Printf("Error while running the Gatekeeper.\n%s", err)
 	}

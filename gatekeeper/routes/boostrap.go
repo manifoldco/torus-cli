@@ -3,12 +3,12 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
-	"fmt"
-
 	"github.com/manifoldco/torus-cli/api"
+	baseapitypes "github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/gatekeeper/apitypes"
 	"github.com/manifoldco/torus-cli/gatekeeper/bootstrap/aws"
@@ -16,8 +16,9 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 )
 
-// awsMachineBoot
-func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFunc {
+// AWSBootstrapRoute is the http.HandlerFunc for handling Bootstrap requests
+// from AWS
+func AWSBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -26,25 +27,27 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 		err := dec.Decode(&req)
 		if err != nil {
 			log.Printf("Error decoding request: %s", err)
-			writeError(w, err)
+			writeError(w, http.StatusBadRequest, err)
 			return
 		}
 
-		provider := aws.New()
-		provider.Identity = req.Identity
-		provider.Signature = req.Signature
+		v := aws.Verifier{
+			Identity:  req.Identity,
+			Signature: req.Signature,
+		}
 
-		if err := provider.Verify(); err != nil {
+		if err := v.Verify(); err != nil {
 			log.Printf("Instance verification failed: %s", err)
-			writeError(w, fmt.Errorf("instance verification failed: %s", err))
+			writeError(w, http.StatusBadRequest, fmt.Errorf("instance verification failed: %s", err))
+			return
 		}
 
 		if req.Machine.Org != "" {
 			orgName = req.Machine.Org
 		}
 		if orgName == "" {
-			log.Printf("No organization provided to bootstrap: %s", err)
-			writeError(w, fmt.Errorf("no organization provided to bootstrap"))
+			log.Printf("No organization provided to bootstrap")
+			writeError(w, http.StatusBadRequest, fmt.Errorf("no organization provided to bootstrap"))
 			return
 		}
 
@@ -52,7 +55,7 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 		if !newOrg {
 			if org == nil {
 				log.Print("No organization found")
-				writeError(w, err)
+				writeError(w, http.StatusNotFound, err)
 				return
 			}
 		}
@@ -62,7 +65,7 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 		}
 		if teamName == "" {
 			log.Print("No team provided to bootstrap")
-			writeError(w, fmt.Errorf("no team provided by bootstra"))
+			writeError(w, http.StatusBadRequest, fmt.Errorf("no team provided by bootstrap"))
 			return
 		}
 
@@ -70,7 +73,7 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 		if !newTeam {
 			if team == nil {
 				log.Printf("No team found")
-				writeError(w, err)
+				writeError(w, http.StatusNotFound, err)
 				return
 			}
 		}
@@ -80,14 +83,14 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 			org, err = api.Orgs.Create(ctx, orgName)
 			if err != nil {
 				log.Print("Could not create org")
-				writeError(w, err)
+				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
 
 			err = api.KeyPairs.Create(ctx, org.ID, nil)
 			if err != nil {
 				log.Printf("Unable to generate org keypairs: %s", err)
-				writeError(w, err)
+				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
 
@@ -99,7 +102,7 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 			team, err = api.Teams.Create(ctx, org.ID, teamName, primitive.MachineTeamType)
 			if err != nil {
 				log.Printf("Could not create team")
-				writeError(w, err)
+				writeError(w, http.StatusInternalServerError, err)
 				return
 			}
 
@@ -109,16 +112,22 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 		machine, tokenSecret, err := api.Machines.Create(ctx, org.ID, team.ID, req.Machine.Name, nil)
 		if err != nil {
 			log.Printf("Unable to create machine: %s", err)
-			writeError(w, err)
+			writeError(w, http.StatusInternalServerError, err)
+			return
+		}
+
+		if len(machine.Tokens) < 1 {
+			log.Printf("Error generating machine credentials")
+			writeError(w, http.StatusInternalServerError, err)
 			return
 		}
 
 		enc := json.NewEncoder(w)
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 
 		resp := apitypes.BootstrapResponse{
-			Token:  machine.Machine.ID,
+			Token:  machine.Tokens[0].Token.ID,
 			Secret: tokenSecret,
 		}
 
@@ -127,11 +136,12 @@ func awsBootstrapRoute(orgName, teamName string, api *api.Client) http.HandlerFu
 }
 
 // writeError returns a bootstrapping error
-func writeError(w http.ResponseWriter, err error) {
-	w.WriteHeader(http.StatusInternalServerError)
+func writeError(w http.ResponseWriter, status int, err error) {
+	w.WriteHeader(status)
 	enc := json.NewEncoder(w)
-	resp := apitypes.BootstrapResponse{
-		Error: err.Error(),
+	resp := baseapitypes.Error{
+		Type: baseapitypes.InternalServerError,
+		Err:  []string{err.Error()},
 	}
 
 	enc.Encode(resp)
@@ -154,12 +164,7 @@ func selectOrg(ctx context.Context, api *api.Client, name string) (*envelope.Org
 }
 
 // selectTeam selects (or marks for creation) the team used to create the Machine
-func selectTeam(
-	ctx context.Context,
-	api *api.Client,
-	orgID *identity.ID,
-	name string,
-) (*envelope.Team, bool, error) {
+func selectTeam(ctx context.Context, api *api.Client, orgID *identity.ID, name string) (*envelope.Team, bool, error) {
 	teams, err := api.Teams.List(ctx, orgID, "", primitive.MachineTeamName)
 	if err != nil {
 		return nil, false, err
