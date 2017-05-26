@@ -324,5 +324,19 @@ func viewPolicyCmd(ctx *cli.Context) error {
 }
 
 func testPolicies(ctx *cli.Context) error {
+	args := ctx.Args()
+	if len(args) < 3 {
+		return errs.NewUsageExitError("Too few arguments", ctx)
+
+	} else if len(args) > 3 {
+		return errs.NewUsageExitError("Too many arguments", ctx)
+	}
+
+	rawAction := args[0]
+	userName := args[1]
+	rawPath := args[2]
+
+	fmt.Printf("User %s has access to %v %v: %v\n", userName, rawAction, rawPath, false)
+
 	return nil
 }
