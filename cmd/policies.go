@@ -16,6 +16,8 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/pathexp"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 func init() {
@@ -323,20 +325,69 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	return nil
 }
 
+const policyTestFailed = "Could not test policy."
+
 func testPolicies(ctx *cli.Context) error {
+	action, userName, path, err := parseArgs(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("User %s has access to %v %v: %v\n", *userName, action.String(), path, false)
+
+	return nil
+}
+
+func parseArgs(ctx *cli.Context) (*primitive.PolicyAction, *string, *pathexp.PathExp, error) {
 	args := ctx.Args()
 	if len(args) < 3 {
-		return errs.NewUsageExitError("Too few arguments", ctx)
-
+		return nil, nil, nil, errs.NewUsageExitError("Too few arguments", ctx)
 	} else if len(args) > 3 {
-		return errs.NewUsageExitError("Too many arguments", ctx)
+		return nil, nil, nil, errs.NewUsageExitError("Too many arguments", ctx)
 	}
 
 	rawAction := args[0]
 	userName := args[1]
 	rawPath := args[2]
 
-	fmt.Printf("User %s has access to %v %v: %v\n", userName, rawAction, rawPath, false)
+	//Validate action
+	action, err := parseAction(rawAction)
+	if err != nil {
+		return nil, nil, nil, errs.NewErrorExitError(policyTestFailed, err)
+	}
 
-	return nil
+	// Validate path
+	path, err := parseRawPath(rawPath)
+	if err != nil {
+		return nil, nil, nil, errs.NewErrorExitError(policyTestFailed, err)
+	}
+	return &action, &userName, path, nil
+}
+
+// Parse and validate a raw path, possibly including a secret. The secret
+// portion is discarded.
+func parseRawPath(rawPath string) (*pathexp.PathExp, error) {
+	idx := strings.LastIndex(rawPath, "/")
+	if idx == -1 {
+		msg := "resource path format is incorrect."
+		return nil, errs.NewExitError(msg)
+	}
+	name := rawPath[idx+1:]
+	path := rawPath[:idx]
+
+	if name == "**" {
+		path = rawPath
+		name = "*"
+	}
+
+	// Ensure that the secret name is valid
+	if !pathexp.ValidSecret(name) {
+		return nil, errs.NewExitError("Invalid secret name")
+	}
+
+	pe, err := pathexp.Parse(path)
+	if err != nil {
+		return nil, errs.NewErrorExitError("Invalid path expression", err)
+	}
+	return pe, nil
 }
