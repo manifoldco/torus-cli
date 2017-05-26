@@ -534,3 +534,28 @@ func filterPolicies(policies []envelope.Policy, predicate PolicyPredicate) []env
 	}
 	return result
 }
+
+// Crete a Predicate to filter (exclude) policies that are not attached to any
+// of the specified teams.
+func policyAttachedToTeamsPredicate(teams []envelope.Team,
+	attachments []envelope.PolicyAttachment) PolicyPredicate {
+
+	teamsByID := make(map[identity.ID]envelope.Team)
+	for _, t := range teams {
+		teamsByID[*t.ID] = t
+	}
+
+	attachmentByPolicyID := make(map[identity.ID]envelope.PolicyAttachment, 0)
+	for _, a := range attachments {
+		attachmentByPolicyID[*a.Body.PolicyID] = a
+	}
+
+	return func(policy envelope.Policy) bool {
+		if a, ok := attachmentByPolicyID[*policy.ID]; ok {
+			if _, ok := teamsByID[*a.Body.OwnerID]; ok {
+				return true
+			}
+		}
+		return false
+	}
+}
