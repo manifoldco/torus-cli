@@ -328,6 +328,11 @@ func viewPolicyCmd(ctx *cli.Context) error {
 
 const policyTestFailed = "Could not test policy."
 
+var permissionString = map[bool]string{
+	true:  "yes",
+	false: "no",
+}
+
 func testPolicies(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -383,7 +388,7 @@ func testPolicies(ctx *cli.Context) error {
 	policies = filterPolicies(policies, predicate)
 	allowed := policiesAllowAccess(policies)
 
-	fmt.Printf("User %s has access to %v %v: %v\n", *userName, action.String(), path, false)
+	fmt.Println(permissionString[allowed])
 
 	return nil
 }
