@@ -559,3 +559,24 @@ func policyAttachedToTeamsPredicate(teams []envelope.Team,
 		return false
 	}
 }
+
+// Create a predicate to filter (exclude) policies that do not apply to the
+// specified path. A policy applies to a path if any of its resources (paths)
+// are equivalent to the specified path. The secret portion of the path is
+// ignored.
+func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
+	return func(policy envelope.Policy) bool {
+		for _, s := range policy.Body.Policy.Statements {
+			rp, err := parseRawPath(s.Resource)
+			if err != nil {
+				// TODO Log this
+				continue
+			}
+			// I'm pretty sure this is wrong...
+			if rp.Equal(pathExp) {
+				return true
+			}
+		}
+		return false
+	}
+}
