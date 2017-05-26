@@ -12,6 +12,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
@@ -390,4 +391,92 @@ func parseRawPath(rawPath string) (*pathexp.PathExp, error) {
 		return nil, errs.NewErrorExitError("Invalid path expression", err)
 	}
 	return pe, nil
+}
+
+// Fetch all teams to which the user belongs. To do this we must first get all
+// teams for the org and membership information for each team, then filter
+// (include) teams if their membership includes the user.
+// Since fetching user, teams, and memberships are expensive, do them in
+// parallel as much as possible.
+func getTeamsForUser(client *api.Client, userName *string, orgID *identity.ID) ([]envelope.Team, error) {
+	c := context.Background()
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	var userErr error
+	var user *apitypes.Profile
+	go func() {
+		defer wg.Done()
+		user, userErr = client.Profiles.ListByName(c, *userName)
+		if user.Body == nil || user.ID == nil {
+			userErr = errs.NewExitError("Could not find user " + *userName)
+		}
+	}()
+
+	var teamErr error
+	var teams []envelope.Team
+	go func() {
+		defer wg.Done()
+		teams, teamErr = client.Teams.GetByOrg(c, orgID)
+		if teamErr != nil {
+			return
+		}
+
+		if teams == nil || len(teams) == 0 {
+			teamErr = errs.NewExitError("No teams found for organisation.")
+			return
+		}
+	}()
+	wg.Wait()
+
+	if userErr != nil || teamErr != nil {
+		return nil, cli.NewMultiError(userErr, teamErr,
+			errs.NewExitError(policyTestFailed),
+		)
+	}
+
+	teamChan := make(chan envelope.Team, 1)
+	filterTeamsByUser(client, teams, user, teamChan, orgID)
+
+	result := make([]envelope.Team, 0)
+	for t := range teamChan {
+		result = append(result, t)
+	}
+	return result, nil
+}
+
+// Given a set of teams and a user, filter (exclude) the teams for which the
+// user is not a member. This requires getting the membership information for
+// each team, which can be expensive, but can be done in parallel.
+func filterTeamsByUser(client *api.Client, teams []envelope.Team,
+	user *apitypes.Profile, teamChan chan envelope.Team,
+	orgID *identity.ID) {
+
+	c := context.Background()
+	wg := &sync.WaitGroup{}
+	go func() {
+		for _, t := range teams {
+			if isMachineTeam(t.Body) {
+				continue
+			}
+
+			wg.Add(1)
+			go func(team envelope.Team) {
+				defer wg.Done()
+				members, err := client.Memberships.List(c, orgID, team.ID, nil)
+				if err != nil {
+					// TODO: Log this!!!
+					return
+				}
+				for _, m := range members {
+					if *user.ID == *m.Body.OwnerID {
+						teamChan <- team
+						return
+					}
+				}
+			}(t)
+		}
+		wg.Wait()
+		close(teamChan)
+	}()
 }
