@@ -580,3 +580,16 @@ func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
 		return false
 	}
 }
+
+// Create a predicate to filter (include) policies that implement the specified
+// policy-action ([crudl]) in any one of their statements.
+func policyImplementsActionPredicate(action primitive.PolicyAction) PolicyPredicate {
+	return func(policy envelope.Policy) bool {
+		for _, s := range policy.Body.Policy.Statements {
+			if s.Action&action > 0 {
+				return true
+			}
+		}
+		return false
+	}
+}
