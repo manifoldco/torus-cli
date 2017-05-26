@@ -329,10 +329,59 @@ func viewPolicyCmd(ctx *cli.Context) error {
 const policyTestFailed = "Could not test policy."
 
 func testPolicies(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
 	action, userName, path, err := parseArgs(ctx)
 	if err != nil {
 		return err
 	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return errs.NewErrorExitError(policyTestFailed, err)
+	} else if org == nil {
+		return errs.NewExitError("Org not found")
+	}
+
+	// Get the Teams (to which the user is a member), Policies and
+	// PolicyAttachments concurrently.
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	var teamsErr error
+	var teams []envelope.Team
+	go func() {
+		defer wg.Done()
+		teams, teamsErr = getTeamsForUser(client, userName, org.ID)
+	}()
+
+	var policiesErr error
+	var policies []envelope.Policy
+	var attachments []envelope.PolicyAttachment
+	go func() {
+		defer wg.Done()
+		policies, attachments, policiesErr = getPoliciesAndAttachments(client, org.ID)
+	}()
+	wg.Wait()
+
+	if teamsErr != nil || policiesErr != nil {
+		return cli.NewMultiError(teamsErr, policiesErr,
+			errs.NewExitError(policyTestFailed))
+	}
+
+	//whittle the policies down to those that are relevant.
+	predicate := AllPredicate(
+		policyAttachedToTeamsPredicate(teams, attachments),
+		policyTouchesPathPredicate(path),
+		policyImplementsActionPredicate(*action),
+	)
+	policies = filterPolicies(policies, predicate)
+	allowed := policiesAllowAccess(policies)
 
 	fmt.Printf("User %s has access to %v %v: %v\n", *userName, action.String(), path, false)
 
