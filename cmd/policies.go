@@ -593,3 +593,22 @@ func policyImplementsActionPredicate(action primitive.PolicyAction) PolicyPredic
 		return false
 	}
 }
+
+// Given a set of policies, determine if they allow access (i.e. allow a
+// specific action on a specific path). Returns true if at least one policy
+// allows access AND exactly zero policies deny access. Return false otherwise.
+// This method only make sense if the policies have been previously reduced to
+// those referring to the same resource and action.
+func policiesAllowAccess(policies []envelope.Policy) bool {
+	allow := false
+	for _, p := range policies {
+		for _, s := range p.Body.Policy.Statements {
+			if s.Effect == primitive.PolicyEffectDeny {
+				return false
+			}
+			allow = true
+		}
+	}
+	return allow
+
+}
