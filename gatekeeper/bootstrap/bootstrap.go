@@ -8,22 +8,21 @@ import (
 	"github.com/manifoldco/torus-cli/gatekeeper/bootstrap/aws"
 )
 
+// Provider represents the Provider type for bootstrapping
+type Provider string
+
 const (
 	// AWSPublic is Amazon's Public Cloud Provider
-	AWSPublic = "aws"
+	AWSPublic Provider = "aws"
 )
 
-// Handler the function returned by the Bootstrap server that can
-// be used to bootstrap some information (e.g. machine) for that service.
-type Handler func(url, name, org, role string) (*apitypes.BootstrapResponse, error)
-
-// New returns a new Provider based on the given bootstrap.Type
-func New(t string) (Handler, error) {
-	switch t {
+// Do will execute the bootstrap request for the given provider
+func Do(provider Provider, url, name, org, role string) (*apitypes.BootstrapResponse, error) {
+	switch provider {
 	case AWSPublic:
-		return aws.Bootstrap, nil
+		return aws.Bootstrap(url, name, org, role)
 
 	default:
-		return nil, fmt.Errorf("Invalid Provider: %s", t)
+		return nil, fmt.Errorf("invalid provider: %s", provider)
 	}
 }

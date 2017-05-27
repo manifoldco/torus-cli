@@ -431,12 +431,8 @@ func listMachinesCmd(ctx *cli.Context) error {
 func bootstrapCmd(ctx *cli.Context) error {
 	cloud := ctx.String("auth")
 
-	bootstrapFunc, err := bootstrap.New(cloud)
-	if err != nil {
-		return fmt.Errorf("bootstrap init failed: %s", err)
-	}
-
-	resp, err := bootstrapFunc(
+	resp, err := bootstrap.Do(
+		bootstrap.Provider(cloud),
 		ctx.String("url"),
 		ctx.String("machine"),
 		ctx.String("org"),
