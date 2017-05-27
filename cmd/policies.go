@@ -509,3 +509,28 @@ func getPoliciesAndAttachments(client *api.Client, orgID *identity.ID) ([]envelo
 	}
 	return policies, attachments, nil
 }
+
+// Test if a Policy satisfies some condition
+type PolicyPredicate func(envelope.Policy) bool
+
+// Compound Predicate: Test of a policy satisfies all predicates
+func AllPredicate(predicates ...PolicyPredicate) PolicyPredicate {
+	return func(policy envelope.Policy) bool {
+		for _, pred := range predicates {
+			if !pred(policy) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func filterPolicies(policies []envelope.Policy, predicate PolicyPredicate) []envelope.Policy {
+	result := make([]envelope.Policy, 0)
+	for _, pol := range policies {
+		if predicate(pol) {
+			result = append(result, pol)
+		}
+	}
+	return result
+}
