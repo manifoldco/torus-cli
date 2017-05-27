@@ -480,3 +480,32 @@ func filterTeamsByUser(client *api.Client, teams []envelope.Team,
 		close(teamChan)
 	}()
 }
+
+// Fetch all policies and policy-attachments for the org. The two steps are
+// independent so do them in parallel.
+func getPoliciesAndAttachments(client *api.Client, orgID *identity.ID) ([]envelope.Policy, []envelope.PolicyAttachment, error) {
+	c := context.Background()
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	var pErr error
+	var policies []envelope.Policy
+	go func() {
+		defer wg.Done()
+		policies, pErr = client.Policies.List(c, orgID, "")
+	}()
+
+	var aErr error
+	var attachments []envelope.PolicyAttachment
+	go func() {
+		defer wg.Done()
+		attachments, aErr = client.Policies.AttachmentsList(c, orgID, nil, nil)
+	}()
+	wg.Wait()
+
+	if aErr != nil || pErr != nil {
+		return nil, nil, cli.NewMultiError(pErr, aErr,
+			errs.NewExitError(policyTestFailed))
+	}
+	return policies, attachments, nil
+}
