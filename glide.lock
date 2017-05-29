@@ -1,10 +1,10 @@
-hash: b600f32392382344cc8d12adb14cdc71ff642e414677fa5c3c933516ed2512c0
-updated: 2017-02-18T16:32:02.423151964+01:00
+hash: b0a6306ab98dab2450b71557d87519ce7691146d1d1bc685112fd84c8a118aea
+updated: 2017-05-21T22:17:23.010762605-03:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: b2852089fcfd0794d25d57f193e15121ab8a6d9e
+  version: 0b6039ef3d10c1eda49843ebf9773dcc5bba0169
   subpackages:
   - aws
   - aws/awserr
@@ -28,7 +28,6 @@ imports:
   - private/protocol/rest
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
-  - private/waiter
   - service/s3
   - service/sts
 - name: github.com/blang/semver
@@ -36,7 +35,7 @@ imports:
 - name: github.com/boltdb/bolt
   version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
 - name: github.com/chzyer/readline
-  version: eef24db1d59cac55d773312ab6efe1890187f2de
+  version: 41eea22f717c616615e1e59aa06cf831f9901f35
 - name: github.com/dchest/blake2b
   version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
 - name: github.com/donovanhide/eventsource
@@ -47,8 +46,10 @@ imports:
   version: a3b1354551a26449fbe05f5d855937f6e7acbd71
 - name: github.com/facebookgo/stats
   version: 1b76add642e42c6ffba7211ad7b3939ce654526e
+- name: github.com/fullsailor/pkcs7
+  version: eb67e7e564b9eae64dc7d95fae0784d6086a5fc4
 - name: github.com/go-ini/ini
-  version: e3c2d47c61e5333f9aa2974695dd94396eb69c75
+  version: 36da989cdc560b989d8f195aec46214d33665d20
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/golang/protobuf

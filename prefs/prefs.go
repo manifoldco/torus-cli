@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	rcFilename  = ".torusrc"
-	registryURI = "https://registry.arigato.sh"
+	rcFilename        = ".torusrc"
+	registryURI       = "https://registry.arigato.sh"
+	gatekeeperAddress = "0.0.0.0:8200"
 )
 
 // Preferences represents the configuration as user has in their torusrc file
@@ -46,6 +47,7 @@ type Core struct {
 	PublicKeyFile      string `ini:"public_key_file,omitempty"`
 	CABundleFile       string `ini:"ca_bundle_file,omitempty"`
 	RegistryURI        string `ini:"registry_uri,omitempty"`
+	GatekeeperAddress  string `ini:"gatekeeper_address"`
 	Context            bool   `ini:"context,omitempty"`
 	AutoConfirm        bool   `ini:"auto_confirm,omitempty"`
 	EnableProgress     bool   `ini:"progress"`
@@ -127,6 +129,7 @@ func NewPreferences() (*Preferences, error) {
 	prefs := &Preferences{
 		Core: Core{
 			RegistryURI:        registryURI,
+			GatekeeperAddress:  gatekeeperAddress,
 			Context:            true,
 			EnableHints:        true,
 			EnableProgress:     true,
