@@ -362,7 +362,7 @@ func testPolicies(ctx *cli.Context) error {
 	var teams []envelope.Team
 	go func() {
 		defer wg.Done()
-		teams, teamsErr = getTeamsForUser(client, userName, org.ID)
+		teams, teamsErr = getTeamsForUser(c, client, userName, org.ID)
 	}()
 
 	var policiesErr error
@@ -370,7 +370,7 @@ func testPolicies(ctx *cli.Context) error {
 	var attachments []envelope.PolicyAttachment
 	go func() {
 		defer wg.Done()
-		policies, attachments, policiesErr = getPoliciesAndAttachments(client, org.ID)
+		policies, attachments, policiesErr = getPoliciesAndAttachments(c, client, org.ID)
 	}()
 	wg.Wait()
 
@@ -452,8 +452,8 @@ func parseRawPath(rawPath string) (*pathexp.PathExp, error) {
 // (include) teams if their membership includes the user.
 // Since fetching user, teams, and memberships are expensive, do them in
 // parallel as much as possible.
-func getTeamsForUser(client *api.Client, userName *string, orgID *identity.ID) ([]envelope.Team, error) {
-	c := context.Background()
+func getTeamsForUser(c context.Context, client *api.Client, userName *string,
+	orgID *identity.ID) ([]envelope.Team, error) {
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
@@ -490,7 +490,7 @@ func getTeamsForUser(client *api.Client, userName *string, orgID *identity.ID) (
 	}
 
 	teamChan := make(chan envelope.Team, 1)
-	filterTeamsByUser(client, teams, user, teamChan, orgID)
+	filterTeamsByUser(c, client, teams, user, teamChan, orgID)
 
 	result := make([]envelope.Team, 0)
 	for t := range teamChan {
@@ -502,11 +502,9 @@ func getTeamsForUser(client *api.Client, userName *string, orgID *identity.ID) (
 // Given a set of teams and a user, filter (exclude) the teams for which the
 // user is not a member. This requires getting the membership information for
 // each team, which can be expensive, but can be done in parallel.
-func filterTeamsByUser(client *api.Client, teams []envelope.Team,
-	user *apitypes.Profile, teamChan chan envelope.Team,
-	orgID *identity.ID) {
+func filterTeamsByUser(c context.Context, client *api.Client, teams []envelope.Team,
+	user *apitypes.Profile, teamChan chan envelope.Team, orgID *identity.ID) {
 
-	c := context.Background()
 	wg := &sync.WaitGroup{}
 	go func() {
 		for _, t := range teams {
@@ -537,8 +535,9 @@ func filterTeamsByUser(client *api.Client, teams []envelope.Team,
 
 // Fetch all policies and policy-attachments for the org. The two steps are
 // independent so do them in parallel.
-func getPoliciesAndAttachments(client *api.Client, orgID *identity.ID) ([]envelope.Policy, []envelope.PolicyAttachment, error) {
-	c := context.Background()
+func getPoliciesAndAttachments(c context.Context, client *api.Client,
+	orgID *identity.ID) ([]envelope.Policy, []envelope.PolicyAttachment, error) {
+
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
