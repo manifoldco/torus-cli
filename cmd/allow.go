@@ -51,28 +51,9 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	}
 
 	// Separate the pathexp from the secret name
-	rawPath := args[1]
-	idx := strings.LastIndex(rawPath, "/")
-	if idx == -1 {
-		msg := "resource path format is incorrect."
-		return errs.NewUsageExitError(msg, ctx)
-	}
-	name := rawPath[idx+1:]
-	path := rawPath[:idx]
-
-	if name == "**" {
-		path = rawPath
-		name = "*"
-	}
-
-	// Ensure that the secret name is valid
-	if !pathexp.ValidSecret(name) {
-		return errs.NewExitError("Invalid secret name")
-	}
-
-	pe, err := pathexp.Parse(path)
+	pe, name, err := parseRawPath(args[1])
 	if err != nil {
-		return errs.NewErrorExitError("Invalid path expression", err)
+		return err
 	}
 
 	stmtAction, err := parseAction(args[0])
@@ -115,7 +96,7 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	policy.Policy.Statements = []primitive.PolicyStatement{{
 		Effect:   effect,
 		Action:   stmtAction,
-		Resource: pe.String() + "/" + name,
+		Resource: pe.String() + "/" + *name,
 	}}
 
 	res, err := client.Policies.Create(c, &policy)
@@ -140,6 +121,33 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	w.Flush()
 
 	return nil
+}
+
+// parseRawPath parses and validates a raw path, possibly including a secret.
+// The secret portion is also validated.
+func parseRawPath(rawPath string) (*pathexp.PathExp, *string, error) {
+	idx := strings.LastIndex(rawPath, "/")
+	if idx == -1 {
+		return nil, nil, errs.NewExitError("resource path format is incorrect.")
+	}
+	secret := rawPath[idx+1:]
+	path := rawPath[:idx]
+
+	if secret == "**" {
+		path = rawPath
+		secret = "*"
+	}
+
+	// Ensure that the secret name is valid
+	if !pathexp.ValidSecret(secret) {
+		return nil, nil, errs.NewExitError("Invalid secret name " + secret)
+	}
+
+	pe, err := pathexp.Parse(path)
+	if err != nil {
+		return nil, nil, errs.NewErrorExitError("Invalid path expression", err)
+	}
+	return pe, &secret, nil
 }
 
 func parseAction(raw string) (primitive.PolicyAction, error) {

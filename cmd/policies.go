@@ -412,39 +412,11 @@ func parseArgs(ctx *cli.Context) (*primitive.PolicyAction, *string, *pathexp.Pat
 	}
 
 	// Validate path
-	path, err := parseRawPath(rawPath)
+	path, _, err := parseRawPath(rawPath)
 	if err != nil {
 		return nil, nil, nil, errs.NewErrorExitError(policyTestFailed, err)
 	}
 	return &action, &userName, path, nil
-}
-
-// Parse and validate a raw path, possibly including a secret. The secret
-// portion is discarded.
-func parseRawPath(rawPath string) (*pathexp.PathExp, error) {
-	idx := strings.LastIndex(rawPath, "/")
-	if idx == -1 {
-		msg := "resource path format is incorrect."
-		return nil, errs.NewExitError(msg)
-	}
-	name := rawPath[idx+1:]
-	path := rawPath[:idx]
-
-	if name == "**" {
-		path = rawPath
-		name = "*"
-	}
-
-	// Ensure that the secret name is valid
-	if !pathexp.ValidSecret(name) {
-		return nil, errs.NewExitError("Invalid secret name")
-	}
-
-	pe, err := pathexp.Parse(path)
-	if err != nil {
-		return nil, errs.NewErrorExitError("Invalid path expression", err)
-	}
-	return pe, nil
 }
 
 // Fetch all teams to which the user belongs. To do this we must first get all
@@ -620,7 +592,7 @@ func policyAttachedToTeamsPredicate(teams []envelope.Team,
 func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
 	return func(policy envelope.Policy) bool {
 		for _, s := range policy.Body.Policy.Statements {
-			rp, err := parseRawPath(s.Resource)
+			rp, _, err := parseRawPath(s.Resource)
 			if err != nil {
 				// TODO Log this
 				continue
