@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -490,7 +491,7 @@ func filterTeamsByUser(c context.Context, client *api.Client, teams []envelope.T
 				defer wg.Done()
 				members, err := client.Memberships.List(c, orgID, team.ID, nil)
 				if err != nil {
-					// TODO: Log this!!!
+					log.Printf("Failed to list memberships for team %v: %v. Skipping...\n", team.Body.Name, err)
 					return
 				}
 				for _, m := range members {
@@ -597,7 +598,8 @@ func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
 		for _, s := range policy.Body.Policy.Statements {
 			rp, _, err := parseRawPath(s.Resource)
 			if err != nil {
-				// TODO Log this
+				log.Printf("Failed parse resource %v for policy %v: %v. Skipping...\n",
+					s.Resource, policy.Body.Policy.Name, err)
 				continue
 			}
 			// I'm pretty sure this is wrong...
