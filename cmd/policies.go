@@ -464,7 +464,7 @@ func getTeamsForUser(c context.Context, client *api.Client, userName *string,
 	teamChan := make(chan envelope.Team, 1)
 	filterTeamsByUser(c, client, teams, user, teamChan, orgID)
 
-	result := make([]envelope.Team, 0)
+	var result []envelope.Team
 	for t := range teamChan {
 		result = append(result, t)
 	}
@@ -551,7 +551,7 @@ func AllPredicate(predicates ...PolicyPredicate) PolicyPredicate {
 }
 
 func filterPolicies(policies []envelope.Policy, predicate PolicyPredicate) []envelope.Policy {
-	result := make([]envelope.Policy, 0)
+	var result []envelope.Policy
 	for _, pol := range policies {
 		if predicate(pol) {
 			result = append(result, pol)
