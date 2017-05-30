@@ -28,7 +28,7 @@ torus signup
 ### OS X
 
 - [homebrew](http://brew.sh): `brew install manifoldco/brew/torus`
-- [npm](https://www.npmjs.com): `npm install -g torus-cli`
+- [npm](https://www.npmjs.com): `npm install -g torus-cli` (be careful not to install torus, since that's a different project)
 - bare zip archives per release version are available on https://get.torus.sh/
 
 ### Linux
