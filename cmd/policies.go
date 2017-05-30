@@ -602,8 +602,8 @@ func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
 					s.Resource, policy.Body.Policy.Name, err)
 				continue
 			}
-			// I'm pretty sure this is wrong...
-			if rp.Equal(pathExp) {
+			// Is this right?
+			if pathExp.Contains(rp) || rp.Contains(pathExp) {
 				return true
 			}
 		}
