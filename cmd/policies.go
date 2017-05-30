@@ -419,9 +419,9 @@ func parseArgs(ctx *cli.Context) (*primitive.PolicyAction, *string, *pathexp.Pat
 	return &action, &userName, path, nil
 }
 
-// Fetch all teams to which the user belongs. To do this we must first get all
-// teams for the org and membership information for each team, then filter
-// (include) teams if their membership includes the user.
+// getTeamsForUser fetches all teams to which the user belongs. To do this it
+// must first get all teams for the org and membership information for each
+// team, then filter (include) teams if their membership includes the user.
 // Since fetching user, teams, and memberships are expensive, do them in
 // parallel as much as possible.
 func getTeamsForUser(c context.Context, client *api.Client, userName *string,
@@ -471,9 +471,10 @@ func getTeamsForUser(c context.Context, client *api.Client, userName *string,
 	return result, nil
 }
 
-// Given a set of teams and a user, filter (exclude) the teams for which the
-// user is not a member. This requires getting the membership information for
-// each team, which can be expensive, but can be done in parallel.
+// filterTeamsByUser, given a set of teams and a user, filters (excludes) teams
+// for which the user is not a member. This requires getting the membership
+// information for each team, which can be expensive, but can be done in
+// parallel.
 func filterTeamsByUser(c context.Context, client *api.Client, teams []envelope.Team,
 	user *apitypes.Profile, teamChan chan envelope.Team, orgID *identity.ID) {
 
@@ -505,8 +506,8 @@ func filterTeamsByUser(c context.Context, client *api.Client, teams []envelope.T
 	}()
 }
 
-// Fetch all policies and policy-attachments for the org. The two steps are
-// independent so do them in parallel.
+// getPoliciesAndAttachments fetches all policies and policy-attachments for the
+// org. The two steps are independent so can be (and are) done in parallel.
 func getPoliciesAndAttachments(c context.Context, client *api.Client,
 	orgID *identity.ID) ([]envelope.Policy, []envelope.PolicyAttachment, error) {
 
@@ -535,10 +536,12 @@ func getPoliciesAndAttachments(c context.Context, client *api.Client,
 	return policies, attachments, nil
 }
 
-// Test if a Policy satisfies some condition
+// PolicyPredicate is a signature for a function that tests if a Policy
+// satisfies some condition
 type PolicyPredicate func(envelope.Policy) bool
 
-// Compound Predicate: Test of a policy satisfies all predicates
+// AllPredicate is a compound Predicate that tests if a policy satisfies all
+// predicates
 func AllPredicate(predicates ...PolicyPredicate) PolicyPredicate {
 	return func(policy envelope.Policy) bool {
 		for _, pred := range predicates {
@@ -560,8 +563,8 @@ func filterPolicies(policies []envelope.Policy, predicate PolicyPredicate) []env
 	return result
 }
 
-// Crete a Predicate to filter (exclude) policies that are not attached to any
-// of the specified teams.
+// policyAttachedToTeamsPredicate cretes a Predicate to filter (exclude)
+// policies that are not attached to any of the specified teams.
 func policyAttachedToTeamsPredicate(teams []envelope.Team,
 	attachments []envelope.PolicyAttachment) PolicyPredicate {
 
@@ -585,10 +588,10 @@ func policyAttachedToTeamsPredicate(teams []envelope.Team,
 	}
 }
 
-// Create a predicate to filter (exclude) policies that do not apply to the
-// specified path. A policy applies to a path if any of its resources (paths)
-// are equivalent to the specified path. The secret portion of the path is
-// ignored.
+// policyTouchesPathPredicate creates a predicate to filter (exclude) policies
+// that do not apply to the specified path. A policy applies to a path if any of
+// its resources (paths) are equivalent to the specified path. The secret
+// portion of the path is ignored.
 func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
 	return func(policy envelope.Policy) bool {
 		for _, s := range policy.Body.Policy.Statements {
@@ -606,8 +609,9 @@ func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
 	}
 }
 
-// Create a predicate to filter (include) policies that implement the specified
-// policy-action ([crudl]) in any one of their statements.
+// policyImplementsActionPredicate creates a predicate to filter (include)
+// policies that implement the specified policy-action ([crudl]) in any one of
+// their statements.
 func policyImplementsActionPredicate(action primitive.PolicyAction) PolicyPredicate {
 	return func(policy envelope.Policy) bool {
 		for _, s := range policy.Body.Policy.Statements {
@@ -619,8 +623,8 @@ func policyImplementsActionPredicate(action primitive.PolicyAction) PolicyPredic
 	}
 }
 
-// Given a set of policies, determine if they allow access (i.e. allow a
-// specific action on a specific path). Returns true if at least one policy
+// policiesAllowAccess determines if a set of polices "allow access" (i.e. allow
+// a specific action on a specific path). Returns true if at least one policy
 // allows access AND exactly zero policies deny access. Return false otherwise.
 // This method only make sense if the policies have been previously reduced to
 // those referring to the same resource and action.
