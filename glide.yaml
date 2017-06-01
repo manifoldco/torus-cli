@@ -44,6 +44,3 @@ import:
 - package: github.com/manifoldco/go-base32
   version: ^1.0.0
 - package: github.com/fullsailor/pkcs7
-- package: golang.org/x/crypto/ssh
-  subpackages:
-  - terminal
