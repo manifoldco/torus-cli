@@ -172,6 +172,11 @@ ifneq (v$(VERSION),$(shell git describe --tags --dirty))
 	$(error "VERSION $(VERSION) is not git HEAD")
 endif
 
+githubcheck:
+ifeq (,$(GITHUB_TOKEN))
+	$(error "A GITHUB_TOKEN (oauth token) must be provided")
+endif
+
 envcheck:
 ifeq (,$(TORUS_S3_BUCKET))
 	$(error "Unknown RELEASE_ENV $(RELEASE_ENV)")
@@ -343,7 +348,7 @@ $(TOOLS)/cdn-indexer: $(wildcard $(CDN_INDEXER)/*.go) $(wildcard $(CDN_INDEXER)/
 	$(GO_BUILD) -o $@ ./$(CDN_INDEXER)
 
 GH_RELEASER=tools/gh-releaser
-$(TOOLS)/gh-releaser: $(wildcard $(GH_RELEASER)/*.go) $(wildcard $(GH_RELEASER)/*.tmpl) vendor
+$(TOOLS)/gh-releaser: $(wildcard $(GH_RELEASER)/*.go) $(wildcard $(GH_RELEASER)/*.tmpl) vendor githubcheck
 	$(GO_BUILD) -o $@ ./$(GH_RELEASER)
 
 RELEASE_TARGETS=\
@@ -357,7 +362,7 @@ COLS=$(shell tput cols)
 S3_CACHE=--cache-control "public, max-age=604800"
 S3_FAST_CACHE=--cache-control "public, max-age=300"
 S3_CP=pushd builds/dist && aws s3 cp --recursive . s3://$(TORUS_S3_BUCKET)
-release-all: envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer $(TOOLS)/gh-releaser
+release-all: githubcheck envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-indexer $(TOOLS)/gh-releaser
 	$(S3_CP) $(S3_CACHE) --content-type="text/plain" --exclude "*" \
 		--include "*SHA256SUMS*"
 	$(S3_CP) $(S3_FAST_CACHE) --exclude "*" \
