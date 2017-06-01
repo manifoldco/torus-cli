@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Unreleased
+
+_Unreleased_
+
+**Fixes**
+
+- Hints will no longer be displayed if stdout is not a terminal.
+
 ## v0.24.0
 
 _2017-05-24_
