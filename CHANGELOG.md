@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## Unreleased
+## v0.24.1
 
-_Unreleased_
+_2017-05-31_
 
 **Fixes**
 
