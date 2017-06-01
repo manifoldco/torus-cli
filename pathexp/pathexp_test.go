@@ -290,7 +290,7 @@ func TestDoubleGlob(t *testing.T) {
 	}
 }
 
-func TestContains(t *testing.T) {
+func TestSegmentsContains(t *testing.T) {
 	path := "/org/project/[development|staging]/**/instance"
 	pe, err := Parse(path)
 	if err != nil {
@@ -305,7 +305,54 @@ func TestContains(t *testing.T) {
 		t.Errorf("Alternation contains failed to match value")
 	}
 
+	if !pe.Envs.Contains("staging") {
+		t.Errorf("Alternation contains failed to match value")
+	}
+
 	if !pe.Identities.Contains("development") {
 		t.Errorf("FullGlob contains failed to match any value")
+	}
+}
+
+func TestExpContains(t *testing.T) {
+	testCases := []struct {
+		l        string
+		r        string
+		contains bool
+	}{
+		{"/o/p/e/s/u/i", "/o/p/e/s/u/i", true},
+		{"/o/p/*/s/u/i", "/o/p/e/s/u/i", true},
+		{"/o/p/*/s/u/i", "/o/p/*/s/u/i", true},
+		{"/o/p/e-*/s/u/i", "/o/p/e-*/s/u/i", true},
+		{"/o/p/e/[s|b]/u/i", "/o/p/e/s/u/i", true},
+		{"/o/p/e/[s|b]/u/i", "/o/p/e/b/u/i", true},
+		{"/o/p/**", "/o/p/e/b/u/i", true},
+		{"/o/p/**/i", "/o/p/e/b/u/i", true},
+
+		{"/o/p/e1/s/u/i", "/o/p/e/s/u/i", false},
+		{"/o/p/e/s/u/i", "/o/p/e1/s/u/i", false},
+		{"/o/p/e/s/u/i", "/o/p/*/s/u/i", false},
+		{"/o/p/e/s/u/i", "/o/p/e-*/s/u/i", false},
+		{"/o/p/e/s/u/i", "/o/p/e/[s|b]/u/i", false},
+		{"/o/p/e/[c|d|e]/u/i", "/o/p/e/s/u/i", false},
+		{"/o/p/e/[c|d|e]/u/i", "/o/p/e/[c|d|e]/u/i", false},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.l+" "+test.r, func(t *testing.T) {
+			l, err := Parse(test.l)
+			if err != nil {
+				t.Fatalf("Failed to parse %s", test.l)
+			}
+
+			r, err := Parse(test.r)
+			if err != nil {
+				t.Fatalf("Failed to parse %s", test.r)
+			}
+
+			if l.Contains(r) != test.contains {
+				t.Errorf("Expected %s Contain %s = %t", test.l, test.r, test.contains)
+			}
+		})
 	}
 }
