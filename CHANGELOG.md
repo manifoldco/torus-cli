@@ -7,6 +7,7 @@ _Unreleased_
 **Fixes**
 
 - Hints will no longer be displayed if stdout is not a terminal.
+- The CLI will now wait indefinitely for a request to be completed by the daemon.
 
 ## v0.24.0
 
