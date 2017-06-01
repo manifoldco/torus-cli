@@ -7,7 +7,6 @@ import (
 
 	"github.com/chzyer/readline"
 	"github.com/manifoldco/ansiwrap"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/manifoldco/torus-cli/prefs"
 	"github.com/manifoldco/torus-cli/promptui"
@@ -89,7 +88,7 @@ func (u *UI) Hint(str string, noPadding bool) {
 		return
 	}
 
-	if !terminal.IsTerminal(int(os.Stdout.Fd())) {
+	if !readline.IsTerminal(int(os.Stdout.Fd())) {
 		return
 	}
 
