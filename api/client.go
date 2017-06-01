@@ -55,7 +55,11 @@ func NewClient(cfg *config.Config) *Client {
 		DefaultRequestDoer: registry.DefaultRequestDoer{
 			Client: &http.Client{
 				Transport: newTransport(cfg),
-				Timeout:   time.Minute,
+
+				// The client can trust the daemon to do the right thing and
+				// cancel appropriately. Therefore, we only care about a
+				// connection timeout, not a request timeout.
+				Timeout: 0,
 			},
 			Host: "http://localhost",
 		},
