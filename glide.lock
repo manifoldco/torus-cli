@@ -1,10 +1,10 @@
 hash: b0a6306ab98dab2450b71557d87519ce7691146d1d1bc685112fd84c8a118aea
-updated: 2017-05-21T22:17:23.010762605-03:00
+updated: 2017-05-31T21:27:40.814727411-03:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: 0b6039ef3d10c1eda49843ebf9773dcc5bba0169
+  version: d43439f542aac478e400c879d32e567a406d172b
   subpackages:
   - aws
   - aws/awserr
@@ -37,7 +37,7 @@ imports:
 - name: github.com/chzyer/readline
   version: 41eea22f717c616615e1e59aa06cf831f9901f35
 - name: github.com/dchest/blake2b
-  version: 3c8c640cd7bea3ca78209d812b5854442ab92fed
+  version: 06006a921c7d13e3fdf63c401cb0e4529a26e6e4
 - name: github.com/donovanhide/eventsource
   version: fd1de70867126402be23c306e1ce32828455d85b
 - name: github.com/facebookgo/clock
@@ -53,7 +53,7 @@ imports:
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/golang/protobuf
-  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
   subpackages:
   - proto
 - name: github.com/google/go-github
@@ -79,7 +79,7 @@ imports:
 - name: github.com/manifoldco/go-base64
   version: bb5e620cf51d2bbe78e624a2c27117655ce73acc
 - name: github.com/natefinch/lumberjack
-  version: dd45e6a67c53f673bb49ca8a001fd3a63ceb640e
+  version: a96e63847dc3c67d17befa69c303767e2f84e54f
 - name: github.com/natefinch/npipe
   version: c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6
 - name: github.com/nightlyone/lockfile
@@ -89,7 +89,7 @@ imports:
 - name: github.com/urfave/cli
   version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: golang.org/x/crypto
-  version: 8a549a1948fc5271eb24f36dcb0d3b47dec75a16
+  version: 9ef620b9ca2f82b55030ffd4f41327fa9e77a92c
   subpackages:
   - curve25519
   - ed25519
@@ -101,17 +101,18 @@ imports:
   - salsa20
   - salsa20/salsa
   - scrypt
+  - ssh/terminal
   - twofish
 - name: golang.org/x/net
-  version: 45e771701b814666a7eb299e6c7a57d0b1799e91
+  version: d1e1b351919c6738fdeb9893d5c998b161464f0c
   subpackages:
   - context
 - name: golang.org/x/oauth2
-  version: 96382aa079b72d8c014eb0c50f6c223d1e6a2de0
+  version: 7fdf09982454086d5570c7db3e11f360194830ca
   subpackages:
   - internal
 - name: google.golang.org/appengine
-  version: ca59ef35f409df61fa4a5f8290ff289b37eccfb8
+  version: 170382fa85b10b94728989dfcf6cc818b335c952
   subpackages:
   - internal
   - internal/base

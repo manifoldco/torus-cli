@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -12,10 +13,13 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/pathexp"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 func init() {
@@ -58,6 +62,19 @@ func init() {
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, detachPolicies,
+				),
+			},
+
+			{
+				Name:      "test",
+				Usage:     "Test a user's access to a path",
+				ArgsUsage: "<c|r|u|d|l> <username> <path>",
+				Flags: []cli.Flag{
+					orgFlag("org to test policy for", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, testPolicies,
 				),
 			},
 		},
@@ -308,4 +325,321 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	w.Flush()
 
 	return nil
+}
+
+const policyTestFailed = "Could not test policy."
+
+var permissionString = map[bool]string{
+	true:  "yes",
+	false: "no",
+}
+
+func testPolicies(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	action, userName, path, err := parseArgs(ctx)
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return errs.NewErrorExitError(policyTestFailed, err)
+	} else if org == nil {
+		return errs.NewExitError("Org not found")
+	}
+
+	// Get the Teams (to which the user is a member), Policies and
+	// PolicyAttachments concurrently.
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	var teamsErr error
+	var teams []envelope.Team
+	go func() {
+		defer wg.Done()
+		teams, teamsErr = getTeamsForUser(c, client, userName, org.ID)
+	}()
+
+	var policiesErr error
+	var policies []envelope.Policy
+	var attachments []envelope.PolicyAttachment
+	go func() {
+		defer wg.Done()
+		policies, attachments, policiesErr = getPoliciesAndAttachments(c, client, org.ID)
+	}()
+	wg.Wait()
+
+	if teamsErr != nil || policiesErr != nil {
+		return cli.NewMultiError(teamsErr, policiesErr,
+			errs.NewExitError(policyTestFailed))
+	}
+
+	//whittle the policies down to those that are relevant.
+	predicate := AllPredicate(
+		policyAttachedToTeamsPredicate(teams, attachments),
+		policyTouchesPathPredicate(path),
+		policyImplementsActionPredicate(*action),
+	)
+	policies = filterPolicies(policies, predicate)
+	allowed := policiesAllowAccess(policies)
+
+	fmt.Println(permissionString[allowed])
+
+	return nil
+}
+
+func parseArgs(ctx *cli.Context) (*primitive.PolicyAction, *string, *pathexp.PathExp, error) {
+	args := ctx.Args()
+	if len(args) < 3 {
+		return nil, nil, nil, errs.NewUsageExitError("Too few arguments", ctx)
+	} else if len(args) > 3 {
+		return nil, nil, nil, errs.NewUsageExitError("Too many arguments", ctx)
+	}
+
+	rawAction := args[0]
+	userName := args[1]
+	rawPath := args[2]
+
+	//Validate action
+	action, err := parseAction(rawAction)
+	if err != nil {
+		return nil, nil, nil, errs.NewErrorExitError(policyTestFailed, err)
+	}
+
+	// Validate path
+	path, _, err := parseRawPath(rawPath)
+	if err != nil {
+		return nil, nil, nil, errs.NewErrorExitError(policyTestFailed, err)
+	}
+	return &action, &userName, path, nil
+}
+
+// getTeamsForUser fetches all teams to which the user belongs. To do this it
+// must first get all teams for the org and membership information for each
+// team, then filter (include) teams if their membership includes the user.
+// Since fetching user, teams, and memberships are expensive, do them in
+// parallel as much as possible.
+func getTeamsForUser(c context.Context, client *api.Client, userName *string,
+	orgID *identity.ID) ([]envelope.Team, error) {
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	var userErr error
+	var user *apitypes.Profile
+	go func() {
+		defer wg.Done()
+		user, userErr = client.Profiles.ListByName(c, *userName)
+		if user.Body == nil || user.ID == nil {
+			userErr = errs.NewExitError("Could not find user " + *userName)
+		}
+	}()
+
+	var teamErr error
+	var teams []envelope.Team
+	go func() {
+		defer wg.Done()
+		teams, teamErr = client.Teams.GetByOrg(c, orgID)
+		if teamErr != nil {
+			return
+		}
+
+		if teams == nil || len(teams) == 0 {
+			teamErr = errs.NewExitError("No teams found for organisation.")
+			return
+		}
+	}()
+	wg.Wait()
+
+	if userErr != nil || teamErr != nil {
+		return nil, cli.NewMultiError(userErr, teamErr,
+			errs.NewExitError(policyTestFailed),
+		)
+	}
+
+	teamChan := make(chan envelope.Team, 1)
+	filterTeamsByUser(c, client, teams, user, teamChan, orgID)
+
+	var result []envelope.Team
+	for t := range teamChan {
+		result = append(result, t)
+	}
+	return result, nil
+}
+
+// filterTeamsByUser, given a set of teams and a user, filters (excludes) teams
+// for which the user is not a member. This requires getting the membership
+// information for each team, which can be expensive, but can be done in
+// parallel.
+func filterTeamsByUser(c context.Context, client *api.Client, teams []envelope.Team,
+	user *apitypes.Profile, teamChan chan envelope.Team, orgID *identity.ID) {
+
+	wg := &sync.WaitGroup{}
+	go func() {
+		for _, t := range teams {
+			if isMachineTeam(t.Body) {
+				continue
+			}
+
+			wg.Add(1)
+			go func(team envelope.Team) {
+				defer wg.Done()
+				members, err := client.Memberships.List(c, orgID, team.ID, nil)
+				if err != nil {
+					log.Printf("Failed to list memberships for team %v: %v. Skipping...\n", team.Body.Name, err)
+					return
+				}
+				for _, m := range members {
+					if *user.ID == *m.Body.OwnerID {
+						teamChan <- team
+						return
+					}
+				}
+			}(t)
+		}
+		wg.Wait()
+		close(teamChan)
+	}()
+}
+
+// getPoliciesAndAttachments fetches all policies and policy-attachments for the
+// org. The two steps are independent so can be (and are) done in parallel.
+func getPoliciesAndAttachments(c context.Context, client *api.Client,
+	orgID *identity.ID) ([]envelope.Policy, []envelope.PolicyAttachment, error) {
+
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	var pErr error
+	var policies []envelope.Policy
+	go func() {
+		defer wg.Done()
+		policies, pErr = client.Policies.List(c, orgID, "")
+	}()
+
+	var aErr error
+	var attachments []envelope.PolicyAttachment
+	go func() {
+		defer wg.Done()
+		attachments, aErr = client.Policies.AttachmentsList(c, orgID, nil, nil)
+	}()
+	wg.Wait()
+
+	if aErr != nil || pErr != nil {
+		return nil, nil, cli.NewMultiError(pErr, aErr,
+			errs.NewExitError(policyTestFailed))
+	}
+	return policies, attachments, nil
+}
+
+// PolicyPredicate is a signature for a function that tests if a Policy
+// satisfies some condition
+type PolicyPredicate func(envelope.Policy) bool
+
+// AllPredicate is a compound Predicate that tests if a policy satisfies all
+// predicates
+func AllPredicate(predicates ...PolicyPredicate) PolicyPredicate {
+	return func(policy envelope.Policy) bool {
+		for _, pred := range predicates {
+			if !pred(policy) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func filterPolicies(policies []envelope.Policy, predicate PolicyPredicate) []envelope.Policy {
+	var result []envelope.Policy
+	for _, pol := range policies {
+		if predicate(pol) {
+			result = append(result, pol)
+		}
+	}
+	return result
+}
+
+// policyAttachedToTeamsPredicate cretes a Predicate to filter (exclude)
+// policies that are not attached to any of the specified teams.
+func policyAttachedToTeamsPredicate(teams []envelope.Team,
+	attachments []envelope.PolicyAttachment) PolicyPredicate {
+
+	teamsByID := make(map[identity.ID]envelope.Team)
+	for _, t := range teams {
+		teamsByID[*t.ID] = t
+	}
+
+	attachmentByPolicyID := make(map[identity.ID]envelope.PolicyAttachment, 0)
+	for _, a := range attachments {
+		attachmentByPolicyID[*a.Body.PolicyID] = a
+	}
+
+	return func(policy envelope.Policy) bool {
+		if a, ok := attachmentByPolicyID[*policy.ID]; ok {
+			if _, ok := teamsByID[*a.Body.OwnerID]; ok {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// policyTouchesPathPredicate creates a predicate to filter (exclude) policies
+// that do not apply to the specified path. A policy applies to a path if any of
+// its resources (paths) are equivalent to the specified path. The secret
+// portion of the path is ignored.
+func policyTouchesPathPredicate(pathExp *pathexp.PathExp) PolicyPredicate {
+	return func(policy envelope.Policy) bool {
+		for _, s := range policy.Body.Policy.Statements {
+			rp, _, err := parseRawPath(s.Resource)
+			if err != nil {
+				log.Printf("Failed parse resource %v for policy %v: %v. Skipping...\n",
+					s.Resource, policy.Body.Policy.Name, err)
+				continue
+			}
+			// Is this right?
+			if pathExp.Contains(rp) || rp.Contains(pathExp) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// policyImplementsActionPredicate creates a predicate to filter (include)
+// policies that implement the specified policy-action ([crudl]) in any one of
+// their statements.
+func policyImplementsActionPredicate(action primitive.PolicyAction) PolicyPredicate {
+	return func(policy envelope.Policy) bool {
+		for _, s := range policy.Body.Policy.Statements {
+			if s.Action&action > 0 {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+// policiesAllowAccess determines if a set of polices "allow access" (i.e. allow
+// a specific action on a specific path). Returns true if at least one policy
+// allows access AND exactly zero policies deny access. Return false otherwise.
+// This method only make sense if the policies have been previously reduced to
+// those referring to the same resource and action.
+func policiesAllowAccess(policies []envelope.Policy) bool {
+	allow := false
+	for _, p := range policies {
+		for _, s := range p.Body.Policy.Statements {
+			if s.Effect == primitive.PolicyEffectDeny {
+				return false
+			}
+			allow = true
+		}
+	}
+	return allow
+
 }

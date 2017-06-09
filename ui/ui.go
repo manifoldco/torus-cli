@@ -87,6 +87,11 @@ func (u *UI) Hint(str string, noPadding bool) {
 	if !u.EnableHints {
 		return
 	}
+
+	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+		return
+	}
+
 	if !noPadding {
 		fmt.Println()
 	}

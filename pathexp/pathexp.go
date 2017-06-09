@@ -525,6 +525,17 @@ func (pe *PathExp) CompareSpecificity(other *PathExp) int {
 	return compareSegmentType(pe.Instances, other.Instances)
 }
 
+// Contains returns whether this path contains the subject. A path Contains
+// another if it resolves to the other or they are equal.
+func (pe *PathExp) Contains(other *PathExp) bool {
+	return pe.Org.Contains(other.Org.String()) &&
+		pe.Project.Contains(other.Project.String()) &&
+		pe.Envs.Contains(other.Envs.String()) &&
+		pe.Services.Contains(other.Services.String()) &&
+		pe.Identities.Contains(other.Identities.String()) &&
+		pe.Instances.Contains(other.Instances.String())
+}
+
 // UnmarshalText implements the encoding.TextUnmarshaler interface.
 // This will be used in json decoding.
 func (pe *PathExp) UnmarshalText(b []byte) error {
