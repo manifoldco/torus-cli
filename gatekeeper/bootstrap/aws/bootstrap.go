@@ -17,9 +17,12 @@ const (
 )
 
 // Bootstrap bootstraps a the AWS instance into a role to a given Gatekeeper instance
-func Bootstrap(url, name, org, role string) (*apitypes.BootstrapResponse, error) {
+func Bootstrap(url, name, org, role, caFile string) (*apitypes.BootstrapResponse, error) {
 	var err error
-	client := client.NewClient(url)
+	client, err := client.NewClient(url, caFile)
+	if err != nil {
+		return nil, fmt.Errorf("cannot initialize bootstrap client: %s", err)
+	}
 
 	identity, err := metadata()
 	if err != nil {

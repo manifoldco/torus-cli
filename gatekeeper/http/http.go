@@ -1,6 +1,9 @@
 package http
 
 import (
+	"crypto/tls"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -28,9 +31,25 @@ type Gatekeeper struct {
 }
 
 // NewGatekeeper returns a new Gatekeeper.
-func NewGatekeeper(org, team string, cfg *config.Config, api *api.Client) *Gatekeeper {
+func NewGatekeeper(org, team, certpath, keypath string, cfg *config.Config, api *api.Client) (*Gatekeeper, error) {
 	server := &http.Server{
 		Addr: cfg.GatekeeperAddress,
+	}
+
+	keypair, err := tlsKeypair(certpath, keypath)
+	if err != nil {
+		log.Printf("Starting Gatekeeper without SSL: %s", err)
+	} else {
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig := &tls.Config{
+			MinVersion:   tls.VersionTLS12,
+			Certificates: []tls.Certificate{*keypair},
+		}
+
+		server.TLSConfig = tlsConfig
 	}
 
 	g := &Gatekeeper{
@@ -43,7 +62,7 @@ func NewGatekeeper(org, team string, cfg *config.Config, api *api.Client) *Gatek
 		api: api,
 	}
 
-	return g
+	return g, nil
 }
 
 // Listen listens on a TCP port for HTTP machine requests
@@ -81,4 +100,27 @@ func loggingHandler(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 		log.Printf("%s %s", r.Method, p)
 	})
+}
+
+func tlsKeypair(certpath, keypath string) (*tls.Certificate, error) {
+	if certpath == "" {
+		return nil, fmt.Errorf("no certificate provided")
+	}
+
+	certBytes, err := ioutil.ReadFile(certpath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read certificate: %s", err)
+	}
+
+	if keypath == "" {
+		return nil, fmt.Errorf("no certificate key provided")
+	}
+
+	keyBytes, err := ioutil.ReadFile(keypath)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read keyfile: %s", err)
+	}
+
+	cert, err := tls.X509KeyPair(certBytes, keyBytes)
+	return &cert, err
 }

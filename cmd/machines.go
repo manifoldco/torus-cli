@@ -47,6 +47,10 @@ func authProviderFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("auth, a", "AUTHPROVIDER", usage, "", "TORUS_AUTH_PROVIDER", required)
 }
 
+func caFlag(usage string, required bool) cli.Flag {
+	return newPlaceholder("ca", "CA_BUNDLE", usage, "", "TORUS_BOOTSTRAP_CA", required)
+}
+
 func init() {
 	machines := cli.Command{
 		Name:      "machines",
@@ -143,6 +147,7 @@ func init() {
 					roleFlag("Role the machine will belong to", true),
 					machineFlag("Machine name to bootstrap", false),
 					orgFlag("Org the machine will belong to", false),
+					caFlag("CA Bundle to use for certificate verification. Uses system if none is provided", false),
 				},
 				Action: chain(checkRequiredFlags, bootstrapCmd),
 			},
@@ -437,6 +442,7 @@ func bootstrapCmd(ctx *cli.Context) error {
 		ctx.String("machine"),
 		ctx.String("org"),
 		ctx.String("role"),
+		ctx.String("ca"),
 	)
 	if err != nil {
 		return fmt.Errorf("bootstrap provision failed: %s", err)

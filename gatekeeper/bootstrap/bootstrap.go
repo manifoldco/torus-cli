@@ -17,10 +17,10 @@ const (
 )
 
 // Do will execute the bootstrap request for the given provider
-func Do(provider Provider, url, name, org, role string) (*apitypes.BootstrapResponse, error) {
+func Do(provider Provider, url, name, org, role, caFile string) (*apitypes.BootstrapResponse, error) {
 	switch provider {
 	case AWSPublic:
-		return aws.Bootstrap(url, name, org, role)
+		return aws.Bootstrap(url, name, org, role, caFile)
 
 	default:
 		return nil, fmt.Errorf("invalid provider: %s", provider)
