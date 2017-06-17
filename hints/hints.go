@@ -94,7 +94,7 @@ func init() {
 			"Start your process with your decrypted secrets using `torus run`",
 		},
 		TeamMembers: {
-			"Display current members of your organization with `torus members member`",
+			"Display current members of your organization with `torus teams members member`",
 		},
 		View: {
 			"View secret values which have been set using `torus view`",
