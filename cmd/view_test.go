@@ -47,8 +47,8 @@ func TestWriteVerboseFormat(t *testing.T) {
 
 	expected := `Credential path: /o/p/e/s/*/i
 
-FOO=bar	/o/p/e/s/*/i/foo
-BAZ="two words"	/o/p/e/s/*/i/baz
+FOO=bar          /o/p/e/s/*/i/foo
+BAZ="two words"  /o/p/e/s/*/i/baz
 `
 	w.Flush()
 	got := string(buf.Bytes())

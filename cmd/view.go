@@ -81,10 +81,14 @@ func writeEnvFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path str
 	tw := tabwriter.NewWriter(w, 2, 0, 2, ' ', 0)
 
 	for _, secret := range secrets {
-		value := (*secret.Body).GetValue()
+		value := (*secret.Body).GetValue().String()
 		name := (*secret.Body).GetName()
 		key := strings.ToUpper(name)
-		fmt.Fprintf(w, "%s=%s\n", key, value.String())
+		if strings.Contains(value, " ") {
+			fmt.Fprintf(tw, "%s=%q\n", key, value)
+		} else {
+			fmt.Fprintf(tw, "%s=%s\n", key, value)
+		}
 	}
 
 	return tw.Flush()
@@ -95,11 +99,15 @@ func writeVerboseFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path
 
 	tw := tabwriter.NewWriter(w, 2, 0, 2, ' ', 0)
 	for _, secret := range secrets {
-		value := (*secret.Body).GetValue()
+		value := (*secret.Body).GetValue().String()
 		name := (*secret.Body).GetName()
 		key := strings.ToUpper(name)
 		spath := (*secret.Body).GetPathExp().String() + "/" + name
-		fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)
+		if strings.Contains(value, " ") {
+			fmt.Fprintf(tw, "%s=%q\t%s\n", key, value, spath)
+		} else {
+			fmt.Fprintf(tw, "%s=%s\t%s\n", key, value, spath)
+		}
 	}
 
 	return tw.Flush()
