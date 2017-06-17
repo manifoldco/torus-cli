@@ -23,7 +23,7 @@ func TestWriteEnvFormat(t *testing.T) {
 	err := writeEnvFormat(w, creds, path)
 
 	expected := `FOO=bar
-BAZ=two words
+BAZ="two words"
 `
 	w.Flush()
 	got := string(buf.Bytes())
@@ -48,7 +48,7 @@ func TestWriteVerboseFormat(t *testing.T) {
 	expected := `Credential path: /o/p/e/s/*/i
 
 FOO=bar	/o/p/e/s/*/i/foo
-BAZ=two words	/o/p/e/s/*/i/baz
+BAZ="two words"	/o/p/e/s/*/i/baz
 `
 	w.Flush()
 	got := string(buf.Bytes())
