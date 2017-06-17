@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -14,7 +15,6 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
-	"github.com/manifoldco/torus-cli/hints"
 )
 
 func init() {
@@ -61,23 +61,24 @@ func viewCmd(ctx *cli.Context) error {
 		format = "verbose"
 	}
 
+	w := os.Stdout
+
 	switch format {
 	case "env":
-		err = printEnvFormat(secrets, path)
+		err = writeEnvFormat(w, secrets, path)
 	case "verbose":
-		err = printVerboseFormat(secrets, path)
+		err = writeVerboseFormat(w, secrets, path)
 	case "json":
-		err = printJSONFormat(secrets, path)
+		err = writeJSONFormat(w, secrets, path)
 	default:
 		return errs.NewUsageExitError("Unknown format: "+format, ctx)
 	}
 
-	hints.Display(hints.Link, hints.Run)
 	return err
 }
 
-func printEnvFormat(secrets []apitypes.CredentialEnvelope, path string) error {
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
+func writeEnvFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path string) error {
+	tw := tabwriter.NewWriter(w, 2, 0, 2, ' ', 0)
 
 	for _, secret := range secrets {
 		value := (*secret.Body).GetValue()
@@ -85,15 +86,14 @@ func printEnvFormat(secrets []apitypes.CredentialEnvelope, path string) error {
 		key := strings.ToUpper(name)
 		fmt.Fprintf(w, "%s=%s\n", key, value.String())
 	}
-	w.Flush()
 
-	return nil
+	return tw.Flush()
 }
 
-func printVerboseFormat(secrets []apitypes.CredentialEnvelope, path string) error {
-	fmt.Printf("Credential path: %s\n\n", path)
+func writeVerboseFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path string) error {
+	fmt.Fprintf(w, "Credential path: %s\n\n", path)
 
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 2, ' ', 0)
+	tw := tabwriter.NewWriter(w, 2, 0, 2, ' ', 0)
 	for _, secret := range secrets {
 		value := (*secret.Body).GetValue()
 		name := (*secret.Body).GetName()
@@ -101,13 +101,11 @@ func printVerboseFormat(secrets []apitypes.CredentialEnvelope, path string) erro
 		spath := (*secret.Body).GetPathExp().String() + "/" + name
 		fmt.Fprintf(w, "%s=%s\t%s\n", key, value.String(), spath)
 	}
-	w.Flush()
 
-	return nil
-
+	return tw.Flush()
 }
 
-func printJSONFormat(secrets []apitypes.CredentialEnvelope, path string) error {
+func writeJSONFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path string) error {
 	keyMap := make(map[string]interface{})
 
 	for _, secret := range secrets {
@@ -121,12 +119,14 @@ func printJSONFormat(secrets []apitypes.CredentialEnvelope, path string) error {
 		keyMap[name] = v
 	}
 
-	str, err := json.MarshalIndent(keyMap, "", "  ")
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+
+	err := enc.Encode(keyMap)
 	if err != nil {
 		return errs.NewErrorExitError("Could not marshal to json", err)
 	}
 
-	fmt.Printf("%s\n", str)
 	return nil
 }
 
