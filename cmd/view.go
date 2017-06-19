@@ -15,6 +15,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/hints"
 )
 
 func init() {
@@ -73,6 +74,8 @@ func viewCmd(ctx *cli.Context) error {
 	default:
 		return errs.NewUsageExitError("Unknown format: "+format, ctx)
 	}
+
+	hints.Display(hints.Link, hints.Run)
 
 	return err
 }
