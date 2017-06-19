@@ -23,6 +23,7 @@ var (
 		Name:  "yes, y",
 		Usage: "Automatically accept confirmation dialogues.",
 	}
+
 )
 
 func formatFlag(defaultValue, description string) cli.Flag {
