@@ -22,10 +22,7 @@ func init() {
 			stdOrgFlag,
 			stdProjectFlag,
 			stdEnvFlag,
-			cli.BoolFlag{
-				Name:  "verbose, v",
-				Usage: "Show credential path.",
-			},
+			stdVerboseFlag,
 			userFlag("Use this user.", false),
 			machineFlag("Use this machine.", false),
 			serviceFlag("Use this service.", "default", true),

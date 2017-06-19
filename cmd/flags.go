@@ -5,7 +5,6 @@ package cmd
 import (
 	"fmt"
 	"strings"
-
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -18,7 +17,10 @@ var (
 	stdProjectFlag  = projectFlag("Use this project.", true)
 	stdEnvFlag      = envFlag("Use this environment.", true)
 	stdInstanceFlag = instanceFlag("Use this instance.", true)
-
+	stdVerboseFlag = cli.BoolFlag{
+		Name:"verbose",
+		Usage:"Print credentials",
+	}
 	stdAutoAcceptFlag = cli.BoolFlag{
 		Name:  "yes, y",
 		Usage: "Automatically accept confirmation dialogues.",
