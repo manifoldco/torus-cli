@@ -78,7 +78,7 @@ func destroyedFlag() cli.Flag {
 }
 func shouldShowCreds() cli.Flag {
 	return cli.BoolFlag {
-		Name:"verbose",
+		Name:"verbose, c",
 		Usage:"Print credentials",
 	}
 }
