@@ -17,10 +17,6 @@ var (
 	stdProjectFlag  = projectFlag("Use this project.", true)
 	stdEnvFlag      = envFlag("Use this environment.", true)
 	stdInstanceFlag = instanceFlag("Use this instance.", true)
-	stdVerboseFlag = cli.BoolFlag{
-		Name:"verbose",
-		Usage:"Print credentials",
-	}
 	stdAutoAcceptFlag = cli.BoolFlag{
 		Name:  "yes, y",
 		Usage: "Automatically accept confirmation dialogues.",
@@ -78,6 +74,12 @@ func destroyedFlag() cli.Flag {
 	return cli.BoolFlag{
 		Name:  "destroyed, d",
 		Usage: "Display only destroyed",
+	}
+}
+func shouldShowCreds() cli.Flag {
+	return cli.BoolFlag {
+		Name:"verbose",
+		Usage:"Print credentials",
 	}
 }
 

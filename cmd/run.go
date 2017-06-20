@@ -7,7 +7,6 @@ import (
 	"strings"
 	"syscall"
 	"github.com/manifoldco/torus-cli/errs"
-
 	"github.com/urfave/cli"
 	"fmt"
 )
@@ -22,7 +21,7 @@ func init() {
 			stdOrgFlag,
 			stdProjectFlag,
 			stdEnvFlag,
-			stdVerboseFlag,
+			shouldShowCreds(),
 			userFlag("Use this user.", false),
 			machineFlag("Use this machine.", false),
 			serviceFlag("Use this service.", "default", true),
