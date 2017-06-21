@@ -9,11 +9,6 @@ import (
 	"github.com/manifoldco/torus-cli/pathexp"
 )
 
-type secretPair struct {
-	key   string
-	value string
-}
-
 func TestWriteEnvFormat(t *testing.T) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
