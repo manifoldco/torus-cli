@@ -20,6 +20,9 @@ const (
 	// Deny command adds hint to `torus deny`
 	Deny
 
+	// Import command adds hint to `torus import`
+	Import
+
 	// InvitesApprove command adds hint to `torus invites approve`
 	InvitesApprove
 
@@ -49,6 +52,9 @@ const (
 
 	// TeamMembers command adds hint to `torus members`
 	TeamMembers
+
+	// Unset command adds hint to `torus unset
+	Unset
 
 	// View command adds hint to `torus view`
 	View

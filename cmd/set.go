@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -45,9 +46,11 @@ func init() {
 }
 
 func setCmd(ctx *cli.Context) error {
-	key, value, errMsg := parseSetArgs(ctx.Args())
-	if errMsg != "" {
-		return errs.NewUsageExitError(errMsg, ctx)
+	args := ctx.Args()
+	key, value, err := parseSetArgs(args)
+
+	if err != nil {
+		return errs.NewUsageExitError(err.Error(), ctx)
 	}
 
 	cred, err := setCredential(ctx, key, func() *apitypes.CredentialValue {
@@ -62,31 +65,31 @@ func setCmd(ctx *cli.Context) error {
 	pe := (*cred.Body).GetPathExp()
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
 
-	hints.Display(hints.View, hints.Run)
+	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import)
 	return nil
 }
 
-func parseSetArgs(args []string) (key string, value string, errMsg string) {
-	// If there is only one argument, try to parse using env var syntax: KEY=value
+// parseSetArgs returns a key and value from a list of arguments. If there is
+// only one argument, try to parse using env var syntax: `KEY=VALUE`.
+func parseSetArgs(args []string) (key string, value string, err error) {
 	if len(args) == 1 {
 		args = strings.SplitN(args[0], "=", 2)
 	}
 
-	switch len(args) {
-	case 0, 1:
-		errMsg = "A secret name and value must be supplied."
-	case 2:
-		key = args[0]
-		value = args[1]
-
-		if key == "" || value == "" {
-			errMsg = "A secret must have a name and value."
-		}
-	default:
-		errMsg = "Too many arguments were provided."
+	if len(args) < 2 {
+		return "", "", errors.New("A secret name and value must be supplied")
+	} else if len(args) > 2 {
+		return "", "", errors.New("Too many arguments were provided")
 	}
 
-	return key, value, errMsg
+	key = args[0]
+	value = args[1]
+
+	if key == "" || value == "" {
+		return "", "", errors.New("A secret must have a name and value")
+	}
+
+	return key, value, nil
 }
 
 func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp, *string, error) {
