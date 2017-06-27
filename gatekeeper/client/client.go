@@ -3,7 +3,11 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -29,20 +33,47 @@ type Client struct {
 }
 
 // NewClient returns a new client to a Gatekeeper host that can bootstrap this machine
-func NewClient(host string) *Client {
+func NewClient(host, caFile string) (*Client, error) {
 	if !strings.HasSuffix(host, "/") {
 		host += "/"
 	}
+
+	caPool, err := x509.SystemCertPool()
+	if err != nil {
+		log.Printf("Could not load system certificate pool: %s. Creating custom pool", err)
+		caPool = x509.NewCertPool()
+	}
+
+	if caFile != "" {
+		caBytes, err := ioutil.ReadFile(caFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read ca file: %s", err)
+		}
+		ok := caPool.AppendCertsFromPEM(caBytes)
+		if !ok {
+			return nil, fmt.Errorf("unable to parse and append ca file: %s", err)
+		}
+	}
+
+	tlsConfig := &tls.Config{
+		RootCAs: caPool,
+	}
+
+	transport := &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+
 	return &Client{
 		rt: &clientRoundTripper{
 			DefaultRequestDoer: registry.DefaultRequestDoer{
 				Client: &http.Client{
-					Timeout: clientTimeout,
+					Timeout:   clientTimeout,
+					Transport: transport,
 				},
 				Host: host,
 			},
 		},
-	}
+	}, nil
 }
 
 // Bootstrap bootstraps the machine with Gatekeeper

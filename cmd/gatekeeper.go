@@ -14,6 +14,11 @@ import (
 	"github.com/manifoldco/torus-cli/gatekeeper"
 )
 
+var (
+	certFlag = newPlaceholder("cert, c", "CERT", "Certificate for SSL", "", "TORUS_GATEKEEPER_CERT", false)
+	keyFlag  = newPlaceholder("key, k", "KEY", "Certificate key for SSL", "", "TORUS_GATEKEEPER_CERT_KEY", false)
+)
+
 func init() {
 	gatekeeper := cli.Command{
 		Name:     "gatekeeper",
@@ -26,6 +31,12 @@ func init() {
 				Action: chain(ensureDaemon, ensureSession, loadDirPrefs,
 					loadPrefDefaults, startGatekeeperCmd,
 				),
+				Flags: []cli.Flag{
+					orgFlag("Use this organization by default in Gatekeeper", false),
+					roleFlag("Use this role.", false),
+					certFlag,
+					keyFlag,
+				},
 			},
 		},
 	}
@@ -42,9 +53,10 @@ func startGatekeeperCmd(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Failed to load config.", err)
 	}
 
-	gatekeeper, err := gatekeeper.New(ctx.String("org"), ctx.String("team"), cfg)
+	gatekeeper, err := gatekeeper.New(ctx.String("org"), ctx.String("role"), ctx.String("cert"), ctx.String("key"), cfg)
 	if err != nil {
 		log.Printf("Error starting a new Gatekeeper instance: %s", err)
+		return err
 	}
 
 	log.Printf("v%s of the Gatekeeper is now listeneing on %s", cfg.Version, gatekeeper.Addr())

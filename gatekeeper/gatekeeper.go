@@ -9,9 +9,12 @@ import (
 )
 
 // New returns a new Gatekeeper
-func New(org, team string, cfg *config.Config) (g *http.Gatekeeper, err error) {
+func New(org, team, certpath, keypath string, cfg *config.Config) (g *http.Gatekeeper, err error) {
 	api := api.NewClient(cfg)
-	http := http.NewGatekeeper(org, team, cfg, api)
+	http, err := http.NewGatekeeper(org, team, certpath, keypath, cfg, api)
+	if err != nil {
+		return nil, err
+	}
 
 	return http, nil
 }
