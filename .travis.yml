@@ -7,7 +7,7 @@ services:
 - docker
 before_install:
 - sudo apt-get update
-- sudo apt-get -o Dpkg::Options::="--force-confnew" install -y --force-yes docker-engine
+- sudo apt-get -o Dpkg::Options::="--force-confnew" install -y --force-yes docker-ce
 cache:
   apt: true
   directories:
