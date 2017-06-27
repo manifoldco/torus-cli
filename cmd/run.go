@@ -6,10 +6,9 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-
 	"github.com/manifoldco/torus-cli/errs"
-
 	"github.com/urfave/cli"
+	"fmt"
 )
 
 func init() {
@@ -18,10 +17,11 @@ func init() {
 		Usage:     "Run a process and inject secrets into its environment",
 		ArgsUsage: "[--] <command> [<arguments>...]",
 		Category:  "SECRETS",
-		Flags: []cli.Flag{
+		Flags: []cli.Flag {
 			stdOrgFlag,
 			stdProjectFlag,
 			stdEnvFlag,
+			shouldShowCreds(),
 			userFlag("Use this user.", false),
 			machineFlag("Use this machine.", false),
 			serviceFlag("Use this service.", "default", true),
@@ -37,17 +37,21 @@ func init() {
 }
 
 func runCmd(ctx *cli.Context) error {
+	fmt.Printf("runCmd")
 	args := ctx.Args()
-
+	shouldShowCreds := ctx.Bool("verbose")
 	if len(args) == 0 {
 		return errs.NewUsageExitError("A command is required", ctx)
 	} else if len(args) == 1 { // only one arg? maybe it was quoted
 		args = strings.Split(args[0], " ")
 	}
 
-	secrets, _, err := getSecrets(ctx)
+	secrets, path, err := getSecrets(ctx)
 	if err != nil {
 		return err
+	}
+	if shouldShowCreds {
+		fmt.Printf(path)
 	}
 
 	// Create the command. It gets this processes's stdio.

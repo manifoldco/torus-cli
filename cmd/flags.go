@@ -5,7 +5,6 @@ package cmd
 import (
 	"fmt"
 	"strings"
-
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -18,11 +17,11 @@ var (
 	stdProjectFlag  = projectFlag("Use this project.", true)
 	stdEnvFlag      = envFlag("Use this environment.", true)
 	stdInstanceFlag = instanceFlag("Use this instance.", true)
-
 	stdAutoAcceptFlag = cli.BoolFlag{
 		Name:  "yes, y",
 		Usage: "Automatically accept confirmation dialogues.",
 	}
+
 )
 
 func formatFlag(defaultValue, description string) cli.Flag {
@@ -75,6 +74,12 @@ func destroyedFlag() cli.Flag {
 	return cli.BoolFlag{
 		Name:  "destroyed, d",
 		Usage: "Display only destroyed",
+	}
+}
+func shouldShowCreds() cli.Flag {
+	return cli.BoolFlag {
+		Name:"verbose, c",
+		Usage:"Print credentials",
 	}
 }
 

@@ -19,3 +19,4 @@ tools/bin
 .DS_Store
 *.sw[mnop]
 *.orig
+.idea/
