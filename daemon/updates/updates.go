@@ -11,7 +11,6 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/manifoldco/torus-cli/config"
-	"github.com/manifoldco/torus-cli/prefs"
 )
 
 const (
@@ -77,15 +76,7 @@ func NewEngine(cfg *config.Config, options ...func(*Engine)) *Engine {
 
 // Start starts the update checking loop.
 func (e *Engine) Start() error {
-	pref, err := prefs.NewPreferences()
-	if err != nil {
-		return fmt.Errorf("cannot load preferences")
-	}
-
-	if pref.Core.EnableCheckUpdates {
-		go e.start()
-	}
-
+	// Disabled until torus dns outage is resolved
 	return nil
 }
 
