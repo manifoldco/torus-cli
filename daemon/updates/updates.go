@@ -58,8 +58,9 @@ type VersionInfo struct {
 // of the Engine itself.
 func NewEngine(cfg *config.Config, options ...func(*Engine)) *Engine {
 	engine := &Engine{
-		config: cfg,
-		stop:   make(chan struct{}),
+		config:        cfg,
+		stop:          make(chan struct{}),
+		targetVersion: "unknown",
 	}
 
 	for _, opt := range options {
@@ -105,27 +106,34 @@ func (e *Engine) start() {
 	}
 
 	log.Printf("last update check: %s", e.lastCheck)
-	e.targetVersion = e.config.Version
+	e.performCheck()
 	for {
 		select {
 		case <-e.stop:
 			log.Printf("stopped checking for updates")
 			return
 		case <-time.After(e.nextCheck()):
-			log.Printf("check updates")
-
-			latest, err := e.getLatestVersion()
-			if err != nil {
-				log.Printf("cannot check for updates: %s", err)
-				continue
-			}
-
-			e.targetVersion = latest
-			if err := e.storeLastCheck(); err != nil {
-				log.Printf("cannot store update check: %s", err)
-			}
+			e.performCheck()
 		}
 	}
+}
+
+// performCheck retrieves the latest version of Torus from the manifest and then
+func (e *Engine) performCheck() {
+	log.Printf("Checking for updates to Torus")
+
+	latest, err := e.getLatestVersion()
+	if err != nil {
+		log.Printf("Could not retrieve latest version of Tours: %s", err)
+		return
+	}
+
+	e.targetVersion = latest
+	if err := e.storeLastCheck(); err != nil {
+		log.Printf("Cannot store the last check date: %s", err)
+	}
+
+	log.Printf("Successfully checked for updates; available version: %s", latest)
 }
 
 // nextCheck returns the time duration to wait before triggering an update check.

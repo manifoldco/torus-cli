@@ -22,6 +22,7 @@ func makeEngine(uri string) *Engine {
 	return &Engine{
 		config: &config.Config{
 			ManifestURI: u,
+			Version:     "0.1.0",
 		},
 	}
 }
@@ -205,6 +206,44 @@ func TestGetLatestCheck(t *testing.T) {
 
 		if !strings.Contains(err.Error(), "cannot get info from") {
 			t.Errorf("received different error than expected: %s", err)
+		}
+	})
+}
+
+func TestNeedsUpdate(t *testing.T) {
+	t.Run("current newer than target", func(t *testing.T) {
+		e := makeEngine(fakeUrl)
+		e.targetVersion = "0.0.1"
+
+		if e.needsUpdate() != false {
+			t.Error("should not need to update")
+		}
+	})
+
+	t.Run("current same as target", func(t *testing.T) {
+		e := makeEngine(fakeUrl)
+		e.targetVersion = e.config.Version
+
+		if e.needsUpdate() != false {
+			t.Error("should not need to update")
+		}
+	})
+
+	t.Run("current older than target", func(t *testing.T) {
+		e := makeEngine(fakeUrl)
+		e.targetVersion = "0.2.0"
+
+		if e.needsUpdate() != true {
+			t.Error("should need to update")
+		}
+	})
+
+	t.Run("target is unknown", func(t *testing.T) {
+		e := makeEngine(fakeUrl)
+		e.targetVersion = "unknown"
+
+		if e.needsUpdate() != false {
+			t.Error("should not need to update")
 		}
 	})
 }

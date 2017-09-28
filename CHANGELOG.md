@@ -7,7 +7,8 @@ _Unreleased_
 **Fixes**
 
 - Daemon will no longer crash if it fails to retrieve the latest version
-- Update checking is now on by default
+- Update checking is now on by default after being disabled in `v0.24.2`
+- Daemon will now check for updates on startup along with every day at 6am
 
 ## v0.24.2
 
