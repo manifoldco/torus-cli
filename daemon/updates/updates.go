@@ -44,6 +44,7 @@ type Engine struct {
 	lastCheck     time.Time
 	targetVersion string
 	timeManager   TimeManager
+	client        *http.Client
 }
 
 // VersionInfo maps the JSON returned from the `url` endpoint, containing the latest
@@ -56,11 +57,12 @@ type VersionInfo struct {
 // NewEngine creates a new Engine based on the provided config structure.
 // It can be extended by passing specific options which alter the initialization
 // of the Engine itself.
-func NewEngine(cfg *config.Config, options ...func(*Engine)) *Engine {
+func NewEngine(cfg *config.Config, t *http.Transport, options ...func(*Engine)) *Engine {
 	engine := &Engine{
 		config:        cfg,
 		stop:          make(chan struct{}),
 		targetVersion: "unknown",
+		client:        &http.Client{Transport: t},
 	}
 
 	for _, opt := range options {
@@ -230,7 +232,7 @@ func (e *Engine) getLastCheck() error {
 }
 
 func (e *Engine) getLatestVersion() (string, error) {
-	resp, err := http.Get(e.config.ManifestURI.String())
+	resp, err := e.client.Get(e.config.ManifestURI.String())
 	if err != nil {
 		return "", fmt.Errorf("cannot get info from %s: %s", e.config.ManifestURI, err)
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 )
 
-var fakeUrl = "http://hellothisdomaincantexistright:54432/test.json"
+var fakeURL = "http://hellothisdomaincantexistright:54432/test.json"
 
 func makeEngine(uri string) *Engine {
 	u, err := url.Parse(uri)
@@ -24,6 +24,7 @@ func makeEngine(uri string) *Engine {
 			ManifestURI: u,
 			Version:     "0.1.0",
 		},
+		client: http.DefaultClient,
 	}
 }
 
@@ -197,7 +198,7 @@ func TestGetLatestCheck(t *testing.T) {
 	})
 
 	t.Run("cannot reach server", func(t *testing.T) {
-		e := makeEngine(fakeUrl)
+		e := makeEngine(fakeURL)
 
 		_, err := e.getLatestVersion()
 		if err == nil {
@@ -212,7 +213,7 @@ func TestGetLatestCheck(t *testing.T) {
 
 func TestNeedsUpdate(t *testing.T) {
 	t.Run("current newer than target", func(t *testing.T) {
-		e := makeEngine(fakeUrl)
+		e := makeEngine(fakeURL)
 		e.targetVersion = "0.0.1"
 
 		if e.needsUpdate() != false {
@@ -221,7 +222,7 @@ func TestNeedsUpdate(t *testing.T) {
 	})
 
 	t.Run("current same as target", func(t *testing.T) {
-		e := makeEngine(fakeUrl)
+		e := makeEngine(fakeURL)
 		e.targetVersion = e.config.Version
 
 		if e.needsUpdate() != false {
@@ -230,7 +231,7 @@ func TestNeedsUpdate(t *testing.T) {
 	})
 
 	t.Run("current older than target", func(t *testing.T) {
-		e := makeEngine(fakeUrl)
+		e := makeEngine(fakeURL)
 		e.targetVersion = "0.2.0"
 
 		if e.needsUpdate() != true {
@@ -239,7 +240,7 @@ func TestNeedsUpdate(t *testing.T) {
 	})
 
 	t.Run("target is unknown", func(t *testing.T) {
-		e := makeEngine(fakeUrl)
+		e := makeEngine(fakeURL)
 		e.targetVersion = "unknown"
 
 		if e.needsUpdate() != false {
