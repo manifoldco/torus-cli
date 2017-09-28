@@ -16,6 +16,7 @@ import (
 const (
 	rcFilename        = ".torusrc"
 	registryURI       = "https://registry.arigato.sh"
+	manifestURI       = "https://get.torus.sh/manifest.json"
 	gatekeeperAddress = "0.0.0.0:8200"
 )
 
@@ -47,6 +48,7 @@ type Core struct {
 	PublicKeyFile      string `ini:"public_key_file,omitempty"`
 	CABundleFile       string `ini:"ca_bundle_file,omitempty"`
 	RegistryURI        string `ini:"registry_uri,omitempty"`
+	ManifestURI        string `ini:"manifest_uri,omitempty"`
 	GatekeeperAddress  string `ini:"gatekeeper_address"`
 	Context            bool   `ini:"context,omitempty"`
 	AutoConfirm        bool   `ini:"auto_confirm,omitempty"`
@@ -129,6 +131,7 @@ func NewPreferences() (*Preferences, error) {
 	prefs := &Preferences{
 		Core: Core{
 			RegistryURI:        registryURI,
+			ManifestURI:        manifestURI,
 			GatekeeperAddress:  gatekeeperAddress,
 			Context:            true,
 			EnableHints:        true,

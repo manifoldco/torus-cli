@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	url              = "https://get.torus.sh/manifest.json"
 	releaseHourCheck = 6 // Check updates at 6am
 )
 
@@ -223,13 +222,12 @@ func (e *Engine) getLastCheck() error {
 }
 
 func (e *Engine) getLatestVersion() (string, error) {
-	resp, err := http.Get(url)
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
+	resp, err := http.Get(e.config.ManifestURI.String())
 	if err != nil {
-		return "", fmt.Errorf("cannot get info: %s", err)
+		return "", fmt.Errorf("cannot get info from %s: %s", e.config.ManifestURI, err)
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("unsuccessful response: %d", resp.StatusCode)
 	}

@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## Unreleased
+
+_Unreleased_
+
+**Fixes**
+
+- Daemon will no longer crash if it fails to retrieve the latest version
+- Update checking is now on by default
+
 ## v0.24.2
 
 _2017-10-25_
