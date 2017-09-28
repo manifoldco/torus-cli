@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -61,9 +62,21 @@ type field struct {
 
 type sortData []data
 
-func (d sortData) Len() int           { return len(d) }
-func (d sortData) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
-func (d sortData) Less(i, j int) bool { return strings.Compare(d[i].Byte, d[j].Byte) < 0 }
+func (d sortData) Len() int      { return len(d) }
+func (d sortData) Swap(i, j int) { d[i], d[j] = d[j], d[i] }
+func (d sortData) Less(i, j int) bool {
+	v := strings.Compare(d[i].Byte, d[j].Byte)
+	switch v {
+	case -1:
+		return true
+	case 0:
+		return d[i].Version < d[j].Version
+	case 1:
+		return false
+	default:
+		panic(fmt.Sprintf("unknown value: %d", v))
+	}
+}
 
 type sortFields []field
 
@@ -74,9 +87,11 @@ func (s sortFields) Less(i, j int) bool { return strings.Compare(s[i].Name, s[j]
 // sortDataByVersion sorts data by schema version, for envelope output.
 type sortDataByVersion []data
 
-func (d sortDataByVersion) Len() int           { return len(d) }
-func (d sortDataByVersion) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
-func (d sortDataByVersion) Less(i, j int) bool { return d[i].Version < d[j].Version }
+func (d sortDataByVersion) Len() int      { return len(d) }
+func (d sortDataByVersion) Swap(i, j int) { d[i], d[j] = d[j], d[i] }
+func (d sortDataByVersion) Less(i, j int) bool {
+	return d[i].Version < d[j].Version
+}
 
 // envTmplData is the data passed for populating the envelope package template
 // file, defined here for convenience.

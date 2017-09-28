@@ -62,13 +62,13 @@ func (t *BaseKeyring) MarshalJSON() ([]byte, error) {
 	return b, nil
 }
 
-// Type returns the enumerated byte representation of User.
-func (t *User) Type() byte {
+// Type returns the enumerated byte representation of UserV1.
+func (t *UserV1) Type() byte {
 	return 0x01
 }
 
-// Type returns the enumerated byte representation of UserV1.
-func (t *UserV1) Type() byte {
+// Type returns the enumerated byte representation of User.
+func (t *User) Type() byte {
 	return 0x01
 }
 
@@ -276,69 +276,6 @@ func (t *Claim) Type() byte {
 	return 0x08
 }
 
-// MarshalJSON implements the json.Marshaler interface for Keyring.
-func (t *Keyring) MarshalJSON() ([]byte, error) {
-	var ob []byte
-	var err error
-	b := []byte{'{'}
-
-	b = append(b, []byte(`"created_at":`)...)
-	ob, err = json.Marshal(t.Created)
-	if err != nil {
-		return nil, err
-	}
-	b = append(b, ob...)
-
-	b = append(b, ',')
-	b = append(b, []byte(`"org_id":`)...)
-	ob, err = json.Marshal(t.OrgID)
-	if err != nil {
-		return nil, err
-	}
-	b = append(b, ob...)
-
-	b = append(b, ',')
-	b = append(b, []byte(`"pathexp":`)...)
-	ob, err = json.Marshal(t.PathExp)
-	if err != nil {
-		return nil, err
-	}
-	b = append(b, ob...)
-
-	b = append(b, ',')
-	b = append(b, []byte(`"previous":`)...)
-	ob, err = json.Marshal(t.Previous)
-	if err != nil {
-		return nil, err
-	}
-	b = append(b, ob...)
-
-	b = append(b, ',')
-	b = append(b, []byte(`"project_id":`)...)
-	ob, err = json.Marshal(t.ProjectID)
-	if err != nil {
-		return nil, err
-	}
-	b = append(b, ob...)
-
-	b = append(b, ',')
-	b = append(b, []byte(`"version":`)...)
-	ob, err = json.Marshal(t.KeyringVersion)
-	if err != nil {
-		return nil, err
-	}
-	b = append(b, ob...)
-
-	b = append(b, '}')
-
-	return b, nil
-}
-
-// Type returns the enumerated byte representation of Keyring.
-func (t *Keyring) Type() byte {
-	return 0x09
-}
-
 // MarshalJSON implements the json.Marshaler interface for KeyringV1.
 func (t *KeyringV1) MarshalJSON() ([]byte, error) {
 	var ob []byte
@@ -399,6 +336,69 @@ func (t *KeyringV1) MarshalJSON() ([]byte, error) {
 
 // Type returns the enumerated byte representation of KeyringV1.
 func (t *KeyringV1) Type() byte {
+	return 0x09
+}
+
+// MarshalJSON implements the json.Marshaler interface for Keyring.
+func (t *Keyring) MarshalJSON() ([]byte, error) {
+	var ob []byte
+	var err error
+	b := []byte{'{'}
+
+	b = append(b, []byte(`"created_at":`)...)
+	ob, err = json.Marshal(t.Created)
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, ob...)
+
+	b = append(b, ',')
+	b = append(b, []byte(`"org_id":`)...)
+	ob, err = json.Marshal(t.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, ob...)
+
+	b = append(b, ',')
+	b = append(b, []byte(`"pathexp":`)...)
+	ob, err = json.Marshal(t.PathExp)
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, ob...)
+
+	b = append(b, ',')
+	b = append(b, []byte(`"previous":`)...)
+	ob, err = json.Marshal(t.Previous)
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, ob...)
+
+	b = append(b, ',')
+	b = append(b, []byte(`"project_id":`)...)
+	ob, err = json.Marshal(t.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, ob...)
+
+	b = append(b, ',')
+	b = append(b, []byte(`"version":`)...)
+	ob, err = json.Marshal(t.KeyringVersion)
+	if err != nil {
+		return nil, err
+	}
+	b = append(b, ob...)
+
+	b = append(b, '}')
+
+	return b, nil
+}
+
+// Type returns the enumerated byte representation of Keyring.
+func (t *Keyring) Type() byte {
 	return 0x09
 }
 
