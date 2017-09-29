@@ -4,7 +4,7 @@ RUN apk add --no-cache curl git make
 
 # Create work directory for the CLI and build output dest
 RUN mkdir -p /go/src/github.com/manifoldco/torus-cli \
-        && mkdir -p /builds \
+        && mkdir -p /builds
 
 ENV PATH="/usr/local/bin:$PATH"
 

@@ -17,7 +17,6 @@ VERSION?=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
 LINTERS=\
 	gofmt \
 	golint \
-	gosimple \
 	vet \
 	misspell \
 	ineffassign \
@@ -34,7 +33,6 @@ ci: binary $(LINTERS) cmdlint test
 
 BOOTSTRAP=\
 	github.com/golang/lint/golint \
-	honnef.co/go/simple/cmd/gosimple \
 	github.com/jteeuwen/go-bindata/... \
 	github.com/client9/misspell/cmd/misspell \
 	github.com/gordonklaus/ineffassign \
@@ -44,7 +42,7 @@ BOOTSTRAP=\
 $(BOOTSTRAP):
 	go get -u $@
 bootstrap: $(BOOTSTRAP)
-	curl http://glide.sh/get | sh
+	glide -v || curl http://glide.sh/get | sh
 
 .PHONY: bootstrap $(BOOTSTRAP)
 
@@ -111,10 +109,10 @@ test: generated vendor
 	@CGO_ENABLED=0 go test -run=. -bench=. -short $$(glide nv)
 
 METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
-	 ./... --enable
+	 . --enable
 
 $(LINTERS):
-	$(METALINT) $@
+	gometalinter --tests --disable-all --vendor --deadline=5m -s data $$(glide nv) --enable $@
 
 $(TOOLS)/cmdlint: $(wildcard tools/cmdlint/*.go) $(wildcard cmd/*.go)
 	$(GO_BUILD) -o $@ ./tools/cmdlint
