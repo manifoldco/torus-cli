@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v0.24.2
+
+_2017-10-25_
+
+**Fixes**
+
+- Disabled version checking against `get.torus.sh` as a temporary work around
+  to torus DNS outage.
+- Disabled update checking by default if a `~/.torusrc` does not already exist.
+
 ## v0.24.1
 
 _2017-05-31_

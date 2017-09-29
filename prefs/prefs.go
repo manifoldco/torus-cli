@@ -133,7 +133,7 @@ func NewPreferences() (*Preferences, error) {
 			Context:            true,
 			EnableHints:        true,
 			EnableProgress:     true,
-			EnableCheckUpdates: true,
+			EnableCheckUpdates: false,
 		},
 	}
 
