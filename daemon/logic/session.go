@@ -20,6 +20,14 @@ type Session struct {
 	engine *Engine
 }
 
+type updateProfile struct {
+	Email     string                    `json:"email,omitempty"`
+	Name      string                    `json:"name,omitempty"`
+	Password  *primitive.UserPassword   `json:"password,omitempty"`
+	Master    *primitive.MasterKey      `json:"master,omitempty"`
+	PublicKey *primitive.LoginPublicKey `json:"public_key,omitempty"`
+}
+
 // Login attempts to create a valid auth token to authorize http requests made
 // against the registry.
 func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) error {
@@ -64,6 +72,72 @@ func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) err
 	}
 
 	return s.engine.session.Set(self.Type, self.Identity, self.Auth, creds.Passphrase(), token)
+}
+
+// UpdateProfile attempts to update the root password used by a user to log
+// into Torus which also allows them to access their stored and encrypted
+// secrets.
+func (s *Session) UpdateProfile(ctx context.Context, newEmail, newName, newPassword string) (envelope.UserInf, error) {
+	if s.engine.session.Type() != apitypes.UserSession {
+		return nil, &apitypes.Error{
+			Type: apitypes.BadRequestError,
+			Err:  []string{"You must be a logged in user to change your password!"},
+		}
+	}
+
+	// Convert the auth portion of the session to a UserInf interface
+	// Note: the auth and identity sections for a user are the same
+	user, ok := s.engine.session.Self().Auth.(envelope.UserInf)
+	if !ok {
+		log.Printf("Could not convert to UserInf during update profile")
+		return nil, &apitypes.Error{
+			Type: apitypes.InternalServerError,
+			Err:  []string{"Could not convert to user interface"},
+		}
+	}
+
+	if user.StructVersion() != 2 {
+		return nil, &apitypes.Error{
+			Type: apitypes.BadRequestError,
+			Err: []string{fmt.Sprintf(
+				"User schema must be v2 to perform password change: %d",
+				user.StructVersion()),
+			},
+		}
+	}
+
+	payload := &updateProfile{}
+	if newEmail != "" {
+		payload.Email = newEmail
+	}
+
+	if newName != "" {
+		payload.Name = newName
+	}
+
+	if newPassword != "" {
+		pw, master, keypair, err := s.engine.crypto.ChangePassword(ctx, newPassword)
+		if err != nil {
+			log.Printf("Could not re-encrypt master key: %s", err)
+			return nil, &apitypes.Error{
+				Type: apitypes.InternalServerError,
+				Err:  []string{"Could not re-encrypt master key"},
+			}
+		}
+
+		payload.Password = pw
+		payload.Master = master
+		payload.PublicKey = keypair
+	}
+
+	updatedUser, err := s.engine.client.Users.Update(ctx, payload)
+	if err != nil {
+		log.Printf("Could not update password on server due to err: %s", err)
+		return nil, err
+	}
+
+	s.engine.session.SetIdentity(apitypes.UserSession, updatedUser, updatedUser)
+	return updatedUser, nil
 }
 
 func (s *Session) attemptEdDSAUpgrade(ctx context.Context, loginToken *envelope.Token,
