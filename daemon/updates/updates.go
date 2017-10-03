@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	url              = "https://get.torus.sh/manifest.json"
 	releaseHourCheck = 6 // Check updates at 6am
 )
 
@@ -45,6 +44,7 @@ type Engine struct {
 	lastCheck     time.Time
 	targetVersion string
 	timeManager   TimeManager
+	client        *http.Client
 }
 
 // VersionInfo maps the JSON returned from the `url` endpoint, containing the latest
@@ -57,10 +57,12 @@ type VersionInfo struct {
 // NewEngine creates a new Engine based on the provided config structure.
 // It can be extended by passing specific options which alter the initialization
 // of the Engine itself.
-func NewEngine(cfg *config.Config, options ...func(*Engine)) *Engine {
+func NewEngine(cfg *config.Config, t *http.Transport, options ...func(*Engine)) *Engine {
 	engine := &Engine{
-		config: cfg,
-		stop:   make(chan struct{}),
+		config:        cfg,
+		stop:          make(chan struct{}),
+		targetVersion: "unknown",
+		client:        &http.Client{Transport: t},
 	}
 
 	for _, opt := range options {
@@ -106,27 +108,34 @@ func (e *Engine) start() {
 	}
 
 	log.Printf("last update check: %s", e.lastCheck)
-	e.targetVersion = e.config.Version
+	e.performCheck()
 	for {
 		select {
 		case <-e.stop:
 			log.Printf("stopped checking for updates")
 			return
 		case <-time.After(e.nextCheck()):
-			log.Printf("check updates")
-
-			latest, err := e.getLatestVersion()
-			if err != nil {
-				log.Printf("cannot check for updates: %s", err)
-				continue
-			}
-
-			e.targetVersion = latest
-			if err := e.storeLastCheck(); err != nil {
-				log.Printf("cannot store update check: %s", err)
-			}
+			e.performCheck()
 		}
 	}
+}
+
+// performCheck retrieves the latest version of Torus from the manifest and then
+func (e *Engine) performCheck() {
+	log.Printf("Checking for updates to Torus")
+
+	latest, err := e.getLatestVersion()
+	if err != nil {
+		log.Printf("Could not retrieve latest version of Tours: %s", err)
+		return
+	}
+
+	e.targetVersion = latest
+	if err := e.storeLastCheck(); err != nil {
+		log.Printf("Cannot store the last check date: %s", err)
+	}
+
+	log.Printf("Successfully checked for updates; available version: %s", latest)
 }
 
 // nextCheck returns the time duration to wait before triggering an update check.
@@ -223,13 +232,12 @@ func (e *Engine) getLastCheck() error {
 }
 
 func (e *Engine) getLatestVersion() (string, error) {
-	resp, err := http.Get(url)
-	if resp.Body != nil {
-		defer resp.Body.Close()
-	}
+	resp, err := e.client.Get(e.config.ManifestURI.String())
 	if err != nil {
-		return "", fmt.Errorf("cannot get info: %s", err)
+		return "", fmt.Errorf("cannot get info from %s: %s", e.config.ManifestURI, err)
 	}
+	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("unsuccessful response: %d", resp.StatusCode)
 	}

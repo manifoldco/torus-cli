@@ -2,14 +2,12 @@ package socket
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/facebookgo/httpdown"
@@ -73,14 +71,6 @@ func NewAuthProxy(c *config.Config, sess session.Session, db *db.DB, t *http.Tra
 		logic:   logic,
 		updates: updates,
 	}, nil
-}
-
-// CreateHTTPTransport creates and configures the
-func CreateHTTPTransport(cfg *config.Config) *http.Transport {
-	return &http.Transport{TLSClientConfig: &tls.Config{
-		ServerName: strings.Split(cfg.RegistryURI.Host, ":")[0],
-		RootCAs:    cfg.CABundle,
-	}}
 }
 
 // Listen starts the main loop of the AuthProxy. It returns on error, or when

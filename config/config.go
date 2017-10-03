@@ -35,6 +35,7 @@ type Config struct {
 	LastUpdatePath    string
 
 	RegistryURI *url.URL
+	ManifestURI *url.URL
 	CABundle    *x509.CertPool
 	PublicKey   *prefs.PublicKey
 }
@@ -61,6 +62,11 @@ func NewConfig(torusRoot string) (*Config, error) {
 		return nil, fmt.Errorf("invalid registry_uri")
 	}
 
+	manifestURI, err := url.Parse(preferences.Core.ManifestURI)
+	if err != nil {
+		return nil, fmt.Errorf("invalid manifest_uri")
+	}
+
 	_, _, err = net.SplitHostPort(preferences.Core.GatekeeperAddress)
 	if err != nil {
 		return nil, fmt.Errorf("invalid gatekeeper listener address")
@@ -77,6 +83,7 @@ func NewConfig(torusRoot string) (*Config, error) {
 		LastUpdatePath:    path.Join(torusRoot, "last_update"),
 
 		RegistryURI:       registryURI,
+		ManifestURI:       manifestURI,
 		GatekeeperAddress: preferences.Core.GatekeeperAddress,
 		CABundle:          caBundle,
 		PublicKey:         publicKey,

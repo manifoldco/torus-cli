@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/nightlyone/lockfile"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/manifoldco/torus-cli/daemon/session"
 	"github.com/manifoldco/torus-cli/daemon/socket"
 	"github.com/manifoldco/torus-cli/daemon/updates"
+	"github.com/manifoldco/torus-cli/daemon/utils"
 )
 
 // Daemon is the torus coprocess that contains session secrets, handles
@@ -70,11 +72,13 @@ func New(cfg *config.Config, groupShared bool) (*Daemon, error) {
 
 	session := session.NewSession()
 	cryptoEngine := crypto.NewEngine(session)
-	transport := socket.CreateHTTPTransport(cfg)
+	transport := utils.CreateHTTPTransport(cfg.CABundle, strings.Split(cfg.RegistryURI.Host, ":")[0])
 	client := registry.NewClient(cfg.RegistryURI.String(), cfg.APIVersion,
 		cfg.Version, session, transport)
 	logic := logic.NewEngine(session, db, cryptoEngine, client)
-	updates := updates.NewEngine(cfg)
+
+	mTransport := utils.CreateHTTPTransport(cfg.CABundle, strings.Split(cfg.ManifestURI.Host, ":")[0])
+	updates := updates.NewEngine(cfg, mTransport)
 
 	proxy, err := socket.NewAuthProxy(cfg, session, db, transport, client, logic, updates, groupShared)
 	if err != nil {
