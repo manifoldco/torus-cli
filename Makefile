@@ -305,7 +305,7 @@ builds/torus-$(VERSION).sierra.bottle.tar.gz: binary-darwin-amd64 builds/bottle/
 
 release-homebrew: envcheck tagcheck release-homebrew-bottle release-homebrew-$(RELEASE_ENV)
 
-BOTTLE_VERSIONS=$(foreach release,sierra el_capitan yosemite,builds/dist/brew/bottles/torus-$(VERSION).$(release).bottle.tar.gz)
+BOTTLE_VERSIONS=$(foreach release,high_sierra sierra el_capitan yosemite,builds/dist/brew/bottles/torus-$(VERSION).$(release).bottle.tar.gz)
 $(BOTTLE_VERSIONS): builds/torus-$(VERSION).sierra.bottle.tar.gz builds/dist/brew/bottles
 	cp $< $@
 
