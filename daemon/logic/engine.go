@@ -56,12 +56,27 @@ func NewEngine(s session.Session, db Database, e *crypto.Engine,
 	return engine
 }
 
-// AppendCredential attempts to append a plain-text Credential object to the
+// AppendCredentials attempts to append plain-text Credential objects to the
 // Credential Graph.
-func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifier,
-	cred *PlaintextCredentialEnvelope) (*PlaintextCredentialEnvelope, error) {
+func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notifier,
+	creds []*PlaintextCredentialEnvelope) ([]*PlaintextCredentialEnvelope, error) {
 
-	n := notifier.Notifier(4)
+	if len(creds) == 0 {
+		return creds, nil
+	}
+
+	n := notifier.Notifier(3 + uint(len(creds)))
+	cred := creds[0]
+
+	// Ensure all creds have matching pathexp
+	for _, c := range creds {
+		if !cred.Body.PathExp.Equal(c.Body.PathExp) {
+			return nil, &apitypes.Error{
+				Type: apitypes.BadRequestError,
+				Err:  []string{"All credential PathExp must match"},
+			}
+		}
+	}
 
 	// Ensure we have an existing keyring for this credential's pathexp
 	graphs, err := e.client.CredentialGraph.List(ctx, "", cred.Body.PathExp,
@@ -93,13 +108,6 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		return nil, err
 	}
 
-	// Find the  most recent version of this credential to act as our previous.
-	previousCred, err := cgs.HeadCredential(cred.Body.PathExp, cred.Body.Name)
-	if err != nil {
-		log.Printf("error finding credentials to match: %s", err)
-		return nil, err
-	}
-
 	var newGraph *registry.CredentialGraphV2
 	// No matching CredentialGraph/KeyRing for this credential.
 	// We'll make a new one now.
@@ -114,37 +122,13 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		graph = newGraph
 	}
 
-	// Construct an encrypted and signed version of the credential
-	credBody := primitive.Credential{
-		State: cred.Body.State,
-		BaseCredential: primitive.BaseCredential{
-			Name:      cred.Body.Name,
-			PathExp:   cred.Body.PathExp,
-			KeyringID: graph.GetKeyring().GetID(),
-			ProjectID: cred.Body.ProjectID,
-			OrgID:     cred.Body.OrgID,
-			Credential: &primitive.CredentialValue{
-				Algorithm: crypto.SecretBox,
-			},
-		},
-	}
-
-	if previousCred == nil {
-		log.Printf("no previous")
-		credBody.Previous = nil
-		credBody.CredentialVersion = 1
-	} else {
-		credBody.Previous = previousCred.GetID()
-		credBody.CredentialVersion = previousCred.CredentialVersion() + 1
-	}
-
 	krm, mekshare, err := graph.FindMember(e.session.AuthID())
 	if err != nil {
 		log.Printf("Error finding keyring membership: %s", err)
 		return nil, err
 	}
 
-	encryptingKey, err := findEncryptingKey(ctx, e.client, credBody.OrgID,
+	encryptingKey, err := findEncryptingKey(ctx, e.client, cred.Body.OrgID,
 		krm.EncryptingKeyID)
 	if err != nil {
 		log.Printf("Error finding encrypting key: %s", err)
@@ -153,34 +137,70 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 
 	n.Notify(observer.Progress, "Encrypting key retrieved", true)
 
-	// Derive a key for the credential using the keyring master key
-	// and use the derived key to encrypt the credential
-	cekNonce, ctNonce, ct, err := e.crypto.BoxCredential(
-		ctx, []byte(cred.Body.Value), *mekshare.Key.Value, *mekshare.Key.Nonce,
-		&kp.Encryption, *encryptingKey.Key.Value)
-	if err != nil {
-		log.Printf("Error encrypting credential: %s", err)
-		return nil, err
+	toCreate := []envelope.CredentialInf{}
+	for _, c := range creds {
+		// Find the  most recent version of this credential to act as our previous.
+		previousCred, err := cgs.HeadCredential(c.Body.PathExp, c.Body.Name)
+		if err != nil {
+			log.Printf("error finding credentials to match: %s", err)
+			return nil, err
+		}
+
+		// Construct an encrypted and signed version of the credential
+		credBody := primitive.Credential{
+			State: c.Body.State,
+			BaseCredential: primitive.BaseCredential{
+				Name:      c.Body.Name,
+				PathExp:   c.Body.PathExp,
+				KeyringID: graph.GetKeyring().GetID(),
+				ProjectID: c.Body.ProjectID,
+				OrgID:     c.Body.OrgID,
+				Credential: &primitive.CredentialValue{
+					Algorithm: crypto.SecretBox,
+				},
+			},
+		}
+
+		if previousCred == nil {
+			log.Printf("no previous")
+			credBody.Previous = nil
+			credBody.CredentialVersion = 1
+		} else {
+			credBody.Previous = previousCred.GetID()
+			credBody.CredentialVersion = previousCred.CredentialVersion() + 1
+		}
+
+		// Derive a key for the credential using the keyring master key
+		// and use the derived key to encrypt the credential
+		cekNonce, ctNonce, ct, err := e.crypto.BoxCredential(
+			ctx, []byte(cred.Body.Value), *mekshare.Key.Value, *mekshare.Key.Nonce,
+			&kp.Encryption, *encryptingKey.Key.Value)
+		if err != nil {
+			log.Printf("Error encrypting credential: %s", err)
+			return nil, err
+		}
+
+		credBody.Nonce = base64.New(cekNonce)
+
+		credBody.Credential.Nonce = base64.New(ctNonce)
+		credBody.Credential.Value = base64.New(ct)
+
+		signed, err := e.crypto.SignedCredential(ctx, &credBody, sigID, &kp.Signature)
+		if err != nil {
+			log.Printf("Error signing credential body: %s", err)
+			return nil, err
+		}
+
+		toCreate = append(toCreate, signed)
+		n.Notify(observer.Progress, "Credential encrypted", true)
 	}
 
-	credBody.Nonce = base64.New(cekNonce)
-
-	credBody.Credential.Nonce = base64.New(ctNonce)
-	credBody.Credential.Value = base64.New(ct)
-
-	signed, err := e.crypto.SignedCredential(ctx, &credBody, sigID, &kp.Signature)
-	if err != nil {
-		log.Printf("Error signing credential body: %s", err)
-		return nil, err
-	}
-
-	n.Notify(observer.Progress, "Credential encrypted", true)
-
+	// XXX: At the end do this stuff (support multi!)
 	if newGraph != nil {
-		newGraph.Credentials = []envelope.CredentialInf{signed}
+		newGraph.Credentials = toCreate
 		_, err = e.client.CredentialGraph.Post(ctx, &graph)
 	} else {
-		_, err = e.client.Credentials.Create(ctx, signed)
+		_, err = e.client.Credentials.Create(ctx, toCreate)
 	}
 
 	if err != nil {
@@ -188,7 +208,7 @@ func (e *Engine) AppendCredential(ctx context.Context, notifier *observer.Notifi
 		return nil, err
 	}
 
-	return cred, nil
+	return creds, nil
 }
 
 // RetrieveCredentials returns all credentials for the given CPath string

@@ -13,8 +13,8 @@ type Credentials struct {
 }
 
 // Create creates the provided credential in the registry.
-func (c *Credentials) Create(ctx context.Context, credential *envelope.Credential) (*envelope.Credential, error) {
-	resp := &envelope.Credential{}
-	err := c.client.RoundTrip(ctx, "POST", "/credentials", nil, credential, &resp)
+func (c *Credentials) Create(ctx context.Context, creds []envelope.CredentialInf) ([]*envelope.Credential, error) {
+	resp := []*envelope.Credential{}
+	err := c.client.RoundTrip(ctx, "POST", "/credentials", nil, creds, &resp)
 	return resp, err
 }

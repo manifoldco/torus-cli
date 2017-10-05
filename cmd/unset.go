@@ -35,29 +35,33 @@ func unsetCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError(msg, ctx)
 	}
 
-	pathexp, cname, err := determineCredential(ctx, args[0])
+	pe, cname, err := determinePath(ctx, args[0])
 	if err != nil {
 		return errs.NewErrorExitError("Could not unset credential", err)
 	}
 
-	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", pathexp.String(), *cname)
+	name := args[0]
+	if cname != nil {
+		name = *cname
+	}
+
+	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", pe.String(), name)
 
 	abortErr := ConfirmDialogue(ctx, nil, &preamble, "", true)
 	if abortErr != nil {
 		return abortErr
 	}
 
-	var cred *apitypes.CredentialEnvelope
-	cred, err = setCredential(ctx, args[0], func() *apitypes.CredentialValue {
+	makers := valueMakers{}
+	makers[name] = func() *apitypes.CredentialValue {
 		return apitypes.NewUnsetCredentialValue()
-	})
+	}
 
+	_, err = setCredentials(ctx, pe, makers)
 	if err != nil {
 		return errs.NewErrorExitError("Could not unset credential", err)
 	}
 
-	name := (*cred.Body).GetName()
-	pe := (*cred.Body).GetPathExp()
 	output := fmt.Sprintf("\nCredential %s has been unset at %s/%s.", name, pe, name)
 	fmt.Println(output)
 
