@@ -174,3 +174,4 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
         the command
 - [ ]   `torus run <command>` without a service defaults to "default" service
 - [ ]   `torus unset [key] —service [service]` will unset the variable
+- [ ]   `torus import` imports multiple secrets from a file

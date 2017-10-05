@@ -7,6 +7,8 @@ _Unreleased_
 **Notable Changes**
 
 - Windows is now advertised as a supported platform via npm installation.
+- Introducing `torus import`, making it simple to import multiple secrets from
+  a single `.env` file!
 
 **Fixes**
 
@@ -17,6 +19,10 @@ _Unreleased_
 - Daemon will now check for updates on startup along with every day at 6am
 - Torus is now compiled using go1.9.1
 - Torus now supports installation from brew via a bottle on Mac OS X High Sierra
+
+**Thanks**
+
+- Luiz Branco
 
 ## v0.24.2
 
