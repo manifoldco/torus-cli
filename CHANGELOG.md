@@ -9,6 +9,7 @@ _Unreleased_
 - Daemon will no longer crash if it fails to retrieve the latest version
 - Update checking is now on by default after being disabled in `v0.24.2`
 - Daemon will now check for updates on startup along with every day at 6am
+- Torus is now compiled using go1.9.1
 
 ## v0.24.2
 
