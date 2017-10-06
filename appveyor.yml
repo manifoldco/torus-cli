@@ -7,7 +7,7 @@ platform:
 
 environment:
   GOPATH: c:\gopath
-  GOVERSION: 1.7
+  GOVERSION: 1.9.1
   GLIDEVERSION: 0.12.3
 
 init:

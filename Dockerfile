@@ -1,4 +1,4 @@
-FROM golang:1.7.4-alpine
+FROM golang:1.9.1-alpine
 
 RUN apk add --no-cache curl git make
 
