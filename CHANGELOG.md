@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+**Notable Changes**
+
+- Windows is now advertised as a supported platform via npm installation.
+
 **Fixes**
 
 - Daemon will no longer crash if it fails to retrieve the latest version
