@@ -52,7 +52,10 @@ sudo tee /etc/apt/sources.list.d/torus.list <<< "deb https://get.torus.sh/$DISTR
 - [npm](https://www.npmjs.com): `npm install -g torus-cli`
 - bare zip archives per release version are available on https://get.torus.sh/
 
-### Windows (Preview)
+### Windows (Alpha)
+
+Install torus via npm using `npm install -g torus-cli` or manally using the
+steps below!
 
 - Get the desired version on [https://get.torus.sh/](https://get.torus.sh/)
 - Unzip the file
