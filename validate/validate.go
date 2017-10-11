@@ -7,7 +7,7 @@ import (
 )
 
 const slugPattern = "^[a-z][a-z0-9\\-\\_]{0,63}$"
-const namePattern = "^[a-zA-Z\\s,\\.'\\-pL]{1,64}$"
+const namePattern = "^[a-zA-Z\\s,\\.'\\-pL]{3,64}$"
 
 // Slug validates whether the input meets slug requirements
 func Slug(input, fieldName string, errorMessage *string) error {
