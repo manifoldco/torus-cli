@@ -53,17 +53,27 @@ func setCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError(err.Error(), ctx)
 	}
 
-	cred, err := setCredential(ctx, key, func() *apitypes.CredentialValue {
-		return apitypes.NewStringCredentialValue(value)
-	})
+	path, cname, err := determinePath(ctx, key)
+	if err != nil {
+		return err
+	}
 
+	name := key
+	if cname != nil {
+		name = *cname
+	}
+
+	makers := valueMakers{}
+	makers[name] = func() *apitypes.CredentialValue {
+		return apitypes.NewStringCredentialValue(value)
+	}
+
+	_, err = setCredentials(ctx, path, makers)
 	if err != nil {
 		return errs.NewErrorExitError("Could not set credential.", err)
 	}
 
-	name := (*cred.Body).GetName()
-	pe := (*cred.Body).GetPathExp()
-	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
+	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, path, name)
 
 	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import)
 	return nil
@@ -92,18 +102,19 @@ func parseSetArgs(args []string) (key string, value string, err error) {
 	return key, value, nil
 }
 
-func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp, *string, error) {
+// determinePath returns a PathExp and a possible credential name if a full
+// path was provided.
+func determinePath(ctx *cli.Context, path string) (*pathexp.PathExp, *string, error) {
 	// First try and use the cli args as a full path. it should override any
 	// options.
-	idx := strings.LastIndex(nameOrPath, "/")
-	name := nameOrPath[idx+1:]
-
-	var pe *pathexp.PathExp
+	idx := strings.LastIndex(path, "/")
+	name := path[idx+1:]
 
 	// It looks like the user gave a path expression. use that instead of flags.
+	var pe *pathexp.PathExp
+	var err error
 	if idx != -1 {
-		var err error
-		path := nameOrPath[:idx]
+		path := path[:idx]
 		pe, err = pathexp.ParsePartial(path)
 		if err != nil {
 			return nil, nil, errs.NewExitError(err.Error())
@@ -112,26 +123,7 @@ func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp,
 			return nil, nil, errs.NewExitError("Secret name cannot be wildcard")
 		}
 	} else {
-		// Falling back to flags. do the expensive population of the user flag now,
-		// and see if any required flags (all of them) are missing.
-		err := chain(setUserEnv, checkRequiredFlags)(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		identity, err := deriveIdentitySlice(ctx)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		pe, err = pathexp.New(
-			ctx.String("org"),
-			ctx.String("project"),
-			ctx.StringSlice("environment"),
-			ctx.StringSlice("service"),
-			identity,
-			ctx.StringSlice("instance"),
-		)
+		pe, err = determinePathFromFlags(ctx)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -140,7 +132,32 @@ func determineCredential(ctx *cli.Context, nameOrPath string) (*pathexp.PathExp,
 	return pe, &name, nil
 }
 
-func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apitypes.CredentialValue) (*apitypes.CredentialEnvelope, error) {
+func determinePathFromFlags(ctx *cli.Context) (*pathexp.PathExp, error) {
+	// Falling back to flags. do the expensive population of the user flag now,
+	// and see if any required flags (all of them) are missing.
+	err := chain(setUserEnv, checkRequiredFlags)(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	identity, err := deriveIdentitySlice(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return pathexp.New(
+		ctx.String("org"),
+		ctx.String("project"),
+		ctx.StringSlice("environment"),
+		ctx.StringSlice("service"),
+		identity,
+		ctx.StringSlice("instance"),
+	)
+}
+
+type valueMakers map[string](func() *apitypes.CredentialValue)
+
+func setCredentials(ctx *cli.Context, pe *pathexp.PathExp, makers valueMakers) ([]apitypes.CredentialEnvelope, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, err
@@ -148,15 +165,6 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 
 	client := api.NewClient(cfg)
 	c := context.Background()
-
-	pe, credName, err := determineCredential(ctx, nameOrPath)
-	if err != nil {
-		return nil, err
-	}
-	var name string
-	if credName != nil {
-		name = *credName
-	}
 
 	org, err := client.Orgs.GetByName(c, pe.Org.String())
 	if org == nil || err != nil {
@@ -169,26 +177,34 @@ func setCredential(ctx *cli.Context, nameOrPath string, valueMaker func() *apity
 		return nil, errs.NewExitError("Project not found")
 	}
 	project := projects[0]
-	value := valueMaker()
 
-	state := "set"
-	if value.IsUnset() {
-		state = "unset"
-		value = nil
+	creds := []*apitypes.CredentialEnvelope{}
+	for name, maker := range makers {
+		value := maker()
+		state := "set"
+		if value.IsUnset() {
+			state = "unset"
+			value = nil
+		}
+
+		var cred apitypes.Credential
+		cBodyV2 := apitypes.CredentialV2{
+			BaseCredential: apitypes.BaseCredential{
+				OrgID:     org.ID,
+				ProjectID: project.ID,
+				Name:      strings.ToLower(name),
+				PathExp:   pe,
+				Value:     value,
+			},
+			State: state,
+		}
+		cred = &cBodyV2
+
+		creds = append(creds, &apitypes.CredentialEnvelope{
+			Version: 2,
+			Body:    &cred,
+		})
 	}
 
-	var cred apitypes.Credential
-	cBodyV2 := apitypes.CredentialV2{
-		BaseCredential: apitypes.BaseCredential{
-			OrgID:     org.ID,
-			ProjectID: project.ID,
-			Name:      strings.ToLower(name),
-			PathExp:   pe,
-			Value:     value,
-		},
-		State: state,
-	}
-	cred = &cBodyV2
-
-	return client.Credentials.Create(c, &cred, progress)
+	return client.Credentials.Create(c, creds, progress)
 }

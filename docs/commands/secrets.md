@@ -3,7 +3,7 @@ The Torus CLI is used to set and access secrets and config. Each value is encryp
 
 A secret is a single piece of configuration which should be encrypted.
 
-Torus exposes your decrypted secrets to your process through environment variables. This means that anything you can store in an environment variable, you can set in Torus. Support for file storage (such as certificates) is planned, but not currently supported.  
+Torus exposes your decrypted secrets to your process through environment variables. This means that anything you can store in an environment variable, you can set in Torus. Support for file storage (such as certificates) is planned, but not currently supported.
 
 ### Command Options
 
@@ -30,10 +30,36 @@ This is how all secrets are stored in Torus.
 
 `torus unset <name|path>` unsets the value for the specified name (or [path](../concepts/path.md)).
 
+## import
+###### Added [v0.25.0](https://github.com/manifoldco/torus-cli/blob/v0.25.0/CHANGELOG.md)
+
+`torus import <file>` or using stdin redirection (e.g. `torus import -e production <prod.env`) imports the contents of an `.env` file to the specified path.
+
+**Example**
+
+```
+$ cat prod.env
+PORT=4000
+DOMAIN=mydomain.co
+MYSQL_URL=mysql://user:pass@host.com:4321/mydb
+
+$ torus import -e production test.env
+
+Credentials retrieved
+Keypairs retrieved
+Encrypting key retrieved
+Credential encrypted
+Credential encrypted
+Completed Operation
+
+Credential x has been set at /myorg/myproject/production/default/*/*/PORT
+Credential b has been set at /myorg/myproject/production/default/*/*/MYSQL_URL
+```
+
 ## view
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus view` displays secrets in the current [context](./project-structure.md#link). 
+`torus view` displays secrets in the current [context](./project-structure.md#link).
 
 By default items are displayed in environment variable format.
 

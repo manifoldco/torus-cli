@@ -61,10 +61,10 @@ func credentialsGetRoute(engine *logic.Engine, o *observer.Observer) http.Handle
 func credentialsPostRoute(engine *logic.Engine, o *observer.Observer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		cred := &logic.PlaintextCredentialEnvelope{}
+		creds := []*logic.PlaintextCredentialEnvelope{}
 
 		dec := json.NewDecoder(r.Body)
-		err := dec.Decode(cred)
+		err := dec.Decode(&creds)
 		if err != nil {
 			log.Printf("error decoding credential: %s", err)
 			encodeResponseErr(w, err)
@@ -78,7 +78,7 @@ func credentialsPostRoute(engine *logic.Engine, o *observer.Observer) http.Handl
 			return
 		}
 
-		cred, err = engine.AppendCredential(ctx, n, cred)
+		creds, err = engine.AppendCredentials(ctx, n, creds)
 		if err != nil {
 			// Rely on logs inside engine for debugging
 			encodeResponseErr(w, err)
@@ -88,7 +88,7 @@ func credentialsPostRoute(engine *logic.Engine, o *observer.Observer) http.Handl
 		n.Notify(observer.Finished, "Completed Operation", true)
 
 		enc := json.NewEncoder(w)
-		err = enc.Encode(cred)
+		err = enc.Encode(creds)
 		if err != nil {
 			log.Printf("error encoding credential create resp: %s", err)
 			encodeResponseErr(w, err)

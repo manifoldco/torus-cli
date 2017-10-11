@@ -43,18 +43,28 @@ func importCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError(err.Error(), ctx)
 	}
 
+	path, err := determinePathFromFlags(ctx)
+	if err != nil {
+		return err
+	}
+
+	makers := valueMakers{}
 	for _, secret := range secrets {
-		cred, err := setCredential(ctx, secret.key, func() *apitypes.CredentialValue {
+		makers[secret.value] = func() *apitypes.CredentialValue {
 			return apitypes.NewStringCredentialValue(secret.value)
-		})
-
-		if err != nil {
-			return errs.NewErrorExitError("Could not set credential.", err)
 		}
+	}
 
+	creds, err := setCredentials(ctx, path, makers)
+	if err != nil {
+		return errs.NewErrorExitError("Could not set credentials.", err)
+	}
+
+	fmt.Println()
+	for _, cred := range creds {
 		name := (*cred.Body).GetName()
 		pe := (*cred.Body).GetPathExp()
-		fmt.Printf("\nCredential %s has been set at %s/%s\n", name, pe, name)
+		fmt.Printf("Credential %s has been set at %s/%s\n", name, pe, name)
 	}
 
 	hints.Display(hints.View, hints.Set)

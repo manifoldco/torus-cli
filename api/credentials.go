@@ -38,61 +38,54 @@ func (c *CredentialsClient) listWorker(ctx context.Context, v *url.Values) ([]ap
 		return nil, err
 	}
 
-	creds := make([]apitypes.CredentialEnvelope, len(resp))
-	for i, c := range resp {
-		v, err := createEnvelopeFromResp(c)
-		if err != nil {
-			return nil, err
-		}
-		creds[i] = *v
-	}
-
-	return creds, err
+	return createEnvelopesFromResp(resp)
 }
 
 // Create creates the given credential
-func (c *CredentialsClient) Create(ctx context.Context, cred *apitypes.Credential,
-	progress ProgressFunc) (*apitypes.CredentialEnvelope, error) {
+func (c *CredentialsClient) Create(ctx context.Context, creds []*apitypes.CredentialEnvelope,
+	progress ProgressFunc) ([]apitypes.CredentialEnvelope, error) {
 
-	env := apitypes.CredentialEnvelope{Version: 2, Body: cred}
-	resp := apitypes.CredentialResp{}
-	err := c.client.DaemonRoundTrip(ctx, "POST", "/credentials", nil, &env, &resp, progress)
+	resp := []apitypes.CredentialResp{}
+	err := c.client.DaemonRoundTrip(ctx, "POST", "/credentials", nil, creds, &resp, progress)
 	if err != nil {
 		return nil, err
 	}
 
-	out, err := createEnvelopeFromResp(resp)
-	return out, err
+	return createEnvelopesFromResp(resp)
 }
 
-func createEnvelopeFromResp(c apitypes.CredentialResp) (*apitypes.CredentialEnvelope, error) {
-	var envelope apitypes.CredentialEnvelope
-	var cBody apitypes.Credential
-	switch c.Version {
-	case 1:
-		cBodyV1 := apitypes.BaseCredential{}
-		err := json.Unmarshal(c.Body, &cBodyV1)
-		if err != nil {
-			return nil, err
+func createEnvelopesFromResp(resp []apitypes.CredentialResp) ([]apitypes.CredentialEnvelope, error) {
+	results := []apitypes.CredentialEnvelope{}
+
+	for _, c := range resp {
+		var cBody apitypes.Credential
+		switch c.Version {
+		case 1:
+			cBodyV1 := apitypes.BaseCredential{}
+			err := json.Unmarshal(c.Body, &cBodyV1)
+			if err != nil {
+				return nil, err
+			}
+
+			cBody = &cBodyV1
+		case 2:
+			cBodyV2 := apitypes.CredentialV2{}
+			err := json.Unmarshal(c.Body, &cBodyV2)
+			if err != nil {
+				return nil, err
+			}
+
+			cBody = &cBodyV2
+		default:
+			return nil, errors.New("Unknown credential version")
 		}
 
-		cBody = &cBodyV1
-	case 2:
-		cBodyV2 := apitypes.CredentialV2{}
-		err := json.Unmarshal(c.Body, &cBodyV2)
-		if err != nil {
-			return nil, err
-		}
-
-		cBody = &cBodyV2
-	default:
-		return nil, errors.New("Unknown credential version")
+		results = append(results, apitypes.CredentialEnvelope{
+			ID:      c.ID,
+			Version: c.Version,
+			Body:    &cBody,
+		})
 	}
 
-	envelope = apitypes.CredentialEnvelope{
-		ID:      c.ID,
-		Version: c.Version,
-		Body:    &cBody,
-	}
-	return &envelope, nil
+	return results, nil
 }
