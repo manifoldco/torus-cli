@@ -4,24 +4,28 @@
 
 _Unreleased_
 
+## v0.25.0
+
+_2017-10-13_
+
 **Notable Changes**
 
-- Windows is now advertised as a supported platform via npm installation.
-- Introducing `torus import`, making it simple to import multiple secrets from
-  a single `.env` file!
+- You can now install the windows client via `npm` (e.g. `npm install -g torus-cli`).
+- Multiple secrets can be imported at once from a `.env` file using `torus
+  import` (e.g. `torus import .env`).
 
 **Fixes**
 
-- Fixed a bug during signup where a name was required to be 3 characters by the
-  server but the client only required one.
-- Fix critical bug which broke some users accounts if they had upgraded to the
-  EdDSA login flow and then attempted to change their password via `torus
-  profile update`.
-- Daemon will no longer crash if it fails to retrieve the latest version
-- Update checking is now on by default after being disabled in `v0.24.2`
-- Daemon will now check for updates on startup along with every day at 6am
+- Torus can now be installed on Mac OS X via `brew`.
+- `torus signup` will no longer error unexpectedly if you provide name with
+  less than 3 characters.
+- Changing your password using `torus profile update` will no longer lock you
+  out of your account.
+- The daemon will no longer crash if it cannot reach `get.torus.sh` during
+  version checking.
+- New version checking has been re-enabled after being disabled in `v0.24.2`
+  whcih will be checked at startup of the daemon and every day at 6am.
 - Torus is now compiled using go1.9.1
-- Torus now supports installation from brew via a bottle on Mac OS X High Sierra
 
 **Thanks**
 
@@ -29,7 +33,7 @@ _Unreleased_
 
 ## v0.24.2
 
-_2017-10-25_
+_2017-09-25_
 
 **Fixes**
 
