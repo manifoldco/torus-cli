@@ -104,19 +104,6 @@ func sessionRoute(s session.Session) http.HandlerFunc {
 	}
 }
 
-type updateName struct {
-	Name string `json:"name"`
-}
-
-type updateEmail struct {
-	Email string `json:"email"`
-}
-
-type updatePassword struct {
-	Password *primitive.UserPassword `json:"password"`
-	Master   *primitive.MasterKey    `json:"master"`
-}
-
 func updateSelfRoute(client *registry.Client, s session.Session, e *logic.Engine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := r.Context()
@@ -144,45 +131,11 @@ func updateSelfRoute(client *registry.Client, s session.Session, e *logic.Engine
 			return
 		}
 
-		// The fresh user object
-		var result envelope.UserInf
-
-		if req.Email != "" {
-			envelope, err := client.Users.Update(c, updateEmail{Email: req.Email})
-			if err != nil {
-				encodeResponseErr(w, err)
-				return
-			}
-			result = envelope
+		result, err := e.Session.UpdateProfile(c, req.Email, req.Name, req.Password)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
 		}
-
-		if req.Name != "" {
-			envelope, err := client.Users.Update(c, updateName{Name: req.Name})
-			if err != nil {
-				encodeResponseErr(w, err)
-				return
-			}
-			result = envelope
-		}
-
-		if req.Password != "" {
-			// Encrypt the new password and re-encrypt the original master key
-			passwordObj, masterObj, err := e.ChangePassword(c, req.Password)
-			if err != nil {
-				log.Printf("Error generating password object: %s", err)
-				encodeResponseErr(w, err)
-				return
-			}
-			envelope, err := client.Users.Update(c, updatePassword{Password: passwordObj, Master: masterObj})
-			if err != nil {
-				encodeResponseErr(w, err)
-				return
-			}
-			result = envelope
-		}
-
-		// Update the local session to have the new user details
-		s.SetIdentity(apitypes.UserSession, result, result)
 
 		enc := json.NewEncoder(w)
 		err = enc.Encode(result)

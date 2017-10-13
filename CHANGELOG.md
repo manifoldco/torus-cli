@@ -14,6 +14,9 @@ _Unreleased_
 
 - Fixed a bug during signup where a name was required to be 3 characters by the
   server but the client only required one.
+- Fix critical bug which broke some users accounts if they had upgraded to the
+  EdDSA login flow and then attempted to change their password via `torus
+  profile update`.
 - Daemon will no longer crash if it fails to retrieve the latest version
 - Update checking is now on by default after being disabled in `v0.24.2`
 - Daemon will now check for updates on startup along with every day at 6am

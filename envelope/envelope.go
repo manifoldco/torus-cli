@@ -54,11 +54,17 @@ func (e *Unsigned) GetVersion() uint8 {
 // UserInf is the common interface for all user schema versions.
 type UserInf interface {
 	Envelope
+	StructVersion() uint8
 	Username() string
 	Name() string
 	Email() string
 	Password() *primitive.UserPassword
 	Master() *primitive.MasterKey
+}
+
+// StructVersion returns the version of the user object
+func (u *UserV1) StructVersion() uint8 {
+	return u.Version
 }
 
 // Username returns the username owned by this User.
@@ -84,6 +90,11 @@ func (u *UserV1) Password() *primitive.UserPassword {
 // Master returns the MasterKey for this User.
 func (u *UserV1) Master() *primitive.MasterKey {
 	return u.Body.Master
+}
+
+// StructVersion returns the version of the User object
+func (u *User) StructVersion() uint8 {
+	return u.Version
 }
 
 // Username returns the username owned by this User.

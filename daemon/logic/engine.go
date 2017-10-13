@@ -555,8 +555,3 @@ func (e *Engine) RevokeKeypairs(ctx context.Context, notifier *observer.Notifier
 
 	return nil
 }
-
-// ChangePassword returns the new password object and re-encrypted masterkey object
-func (e *Engine) ChangePassword(ctx context.Context, newPassword string) (*primitive.UserPassword, *primitive.MasterKey, error) {
-	return e.crypto.ChangePassword(ctx, newPassword)
-}

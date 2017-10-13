@@ -498,14 +498,35 @@ func newTriplesec(ctx context.Context, k []byte) (*triplesec.Cipher, error) {
 }
 
 // ChangePassword creates a password object and re-encrypts the master key
-func (e *Engine) ChangePassword(ctx context.Context, newPassword string) (*primitive.UserPassword, *primitive.MasterKey, error) {
+func (e *Engine) ChangePassword(ctx context.Context, newPassword string) (*primitive.UserPassword, *primitive.MasterKey, *primitive.LoginPublicKey, error) {
 	// We need to re-use the master key
 	currentMasterKey, err := e.unsealMasterKey(ctx)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
+
 	// Encrypt the new password and re-encrypt the original master key
-	return EncryptPasswordObject(ctx, newPassword, &currentMasterKey)
+	pw, master, err := EncryptPasswordObject(ctx, newPassword, &currentMasterKey)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Now derive LoginKeypair
+	s, err := base64.NewFromString(pw.Salt)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	keypair, err := DeriveLoginKeypair(ctx, []byte(newPassword), s)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return pw, master, &primitive.LoginPublicKey{
+		Salt:  keypair.Salt(),
+		Value: keypair.PublicKey(),
+		Alg:   EdDSA,
+	}, nil
 }
 
 // deriveKey Derives a single use key from the given master key via blake2b
