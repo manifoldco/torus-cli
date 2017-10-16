@@ -390,7 +390,7 @@ func (e *Engine) ApproveInvite(ctx context.Context, notifier *observer.Notifier,
 func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifier,
 	OrgID *identity.ID) error {
 
-	n := notifier.Notifier(4)
+	n := notifier.Notifier(5)
 
 	kp, err := e.crypto.GenerateKeyPairs(ctx)
 	if err != nil {
@@ -460,6 +460,8 @@ func (e *Engine) GenerateKeypairs(ctx context.Context, notifier *observer.Notifi
 		log.Printf("Error uploading encryption keypair: %s", err)
 		return err
 	}
+
+	n.Notify(observer.Progress, "Encryption keys uploaded", true)
 
 	objs = make([]envelope.Envelope, len(claims)+2)
 	objs[0] = pubenc

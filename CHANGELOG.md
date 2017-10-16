@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+**Fixes**
+
+- Torus now reports when an encryption key has been uploaded
+
 ## v0.25.0
 
 _2017-10-13_
