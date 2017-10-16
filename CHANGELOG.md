@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+## v0.25.1
+
+_2017-10-16_
+
 **Fixes**
 
 - Fixed a bug preventing Torus being installed from a Brew formula
