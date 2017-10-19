@@ -32,16 +32,13 @@ ci: binary $(LINTERS) cmdlint test
 #################################################
 
 BOOTSTRAP=\
-	github.com/golang/lint/golint \
 	github.com/jteeuwen/go-bindata/... \
-	github.com/client9/misspell/cmd/misspell \
-	github.com/gordonklaus/ineffassign \
-	github.com/tsenart/deadcode \
 	github.com/alecthomas/gometalinter
 
 $(BOOTSTRAP):
 	go get -u $@
 bootstrap: $(BOOTSTRAP)
+	gometalinter --install
 	glide -v || curl http://glide.sh/get | sh
 
 .PHONY: bootstrap $(BOOTSTRAP)
