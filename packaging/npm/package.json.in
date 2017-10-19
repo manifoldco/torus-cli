@@ -33,9 +33,9 @@
   ],
   "logo": "https://s3.amazonaws.com/manifold.co/torus_logo.png",
   "license": "BSD-3-Clause",
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {},
+  "optionalDependencies": {
     "kexec": "^3.0.0"
-  },
-  "devDependencies": {
   }
 }
