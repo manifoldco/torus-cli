@@ -424,7 +424,9 @@ NPM_DEPS=\
 	builds/npm/LICENSE.md \
 	builds/npm/bin/torus \
 	builds/npm/bin/torus-darwin-amd64 \
-	builds/npm/bin/torus-linux-amd64
+	builds/npm/bin/torus-linux-amd64 \
+	builds/npm/bin/torus.exe
+
 npm: $(NPM_DEPS)
 
 builds/npm builds/npm/bin builds/npm/scripts:
@@ -443,6 +445,9 @@ builds/npm/bin/torus-darwin-amd64: builds/bin/$(VERSION)/darwin/amd64/torus buil
 	cp $< $@
 
 builds/npm/bin/torus-linux-amd64: builds/bin/$(VERSION)/linux/amd64/torus builds/npm/bin
+	cp $< $@
+
+builds/npm/bin/torus.exe: builds/bin/$(VERSION)/windows/amd64/torus.exe builds/npm/bin
 	cp $< $@
 
 builds/torus-npm-$(VERSION).tar.gz: npm
