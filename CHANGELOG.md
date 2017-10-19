@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+## v0.25.2
+
+_2017-1019_
+
 **Fixes**
 
 - Fixed a bug preventing Torus from being used once installed via npm on win32.
