@@ -1,7 +1,8 @@
 # Policies
 Torus CLI has resource-based policies for access control. In order to facilitate the basics of secret sharing we include three default policies.
 
-Policies are attached to teams and roles to construct what the members are entitled to access.
+Policies are attached to teams and machine roles to construct what the members are entitled to access.
+
 ## Default Policies
 The three default teams each have their own default policy.
 
@@ -32,7 +33,7 @@ allow crudl /${org}/*/*/*/*/*/*
 ```
 
 ### Owner
-Based on the admin policy, owners are given full access to their Torus organization; however, by default they are the only ones permitted to add users to the "owner" team.  
+Based on the admin policy, owners are given full access to their Torus organization; however, by default they are the only ones permitted to add users to the "owner" team.
 
 ```
 allow crudl teams:*
@@ -46,4 +47,4 @@ allow crudl /${org}/*/*/*/*/*/*
 ```
 
 ## Machines
-Unlike users, machines are not automatically given access through default policies. A machine starts out with zero permissions and must have policies attached to its role to open its access.
+Unlike users, machines are not automatically given access through default policies. A machine starts out with zero permissions and must have policies attached to its machine role to open its access.

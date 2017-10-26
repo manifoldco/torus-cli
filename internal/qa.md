@@ -81,6 +81,8 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   System policies cannot be detached
 - [ ]   `torus policies view [name]` displays statements contained within the
         policy
+- [ ]   A policy can be attached to multiple teams via `torus policies attach`
+- [ ]   A policy can be detached and reattached to a team
 
 ### Worklog/Keyring Versioning
 

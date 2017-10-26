@@ -30,13 +30,13 @@ func init() {
 		Subcommands: []cli.Command{
 			{
 				Name:  "list",
-				Usage: "List ACL policies for an organization",
+				Usage: "List all policies for an organization",
 				Flags: []cli.Flag{
-					orgFlag("org to show policies for", true),
+					orgFlag("The org to show policies for", true),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, listPolicies,
+					setUserEnv, checkRequiredFlags, listPoliciesCmd,
 				),
 			},
 			{
@@ -44,7 +44,7 @@ func init() {
 				Usage:     "Display the contents of a policy",
 				ArgsUsage: "<policy>",
 				Flags: []cli.Flag{
-					orgFlag("org to show policies for", true),
+					orgFlag("The org the policy belongs to", true),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -54,14 +54,27 @@ func init() {
 
 			{
 				Name:      "detach",
-				Usage:     "Detach (but not delete) a policy from a team or role",
-				ArgsUsage: "<name> <team|role>",
+				Usage:     "Detach (but not delete) a policy from a team or machine role",
+				ArgsUsage: "<name> <team|machine-role>",
 				Flags: []cli.Flag{
-					orgFlag("org to detach policy from", true),
+					orgFlag("The org the team and policy belong to", true),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, detachPolicies,
+					setUserEnv, checkRequiredFlags, detachPolicyCmd,
+				),
+			},
+
+			{
+				Name:      "attach",
+				Usage:     "Attach a policy to a team or machine role",
+				ArgsUsage: "<name> <team|machine-role>",
+				Flags: []cli.Flag{
+					orgFlag("The org the team and policy belong to", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, attachPolicyCmd,
 				),
 			},
 
@@ -70,7 +83,7 @@ func init() {
 				Usage:     "Test a user's access to a path",
 				ArgsUsage: "<c|r|u|d|l> <username> <path>",
 				Flags: []cli.Flag{
-					orgFlag("org to test policy for", true),
+					orgFlag("The org the user and policy belong to", true),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -83,8 +96,102 @@ func init() {
 }
 
 const policyDetachFailed = "Could not detach policy."
+const policyAttachFailed = "Could not attach policy."
 
-func detachPolicies(ctx *cli.Context) error {
+func attachPolicyCmd(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	args := ctx.Args()
+	if len(args) < 2 {
+		return errs.NewUsageExitError("Not enough arguments provided", ctx)
+	} else if len(args) > 2 {
+		return errs.NewUsageExitError("Too many arguments provided", ctx)
+	}
+
+	policyName := args[0]
+	teamName := args[1]
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, policy, team, err := getOrgPolicyAndTeam(c, client, ctx.String("org"), policyName, teamName)
+	if err != nil {
+		return err
+	}
+
+	err = client.Policies.Attach(c, org.ID, policy.ID, team.ID)
+	if err != nil {
+		return errs.NewErrorExitError(policyAttachFailed, err)
+	}
+
+	fmt.Printf("Policy %s has been attached to team %s!\n",
+		policy.Body.Policy.Name,
+		team.Body.Name,
+	)
+	return nil
+}
+
+func getOrgPolicyAndTeam(ctx context.Context, client *api.Client, orgName,
+	policyName, teamName string) (*envelope.Org, *envelope.Policy, *envelope.Team, error) {
+
+	org, err := client.Orgs.GetByName(ctx, orgName)
+	if err != nil {
+		return nil, nil, nil, errs.NewErrorExitError(policyDetachFailed, err)
+	}
+	if org == nil {
+		return nil, nil, nil, errs.NewExitError("Org not found")
+	}
+
+	var waitPolicy sync.WaitGroup
+	waitPolicy.Add(2)
+
+	var team *envelope.Team
+	var policy *envelope.Policy
+	var pErr, tErr error
+
+	go func() {
+		var policies []envelope.Policy
+		policies, pErr = client.Policies.List(ctx, org.ID, "")
+		for _, p := range policies {
+			if p.Body.Policy.Name == policyName {
+				policy = &p
+				break
+			}
+		}
+		waitPolicy.Done()
+	}()
+
+	go func() {
+		teams, tErr := client.Teams.GetByName(ctx, org.ID, teamName)
+		if len(teams) < 1 || tErr != nil {
+			waitPolicy.Done()
+			return
+		}
+		team = &teams[0]
+		waitPolicy.Done()
+	}()
+
+	waitPolicy.Wait()
+	if tErr != nil || pErr != nil {
+		return nil, nil, nil, cli.NewMultiError(
+			tErr,
+			pErr,
+		)
+	}
+	if team == nil {
+		return nil, nil, nil, errs.NewExitError("Team " + teamName + " not found.")
+	}
+	if policy == nil {
+		return nil, nil, nil, errs.NewExitError("Policy " + policyName + " not found.")
+	}
+
+	return org, policy, team, nil
+}
+
+func detachPolicyCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -105,56 +212,9 @@ func detachPolicies(ctx *cli.Context) error {
 	c := context.Background()
 
 	// Look up the target org
-	var org *envelope.Org
-	org, err = client.Orgs.GetByName(c, ctx.String("org"))
+	org, policy, team, err := getOrgPolicyAndTeam(c, client, ctx.String("org"), policyName, teamName)
 	if err != nil {
-		return errs.NewErrorExitError(policyDetachFailed, err)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found")
-	}
-
-	var waitPolicy sync.WaitGroup
-	waitPolicy.Add(2)
-
-	var team *envelope.Team
-	var policy *envelope.Policy
-	var pErr, tErr error
-
-	go func() {
-		var policies []envelope.Policy
-		policies, pErr = client.Policies.List(c, org.ID, "")
-		for _, p := range policies {
-			if p.Body.Policy.Name == policyName {
-				policy = &p
-				break
-			}
-		}
-		waitPolicy.Done()
-	}()
-
-	go func() {
-		teams, tErr := client.Teams.GetByName(c, org.ID, teamName)
-		if len(teams) < 1 || tErr != nil {
-			waitPolicy.Done()
-			return
-		}
-		team = &teams[0]
-		waitPolicy.Done()
-	}()
-
-	waitPolicy.Wait()
-	if tErr != nil || pErr != nil {
-		return cli.NewMultiError(
-			tErr,
-			pErr,
-		)
-	}
-	if team == nil {
-		return errs.NewExitError("Team " + teamName + " not found.")
-	}
-	if policy == nil {
-		return errs.NewExitError("Policy " + policyName + " not found.")
+		return err
 	}
 
 	attachments, err := client.Policies.AttachmentsList(c, org.ID, team.ID, policy.ID)
@@ -179,7 +239,7 @@ func detachPolicies(ctx *cli.Context) error {
 
 const policyListFailed = "Could not list policies."
 
-func listPolicies(ctx *cli.Context) error {
+func listPoliciesCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
