@@ -15,6 +15,7 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/validate"
 )
 
 func init() {
@@ -23,7 +24,11 @@ func init() {
 		Usage:     "Increase access given to a team or role by creating and attaching a new policy",
 		ArgsUsage: "<crudl> <path> <team|machine-role>",
 		Category:  "ACCESS CONTROL",
-		Action:    chain(ensureDaemon, ensureSession, allowCmd),
+		Flags: []cli.Flag{
+			nameFlag("The name to give the generated policy (e.g. allow-prod-env)"),
+			descriptionFlag("A sentence or two explaining the purpose of the policy"),
+		},
+		Action: chain(ensureDaemon, ensureSession, allowCmd),
 	}
 
 	Cmds = append(Cmds, allow)
@@ -51,7 +56,7 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	}
 
 	// Separate the pathexp from the secret name
-	pe, name, err := parseRawPath(args[1])
+	pe, secretName, err := parseRawPath(args[1])
 	if err != nil {
 		return err
 	}
@@ -62,6 +67,20 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	}
 
 	stmtAction |= extra
+
+	name := ctx.String("name")
+	description := ctx.String("description")
+
+	if name == "" {
+		name = fmt.Sprintf("generated-%s-%d", effect.String(), time.Now().Unix())
+	}
+
+	if err := validate.Slug(name, "policy", nil); err != nil {
+		return errs.NewErrorExitError("Invalid name provided.", err)
+	}
+	if err := validate.Description(description, "policy"); err != nil {
+		return errs.NewErrorExitError("Invalid description provided.", err)
+	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -92,11 +111,12 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 		PolicyType: "user",
 		OrgID:      org.ID,
 	}
-	policy.Policy.Name = fmt.Sprintf("generated-%s-%d", effect.String(), time.Now().Unix())
+	policy.Policy.Name = name
+	policy.Policy.Description = description
 	policy.Policy.Statements = []primitive.PolicyStatement{{
 		Effect:   effect,
 		Action:   stmtAction,
-		Resource: pe.String() + "/" + *name,
+		Resource: pe.String() + "/" + *secretName,
 	}}
 
 	res, err := client.Policies.Create(c, &policy)
@@ -109,9 +129,12 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 		return errs.NewErrorExitError("Could not attach policy.", err)
 	}
 
-	fmt.Printf("Policy generated and attached to the %s team.\n", team.Body.Name)
+	fmt.Printf("Policy %s generated and attached to the %s team.\n", name, team.Body.Name)
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
+	fmt.Fprintf(w, "Name:\t%s\n", name)
+	fmt.Fprintf(w, "Description:\t%s\n", description)
+
 	for _, s := range res.Body.Policy.Statements {
 		fmt.Fprintln(w, "")
 		fmt.Fprintf(w, "Effect:\t%s\n", s.Effect.String())

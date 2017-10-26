@@ -12,7 +12,11 @@ func init() {
 		Usage:     "Decrease access given to a team or role by creating and attaching a new policy",
 		ArgsUsage: "<crudl> <path> <team|machine-role>",
 		Category:  "ACCESS CONTROL",
-		Action:    chain(ensureDaemon, ensureSession, denyCmd),
+		Flags: []cli.Flag{
+			nameFlag("The name to give the generated policy (e.g. allow-prod-env)"),
+			descriptionFlag("A sentence or two explaining what the generated policy does"),
+		},
+		Action: chain(ensureDaemon, ensureSession, denyCmd),
 	}
 
 	Cmds = append(Cmds, deny)

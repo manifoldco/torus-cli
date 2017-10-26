@@ -25,9 +25,20 @@ var (
 	}
 )
 
+// formatFlag creates a new --format cli.Flag with custom usage string
 func formatFlag(defaultValue, description string) cli.Flag {
 	return newPlaceholder("format, f", "FORMAT", description,
 		defaultValue, "TORUS_FORMAT", false)
+}
+
+// nameFlag creates a new --name cli.Flag with custom usage string
+func nameFlag(description string) cli.Flag {
+	return newPlaceholder("name, n", "NAME", description, "", "TORUS_NAME", false)
+}
+
+// descriptionFlag creates a new --description, -d cli.Flag with custom usage string
+func descriptionFlag(description string) cli.Flag {
+	return newPlaceholder("description, d", "DESCRIPTION", description, "", "TORUS_DESCRIPTION", false)
 }
 
 // orgFlag creates a new --org cli.Flag with custom usage string.

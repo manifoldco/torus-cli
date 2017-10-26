@@ -83,6 +83,7 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
         policy
 - [ ]   A policy can be attached to multiple teams via `torus policies attach`
 - [ ]   A policy can be detached and reattached to a team
+- [ ]   A policy can be given a name and a description
 
 ### Worklog/Keyring Versioning
 
