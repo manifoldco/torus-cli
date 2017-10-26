@@ -4,6 +4,11 @@
 
 _Unreleased_
 
+**Notable Changes**
+
+- Introduced `torus policies attach` allowing a user to attach a policy to
+  multiple teams or machine roles.
+
 ## v0.25.2
 
 _2017-1019_

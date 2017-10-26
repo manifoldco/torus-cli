@@ -108,7 +108,7 @@ Machines are a method of authenticating systems which are not owned by an indivi
 
 Each machine is given an ID and Token value which are synonymous with a user’s email and password. These are used to authenticate the CLI on a per-system basis.
 
-Roles are assigned to each machine for [access control](./access-control.md).
+Machine roles are assigned to each machine for [access control](./access-control.md).
 
 ### create
 ###### Added [v0.15.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -122,7 +122,7 @@ A machine is given a unique name within the organization that adheres to the sys
 
 `torus machines list` displays all available machines for the specified organization.
 
-The Machine listing can be filtered using the role or destroyed command options.
+The Machine listing can be filtered using the `--role` or `--destroyed` command options.
 
 ### view
 ###### Added [v0.15.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -137,16 +137,16 @@ The Machine listing can be filtered using the role or destroyed command options.
 ### roles
 Machines are given roles (similar to how users are added to teams) which enable you to finely control what a machine has access to when deployed.
 
-Once created a role can have any number of policies attached to it.
+Once created a machine role can have any number of policies attached to it.
 
 #### create
 ###### Added [v0.16.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus machines roles create <name>` creates a new role for the specified organization.
+`torus machines roles create <name>` creates a new machine role for the specified organization.
 
-A role is given a unique name within the organization’s roles that adheres to the system naming scheme.
+A machine role is given a unique name within an organization that adheres to the system naming scheme.
 
 #### list
 ###### Added [v0.16.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus machines roles list` displays all available roles for the specified organization.
+`torus machines roles list` displays all available machine roles for the specified organization.

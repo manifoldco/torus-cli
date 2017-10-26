@@ -53,7 +53,7 @@ A policy contains rules about which actions can be taken on specific resources. 
 
 Each default team has its own default policy, and can have additional policies attached to the team. You can view the [complete default policies here](../concepts/policies.md), in short:
 
-**Member team:** cannot manage resources, can set credentials in their own "dev-username" environment and share credentials through the "dev-\*"  
+**Member team:** cannot manage resources, can set credentials in their own "dev-username" environment and share credentials through the "dev-\*"
 environment.
 
 **Admin team:** has mostly full access. Can manage all resources: teams, policies, projects, environments, etc. Cannot add members to "owner" team.
@@ -66,33 +66,40 @@ Each command within this group must be supplied an Organization flag using `--or
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
 `torus policies list` displays all available policies for the specified organization.
-  
-Each row has a name, type (system or member), and list of teams the policy is attached to.  
+
+Each row has a name, type (system or member), and list of teams and machine roles the policy is attached to.
 
 ### view
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus policies view <name>` displays all of the rules within the named policy.  
+`torus policies view <name>` displays all of the rules within the named policy.
 
 Each row has the effect (allow or deny), the list of actions (crudl - create, read, update, delete, list), and the resource path.
 
 ### detach
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus policies detach <name> <team|role>` detaches the policy (identified by name) from the given team (or role).
+`torus policies detach <name> <team|machine-role>` detaches the policy (identified by name) from the given team (or machine role).
 
 This enables you to lift restrictions (or grants) from a team.
+
+### attach
+###### [v0.26.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+
+`torus policies attach <name> <team|machine-role>` attaches the policy (identified by the poliy name) to the given team (or machine role).
+
+This enables you to re-use policies by attaching one to multiple teams and machine roles.
 
 ## allow
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus allow <crudl> <path> <team|role>` generates a new policy and attaches it to the given team (or role). The policy created is given a generated name.
+`torus allow <crudl> <path> <team|machine-role>` generates a new policy and attaches it to the given team (or machine role). The policy created is given a generated name.
 
 CRUDL (create, read, update, delete, list) represents the actions that are being granted. The supplied Path represents the resource that you are enabling the aforementioned actions on.
 
 ## deny
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus deny <crudl> <path> <team|role>` generates a new policy and attaches it to the given team (or role). The policy created is given a generated name.
+`torus deny <crudl> <path> <team|machine-role>` generates a new policy and attaches it to the given team (or machine role). The policy created is given a generated name.
 
 CRUDL (create, read, update, delete, list) represents the actions that are being denied (or restricted). The supplied Path represents the resource that you are disabling the aforementioned actions on.
