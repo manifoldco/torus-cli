@@ -33,6 +33,12 @@ func (p *PoliciesClient) Create(ctx context.Context, policy *primitive.Policy) (
 	return &res, err
 }
 
+// Delete destroys the policy for the given ID
+func (p *PoliciesClient) Delete(ctx context.Context, policyID *identity.ID) error {
+	url := "/policies/" + policyID.String()
+	return p.client.RoundTrip(ctx, "DELETE", url, nil, nil, nil)
+}
+
 // List retrieves relevant policiies by orgID and/or name
 func (p *PoliciesClient) List(ctx context.Context, orgID *identity.ID, name string) ([]envelope.Policy, error) {
 	v := &url.Values{}

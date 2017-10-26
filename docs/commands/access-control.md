@@ -15,6 +15,14 @@ The creator of the organization is automatically added to all three teams. Anyon
 
 Only users who are a member of the "admin" team can manage resources within an organization.
 
+### Command Options
+
+All teams commands accept the following flags:
+
+  Option | Description
+  ---- | ----
+  --org, ORG, -o ORG | The org the team or teams belong to
+
 ### create
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
@@ -62,6 +70,14 @@ environment.
 
 Each command within this group must be supplied an Organization flag using `--org <name>`, or `-o <name>` for short. The organization can also be supplied by executing these commands within a [linked directory](./project-structure.md#link).
 
+### Command Options
+
+All policies commands accept the following flags:
+
+  Option | Description
+  ---- | ----
+  --org, ORG, -o ORG | The org the policy or policies belong to
+
 ### list
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
@@ -76,6 +92,13 @@ Each row has a name, type (system or member), and list of teams and machine role
 
 Each row has the effect (allow or deny), the list of actions (crudl - create, read, update, delete, list), and the resource path.
 
+### attach
+###### Added [v0.26.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+
+`torus policies attach <name> <team|machine-role>` attaches the policy (identified by the poliy name) to the given team (or machine role).
+
+This enables you to re-use policies by attaching one to multiple teams and machine roles.
+
 ### detach
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
@@ -83,12 +106,20 @@ Each row has the effect (allow or deny), the list of actions (crudl - create, re
 
 This enables you to lift restrictions (or grants) from a team.
 
-### attach
-###### [v0.26.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+### delete
+###### Added [v0.26.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus policies attach <name> <team|machine-role>` attaches the policy (identified by the poliy name) to the given team (or machine role).
+`torus policies delete <name>` deletes a policy and all of it's attachments (identified by name) from the given org.
 
-This enables you to re-use policies by attaching one to multiple teams and machine roles.
+This enables you to permanently delete a policy from an organization.
+
+#### Command Options
+
+The delete command accepts the following additional flags:
+
+  Option | Description
+  ----   | -----
+  --yes, -y | Automatically accept the confirm dialog
 
 ## allow
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -101,8 +132,11 @@ If a name (`--name` flag) is not provided, one will be automatically generated.
 
 #### Command Options
 
+The `allow` command accepts the following flags:
+
   Option | Description
   ----   | -----
+  --org ORG, -o ORG | The org to generate the policy for
   --name NAME, -n NAME | The name to give the generated policy (e.g. allow-prod-env)
   --description DESCRIPTION, -d DESCRIPTION | A sentence or two explaining the purpose of the policy
 
@@ -126,8 +160,11 @@ If a name (`--name` flag) is not provided, one will be automatically generated.
 
 #### Command Options
 
+The `deny` command accepts the following flags:
+
   Option | Description
   ----   | -----
+  --org ORG, -o ORG | The org to generate the policy for
   --name NAME, -n NAME | The name to give the generated policy (e.g. allow-prod-env)
   --description DESCRIPTION, -d DESCRIPTION | A sentence or two explaining the purpose of the policy
 
