@@ -89,6 +89,7 @@ func init() {
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, testPolicies,
 				),
+				Hidden: true,
 			},
 		},
 	}
