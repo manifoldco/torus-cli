@@ -97,9 +97,37 @@ This enables you to re-use policies by attaching one to multiple teams and machi
 
 CRUDL (create, read, update, delete, list) represents the actions that are being granted. The supplied Path represents the resource that you are enabling the aforementioned actions on.
 
+If a name (`--name` flag) is not provided, one will be automatically generated.
+
+#### Command Options
+
+  Option | Description
+  ----   | -----
+  --name NAME, -n NAME | The name to give the generated policy (e.g. allow-prod-env)
+  --description DESCRIPTION, -d DESCRIPTION | A sentence or two explaining the purpose of the policy
+
+**Example**
+
+```bash
+# Create a policy allowing it's subjects to read secrets from prod environment
+# in the api project which belongs to the myorg organization and attach it to
+# the api-prod-machines machine role.
+$ torus allow -n read-api-prod-env rl /myorg/api/prod/*/*/*/* api-prod-machines
+```
+
 ## deny
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
 `torus deny <crudl> <path> <team|machine-role>` generates a new policy and attaches it to the given team (or machine role). The policy created is given a generated name.
 
 CRUDL (create, read, update, delete, list) represents the actions that are being denied (or restricted). The supplied Path represents the resource that you are disabling the aforementioned actions on.
+
+If a name (`--name` flag) is not provided, one will be automatically generated.
+
+#### Command Options
+
+  Option | Description
+  ----   | -----
+  --name NAME, -n NAME | The name to give the generated policy (e.g. allow-prod-env)
+  --description DESCRIPTION, -d DESCRIPTION | A sentence or two explaining the purpose of the policy
+

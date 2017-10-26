@@ -8,6 +8,9 @@ _Unreleased_
 
 - Introduced `torus policies attach` allowing a user to attach a policy to
   multiple teams or machine roles.
+- When generating a policy using `torus allow` or `torus deny` you can now
+  specify it's name and description using the `--name` and `--description`
+  flags.
 
 ## v0.25.2
 

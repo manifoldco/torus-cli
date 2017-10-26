@@ -23,6 +23,15 @@ func Slug(input, fieldName string, errorMessage *string) error {
 	return errors.New(msg)
 }
 
+// Description validates whether the input meets the descriptin requirements
+func Description(input, fieldName string) error {
+	if len(input) <= 500 {
+		return nil
+	}
+
+	return errors.New(fieldName + " descriptions must be less than 500 characters")
+}
+
 // Email validates whether the input is a valid email format
 func Email(input string) error {
 	if govalidator.IsEmail(input) {
