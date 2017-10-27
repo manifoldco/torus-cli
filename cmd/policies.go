@@ -20,6 +20,7 @@ import (
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/validate"
 )
 
 func init() {
@@ -79,6 +80,20 @@ func init() {
 			},
 
 			{
+				Name:      "delete",
+				Usage:     "Delete a policy from the organization",
+				ArgsUsage: "<name>",
+				Flags: []cli.Flag{
+					stdAutoAcceptFlag,
+					orgFlag("The org the policy belongs to", true),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, deletePolicyCmd,
+				),
+			},
+
+			{
 				Name:      "test",
 				Usage:     "Test a user's access to a path",
 				ArgsUsage: "<c|r|u|d|l> <username> <path>",
@@ -89,6 +104,7 @@ func init() {
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, testPolicies,
 				),
+				Hidden: true,
 			},
 		},
 	}
@@ -97,6 +113,7 @@ func init() {
 
 const policyDetachFailed = "Could not detach policy."
 const policyAttachFailed = "Could not attach policy."
+const policyDeleteFailed = "Could not delete policy."
 
 func attachPolicyCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
@@ -113,6 +130,13 @@ func attachPolicyCmd(ctx *cli.Context) error {
 
 	policyName := args[0]
 	teamName := args[1]
+
+	if err := validate.Slug(policyName, "policy", nil); err != nil {
+		return errs.NewUsageExitError("Invalid policy name provided", ctx)
+	}
+	if err := validate.Slug(teamName, "team", nil); err != nil {
+		return errs.NewUsageExitError("Invalid team name provided", ctx)
+	}
 
 	client := api.NewClient(cfg)
 	c := context.Background()
@@ -208,6 +232,13 @@ func detachPolicyCmd(ctx *cli.Context) error {
 	policyName := args[0]
 	teamName := args[1]
 
+	if err := validate.Slug(policyName, "policy", nil); err != nil {
+		return errs.NewUsageExitError("Invalid policy name provided", ctx)
+	}
+	if err := validate.Slug(teamName, "team", nil); err != nil {
+		return errs.NewUsageExitError("Invalid team name provided", ctx)
+	}
+
 	client := api.NewClient(cfg)
 	c := context.Background()
 
@@ -238,6 +269,59 @@ func detachPolicyCmd(ctx *cli.Context) error {
 }
 
 const policyListFailed = "Could not list policies."
+
+func deletePolicyCmd(ctx *cli.Context) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	args := ctx.Args()
+	if len(args) != 1 {
+		return errs.NewUsageExitError("A policy name must be provided", ctx)
+	}
+
+	policyName := args[0]
+	if err := validate.Slug(policyName, "policy", nil); err != nil {
+		return errs.NewUsageExitError("Invalid policy name provided", ctx)
+	}
+
+	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	if err != nil {
+		return errs.NewErrorExitError(policyDeleteFailed, err)
+	}
+	if org == nil {
+		return errs.NewExitError("Org not found.")
+	}
+
+	policies, err := client.Policies.List(c, org.ID, policyName)
+	if err != nil {
+		return errs.NewErrorExitError(policyDeleteFailed, err)
+	}
+
+	if len(policies) == 0 {
+		return errs.NewExitError("Policy not found.")
+	}
+
+	policy := policies[0]
+	preamble := fmt.Sprintf("You are about to delete the %s policy and all "+
+		"of it's attachments. This cannot be undone.", policyName)
+	err = ConfirmDialogue(ctx, nil, &preamble, "", true) // Will error if user does not confirm
+	if err != nil {
+		return err
+	}
+
+	err = client.Policies.Delete(c, policy.ID)
+	if err != nil {
+		return errs.NewErrorExitError(policyDeleteFailed, err)
+	}
+
+	fmt.Printf("\nPolicy %s and all of it's attachments have been deleted.\n", policyName)
+	return nil
+}
 
 func listPoliciesCmd(ctx *cli.Context) error {
 	cfg, err := config.LoadConfig()
@@ -344,6 +428,11 @@ func viewPolicyCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError(msg, ctx)
 	}
 
+	policyName := args[0]
+	if err := validate.Slug(policyName, "policy", nil); err != nil {
+		return errs.NewUsageExitError("Invalid policy name provided", ctx)
+	}
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -360,13 +449,13 @@ func viewPolicyCmd(ctx *cli.Context) error {
 		return errs.NewExitError("Org not found.")
 	}
 
-	policies, err := client.Policies.List(c, org.ID, args[0])
+	policies, err := client.Policies.List(c, org.ID, policyName)
 	if err != nil {
 		return errs.NewExitError("Unable to list policies.")
 	}
 
 	if len(policies) < 1 {
-		return errs.NewExitError("Policy '" + args[0] + "' not found.")
+		return errs.NewExitError("Policy '" + policyName + "' not found.")
 	}
 
 	policy := policies[0]

@@ -8,6 +8,8 @@ _Unreleased_
 
 - Introduced `torus policies attach` allowing a user to attach a policy to
   multiple teams or machine roles.
+- Introduced `torus policies delete` allowing a user to delete a policy and all
+  of it's attachment from an org. System policies cannot be deleted.
 - When generating a policy using `torus allow` or `torus deny` you can now
   specify it's name and description using the `--name` and `--description`
   flags.
