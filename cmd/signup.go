@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/ui"
 
 	"github.com/urfave/cli"
 )
@@ -77,6 +78,8 @@ func signup(ctx *cli.Context, subCommand bool) error {
 		}
 	}
 
+	reminderLabel := "Reminder: "
+	ui.Hint("Don't forget to keep your password safe and secure! You can't recover your account if your password lost.", false, &reminderLabel)
 	password, err := PasswordPrompt(true, nil)
 	if err != nil {
 		return err

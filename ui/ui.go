@@ -80,10 +80,10 @@ func (u *UI) LineIndent(indent int, format string, a ...interface{}) {
 }
 
 // Hint calls hint on the default UI
-func Hint(str string, noPadding bool) { defUI.Hint(str, noPadding) }
+func Hint(str string, noPadding bool, label *string) { defUI.Hint(str, noPadding, label) }
 
 // Hint handles the ui output for hint/onboarding messages, when enabled
-func (u *UI) Hint(str string, noPadding bool) {
+func (u *UI) Hint(str string, noPadding bool, label *string) {
 	if !u.EnableHints {
 		return
 	}
@@ -96,9 +96,12 @@ func (u *UI) Hint(str string, noPadding bool) {
 		fmt.Println()
 	}
 
-	label := bold("Protip: ")
-	rc := ansiwrap.RuneCount(label)
-	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(label+str, u.Cols, u.Indent, u.Indent+rc))
+	hintLabel := bold("Protip: ")
+	if label != nil {
+		hintLabel = bold(*label)
+	}
+	rc := ansiwrap.RuneCount(hintLabel)
+	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(hintLabel+str, u.Cols, u.Indent, u.Indent+rc))
 }
 
 // Child calls Child on the default UI
