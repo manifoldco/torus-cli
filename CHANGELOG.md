@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+## v0.26.0
+
+_2017-10-27_
+
 **Notable Changes**
 
 - Introduced `torus policies attach` allowing a user to attach a policy to
@@ -21,7 +25,7 @@ _Unreleased_
 
 ## v0.25.2
 
-_2017-1019_
+_2017-10-19_
 
 **Fixes**
 
