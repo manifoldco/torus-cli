@@ -136,7 +136,7 @@ func NewPreferences() (*Preferences, error) {
 			Context:            true,
 			EnableHints:        true,
 			EnableProgress:     true,
-			EnableCheckUpdates: false,
+			EnableCheckUpdates: true,
 		},
 	}
 
