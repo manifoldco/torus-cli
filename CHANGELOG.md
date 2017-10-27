@@ -12,7 +12,7 @@ _Unreleased_
   of it's attachment from an org. System policies cannot be deleted.
 - When generating a policy using `torus allow` or `torus deny` you can now
   specify it's name and description using the `--name` and `--description`
-  flags.
+  flags. If no description is provided, one will be generated.
 
 **Fixes**
 
