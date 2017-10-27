@@ -14,6 +14,11 @@ _Unreleased_
   specify it's name and description using the `--name` and `--description`
   flags.
 
+**Fixes**
+
+- Clarify the behaviour of the `--environment`, `--service`, `--instance`,
+  `--user`, and `--machine` flags when reading or writing secrets.
+
 ## v0.25.2
 
 _2017-1019_
