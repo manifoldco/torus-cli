@@ -46,6 +46,14 @@ func allowCmd(ctx *cli.Context) error {
 }
 
 func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.PolicyAction) error {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
 	args := ctx.Args()
 	if len(args) != 3 {
 		msg := "permissions, path, and team are required."
@@ -74,6 +82,15 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	if name == "" {
 		name = fmt.Sprintf("generated-%s-%d", effect.String(), time.Now().Unix())
 	}
+	if description == "" {
+		session, err := client.Session.Who(c)
+		if err != nil {
+			return errs.NewErrorExitError("Error fetching identity", err)
+		}
+
+		description = fmt.Sprintf("Generated on %s by %s",
+			time.Now().Format(time.RFC822Z), session.Username())
+	}
 
 	if err := validate.Slug(name, "policy", nil); err != nil {
 		return errs.NewErrorExitError("Invalid name provided.", err)
@@ -81,14 +98,6 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	if err := validate.Description(description, "policy"); err != nil {
 		return errs.NewErrorExitError("Invalid description provided.", err)
 	}
-
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
-
-	client := api.NewClient(cfg)
-	c := context.Background()
 
 	org, err := client.Orgs.GetByName(c, pe.Org.String())
 	if err != nil {
