@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+**Fixes**
+
+- Users are now reminded to keep their password safe and secure during `torus signup`.
+
 ## v0.26.0
 
 _2017-10-27_

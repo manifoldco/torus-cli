@@ -113,7 +113,7 @@ func init() {
 func Display(possible ...Cmd) {
 	hint := randHint(possible)
 	if hint != "" {
-		ui.Hint(hint, false)
+		ui.Hint(hint, false, nil)
 	}
 }
 
