@@ -11,11 +11,13 @@ Torus exposes your decrypted secrets to your process through environment variabl
   ---- | ----
   --org, ORG, -o ORG | Executing the command for the specified org.
   --project PROJECT, -p PROJECT | Executing the command for the specified project.
-  --environment ENV, -e ENV | Executing the command for the specified environment. Can be specified multiple times.
+  --environment ENV, -e ENV | Executing the command for the specified environment.
   --service SERVICE, -s SERVICE | Execute the command for the specified environment. (default: default)
   --user USER, -u USER | Execute the command for the specified user identity. (default: *)
   --machine MACHINE, -m MACHINE | Execute the command for the specified machine identity. (default: *)
   --instance INSTANCE, -i INSTANCE | Execute the command for the specified instance identity. (default: *)
+
+The `--environment`, `--service`, `--user`, `--machine`, and `--instance` flags can be specified many times when setting, unsetting, or importing secrets.
 
 ## set
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -24,6 +26,74 @@ Torus exposes your decrypted secrets to your process through environment variabl
 for the specified name (or [path](../concepts/path.md)).
 
 This is how all secrets are stored in Torus.
+
+#### Examples
+
+**Using flags**
+
+```bash
+# Setting the port for the production auth service inside myorg's api project.
+$ torus set -o myorg -p api -e production -s auth PORT 3000
+
+Credentials retrieved
+Keypairs retrieved
+Encrypting key retrieved
+Credential encrypted
+Completed Operation
+
+Credential PORT has been set at /myorg/api/production/auth/*/*/PORT
+```
+
+**Using flags inside a linked directory**
+
+You can link a directory to an org and project using the [`torus link`](./project-structure.md) command. Once a directory is linked, you only need to specify the flags you want to override.
+
+```bash
+# Setting the port for the auth service in staging
+$ torus set -e staging -s auth PORT 8080
+
+Credentials retrieved
+Keypairs retrieved
+Encrypting key retrieved
+Credential encrypted
+Completed Operation
+
+Credential PORT has been set at /myorg/api/staging/auth/*/*/PORT
+```
+
+**Using multiple flags to share a secret between environments**
+
+You can specify the environment, service, user, machine, and instance flags many times to share a secret.
+
+```bash
+# Setting the same port for production and staging for the auth service
+$ torus set -e production -e staging -s auth PORT 8080
+
+Credentials retrieved
+Keypairs retrieved
+Encrypting key retrieved
+Credential encrypted
+Completed Operation
+
+Credential PORT has been set at /myorg/api/[production|staging]/auth/*/*/PORT
+```
+
+**Setting a secret with a `*` value**
+
+You can set a secret to be shared across all environments, or services by specifying a value of `*`. For example, if you set an environment to be `*` then any environment (production, staging, dev, etc) will have access to the value.
+
+```bash
+# Setting the same port across all environments for the auth service
+$ torus set -e * -s auth PORT 8080
+
+Credentials retrieved
+Keypairs retrieved
+Encrypting key retrieved
+Credential encrypted
+Completed Operation
+
+Credential PORT has been set at /myorg/api/[production|staging]/auth/*/*/PORT
+```
 
 ## unset
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -37,7 +107,7 @@ This is how all secrets are stored in Torus.
 
 **Example**
 
-```
+```bash
 $ cat prod.env
 PORT=4000
 DOMAIN=mydomain.co
@@ -52,8 +122,8 @@ Credential encrypted
 Credential encrypted
 Completed Operation
 
-Credential x has been set at /myorg/myproject/production/default/*/*/PORT
-Credential b has been set at /myorg/myproject/production/default/*/*/MYSQL_URL
+Credential port has been set at /myorg/myproject/production/default/*/*/PORT
+Credential mysql_url has been set at /myorg/myproject/production/default/*/*/MYSQL_URL
 ```
 
 ## view
@@ -80,7 +150,8 @@ By prefixing your process execution with `torus run` we are able to fetch, decry
 To ensure that your command’s arguments and options are passed correctly you may need to separate your `torus run` definition from your command definition with `--`, for example:
 
 ```
-torus run -o example -- node ./bin/www --app api
+# Inject secrets into the process from the production environment and www service.
+$ torus run -e production -s www -- node ./bin/www --app api
 ```
 
 ## ls
