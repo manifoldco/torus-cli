@@ -20,6 +20,9 @@ const (
 	// Deny command adds hint to `torus deny`
 	Deny
 
+	// GettingStarted displays helpful hints when a user signs up
+	GettingStarted
+
 	// Import command adds hint to `torus import`
 	Import
 
@@ -66,6 +69,9 @@ func init() {
 	commandHints = map[Cmd][]string{
 		Allow: {
 			"Grant additional access to secrets for a team or role using `torus allow`",
+		},
+		GettingStarted: {
+			"Link your code repository to an org and project by generating a .torus.json file using the `torus link` command! Share this linking with your teammates by committing to the repository.",
 		},
 		Context: {
 			"Your linked organization and project are found in .torus.json after running `torus link`",

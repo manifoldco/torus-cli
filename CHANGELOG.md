@@ -7,6 +7,9 @@ _Unreleased_
 **Fixes**
 
 - Users are now reminded to keep their password safe and secure during `torus signup`.
+- No longer prompt to enable or disable hints during signup, instead always enable them.
+- Actually set the default value of the `core.check_updates` preference to `true`
+- Add a tip after signup to generate a `.torus.json` file using `torus link`
 
 ## v0.26.0
 
