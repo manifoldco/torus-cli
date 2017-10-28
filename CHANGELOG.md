@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+## v0.26.1
+
+_2017-10-28_
+
 **Fixes**
 
 - `torus import` will now use the provided key instead of the value
