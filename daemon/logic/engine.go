@@ -173,7 +173,7 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 		// Derive a key for the credential using the keyring master key
 		// and use the derived key to encrypt the credential
 		cekNonce, ctNonce, ct, err := e.crypto.BoxCredential(
-			ctx, []byte(cred.Body.Value), *mekshare.Key.Value, *mekshare.Key.Nonce,
+			ctx, []byte(c.Body.Value), *mekshare.Key.Value, *mekshare.Key.Nonce,
 			&kp.Encryption, *encryptingKey.Key.Value)
 		if err != nil {
 			log.Printf("Error encrypting credential: %s", err)

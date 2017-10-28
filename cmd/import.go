@@ -50,9 +50,11 @@ func importCmd(ctx *cli.Context) error {
 
 	makers := valueMakers{}
 	for _, secret := range secrets {
-		makers[secret.key] = func() *apitypes.CredentialValue {
-			return apitypes.NewStringCredentialValue(secret.value)
-		}
+		makers[secret.key] = func(value string) valueMaker {
+			return func() *apitypes.CredentialValue {
+				return apitypes.NewStringCredentialValue(value)
+			}
+		}(secret.value)
 	}
 
 	creds, err := setCredentials(ctx, path, makers)
