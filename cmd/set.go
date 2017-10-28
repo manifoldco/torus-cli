@@ -155,7 +155,8 @@ func determinePathFromFlags(ctx *cli.Context) (*pathexp.PathExp, error) {
 	)
 }
 
-type valueMakers map[string](func() *apitypes.CredentialValue)
+type valueMaker func() *apitypes.CredentialValue
+type valueMakers map[string]valueMaker
 
 func setCredentials(ctx *cli.Context, pe *pathexp.PathExp, makers valueMakers) ([]apitypes.CredentialEnvelope, error) {
 	cfg, err := config.LoadConfig()
