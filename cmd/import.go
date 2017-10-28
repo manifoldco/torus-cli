@@ -50,7 +50,7 @@ func importCmd(ctx *cli.Context) error {
 
 	makers := valueMakers{}
 	for _, secret := range secrets {
-		makers[secret.value] = func() *apitypes.CredentialValue {
+		makers[secret.key] = func() *apitypes.CredentialValue {
 			return apitypes.NewStringCredentialValue(secret.value)
 		}
 	}
