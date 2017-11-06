@@ -4,6 +4,10 @@
 
 _Unreleased_
 
+**Fixes**
+
+- Request timeout to the server has been increased from 6s to 60s.
+
 ## v0.26.1
 
 _2017-10-28_

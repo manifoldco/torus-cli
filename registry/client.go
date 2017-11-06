@@ -124,7 +124,7 @@ func (rt *registryRoundTripper) NewRequest(method, path string,
 func (rt *registryRoundTripper) Do(ctx context.Context, r *http.Request,
 	v interface{}) (*http.Response, error) {
 
-	ctx, cancelFunc := context.WithTimeout(ctx, 6*time.Second)
+	ctx, cancelFunc := context.WithTimeout(ctx, 60*time.Second)
 	r = r.WithContext(ctx)
 	defer cancelFunc()
 
