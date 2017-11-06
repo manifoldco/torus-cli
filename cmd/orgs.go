@@ -246,9 +246,6 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	var getMembers sync.WaitGroup
-	getMembers.Add(2)
-
 	var org *envelope.Org
 	var orgs []envelope.Org
 	var team envelope.Team
@@ -269,7 +266,8 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 			return oErr
 		}
 
-		idx, _, oErr := SelectOrgPrompt(orgs)
+		//idx, _, oErr := SelectOrgPrompt(orgs)
+		idx, _, oErr := SelectExistingOrgPrompt(orgs)
 		if oErr != nil {
 			return oErr
 		}
@@ -280,48 +278,34 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 		}
 
 		org = &orgs[idx]
+	} else {
+		// If org flag was used, identify the org supplied.
+		org, oErr = client.Orgs.GetByName(c, orgFlagArgument)
+		if org == nil {
+			return oErr
+		}
 	}
 
-	go func() {
-		// If org flag was used, identify the org supplied.
-		if orgFlagArgument != "" {
-			org, oErr = client.Orgs.GetByName(c, orgFlagArgument)
-			if org == nil {
-				oErr = errs.NewExitError("Org not found.")
-				return
-			}
-		}
+	// Retrieve the team by name supplied
+	teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
+	if len(teams) != 1 {
+		return tErr
+	}
+	team = teams[0]
 
-		// Retrieve the team by name supplied
-		teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
-		if len(teams) != 1 {
-			tErr = errs.NewExitError("Team not found.")
-			getMembers.Done()
-			return
-		}
-		team = teams[0]
+	// Hide machine teams from the teams list; as we use them to represent
+	// machine roles in the system.
+	if isMachineTeam(team.Body) {
+		return tErr
+	}
 
-		// Hide machine teams from the teams list; as we use them to represent
-		// machine roles in the system.
-		if isMachineTeam(team.Body) {
-			tErr = errs.NewExitError("Team not found.")
-			getMembers.Done()
-			return
-		}
-
-		// Pull all memberships for supplied org/team
-		memberships, mErr = client.Memberships.List(c, org.ID, team.ID, nil)
-		getMembers.Done()
-	}()
+	// Pull all memberships for supplied org/team
+	memberships, mErr = client.Memberships.List(c, org.ID, team.ID, nil)
 
 	var session *api.Session
-	go func() {
-		// Who am I
-		session, sErr = client.Session.Who(c)
-		getMembers.Done()
-	}()
+	// Who am I
+	session, sErr = client.Session.Who(c)
 
-	getMembers.Wait()
 	if oErr != nil || mErr != nil || tErr != nil {
 		return cli.NewMultiError(
 			oErr,
