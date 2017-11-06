@@ -82,7 +82,7 @@ func TestCredentialSet(t *testing.T) {
 		t.Fatal("Unable to decode credential value: " + err.Error())
 	}
 
-	t.Run("unset is ignored", func(t *testing.T) {
+	t.Run("v2 unset results in an error", func(t *testing.T) {
 		cset := credentialSet{}
 
 		// Version two unset credential
@@ -98,21 +98,32 @@ func TestCredentialSet(t *testing.T) {
 		}
 		cBody = &cBodyV2
 		cred := apitypes.CredentialEnvelope{Body: &cBody}
-		cset.Add(cred)
 
-		// Version one unset credential
-		path, _ = pathexp.Parse("/o/p/e/s/u/i")
+		err := cset.Add(cred)
+		if err == nil {
+			t.Error("Expect an error to be returned")
+		}
+	})
+
+	t.Run("v1 unset results in an error", func(t *testing.T) {
+		cset := credentialSet{}
+
+		path, _ := pathexp.Parse("/o/p/e/s/u/i")
 		cBodyV1 := apitypes.BaseCredential{
 			Name:    "nothing",
 			PathExp: path,
 			Value:   unset,
 		}
-		cBody = &cBodyV1
-		cred = apitypes.CredentialEnvelope{Body: &cBody}
-		cset.Add(cred)
+		var cBody apitypes.Credential = &cBodyV1
+		cred := apitypes.CredentialEnvelope{Body: &cBody}
+
+		err := cset.Add(cred)
+		if err == nil {
+			t.Error("Expect an error to be returned")
+		}
 
 		if len(cset.ToSlice()) != 0 {
-			t.Error("Unset credential was added to set")
+			t.Error("Expect an empty slice to be returned")
 		}
 	})
 
@@ -165,7 +176,6 @@ func TestCredentialSet(t *testing.T) {
 	})
 
 	t.Run("output is sorted", func(t *testing.T) {
-
 		makeCred := func(name string) apitypes.CredentialEnvelope {
 			path, _ := pathexp.Parse("/o/p/e/s/*/i")
 			var cBody apitypes.Credential

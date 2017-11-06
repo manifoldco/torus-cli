@@ -174,7 +174,9 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 
 	cset := credentialSet{}
 	for _, c := range secrets {
-		cset.Add(c)
+		if err := cset.Add(c); err != nil {
+			return nil, "", errs.NewErrorExitError("Error compacting secrets", err)
+		}
 	}
 
 	return cset.ToSlice(), path, nil
