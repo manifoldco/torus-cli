@@ -695,3 +695,16 @@ func getKeyringMembers(ctx context.Context, client *registry.Client,
 
 	return members, nil
 }
+
+func ignoreUnset(creds []envelope.CredentialInf) []envelope.CredentialInf {
+	out := []envelope.CredentialInf{}
+	for _, c := range creds {
+		if c.Unset() {
+			continue
+		}
+
+		out = append(out, c)
+	}
+
+	return out
+}
