@@ -143,7 +143,7 @@ func requestIDHandler(next http.Handler) http.Handler {
 // returning a custom error response.
 func proxyCanceler(proxy http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx, cancelFunc := context.WithTimeout(context.Background(), 6*time.Second)
+		ctx, cancelFunc := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancelFunc()
 
 		cw := cancelingProxyResponseWriter{
