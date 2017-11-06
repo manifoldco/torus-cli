@@ -5,6 +5,7 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 
 	"github.com/manifoldco/go-base64"
@@ -239,6 +240,8 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 		return nil, err
 	}
 
+	// Prune removes all unactive graphs (those without a head credential) and
+	// unset credentials.
 	activeGraphs, err := cgs.Prune()
 	if err != nil {
 		return nil, err
@@ -290,17 +293,28 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 
 		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
 			for _, cred := range graph.GetCredentials() {
-				state := "set"
-				if cred.Unset() {
-					state = "unset"
-				}
-
 				pt, err := u.Unbox(ctx, *cred.Credential().Value, *cred.Nonce(), *cred.Credential().Nonce)
 				if err != nil {
 					log.Printf("Error decrypting credential: %s", err)
 					return err
 				}
 
+				// If this is a v1 credential, then we need to unmarshal the
+				// plain text value to check whether or not we should return
+				// the credentials.
+				if cred.GetVersion() == 1 {
+					cValue := apitypes.CredentialValue{}
+					err = json.Unmarshal(pt, &cValue)
+					if err != nil {
+						return err
+					}
+
+					if cValue.IsUnset() {
+						continue
+					}
+				}
+
+				state := "set"
 				plainCred := PlaintextCredentialEnvelope{
 					ID:      cred.GetID(),
 					Version: cred.GetVersion(),
@@ -313,6 +327,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 						State:     &state,
 					},
 				}
+
 				creds = append(creds, plainCred)
 
 				n.Notify(observer.Progress, "Credential decrypted", true)

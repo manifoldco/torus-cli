@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"sort"
 
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -17,10 +18,10 @@ type credentialSet map[string]*apitypes.CredentialEnvelope
 // Add adds a credential to the credentialSet, replacing an existing credential
 // of the same name, if the new credential is more specific.
 //
-// If the added credential is an unset value, it is summarily ignored.
-func (c credentialSet) Add(cred apitypes.CredentialEnvelope) {
+// If the added credential is an unset value, it is ignored.
+func (c credentialSet) Add(cred apitypes.CredentialEnvelope) error {
 	if (*cred.Body).GetValue() == nil {
-		return
+		return errors.New("Cannot add an unset credential")
 	}
 
 	name := (*cred.Body).GetName()
@@ -29,11 +30,12 @@ func (c credentialSet) Add(cred apitypes.CredentialEnvelope) {
 		// the existing one. Keep the existing one.
 		eBody := *existing.Body
 		if (*cred.Body).GetPathExp().CompareSpecificity(eBody.GetPathExp()) != 1 {
-			return
+			return nil
 		}
 	}
 
 	c[name] = &cred
+	return nil
 }
 
 // ToSlice returns a slice of the credentials in the set, in lexicographically
