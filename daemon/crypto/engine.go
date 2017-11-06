@@ -291,6 +291,45 @@ func (e *Engine) UnboxCredential(ctx context.Context, ct, encMec, mecNonce,
 	return pt, nil
 }
 
+// Unsealer providers an interface to unbox public encryption keypairs using
+// the users master encryption key
+type Unsealer interface {
+	WithUnboxer(context.Context, []byte, []byte, func(Unboxer) error) error
+}
+
+type unsealerImpl struct {
+	privkey []byte
+	pubkey  []byte
+}
+
+// WithUnboxer returns an Unboxer for unboxing credentials tied to the unsealed
+// keypairs.
+func (u *unsealerImpl) WithUnboxer(ctx context.Context, encMec, mecNonce []byte,
+	fn func(Unboxer) error) error {
+
+	nonce := [24]byte{}
+	copy(nonce[:], mecNonce)
+
+	privkb := [32]byte{}
+	copy(privkb[:], u.privkey)
+
+	pubkb := [32]byte{}
+	copy(pubkb[:], u.pubkey)
+
+	err := ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return err
+	}
+
+	mek, success := box.Open([]byte{}, encMec, &nonce, &pubkb, &privkb)
+	if !success {
+		return errors.New("Failed to decrypt keyring")
+	}
+
+	unboxer := unboxerImpl{mek: mek}
+	return fn(&unboxer)
+}
+
 // Unboxer provides an interface to unbox credentials, within the context
 type Unboxer interface {
 	Unbox(context.Context, []byte, []byte, []byte) ([]byte, error)
@@ -342,6 +381,25 @@ func (e *Engine) WithUnboxer(ctx context.Context, encMec, mecNonce []byte,
 
 	u := unboxerImpl{mek: mek}
 
+	return fn(&u)
+}
+
+// WithUnsealer returns an Unsealer to unseal keypairs which can
+// subsequentently perform crypto operations through the Unsealer interface.
+func (e *Engine) WithUnsealer(ctx context.Context, privKP *EncryptionKeyPair,
+	pubKey []byte, fn func(Unsealer) error) error {
+
+	privKey, err := e.Unseal(ctx, privKP.Private, privKP.PNonce)
+	if err != nil {
+		return err
+	}
+
+	err = ctxutil.ErrIfDone(ctx)
+	if err != nil {
+		return err
+	}
+
+	u := unsealerImpl{privkey: privKey, pubkey: pubKey}
 	return fn(&u)
 }
 
