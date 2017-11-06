@@ -3,7 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
+	"text/tabwriter"
+	"unicode/utf8"
 
 	"github.com/urfave/cli"
 
@@ -13,6 +18,8 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
+	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/promptui"
 )
 
 func init() {
@@ -42,6 +49,17 @@ func init() {
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
 					setUserEnv, checkRequiredFlags, orgsRemove,
+				),
+			},
+			{
+				Name:  "members",
+				Usage: "List all members in an org",
+				Flags: []cli.Flag{
+					orgFlag("Use this organization.", false),
+				},
+				Action: chain(
+					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+					setUserEnv, checkRequiredFlags, orgsMembersListCmd,
 				),
 			},
 		},
@@ -212,6 +230,148 @@ func orgsRemove(ctx *cli.Context) error {
 	}
 
 	fmt.Println("User has been removed from the org.")
+	return nil
+}
+
+func orgsMembersListCmd(ctx *cli.Context) error {
+
+	// Use "member" team name to bypass specific teams
+	teamName := "member"
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	var getMembers sync.WaitGroup
+	getMembers.Add(2)
+
+	var org *envelope.Org
+	var orgs []envelope.Org
+	var team envelope.Team
+	var teams []envelope.Team
+	var memberships []envelope.Membership
+	var oErr, tErr, mErr, sErr error
+
+	// Retrieve the org name supplied via the --org flag.
+	// This flag is optional. If none was supplied, then
+	// orgFlagArgument will be set to "". In this case,
+	// prompt the user to select an org.
+	orgFlagArgument := ctx.String("org")
+
+	if orgFlagArgument == "" {
+		// Retrieve list of available orgs
+		orgs, oErr = client.Orgs.List(c)
+		if oErr != nil {
+			return oErr
+		}
+
+		idx, _, oErr := SelectOrgPrompt(orgs)
+		if oErr != nil {
+			return oErr
+		}
+
+		if idx == promptui.SelectedAdd {
+			// COME BACK TO THIS
+			// Error condition, unsure how to handle
+		}
+
+		org = &orgs[idx]
+	}
+
+	go func() {
+		// If org flag was used, identify the org supplied.
+		if orgFlagArgument != "" {
+			org, oErr = client.Orgs.GetByName(c, orgFlagArgument)
+			if org == nil {
+				oErr = errs.NewExitError("Org not found.")
+				return
+			}
+		}
+
+		// Retrieve the team by name supplied
+		teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
+		if len(teams) != 1 {
+			tErr = errs.NewExitError("Team not found.")
+			getMembers.Done()
+			return
+		}
+		team = teams[0]
+
+		// Hide machine teams from the teams list; as we use them to represent
+		// machine roles in the system.
+		if isMachineTeam(team.Body) {
+			tErr = errs.NewExitError("Team not found.")
+			getMembers.Done()
+			return
+		}
+
+		// Pull all memberships for supplied org/team
+		memberships, mErr = client.Memberships.List(c, org.ID, team.ID, nil)
+		getMembers.Done()
+	}()
+
+	var session *api.Session
+	go func() {
+		// Who am I
+		session, sErr = client.Session.Who(c)
+		getMembers.Done()
+	}()
+
+	getMembers.Wait()
+	if oErr != nil || mErr != nil || tErr != nil {
+		return cli.NewMultiError(
+			oErr,
+			mErr,
+			tErr,
+			sErr,
+		)
+	}
+
+	if len(memberships) == 0 {
+		fmt.Printf("%s has no members\n", team.Body.Name)
+		return nil
+	}
+
+	membershipUserIDs := make(map[identity.ID]bool)
+	for _, membership := range memberships {
+		membershipUserIDs[*membership.Body.OwnerID] = true
+	}
+
+	var profileIDs []identity.ID
+	for id := range membershipUserIDs {
+		profileIDs = append(profileIDs, id)
+	}
+
+	profiles, err := client.Profiles.ListByID(c, profileIDs)
+	if err != nil {
+		return err
+	}
+	if profiles == nil {
+		return errs.NewExitError("User not found.")
+	}
+
+	count := strconv.Itoa(len(memberships))
+	title := "members of the " + team.Body.Name + " team (" + count + ")"
+
+	fmt.Println("")
+	fmt.Println(title)
+	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
+
+	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
+	for _, profile := range profiles {
+		me := ""
+		if session.Username() == profile.Body.Username {
+			me = "*"
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, profile.Body.Username)
+	}
+
+	w.Flush()
+	fmt.Println("\n  (*) you")
 	return nil
 }
 
