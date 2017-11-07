@@ -4,6 +4,14 @@
 
 _Unreleased_
 
+**Notable Changes**
+
+- Significant performance increases when secrets are sourced from multiple
+  keyrings. For example if a secret is brought in from `dev-*` and `dev-user`
+  Torus will no longer unseal the private encryption key twice which leads to a
+  signficiant reduction in decryption time. Users should notice this
+  improvement when using `torus view` and `torus run`.
+
 **Fixes**
 
 - Request timeout to the server has been increased from 6s to 60s.

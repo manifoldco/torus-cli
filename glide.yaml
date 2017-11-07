@@ -45,3 +45,4 @@ import:
   version: ^1.0.0
 - package: github.com/fullsailor/pkcs7
 - package: github.com/google/shlex
+- package: github.com/onsi/gomega
