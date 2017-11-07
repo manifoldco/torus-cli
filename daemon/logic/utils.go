@@ -205,8 +205,14 @@ func newV2KeyringMember(ctx context.Context, engine *crypto.Engine,
 func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *registry.Client,
 	s session.Session, orgID, ownerID *identity.ID) ([]envelope.KeyringMemberV1, []registry.KeyringMember, error) {
 
+	keypairs, err := client.KeyPairs.List(ctx, orgID)
+	if err != nil {
+		log.Printf("could not fetch keypairs for org: %s", err)
+		return nil, nil, err
+	}
+
 	// Get this user's keypairs
-	sigID, encID, kp, err := fetchKeyPairs(ctx, client, orgID)
+	sigID, encID, kp, err := fetchKeyPairs(keypairs, orgID)
 	if err != nil {
 		log.Printf("could not fetch keypairs for org: %s", err)
 		return nil, nil, err
@@ -329,62 +335,23 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 	return v1members, v2members, nil
 }
 
-// fetchRegistryKeyPairs fetches the user's signing and encryption keypairs
-// from the registry for the given org id.
-// It returns an error if the keypairs cannot be fetched from the registry,
-// or if an invalid keypair type is seen.
-// It returns nil for keypair types that are not found.
-func fetchRegistryKeyPairs(ctx context.Context, client *registry.Client,
-	orgID *identity.ID) (*registry.ClaimedKeyPair, *registry.ClaimedKeyPair, error) {
+// fetchKeyPairs fetches and bundles the user's signing and encryption keypairs
+// from the given keypairs struct
+func fetchKeyPairs(k *registry.Keypairs, orgID *identity.ID) (
+	*identity.ID, *identity.ID, *crypto.KeyPairs, error) {
 
-	keyPairs, err := client.KeyPairs.List(ctx, orgID)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var sigClaimed *registry.ClaimedKeyPair
-	var encClaimed *registry.ClaimedKeyPair
-	for _, kp := range keyPairs {
-		var keyPair = kp
-		if keyPair.Revoked() {
-			continue
-		}
-
-		switch kt := keyPair.PublicKey.Body.KeyType; kt {
-		case primitive.SigningKeyType:
-			sigClaimed = &keyPair
-		case primitive.EncryptionKeyType:
-			encClaimed = &keyPair
-		default:
-			return nil, nil, &apitypes.Error{
-				Type: apitypes.InternalServerError,
-				Err:  []string{fmt.Sprintf("Unknown key type: %s", kt)},
-			}
-		}
-	}
-
-	return encClaimed, sigClaimed, nil
-}
-
-// fetchKeyPairs fetches the user's signing and encryption keypairs from the
-// registry for the given org id.
-func fetchKeyPairs(ctx context.Context, client *registry.Client,
-	orgID *identity.ID) (*identity.ID, *identity.ID, *crypto.KeyPairs, error) {
-
-	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, client, orgID)
+	enc, err := k.Select(orgID, primitive.EncryptionKeyType)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	if sigClaimed == nil || encClaimed == nil {
-		return nil, nil, nil, &apitypes.Error{
-			Type: apitypes.NotFoundError,
-			Err:  []string{"Missing encryption or signing keypairs"},
-		}
+	sig, err := k.Select(orgID, primitive.SigningKeyType)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
-	kp := bundleKeypairs(sigClaimed, encClaimed)
-	return sigClaimed.PublicKey.ID, encClaimed.PublicKey.ID, kp, nil
+	kp := bundleKeypairs(sig, enc)
+	return sig.PublicKey.ID, enc.PublicKey.ID, kp, nil
 }
 
 func bundleKeypairs(sigClaimed, encClaimed *registry.ClaimedKeyPair) *crypto.KeyPairs {

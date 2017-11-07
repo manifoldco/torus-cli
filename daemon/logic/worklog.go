@@ -211,7 +211,17 @@ func (missingKeypairsHandler) resolveErr() string {
 }
 
 func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Org) ([]apitypes.WorklogItem, error) {
-	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, h.engine.client, org.ID)
+	keypairs, err := h.engine.client.KeyPairs.List(ctx, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	encClaimed, err := keypairs.Select(org.ID, primitive.EncryptionKeyType)
+	if err != nil {
+		return nil, err
+	}
+
+	sigClaimed, err := keypairs.Select(org.ID, primitive.SigningKeyType)
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +469,12 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 
 	// Preamble. Get the current user's keypairs, and the org's claims for
 	// pubkey lookup.
-	sigID, encID, kp, err := fetchKeyPairs(ctx, h.engine.client, orgID)
+	keypairs, err := h.engine.client.KeyPairs.List(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	sigID, encID, kp, err := fetchKeyPairs(keypairs, orgID)
 	if err != nil {
 		return err
 	}

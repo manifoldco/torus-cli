@@ -89,7 +89,13 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 
 	n.Notify(observer.Progress, "Credentials retrieved", true)
 
-	sigID, encID, kp, err := fetchKeyPairs(ctx, e.client, cred.Body.OrgID)
+	keypairs, err := e.client.KeyPairs.List(ctx, cred.Body.OrgID)
+	if err != nil {
+		log.Printf("Error fetching keypairs: %s", err)
+		return nil, err
+	}
+
+	sigID, encID, kp, err := fetchKeyPairs(keypairs, cred.Body.OrgID)
 	if err != nil {
 		log.Printf("Error fetching keypairs: %s", err)
 		return nil, err
@@ -247,6 +253,11 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 		return nil, err
 	}
 
+	creds := []PlaintextCredentialEnvelope{}
+	if len(activeGraphs) == 0 {
+		return creds, nil
+	}
+
 	var steps uint = 1
 	for _, graph := range activeGraphs {
 		steps += uint(len(graph.GetCredentials()))
@@ -258,10 +269,15 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	keypairs := make(map[identity.ID]*crypto.KeyPairs)
 	encryptingKeys := make(map[identity.ID]*primitive.PublicKey)
 
+	kps, err := e.client.KeyPairs.List(ctx, nil)
+	if err != nil {
+		log.Printf("Cannot fetch keypairs: %s", err)
+		return nil, err
+	}
+
 	// Loop over the trees and unpack the credentials; later on we will
 	// actually do real work and decrypt each of these credentials but for
 	// now we just need ot return a list of them!
-	creds := []PlaintextCredentialEnvelope{}
 	idx := newCredentialGraphKeyIndex(*(e.session.AuthID()))
 	idx.Add(activeGraphs...)
 
@@ -273,7 +289,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 		orgID := graphs[0].GetKeyring().OrgID()
 		kp, ok := keypairs[*orgID]
 		if !ok {
-			_, _, kp, err = fetchKeyPairs(ctx, e.client, orgID)
+			_, _, kp, err = fetchKeyPairs(kps, orgID)
 			if err != nil {
 				log.Printf("Error fetching keypairs: %s", err)
 				return nil, err
@@ -517,21 +533,35 @@ func (e *Engine) RevokeKeypairs(ctx context.Context, notifier *observer.Notifier
 
 	n := notifier.Notifier(5)
 
-	encKP, sigKP, err := fetchRegistryKeyPairs(ctx, e.client, orgID)
+	keypairs, err := e.client.KeyPairs.List(ctx, orgID)
 	if err != nil {
 		log.Printf("Error retrieving keypairs: %s", err)
 		return err
 	}
 
-	n.Notify(observer.Progress, "Keypairs retrieved", true)
-
-	if sigKP == nil { // no active keypairs; nothing to revoke
-		log.Println("No keys to revoke")
+	encKP, err := keypairs.Select(orgID, primitive.EncryptionKeyType)
+	if err == registry.ErrMissingValidKeypair {
+		log.Printf("No keys to revoke, can't find encryption keypair")
 		return nil
 	}
+	if err != nil {
+		log.Printf("Could not find encryption keypair: %s", err)
+		return err
+	}
+
+	sigKP, err := keypairs.Select(orgID, primitive.SigningKeyType)
+	if err == registry.ErrMissingValidKeypair {
+		log.Printf("No keys to revoke, can't find signing keypair")
+		return nil
+	}
+	if err != nil {
+		log.Printf("Could not find signing keypair: %s", err)
+		return err
+	}
+
+	n.Notify(observer.Progress, "Keypairs retrieved", true)
 
 	sigID := sigKP.PublicKey.ID
-
 	kp := bundleKeypairs(sigKP, encKP)
 
 	if encKP != nil { // the encryption keypair might already be revoked
