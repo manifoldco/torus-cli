@@ -262,8 +262,15 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	// actually do real work and decrypt each of these credentials but for
 	// now we just need ot return a list of them!
 	creds := []PlaintextCredentialEnvelope{}
-	for _, graph := range activeGraphs {
-		orgID := graph.GetKeyring().OrgID()
+	idx := newCredentialGraphKeyIndex(*(e.session.AuthID()))
+	idx.Add(activeGraphs...)
+
+	for encryptingKeyID, graphs := range idx.GetIndex() {
+		if len(graphs) == 0 {
+			continue
+		}
+
+		orgID := graphs[0].GetKeyring().OrgID()
 		kp, ok := keypairs[*orgID]
 		if !ok {
 			_, _, kp, err = fetchKeyPairs(ctx, e.client, orgID)
@@ -274,64 +281,73 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			keypairs[*orgID] = kp
 		}
 
-		krm, mekshare, err := graph.FindMember(e.session.AuthID())
-		if err != nil {
-			log.Printf("Error finding keyring membership: %s", err)
-			return nil, err
-		}
-
-		encryptingKey, ok := encryptingKeys[*krm.EncryptingKeyID]
+		encryptingKey, ok := encryptingKeys[encryptingKeyID]
 		if !ok {
 			encryptingKey, err = findEncryptingKey(ctx, e.client, orgID,
-				krm.EncryptingKeyID)
+				&encryptingKeyID)
 			if err != nil {
 				log.Printf("Error finding encrypting key for user: %s", err)
 				return nil, err
 			}
-			encryptingKeys[*krm.EncryptingKeyID] = encryptingKey
+			encryptingKeys[encryptingKeyID] = encryptingKey
 		}
 
-		err = e.crypto.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption, *encryptingKey.Key.Value, func(u crypto.Unboxer) error {
-			for _, cred := range graph.GetCredentials() {
-				pt, err := u.Unbox(ctx, *cred.Credential().Value, *cred.Nonce(), *cred.Credential().Nonce)
+		err = e.crypto.WithUnsealer(ctx, &kp.Encryption, *encryptingKey.Key.Value, func(unsealer crypto.Unsealer) error {
+			for _, graph := range graphs {
+				mekshare, err := graph.FindMEKByKeyID(&encryptingKeyID)
 				if err != nil {
-					log.Printf("Error decrypting credential: %s", err)
+					log.Printf("Error finding keyring membership: %s %s", encryptingKeyID, err)
 					return err
 				}
 
-				// If this is a v1 credential, then we need to unmarshal the
-				// plain text value to check whether or not we should return
-				// the credentials.
-				if cred.GetVersion() == 1 {
-					cValue := apitypes.CredentialValue{}
-					err = json.Unmarshal(pt, &cValue)
-					if err != nil {
-						return err
+				err = unsealer.WithUnboxer(ctx, *mekshare.Key.Value, *mekshare.Key.Nonce, func(u crypto.Unboxer) error {
+					for _, cred := range graph.GetCredentials() {
+						pt, err := u.Unbox(ctx, *cred.Credential().Value, *cred.Nonce(), *cred.Credential().Nonce)
+						if err != nil {
+							log.Printf("Error decrypting credential: %s", err)
+							return err
+						}
+
+						// If this is a v1 credential, then we need to unmarshal the
+						// plain text value to check whether or not we should return
+						// the credentials.
+						if cred.GetVersion() == 1 {
+							cValue := apitypes.CredentialValue{}
+							err = json.Unmarshal(pt, &cValue)
+							if err != nil {
+								return err
+							}
+
+							if cValue.IsUnset() {
+								continue
+							}
+						}
+
+						state := "set"
+						plainCred := PlaintextCredentialEnvelope{
+							ID:      cred.GetID(),
+							Version: cred.GetVersion(),
+							Body: &PlaintextCredential{
+								Name:      cred.Name(),
+								PathExp:   cred.PathExp(),
+								ProjectID: cred.ProjectID(),
+								OrgID:     cred.OrgID(),
+								Value:     string(pt),
+								State:     &state,
+							},
+						}
+
+						creds = append(creds, plainCred)
+
+						n.Notify(observer.Progress, "Credential decrypted", true)
 					}
-
-					if cValue.IsUnset() {
-						continue
-					}
+					return nil
+				})
+				if err != nil {
+					return err
 				}
-
-				state := "set"
-				plainCred := PlaintextCredentialEnvelope{
-					ID:      cred.GetID(),
-					Version: cred.GetVersion(),
-					Body: &PlaintextCredential{
-						Name:      cred.Name(),
-						PathExp:   cred.PathExp(),
-						ProjectID: cred.ProjectID(),
-						OrgID:     cred.OrgID(),
-						Value:     string(pt),
-						State:     &state,
-					},
-				}
-
-				creds = append(creds, plainCred)
-
-				n.Notify(observer.Progress, "Credential decrypted", true)
 			}
+
 			return nil
 		})
 		if err != nil {

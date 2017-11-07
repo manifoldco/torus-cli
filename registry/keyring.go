@@ -27,6 +27,7 @@ type KeyringSection interface {
 	GetKeyring() envelope.KeyringInf
 	KeyringVersion() int
 	FindMember(*identity.ID) (*primitive.KeyringMember, *primitive.MEKShare, error)
+	FindMEKByKeyID(*identity.ID) (*primitive.MEKShare, error)
 	HasRevocations() bool
 	GetClaims() []envelope.KeyringMemberClaim
 }
@@ -55,17 +56,7 @@ func (k *KeyringSectionV1) FindMember(id *identity.ID) (*primitive.KeyringMember
 	var mekshare *primitive.MEKShare
 	for _, m := range k.Members {
 		if *m.Body.OwnerID == *id {
-			krm = &primitive.KeyringMember{
-				OrgID:           m.Body.OrgID,
-				KeyringID:       m.Body.KeyringID,
-				OwnerID:         m.Body.OwnerID,
-				PublicKeyID:     m.Body.PublicKeyID,
-				EncryptingKeyID: m.Body.EncryptingKeyID,
-			}
-
-			mekshare = &primitive.MEKShare{
-				Key: m.Body.Key,
-			}
+			krm, mekshare = convertV1KRM(&m)
 			break
 		}
 	}
@@ -75,6 +66,39 @@ func (k *KeyringSectionV1) FindMember(id *identity.ID) (*primitive.KeyringMember
 	}
 
 	return krm, mekshare, nil
+}
+
+// FindMEKByKeyID returns the MEKShare for the given encrypting key id.
+//
+// The data is returned in the V2 format.
+func (k *KeyringSectionV1) FindMEKByKeyID(id *identity.ID) (*primitive.MEKShare, error) {
+	var mekshare *primitive.MEKShare
+	for _, m := range k.Members {
+		if *m.Body.EncryptingKeyID == *id {
+			mekshare = &primitive.MEKShare{
+				Key: m.Body.Key,
+			}
+			break
+		}
+	}
+
+	if mekshare == nil {
+		return nil, ErrMemberNotFound
+	}
+
+	return mekshare, nil
+}
+
+func convertV1KRM(krm *envelope.KeyringMemberV1) (*primitive.KeyringMember, *primitive.MEKShare) {
+	return &primitive.KeyringMember{
+			OrgID:           krm.Body.OrgID,
+			KeyringID:       krm.Body.KeyringID,
+			OwnerID:         krm.Body.OwnerID,
+			PublicKeyID:     krm.Body.PublicKeyID,
+			EncryptingKeyID: krm.Body.EncryptingKeyID,
+		}, &primitive.MEKShare{
+			Key: krm.Body.Key,
+		}
 }
 
 // HasRevocations indicates that a Keyring holds revoked user keys. We don't
@@ -123,11 +147,8 @@ outerLoop:
 			// unrevoked.
 			// A revocation is always terminal for a claim chain, so if there's
 			// any revocations for this membership, we know it is invalid.
-			for _, c := range k.Claims {
-				if *c.Body.KeyringMemberID == *m.Member.ID && c.Body.ClaimType == primitive.RevocationClaimType {
-					continue outerLoop
-				}
-
+			if krmIsRevoked(m, k.Claims) {
+				continue outerLoop
 			}
 
 			krm = m.Member.Body
@@ -144,6 +165,48 @@ outerLoop:
 	}
 
 	return krm, mekshare, nil
+}
+
+// FindMEKByKeyID returns the mekshare for the given encrypting key id.
+//
+// An owner (user/machine token) may have multiple memberships, one per
+// encryption key. There will only be one unrevoked membership. Eitgher this
+// unrevoked membership will ber returned, or the result will error with
+// ErrMemberNotFound.
+func (k *KeyringSectionV2) FindMEKByKeyID(id *identity.ID) (*primitive.MEKShare, error) {
+	var mekshare *primitive.MEKShare
+
+outerLoop:
+	for _, m := range k.Members {
+		if *m.Member.Body.EncryptingKeyID == *id {
+			// We've found the right key. Now see if this membership is
+			// unrevoked.
+			// A revocation is always terminal for a claim chain, so if there's
+			// any revocations for this membership, we know it is invalid.
+			if krmIsRevoked(m, k.Claims) {
+				continue outerLoop
+			}
+
+			if m.MEKShare == nil {
+				return nil, ErrMemberNotFound
+			}
+
+			mekshare = m.MEKShare.Body
+			break
+		}
+	}
+
+	return mekshare, nil
+}
+
+func krmIsRevoked(m KeyringMember, claims []envelope.KeyringMemberClaim) bool {
+	for _, c := range claims {
+		if *c.Body.KeyringMemberID == *m.Member.ID && c.Body.ClaimType == primitive.RevocationClaimType {
+			return true
+		}
+	}
+
+	return false
 }
 
 // HasRevocations indicates that a Keyring holds revoked user keys.

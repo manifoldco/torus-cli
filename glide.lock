@@ -1,10 +1,10 @@
-hash: c7850fba9a0bf5699e401a7a882b84ede107d56c0b104e53026353199c0a186b
-updated: 2017-06-17T11:54:13.148029547-04:00
+hash: 69bc17d0eb97e74bcefec393a8f35aed1496c478c83e990d13fd00d448ab512d
+updated: 2017-11-06T20:49:25.635505694-04:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
 - name: github.com/aws/aws-sdk-go
-  version: 96358b8282b1a3aa66836d2f2fe66216cc419668
+  version: d46843b92a3a8e377d7fe24b4d70fca37f923d00
   subpackages:
   - aws
   - aws/awserr
@@ -32,9 +32,9 @@ imports:
   - service/s3
   - service/sts
 - name: github.com/blang/semver
-  version: b38d23b8782a487059e8fc8773e9a5b228a77cb6
+  version: 2ee87856327ba09384cabd113bc6b5d174e9ec0f
 - name: github.com/boltdb/bolt
-  version: 583e8937c61f1af6513608ccc75c97b6abdf4ff9
+  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
 - name: github.com/chzyer/readline
   version: 41eea22f717c616615e1e59aa06cf831f9901f35
 - name: github.com/dchest/blake2b
@@ -50,7 +50,7 @@ imports:
 - name: github.com/fullsailor/pkcs7
   version: eb67e7e564b9eae64dc7d95fae0784d6086a5fc4
 - name: github.com/go-ini/ini
-  version: d3de07a94d22b4a0972deb4b96d790c2c0ce8333
+  version: f280b3ba517bf5fc98922624f21fb0e7a92adaec
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/golang/protobuf
@@ -87,10 +87,24 @@ imports:
   version: c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6
 - name: github.com/nightlyone/lockfile
   version: 1d49c987357a327b5b03aa84cbddd582c328615d
+- name: github.com/onsi/gomega
+  version: 334b8f472b3af5d541c5642701c1e29e2126f486
+  subpackages:
+  - format
+  - internal/assertion
+  - internal/asyncassertion
+  - internal/oraclematcher
+  - internal/testingtsupport
+  - matchers
+  - matchers/support/goraph/bipartitegraph
+  - matchers/support/goraph/edge
+  - matchers/support/goraph/node
+  - matchers/support/goraph/util
+  - types
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/urfave/cli
-  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
+  version: cfb38830724cc34fedffe9a2a29fb54fa9169cd1
 - name: golang.org/x/crypto
   version: 9ef620b9ca2f82b55030ffd4f41327fa9e77a92c
   subpackages:
@@ -125,4 +139,6 @@ imports:
   - urlfetch
 - name: gopkg.in/oleiade/reflections.v1
   version: 2b6ec3da648e3e834dc41bad8d9ed7f2dc6a9496
-testImports: []
+testImports:
+- name: gopkg.in/yaml.v2
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
