@@ -3,7 +3,6 @@ package logic
 import (
 	"context"
 	"crypto/rand"
-	"fmt"
 	"log"
 	"time"
 
@@ -60,8 +59,9 @@ func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, org
 // createCredentialGraph generates, signs, and posts a new CredentialGraph
 // to the registry.
 func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
-	parent registry.CredentialGraph, sigID *identity.ID, encID *identity.ID, kp *crypto.KeyPairs,
-	client *registry.Client, engine *crypto.Engine) (*registry.CredentialGraphV2, error) {
+	parent registry.CredentialGraph, sigID *identity.ID, encID *identity.ID,
+	kp *crypto.KeyPairs, ct *registry.ClaimTree, client *registry.Client,
+	engine *crypto.Engine) (*registry.CredentialGraphV2, error) {
 
 	pathExp, err := credBody.PathExp.WithInstance("*")
 	if err != nil {
@@ -91,31 +91,21 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		return nil, err
 	}
 
-	claimTrees, err := client.ClaimTree.List(ctx, credBody.OrgID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(claimTrees) != 1 {
-		return nil, &apitypes.Error{
-			Type: apitypes.NotFoundError,
-			Err: []string{
-				fmt.Sprintf("Claim tree not found for org: %s", credBody.OrgID),
-			},
-		}
-	}
-
 	// use their public key to encrypt the mek with a random nonce.
 	members := []registry.KeyringMember{}
 	for _, subject := range subjects {
 		for _, id := range subject.KeyOwnerIDs() {
 			// For this user/mtoken, find their public encryption key
-			encPubKey, err := findEncryptionPublicKey(claimTrees, credBody.OrgID, &id)
-			if err != nil {
-				// If we didn't find an active key, don't encode this user/token
-				// in the keyring, but keep going.
+			enc, err := ct.Find(&id, true)
+			if err == registry.ErrKeyNotFound {
+				// If we didn't find an active key, don't encode this
+				// user/token in the keyring, but keep going.
 				continue
 			}
+			if err != nil {
+				return nil, err
+			}
+			encPubKey := enc.PublicKey
 
 			encmek, nonce, err := engine.Box(ctx, mek, &kp.Encryption, []byte(*encPubKey.Body.Key.Value))
 			if err != nil {
@@ -218,20 +208,10 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 		return nil, nil, err
 	}
 
-	claimTrees, err := client.ClaimTree.List(ctx, orgID, nil)
+	claimTree, err := client.ClaimTree.Get(ctx, orgID, nil)
 	if err != nil {
 		log.Printf("could not retrieve claim tree for invite approval: %s", err)
 		return nil, nil, err
-	}
-
-	if len(claimTrees) != 1 {
-		log.Printf("incorrect number of claim trees returned: %d", len(claimTrees))
-		return nil, nil, &apitypes.Error{
-			Type: apitypes.NotFoundError,
-			Err: []string{
-				fmt.Sprintf("Claim tree not found for org: %s", orgID),
-			},
-		}
 	}
 
 	// Get all the keyrings and memberships for the current user. This way we
@@ -260,11 +240,12 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 	}
 
 	// Find encryption keys for user
-	targetPubKey, err := findEncryptionPublicKey(claimTrees, orgID, ownerID)
+	targetKeySegment, err := claimTree.FindActive(ownerID, primitive.EncryptionKeyType)
 	if err != nil {
 		log.Printf("could not find encryption key for owner id: %s", ownerID.String())
 		return nil, nil, err
 	}
+	targetPubKey := targetKeySegment.PublicKey
 
 	cgs := newCredentialGraphSet()
 	err = cgs.Add(graphs...)
@@ -289,11 +270,12 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 			}
 		}
 
-		encPubKey, err := findEncryptionPublicKeyByID(claimTrees, orgID, krm.EncryptingKeyID)
+		encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, true)
 		if err != nil {
 			log.Printf("could not find encypting public key for membership: %s", err)
 			return nil, nil, err
 		}
+		encPubKey := encPubKeySegment.PublicKey
 
 		encMek, nonce, err := c.CloneMembership(ctx, *mekshare.Key.Value,
 			*mekshare.Key.Nonce, &kp.Encryption, *encPubKey.Body.Key.Value, *targetPubKey.Body.Key.Value)
@@ -381,44 +363,6 @@ func bundleKeypairs(sigClaimed, encClaimed *registry.ClaimedKeyPair) *crypto.Key
 	return &kp
 }
 
-// findEncryptingKey queries the registry for public keys in the given org, to
-// find the matching one
-func findEncryptingKey(ctx context.Context, client *registry.Client, orgID *identity.ID,
-	encryptingKeyID *identity.ID) (*primitive.PublicKey, error) {
-
-	claimTrees, err := client.ClaimTree.List(ctx, orgID, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(claimTrees) != 1 {
-		return nil, &apitypes.Error{
-			Type: apitypes.NotFoundError,
-			Err: []string{
-				fmt.Sprintf("Claim tree not found for org: %s", orgID),
-			},
-		}
-	}
-
-	var encryptingKey *primitive.PublicKey
-	for _, segment := range claimTrees[0].PublicKeys {
-		if *segment.PublicKey.ID == *encryptingKeyID {
-			encryptingKey = segment.PublicKey.Body
-			break
-		}
-	}
-	if encryptingKey == nil {
-		return nil, &apitypes.Error{
-			Type: apitypes.NotFoundError,
-			Err: []string{
-				fmt.Sprintf("Encrypting key not found: %s", encryptingKeyID),
-			},
-		}
-	}
-
-	return encryptingKey, nil
-}
-
 // findSystemTeams takes in a list of team objects and returns the members and machines
 // teams.
 func findSystemTeams(teams []envelope.Team) (*envelope.Team, *envelope.Team, error) {
@@ -455,82 +399,6 @@ func findSystemTeams(teams []envelope.Team) (*envelope.Team, *envelope.Team, err
 	}
 
 	return members, machines, nil
-}
-
-func findEncryptionPublicKey(trees []registry.ClaimTree, orgID *identity.ID,
-	userID *identity.ID) (*envelope.PublicKey, error) {
-
-	// Loop over claimtree looking for the users encryption key
-	var encKey *envelope.PublicKey
-	for _, tree := range trees {
-		if *tree.Org.ID != *orgID {
-			continue
-		}
-
-		for _, segment := range tree.PublicKeys {
-			if segment.Revoked() {
-				continue
-			}
-
-			key := segment.PublicKey
-			if *key.Body.OwnerID != *userID {
-				continue
-			}
-
-			if key.Body.KeyType != primitive.EncryptionKeyType {
-				continue
-			}
-
-			encKey = key
-		}
-	}
-
-	if encKey == nil {
-		err := fmt.Errorf("No encryption pubkey found for: %s", userID.String())
-		return nil, err
-	}
-
-	return encKey, nil
-}
-
-func findEncryptionPublicKeyByID(trees []registry.ClaimTree, orgID *identity.ID,
-	ID *identity.ID) (*envelope.PublicKey, error) {
-
-	// Loop over claimtree looking for the users encryption key
-	var encKey *envelope.PublicKey
-	for _, tree := range trees {
-		if *tree.Org.ID != *orgID {
-			continue
-		}
-
-		for _, segment := range tree.PublicKeys {
-			if segment.Revoked() {
-				continue
-			}
-
-			key := segment.PublicKey
-			if *key.ID != *ID {
-				continue
-			}
-
-			if key.Body.KeyType != primitive.EncryptionKeyType {
-				continue
-			}
-
-			encKey = key
-		}
-	}
-
-	if encKey == nil {
-		return nil, &apitypes.Error{
-			Type: apitypes.NotFoundError,
-			Err: []string{
-				fmt.Sprintf("Encryption pubkey not found for: %s", ID.String()),
-			},
-		}
-	}
-
-	return encKey, nil
 }
 
 func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,

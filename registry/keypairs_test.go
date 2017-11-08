@@ -11,12 +11,18 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 )
 
-func createCKP(orgID *identity.ID, t primitive.KeyType, revoked bool) ClaimedKeyPair {
+func createPKS(orgID *identity.ID, t primitive.KeyType, revoked bool) apitypes.PublicKeySegment {
+	ownerID, err := identity.NewMutable(&primitive.User{})
+	if err != nil {
+		panic(err)
+	}
+
 	pubk := &envelope.PublicKey{
 		Version: 1,
 		Body: &primitive.PublicKey{
 			OrgID:   orgID,
 			KeyType: t,
+			OwnerID: &ownerID,
 		},
 	}
 
@@ -26,29 +32,13 @@ func createCKP(orgID *identity.ID, t primitive.KeyType, revoked bool) ClaimedKey
 	}
 	pubk.ID = &pubkID
 
-	privk := &envelope.PrivateKey{
-		Version: 1,
-		Body: &primitive.PrivateKey{
-			OrgID:       orgID,
-			PublicKeyID: pubk.ID,
-		},
-	}
-	privkID, err := identity.NewImmutable(privk.Body, "sdfs")
-	if err != nil {
-		panic(err)
-	}
-	privk.ID = &privkID
-
-	ckp := ClaimedKeyPair{
-		PublicKeySegment: apitypes.PublicKeySegment{
-			PublicKey: pubk,
-			Claims:    []envelope.Claim{},
-		},
-		PrivateKey: privk,
+	pks := apitypes.PublicKeySegment{
+		PublicKey: pubk,
+		Claims:    []envelope.Claim{},
 	}
 
 	if revoked {
-		ckp.Claims = append(ckp.Claims, envelope.Claim{
+		pks.Claims = append(pks.Claims, envelope.Claim{
 			Version: 1,
 			Body: &primitive.Claim{
 				OrgID:       orgID,
@@ -58,7 +48,29 @@ func createCKP(orgID *identity.ID, t primitive.KeyType, revoked bool) ClaimedKey
 		})
 	}
 
-	return ckp
+	return pks
+}
+
+func createCKP(orgID *identity.ID, t primitive.KeyType, revoked bool) ClaimedKeyPair {
+	pks := createPKS(orgID, t, revoked)
+	privk := &envelope.PrivateKey{
+		Version: 1,
+		Body: &primitive.PrivateKey{
+			OrgID:       orgID,
+			OwnerID:     pks.PublicKey.Body.OwnerID,
+			PublicKeyID: pks.PublicKey.ID,
+		},
+	}
+	privkID, err := identity.NewImmutable(privk.Body, "sdfs")
+	if err != nil {
+		panic(err)
+	}
+	privk.ID = &privkID
+
+	return ClaimedKeyPair{
+		PublicKeySegment: pks,
+		PrivateKey:       privk,
+	}
 }
 
 func TestKeypairs(t *testing.T) {

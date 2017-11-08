@@ -95,6 +95,12 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 		return nil, err
 	}
 
+	claimtree, err := e.client.ClaimTree.Get(ctx, cred.Body.OrgID, nil)
+	if err != nil {
+		log.Printf("Error fetching claimtree for org[%s]: %s", cred.Body.OrgID, err)
+		return nil, err
+	}
+
 	sigID, encID, kp, err := fetchKeyPairs(keypairs, cred.Body.OrgID)
 	if err != nil {
 		log.Printf("Error fetching keypairs: %s", err)
@@ -120,7 +126,7 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 	// We'll make a new one now.
 	if graph == nil || graph.HasRevocations() {
 		newGraph, err = createCredentialGraph(ctx, cred.Body, graph,
-			sigID, encID, kp, e.client, e.crypto)
+			sigID, encID, kp, claimtree, e.client, e.crypto)
 		if err != nil {
 			log.Printf("error creating credential graph: %s", err)
 			return nil, err
@@ -135,12 +141,12 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 		return nil, err
 	}
 
-	encryptingKey, err := findEncryptingKey(ctx, e.client, cred.Body.OrgID,
-		krm.EncryptingKeyID)
+	encKeySegment, err := claimtree.Find(krm.EncryptingKeyID, true)
 	if err != nil {
-		log.Printf("Error finding encrypting key: %s", err)
+		log.Printf("Error finding encrypting key[%s]: %s", krm.EncryptingKeyID, err)
 		return nil, err
 	}
+	encryptingKey := encKeySegment.PublicKey.Body
 
 	n.Notify(observer.Progress, "Encrypting key retrieved", true)
 
@@ -266,27 +272,38 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	n := notifier.Notifier(steps)
 	n.Notify(observer.Progress, "Credentials retrieved", true)
 
-	keypairs := make(map[identity.ID]*crypto.KeyPairs)
-	encryptingKeys := make(map[identity.ID]*primitive.PublicKey)
-
-	kps, err := e.client.KeyPairs.List(ctx, nil)
-	if err != nil {
-		log.Printf("Cannot fetch keypairs: %s", err)
-		return nil, err
-	}
-
 	// Loop over the trees and unpack the credentials; later on we will
 	// actually do real work and decrypt each of these credentials but for
 	// now we just need ot return a list of them!
 	idx := newCredentialGraphKeyIndex(*(e.session.AuthID()))
 	idx.Add(activeGraphs...)
 
+	// All graphs will belong to the same org
+	orgID := activeGraphs[0].GetKeyring().OrgID()
+
+	// Cache the bundled crypto keypairs for reuse
+	keypairs := make(map[identity.ID]*crypto.KeyPairs)
+
+	// Fetch the user's keypairs for this specific organization
+	kps, err := e.client.KeyPairs.List(ctx, orgID)
+	if err != nil {
+		log.Printf("Cannot fetch keypairs for org[%s]: %s", orgID, err)
+		return nil, err
+	}
+
+	// Fetch the claimtree for the organization which will include all public
+	// keys and their claims for all users and machines inside the org
+	claimtree, err := e.client.ClaimTree.Get(ctx, orgID, nil)
+	if err != nil {
+		log.Printf("Could not fetch claimtree for org[%s]: %s", orgID, err)
+		return nil, err
+	}
+
 	for encryptingKeyID, graphs := range idx.GetIndex() {
 		if len(graphs) == 0 {
 			continue
 		}
 
-		orgID := graphs[0].GetKeyring().OrgID()
 		kp, ok := keypairs[*orgID]
 		if !ok {
 			_, _, kp, err = fetchKeyPairs(kps, orgID)
@@ -297,17 +314,13 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			keypairs[*orgID] = kp
 		}
 
-		encryptingKey, ok := encryptingKeys[encryptingKeyID]
-		if !ok {
-			encryptingKey, err = findEncryptingKey(ctx, e.client, orgID,
-				&encryptingKeyID)
-			if err != nil {
-				log.Printf("Error finding encrypting key for user: %s", err)
-				return nil, err
-			}
-			encryptingKeys[encryptingKeyID] = encryptingKey
+		encryptingKeySegment, err := claimtree.Find(&encryptingKeyID, false)
+		if err != nil {
+			log.Printf("Could not find encrypting key[%s]: %s", encryptingKeyID, err)
+			return nil, err
 		}
 
+		encryptingKey := encryptingKeySegment.PublicKey.Body
 		err = e.crypto.WithUnsealer(ctx, &kp.Encryption, *encryptingKey.Key.Value, func(unsealer crypto.Unsealer) error {
 			for _, graph := range graphs {
 				mekshare, err := graph.FindMEKByKeyID(&encryptingKeyID)
