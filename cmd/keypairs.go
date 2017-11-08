@@ -98,7 +98,7 @@ func listKeypairs(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, "ID\tORG\tKEY TYPE\tVALID\tCREATION DATE")
 	fmt.Fprintln(w, " \t \t \t \t ")
-	for _, keypair := range keypairs {
+	for _, keypair := range keypairs.All() {
 		pk := keypair.PublicKey.Body
 		valid := "YES"
 		if keypair.Revoked() {
@@ -161,7 +161,7 @@ func generateKeypairs(ctx *cli.Context) error {
 			pErr = err
 			break
 		}
-		for _, kp := range keypairs {
+		for _, kp := range keypairs.All() {
 			if kp.Revoked() {
 				continue
 			}
@@ -263,7 +263,7 @@ func revokeKeypairs(ctx *cli.Context) error {
 
 	hasKey := make(map[primitive.KeyType]struct{})
 
-	for _, kp := range keypairs {
+	for _, kp := range keypairs.All() {
 		if kp.Revoked() {
 			continue
 		}

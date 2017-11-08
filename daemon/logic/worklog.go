@@ -211,7 +211,17 @@ func (missingKeypairsHandler) resolveErr() string {
 }
 
 func (h *missingKeypairsHandler) list(ctx context.Context, org *envelope.Org) ([]apitypes.WorklogItem, error) {
-	encClaimed, sigClaimed, err := fetchRegistryKeyPairs(ctx, h.engine.client, org.ID)
+	keypairs, err := h.engine.client.KeyPairs.List(ctx, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	encClaimed, err := keypairs.Select(org.ID, primitive.EncryptionKeyType)
+	if err != nil {
+		return nil, err
+	}
+
+	sigClaimed, err := keypairs.Select(org.ID, primitive.SigningKeyType)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +365,7 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 		return nil, err
 	}
 
-	claimTrees, err := h.engine.client.ClaimTree.List(ctx, org.ID, nil)
+	claimTree, err := h.engine.client.ClaimTree.Get(ctx, org.ID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -384,9 +394,12 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 				// We now know the user/machine should have access to this keyring,
 				// but at the moment they do not. See if they do have a valid
 				// encryption key we can use to add them to the keyring.
-				targetPubKey, _ := findEncryptionPublicKey(claimTrees, org.ID, &owner)
-				if targetPubKey == nil { // nothing we can do for this user right now
+				_, err = claimTree.FindActive(&owner, primitive.EncryptionKeyType)
+				if err == registry.ErrMissingKeyForOwner {
 					continue
+				}
+				if err != nil {
+					return nil, err
 				}
 
 				// This member is missing access (user, or one or more machine
@@ -459,12 +472,17 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 
 	// Preamble. Get the current user's keypairs, and the org's claims for
 	// pubkey lookup.
-	sigID, encID, kp, err := fetchKeyPairs(ctx, h.engine.client, orgID)
+	keypairs, err := h.engine.client.KeyPairs.List(ctx, orgID)
 	if err != nil {
 		return err
 	}
 
-	claimTrees, err := h.engine.client.ClaimTree.List(ctx, orgID, nil)
+	sigID, encID, kp, err := fetchKeyPairs(keypairs, orgID)
+	if err != nil {
+		return err
+	}
+
+	claimTree, err := h.engine.client.ClaimTree.Get(ctx, orgID, nil)
 	if err != nil {
 		return err
 	}
@@ -511,14 +529,17 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 				return err
 			}
 
-			encPubKey, err := findEncryptionPublicKeyByID(claimTrees, orgID, krm.EncryptingKeyID)
+			encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, true)
 			if err != nil {
 				return err
 			}
-			targetPubKey, err := findEncryptionPublicKey(claimTrees, orgID, &ownerID)
+			encPubKey := encPubKeySegment.PublicKey
+
+			targetPubKeySegment, err := claimTree.FindActive(&ownerID, primitive.EncryptionKeyType)
 			if err != nil {
 				return err
 			}
+			targetPubKey := targetPubKeySegment.PublicKey
 
 			encMek, nonce, err := h.engine.crypto.CloneMembership(ctx,
 				*mekshare.Key.Value, *mekshare.Key.Nonce, &kp.Encryption,

@@ -11,6 +11,14 @@ _Unreleased_
   Torus will no longer unseal the private encryption key twice which leads to a
   signficiant reduction in decryption time. Users should notice this
   improvement when using `torus view` and `torus run`.
+- Significant reduction in the number of round trips made to the Torus server
+  to fetch an organizations claimtree (web of trust) when decrypting or
+  encrypting secrets. Users should notice this improvement when many different
+  users are contributing secrets to the same keyrings when using `torus view`,
+  `torus run`, `torus set`, or `torus unset`.
+- Parallelized fetching of keypairs and an orgs claimtree during secret
+  decryption. Users should notice a modest improvement when using `torus view`
+  and `torus run`.
 
 **Fixes**
 
