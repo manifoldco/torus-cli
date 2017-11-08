@@ -96,8 +96,8 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	for _, subject := range subjects {
 		for _, id := range subject.KeyOwnerIDs() {
 			// For this user/mtoken, find their public encryption key
-			enc, err := ct.Find(&id, true)
-			if err == registry.ErrKeyNotFound {
+			enc, err := ct.FindActive(&id, primitive.EncryptionKeyType)
+			if err == registry.ErrMissingKeyForOwner {
 				// If we didn't find an active key, don't encode this
 				// user/token in the keyring, but keep going.
 				continue
