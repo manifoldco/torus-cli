@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"sync"
 
 	"github.com/manifoldco/go-base64"
 
@@ -234,21 +235,23 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 		panic("cpath or cpathexp required")
 	}
 
-	var err error
 	var graphs []registry.CredentialGraph
+	var err error
 	if cpath != nil {
 		graphs, err = e.client.CredentialGraph.List(ctx, *cpath, nil, e.session.AuthID())
 	} else if cpathexp != nil {
 		graphs, err = e.client.CredentialGraph.Search(ctx, *cpathexp, e.session.AuthID())
 	}
+
 	if err != nil {
-		log.Printf("error retrieving credential graphs: %s", err)
+		log.Printf("error retrieving credential graph: %s", err)
 		return nil, err
 	}
 
 	cgs := newCredentialGraphSet()
 	err = cgs.Add(graphs...)
 	if err != nil {
+		log.Printf("error creating credential graph set: %s", err)
 		return nil, err
 	}
 
@@ -281,24 +284,37 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	// All graphs will belong to the same org
 	orgID := activeGraphs[0].GetKeyring().OrgID()
 
-	// Cache the bundled crypto keypairs for reuse
-	keypairs := make(map[identity.ID]*crypto.KeyPairs)
+	var fetchKeys sync.WaitGroup
+	var kps *registry.Keypairs
+	var claimtree *registry.ClaimTree
+	var kpsErr, ctErr error
+	fetchKeys.Add(2)
 
 	// Fetch the user's keypairs for this specific organization
-	kps, err := e.client.KeyPairs.List(ctx, orgID)
-	if err != nil {
-		log.Printf("Cannot fetch keypairs for org[%s]: %s", orgID, err)
-		return nil, err
+	go func() {
+		kps, kpsErr = e.client.KeyPairs.List(ctx, orgID)
+		fetchKeys.Done()
+	}()
+
+	// Fetch the org's claimtree which will include all public keys and their
+	// claims for all users and machines inside the org
+	go func() {
+		claimtree, ctErr = e.client.ClaimTree.Get(ctx, orgID, nil)
+		fetchKeys.Done()
+	}()
+
+	fetchKeys.Wait()
+	if kpsErr != nil {
+		log.Printf("Cannot fetch keypairs for org[%s]: %s", orgID, kpsErr)
+		return nil, kpsErr
+	}
+	if ctErr != nil {
+		log.Printf("Could not fetch claimtree for org[%s]: %s", orgID, ctErr)
+		return nil, ctErr
 	}
 
-	// Fetch the claimtree for the organization which will include all public
-	// keys and their claims for all users and machines inside the org
-	claimtree, err := e.client.ClaimTree.Get(ctx, orgID, nil)
-	if err != nil {
-		log.Printf("Could not fetch claimtree for org[%s]: %s", orgID, err)
-		return nil, err
-	}
-
+	// Cache the bundled crypto keypairs for reuse
+	keypairs := make(map[identity.ID]*crypto.KeyPairs)
 	for encryptingKeyID, graphs := range idx.GetIndex() {
 		if len(graphs) == 0 {
 			continue

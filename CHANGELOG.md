@@ -16,6 +16,9 @@ _Unreleased_
   encrypting secrets. Users should notice this improvement when many different
   users are contributing secrets to the same keyrings when using `torus view`,
   `torus run`, `torus set`, or `torus unset`.
+- Parallelized fetching of keypairs and an orgs claimtree during secret
+  decryption. Users should notice a modest improvement when using `torus view`
+  and `torus run`.
 
 **Fixes**
 
