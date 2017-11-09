@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"errors"
+	"log"
 	"sort"
 
 	"github.com/manifoldco/go-base64"
@@ -345,9 +346,14 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 	}
 
 	for _, pe := range paths {
+		// XXX: For graphs we can't retrieve, just ignore them and continue on.
+		//
+		// This happens when a user is removed from an org and their dev
+		// environment is deleted.
 		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", pe, nil)
 		if err != nil {
-			return nil, err
+			log.Printf("Skipping inspection of graph due to error: %s", err)
+			continue
 		}
 
 		err = cgs.Add(graphs...)
@@ -490,9 +496,14 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 	cgs := newCredentialGraphSet()
 	details := item.Details.(*apitypes.KeyringMembersWorklogDetails)
 	for _, pe := range details.Keyrings {
+		// XXX: For graphs we can't retrieve, skip them.
+		//
+		// This happens when a user is removed from an org and their dev
+		// environment is deleted.
 		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", &pe, nil)
 		if err != nil {
-			return err
+			log.Printf("Skipping inspection of graph due to error: %s", err)
+			continue
 		}
 
 		err = cgs.Add(graphs...)
@@ -529,7 +540,7 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 				return err
 			}
 
-			encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, true)
+			encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, false)
 			if err != nil {
 				return err
 			}

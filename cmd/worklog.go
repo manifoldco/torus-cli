@@ -160,7 +160,7 @@ func worklogList(ctx *cli.Context) error {
 
 	items, err := client.Worklog.List(c, org.ID)
 	if err != nil {
-		return err
+		return errs.NewErrorExitError("Could not retrieve worklog items", err)
 	}
 
 	if len(items) == 0 {
@@ -209,7 +209,7 @@ func worklogView(ctx *cli.Context) error {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return err
+		return errs.NewErrorExitError("Could not load config", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -227,7 +227,7 @@ func worklogView(ctx *cli.Context) error {
 
 	item, err := client.Worklog.Get(c, org.ID, &ident)
 	if err != nil {
-		return err
+		return errs.NewErrorExitError("Could not retrieve worklog item", err)
 	}
 
 	ui.Line("%s %s\n", yellow(item.ID.String()), subjectFor(item))
@@ -261,7 +261,7 @@ func worklogResolve(ctx *cli.Context) error {
 
 	items, err := client.Worklog.List(c, org.ID)
 	if err != nil {
-		return err
+		return errs.NewErrorExitError("Could not retrieve worklog items", err)
 	}
 
 	var toResolve []apitypes.WorklogItem

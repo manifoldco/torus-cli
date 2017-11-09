@@ -23,6 +23,8 @@ _Unreleased_
 **Fixes**
 
 - Request timeout to the server has been increased from 6s to 60s.
+- Fixed a bug preventing a user's invitation from being approved after a user
+  was removed from the organization.
 
 ## v0.26.1
 
