@@ -232,34 +232,11 @@ func orgsRemove(ctx *cli.Context) error {
 	return nil
 }
 
-// ByTeamPrecedence will implement the sort Interface
-type ByTeamPrecedence []envelope.Team
-
-func (tp ByTeamPrecedence) Len() int {
-	return len(tp)
-}
-
-func (tp ByTeamPrecedence) Swap(i, j int) {
-	tp[i], tp[j] = tp[j], tp[i]
-}
-
-func (tp ByTeamPrecedence) Less(i, j int) bool {
-	if tp[i].Body.TeamType == "system" && tp[j].Body.TeamType == "system" {
-		return primitive.SystemTeams[tp[i].Body.Name] < primitive.SystemTeams[tp[j].Body.Name]
-	} else if tp[i].Body.TeamType == "system" {
-		return true
-	} else if tp[j].Body.TeamType == "system" {
-		return false
-	}
-
-	return tp[i].Body.Name[0] < tp[j].Body.Name[0]
-}
-
 func orgsMembersListCmd(ctx *cli.Context) error {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return err
+		return errs.NewExitError("Failed to load config.")
 	}
 
 	client := api.NewClient(cfg)
@@ -272,29 +249,28 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 	// This flag is optional. If none was supplied, then
 	// orgFlagArgument will be set to "". In this case,
 	// prompt the user to select an org.
-	orgFlagArgument := ctx.String("org")
+	orgName := ctx.String("org")
 
-	if orgFlagArgument == "" {
+	if orgName == "" {
 		// Retrieve list of available orgs
 		orgs, err = client.Orgs.List(c)
 		if err != nil {
-			return err
+			return errs.NewExitError("Failed to retrieve orgs list.")
 		}
 
 		// Prompt user to select from list of existing orgs
 		idx, _, err := SelectExistingOrgPrompt(orgs)
 		if err != nil {
-			return err
+			return errs.NewExitError("Failed to select org.")
 		}
 
 		org = &orgs[idx]
 
 	} else {
 		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgFlagArgument)
+		org, err = client.Orgs.GetByName(c, orgName)
 		if org == nil {
-			fmt.Println("org", orgFlagArgument, "not found.")
-			return err
+			return errs.NewExitError("org" + orgName + "not found.")
 		}
 	}
 
@@ -351,8 +327,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 	}
 
 	if len(memberships) == 0 {
-		fmt.Printf("%s has no members\n", org.Body.Name)
-		return nil
+		return errs.NewExitError(org.Body.Name + " has no members.")
 	}
 
 	// Map team IDs to Team objects
@@ -371,7 +346,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 		// Skip memberships not associated with teams within org
 		team, ok := teamsIdx[*membership.Body.TeamID]
 		if !ok {
-			continue
+			panic("Attemped to access membership with no associated team.")
 		}
 
 		// Skip memberships associated with machine team
@@ -400,7 +375,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 
 	users, err := client.Profiles.ListByID(c, userIDs)
 	if err != nil {
-		return err
+		return errs.NewExitError("Could not list teams.")
 	}
 	if users == nil {
 		return errs.NewExitError("User not found.")

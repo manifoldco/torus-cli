@@ -748,10 +748,9 @@ const (
 
 // SystemTeams is an ordering of importance of system teams
 var SystemTeams = map[string]int{
-	OwnerTeamName:   0,
-	AdminTeamName:   1,
-	MemberTeamName:  2,
-	MachineTeamName: 3,
+	OwnerTeamName:  0,
+	AdminTeamName:  1,
+	MemberTeamName: 2,
 }
 
 // Team IDs for certain system teams can be derived based on their OrgID.
