@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## Unreleased
+## v0.27.0
 
-_Unreleased_
+_2017-10-08_
 
 **Notable Changes**
 
