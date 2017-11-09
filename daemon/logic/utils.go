@@ -270,9 +270,10 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 			}
 		}
 
-		encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, true)
+		// Find the key that encrypted this user into the keyring
+		encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, false)
 		if err != nil {
-			log.Printf("could not find encypting public key for membership: %s", err)
+			log.Printf("could not find encrypting public key for membership: %s", err)
 			return nil, nil, err
 		}
 		encPubKey := encPubKeySegment.PublicKey

@@ -529,7 +529,7 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 				return err
 			}
 
-			encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, true)
+			encPubKeySegment, err := claimTree.Find(krm.EncryptingKeyID, false)
 			if err != nil {
 				return err
 			}
