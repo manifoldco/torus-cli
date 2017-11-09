@@ -8,7 +8,6 @@ import (
 	"strings"
 	"sync"
 	"text/tabwriter"
-	"unicode/utf8"
 
 	"github.com/urfave/cli"
 
@@ -278,24 +277,25 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		return errs.NewExitError("User not found.")
 	}
 
-	count := strconv.Itoa(len(memberships))
-	title := "members of the " + team.Body.Name + " team (" + count + ")"
-
 	fmt.Println("")
-	fmt.Println(title)
-	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
-
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
+	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	fmt.Fprintf(w, " \tUSERNAME\tNAME\n")
 	for _, profile := range profiles {
 		me := ""
 		if session.Username() == profile.Body.Username {
 			me = "*"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, profile.Body.Username)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Username, profile.Body.Name)
 	}
 
 	w.Flush()
-	fmt.Println("\n  (*) you")
+
+	count := strconv.Itoa(len(memberships))
+	title := "team " + team.Body.Name + " has (" + count + ") members."
+
+	fmt.Println("")
+	fmt.Println(title)
+
 	return nil
 }
 
