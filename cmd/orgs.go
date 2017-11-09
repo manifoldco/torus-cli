@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"text/tabwriter"
-	"unicode/utf8"
 
 	"github.com/urfave/cli"
 
@@ -19,7 +18,7 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
-	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/primitive"
 )
 
 func init() {
@@ -233,10 +232,30 @@ func orgsRemove(ctx *cli.Context) error {
 	return nil
 }
 
-func orgsMembersListCmd(ctx *cli.Context) error {
+// ByTeamPrecedence will implement the sort Interface
+type ByTeamPrecedence []envelope.Team
 
-	// Use "member" team name to bypass specific teams
-	teamName := "member"
+func (tp ByTeamPrecedence) Len() int {
+	return len(tp)
+}
+
+func (tp ByTeamPrecedence) Swap(i, j int) {
+	tp[i], tp[j] = tp[j], tp[i]
+}
+
+func (tp ByTeamPrecedence) Less(i, j int) bool {
+	if tp[i].Body.TeamType == "system" && tp[j].Body.TeamType == "system" {
+		return primitive.SystemTeams[tp[i].Body.Name] < primitive.SystemTeams[tp[j].Body.Name]
+	} else if tp[i].Body.TeamType == "system" {
+		return true
+	} else if tp[j].Body.TeamType == "system" {
+		return false
+	}
+
+	return tp[i].Body.Name[0] < tp[j].Body.Name[0]
+}
+
+func orgsMembersListCmd(ctx *cli.Context) error {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -248,10 +267,6 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 
 	var org *envelope.Org
 	var orgs []envelope.Org
-	var team envelope.Team
-	var teams []envelope.Team
-	var memberships []envelope.Membership
-	var oErr, tErr, mErr, sErr error
 
 	// Retrieve the org name supplied via the --org flag.
 	// This flag is optional. If none was supplied, then
@@ -261,101 +276,171 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 
 	if orgFlagArgument == "" {
 		// Retrieve list of available orgs
-		orgs, oErr = client.Orgs.List(c)
-		if oErr != nil {
-			return oErr
+		orgs, err = client.Orgs.List(c)
+		if err != nil {
+			return err
 		}
 
-		//idx, _, oErr := SelectOrgPrompt(orgs)
-		idx, _, oErr := SelectExistingOrgPrompt(orgs)
-		if oErr != nil {
-			return oErr
-		}
-
-		if idx == promptui.SelectedAdd {
-			// COME BACK TO THIS
-			// Error condition, unsure how to handle
+		// Prompt user to select from list of existing orgs
+		idx, _, err := SelectExistingOrgPrompt(orgs)
+		if err != nil {
+			return err
 		}
 
 		org = &orgs[idx]
+
 	} else {
 		// If org flag was used, identify the org supplied.
-		org, oErr = client.Orgs.GetByName(c, orgFlagArgument)
+		org, err = client.Orgs.GetByName(c, orgFlagArgument)
 		if org == nil {
-			return oErr
+			fmt.Println("org", orgFlagArgument, "not found.")
+			return err
 		}
 	}
 
-	// Retrieve the team by name supplied
-	teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
-	if len(teams) != 1 {
-		return tErr
-	}
-	team = teams[0]
-
-	// Hide machine teams from the teams list; as we use them to represent
-	// machine roles in the system.
-	if isMachineTeam(team.Body) {
-		return tErr
-	}
-
-	// Pull all memberships for supplied org/team
-	memberships, mErr = client.Memberships.List(c, org.ID, team.ID, nil)
-
+	// Retrieve teams, memberships and the current session concurrently
+	var teams []envelope.Team
+	var memberships []envelope.Membership
 	var session *api.Session
-	// Who am I
-	session, sErr = client.Session.Who(c)
+	var tErr, mErr, sErr error
 
-	if oErr != nil || mErr != nil || tErr != nil {
+	var getMembersTeamsSession sync.WaitGroup
+	getMembersTeamsSession.Add(3)
+
+	go func() {
+		// Retrieve list of teams in org
+		teams, tErr = client.Teams.List(c, org.ID, "", primitive.AnyTeamType)
+		if tErr != nil {
+			tErr = errs.NewExitError("Could not retrieve list of teams.")
+			getMembersTeamsSession.Done()
+			return
+		}
+
+		getMembersTeamsSession.Done()
+	}()
+
+	go func() {
+		// Retrieve list of memberships in org
+		memberships, mErr = client.Memberships.List(c, org.ID, nil, nil)
+		if mErr != nil {
+			tErr = errs.NewExitError("Could not retrieve list of memberships.")
+			getMembersTeamsSession.Done()
+			return
+		}
+		getMembersTeamsSession.Done()
+	}()
+
+	go func() {
+		// Get current session - Who am I
+		session, err = client.Session.Who(c)
+		if sErr != nil {
+			sErr = errs.NewExitError("Failed to get current session.")
+			getMembersTeamsSession.Done()
+			return
+		}
+		getMembersTeamsSession.Done()
+	}()
+
+	getMembersTeamsSession.Wait()
+	if tErr != nil || mErr != nil || sErr != nil {
 		return cli.NewMultiError(
-			oErr,
-			mErr,
 			tErr,
+			mErr,
 			sErr,
 		)
 	}
 
 	if len(memberships) == 0 {
-		fmt.Printf("%s has no members\n", team.Body.Name)
+		fmt.Printf("%s has no members\n", org.Body.Name)
 		return nil
 	}
 
-	membershipUserIDs := make(map[identity.ID]bool)
+	// Map team IDs to Team objects
+	teamsIdx := make(map[identity.ID]envelope.Team)
+	for _, team := range teams {
+		teamsIdx[*team.ID] = team
+	}
+
+	userTeamIdx := make(map[identity.ID][]identity.ID) // Mapping from user ID to team IDs
+	membershipUserIDs := make(map[identity.ID]bool)    // Set of unique user IDs
+
+	// Create:
+	//	- Set of unqiue user IDs in membershipUserIDs
+	// 	- Mapping from user IDs to team IDs in userTeamIdx (1:m mapping)
 	for _, membership := range memberships {
+		// Skip memberships not associated with teams within org
+		team, ok := teamsIdx[*membership.Body.TeamID]
+		if !ok {
+			continue
+		}
+
+		// Skip memberships associated with machine team
+		if isMachineTeam(team.Body) {
+			continue
+		}
+
+		// Add to set of unique user IDs
 		membershipUserIDs[*membership.Body.OwnerID] = true
+
+		// For each new user ID, create mapping to teams that the user is in
+		_, ok = userTeamIdx[*membership.Body.OwnerID]
+		if !ok {
+			// For new user IDs (not yet in userTeamIdx) create an empty list of team IDs
+			userTeamIdx[*membership.Body.OwnerID] = []identity.ID{}
+		}
+		// Add current membership's team ID to user's list
+		userTeamIdx[*membership.Body.OwnerID] = append(userTeamIdx[*membership.Body.OwnerID], *membership.Body.TeamID)
 	}
 
-	var profileIDs []identity.ID
+	// Create unique list of user IDs
+	var userIDs []identity.ID
 	for id := range membershipUserIDs {
-		profileIDs = append(profileIDs, id)
+		userIDs = append(userIDs, id)
 	}
 
-	profiles, err := client.Profiles.ListByID(c, profileIDs)
+	users, err := client.Profiles.ListByID(c, userIDs)
 	if err != nil {
 		return err
 	}
-	if profiles == nil {
+	if users == nil {
 		return errs.NewExitError("User not found.")
 	}
 
-	count := strconv.Itoa(len(memberships))
-	title := "members of the " + team.Body.Name + " team (" + count + ")"
-
 	fmt.Println("")
-	fmt.Println(title)
-	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
-
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	for _, profile := range profiles {
+	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	fmt.Fprintf(w, " \tUSERNAME\tNAME\tTEAM\n")
+	for _, user := range users {
 		me := ""
-		if session.Username() == profile.Body.Username {
+		if session.Username() == user.Body.Username {
 			me = "*"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, profile.Body.Username)
+
+		// Sort teams by precedence
+		userTeams := []envelope.Team{}
+		for _, teamID := range userTeamIdx[*user.ID] {
+			userTeams = append(userTeams, teamsIdx[teamID])
+		}
+
+		sort.Sort(ByTeamPrecedence(userTeams))
+
+		// Create string containing all team names associated with each user
+		teamString := ""
+		for _, t := range userTeams {
+			teamString += t.Body.Name + ", "
+		}
+		// Remove trailing comma and space character
+		teamString = teamString[:len(teamString)-2]
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Username, user.Body.Name, teamString)
 	}
 
 	w.Flush()
-	fmt.Println("\n  (*) you")
+
+	count := strconv.Itoa(len(userIDs))
+	countString := "org " + org.Body.Name + " has (" + count + ") members."
+
+	fmt.Println("")
+	fmt.Println(countString)
+	fmt.Println("")
 	return nil
 }
 
