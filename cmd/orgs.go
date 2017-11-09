@@ -58,7 +58,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, orgsMembersListCmd,
+					orgsMembersListCmd,
 				),
 			},
 		},
