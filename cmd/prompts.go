@@ -188,6 +188,29 @@ func SelectOrgPrompt(orgs []envelope.Org) (int, string, error) {
 	return prompt.Run()
 }
 
+// SelectExistingOrgPrompt prompts the user to select an org from a list
+// No option is given to create a new org
+func SelectExistingOrgPrompt(orgs []envelope.Org) (int, string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return 0, "", err
+	}
+
+	names := make([]string, len(orgs))
+	for i, o := range orgs {
+		names[i] = o.Body.Name
+	}
+
+	// Get the user's org selection
+	prompt := promptui.Select{
+		Label:     "Select organization",
+		Items:     names,
+		IsVimMode: preferences.Core.Vim,
+	}
+
+	return prompt.Run()
+}
+
 // SelectTeamPrompt prompts the user to select a team from a list or enter a
 // new name, an optional label can be provided.
 func SelectTeamPrompt(teams []envelope.Team, label, addLabel string) (int, string, error) {
