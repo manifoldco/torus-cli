@@ -346,7 +346,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 		// Skip memberships not associated with teams within org
 		team, ok := teamsIdx[*membership.Body.TeamID]
 		if !ok {
-			panic("Attemped to access membership with no associated team.")
+			panic("Attempted to access membership with no associated team.")
 		}
 
 		// Skip memberships associated with machine team

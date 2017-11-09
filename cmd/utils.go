@@ -19,7 +19,7 @@ func (tp ByTeamPrecedence) Swap(i, j int) {
 func (tp ByTeamPrecedence) Less(i, j int) bool {
 
 	// 1) 	If both teams are system teams, must compare owner < admin < member
-	//		where "<" means has higher precendence (ie. owner (0) < admin (1) where
+	//		where "<" means has higher precedence (ie. owner (0) < admin (1) where
 	//		owner has a higher precedence).
 	//
 	// 2) 	Any system team automatically has higher precedence than a non-system team.
