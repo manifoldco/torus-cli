@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## Unreleased
+
+_Unreleased_
+
+**Notable Changes**
+
+- Introduced command `orgs members --org ORG -o ORG` to list all members within
+  an organization.
+
 ## v0.27.0
 
 _2017-10-08_
