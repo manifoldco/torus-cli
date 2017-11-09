@@ -9,6 +9,16 @@ import (
 	"github.com/manifoldco/torus-cli/primitive"
 )
 
+var expectedOrder = []string{
+	primitive.OwnerTeamName,
+	primitive.AdminTeamName,
+	primitive.MemberTeamName,
+	"cat",
+	"dog",
+	"elephant",
+	"apple",
+}
+
 // TestTeamPrecedenceSort tests that the ByTeamPrecedence correctly
 // implements the Sort interface.
 //
@@ -19,7 +29,6 @@ func TestTeamPrecedenceSort(t *testing.T) {
 	testTeamList := ByTeamPrecedence{
 		// Machine -> machine team
 		{
-			Version: 6,
 			Body: &primitive.Team{
 				Name:     "apple",
 				TeamType: primitive.MachineTeamType,
@@ -27,7 +36,6 @@ func TestTeamPrecedenceSort(t *testing.T) {
 		},
 		// User -> cat team
 		{
-			Version: 3,
 			Body: &primitive.Team{
 				Name:     "cat",
 				TeamType: primitive.UserTeamType,
@@ -35,7 +43,6 @@ func TestTeamPrecedenceSort(t *testing.T) {
 		},
 		// User -> dog team
 		{
-			Version: 4,
 			Body: &primitive.Team{
 				Name:     "dog",
 				TeamType: primitive.UserTeamType,
@@ -43,7 +50,6 @@ func TestTeamPrecedenceSort(t *testing.T) {
 		},
 		// User elephant team
 		{
-			Version: 5,
 			Body: &primitive.Team{
 				Name:     "elephant",
 				TeamType: primitive.UserTeamType,
@@ -51,15 +57,12 @@ func TestTeamPrecedenceSort(t *testing.T) {
 		},
 		// System -> Member team
 		{
-			Version: 2,
 			Body: &primitive.Team{
 				Name:     primitive.MemberTeamName,
 				TeamType: primitive.SystemTeamType,
 			},
 		},
-		// System -> Admin team
 		{
-			Version: 1,
 			Body: &primitive.Team{
 				Name:     primitive.AdminTeamName,
 				TeamType: primitive.SystemTeamType,
@@ -67,7 +70,6 @@ func TestTeamPrecedenceSort(t *testing.T) {
 		},
 		// System -> Owner team
 		{
-			Version: 0,
 			Body: &primitive.Team{
 				Name:     primitive.OwnerTeamName,
 				TeamType: primitive.SystemTeamType,
@@ -77,11 +79,11 @@ func TestTeamPrecedenceSort(t *testing.T) {
 
 	sort.Sort(ByTeamPrecedence(testTeamList))
 
-	idList := []int{}
+	var foundOrder []string
 	for _, team := range testTeamList {
-		idList = append(idList, int(team.Version))
+		foundOrder = append(foundOrder, team.Body.Name)
 	}
 
-	listSortedCorrectly := sort.IntsAreSorted(idList)
-	gm.Expect(listSortedCorrectly).To(gm.BeTrue())
+	gm.Expect(foundOrder).Should(gm.Equal(expectedOrder))
+
 }
