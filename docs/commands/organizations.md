@@ -21,6 +21,24 @@ Each organization name is globally unique and must adhere to the system naming s
 
 `torus orgs remove [username]` removes the specified user from the specified organization.
 
+### members
+###### Added [v0.28.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+
+`torus orgs members` lists all members within an organization, including their username, name and all the teams they belong to.
+
+**Example**
+
+```
+$ torus orgs members
+✔ Select organization: matt
+
+    USERNAME   NAME          TEAM
+*   matt       Matt Wright   owner, admin, member
+    barnaby    barnaby       admin, member, myuserteam
+
+org matt has (2) members.
+```
+
 ## keypairs
 Every user/machine in the Torus ecosystem has both a signing and an encryption key per-organization. These key pairs are generated when an entity joins an organization.
 
