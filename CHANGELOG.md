@@ -6,8 +6,8 @@ _Unreleased_
 
 **Notable Changes**
 
-- Introduced command `orgs members --org ORG -o ORG` to list all members within
-  an organization.
+- Introduced command `orgs members --org ORG` to list all members within an organization.
+- Changed the output style of `teams members` to match the output style of `orgs members --org ORG`.
 
 ## v0.27.0
 

@@ -40,6 +40,18 @@ A team is given a unique name within the organization that adheres to the naming
 
 To display all members of your organization display the members of the "member" team using `torus teams members member`. This is useful when using the add and remove commands.
 
+**Example**
+
+```
+$ torus teams members member --org matt
+
+    USERNAME   NAME
+*   matt       Matt Wright
+    barnaby    barnaby
+
+team member has (2) members.
+```
+
 ### add
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
