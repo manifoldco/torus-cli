@@ -6,7 +6,7 @@ A secure, shared workspace for secrets.
 [Documentation](https://torus.sh/docs) |
 [Twitter](https://twitter.com/toruscli) |
 [Security Disclosure](./internal/security.md) |
-[Code of Conduct](./.github/CONDUCT.md) |
+[Code of Conduct](./.github/CODE_OF_CONDUCT.md) |
 [Contribution Guidelines](./.github/CONTRIBUTING.md)
 
 [![Travis](https://img.shields.io/travis/manifoldco/torus-cli/master.svg)](https://travis-ci.org/manifoldco/torus-cli)
@@ -71,6 +71,10 @@ steps below!
 Currently on Windows, the Daemon will create a named pipe using the default security attributes. This means, that the LocalSystem account, administrators, and the creator will be granted full control. All members of the Everyone group and the anonymous account are granted read access.
 
 More information can be found [here](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365150(v=vs.85).aspx).
+
+## Contributing
+
+We're always looking for new contributors to help us improve Torus! To get started give our [Contributor Guidelines](./.github/CONTRIBUTING.md) a quick read!
 
 ## Security Disclosure
 
