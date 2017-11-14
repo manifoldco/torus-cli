@@ -9,6 +9,10 @@ _Unreleased_
 - Introduced command `orgs members --org ORG` to list all members within an organization.
 - Changed the output style of `teams members` to match the output style of `orgs members --org ORG`.
 
+**Fixes**
+
+- Fixed a bug preventing old credential values from being decrypted.
+
 ## v0.27.0
 
 _2017-10-08_

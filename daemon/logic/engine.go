@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"strconv"
 	"sync"
 
 	"github.com/manifoldco/go-base64"
@@ -259,11 +260,13 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	// unset credentials.
 	activeGraphs, err := cgs.Prune()
 	if err != nil {
+		log.Printf("error encountered while pruning graph: %s", err)
 		return nil, err
 	}
 
 	creds := []PlaintextCredentialEnvelope{}
 	if len(activeGraphs) == 0 {
+		log.Printf("no active graphs found")
 		return creds, nil
 	}
 
@@ -358,8 +361,9 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 						// the credentials.
 						if cred.GetVersion() == 1 {
 							cValue := apitypes.CredentialValue{}
-							err = json.Unmarshal(pt, &cValue)
+							err = json.Unmarshal([]byte(strconv.Quote(string(pt))), &cValue)
 							if err != nil {
+								log.Printf("could not unmarshal credential value from v1 cred: %s", err)
 								return err
 							}
 
@@ -389,6 +393,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 					return nil
 				})
 				if err != nil {
+					log.Printf("encountered an error while unboxing: %s", err)
 					return err
 				}
 			}
@@ -396,6 +401,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 			return nil
 		})
 		if err != nil {
+			log.Printf("encountered an error while unsealing: %s", err)
 			return nil, err
 		}
 	}
