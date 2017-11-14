@@ -2,6 +2,7 @@ package apitypes
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 )
 
@@ -81,5 +82,22 @@ func TestCredentialValueUnmarshalJSON(t *testing.T) {
 			t.Errorf("wrong value! had: '%s' wanted: '%s'", c.String(), expectedStr)
 		}
 
+	})
+
+	t.Run("quoted json string", func(t *testing.T) {
+		jsonString := strconv.Quote(`{"version":1,"body":{"type":"string","value":"12345678"}}`)
+		c := CredentialValue{}
+		err := json.Unmarshal([]byte(jsonString), &c)
+		if err != nil {
+			t.Errorf("unexpected error: %s", err)
+		}
+
+		if c.IsUnset() {
+			t.Error("value is unset")
+		}
+
+		if c.String() != "12345678" {
+			t.Errorf("wrong value! had '%s' wanted '%s'", c.String(), "12345678")
+		}
 	})
 }
