@@ -3,9 +3,12 @@
 package socket
 
 import (
+	"fmt"
+	"log"
 	"net"
+	"os/user"
 
-	"github.com/natefinch/npipe"
+	"github.com/Microsoft/go-winio"
 )
 
 func makeSocket(transportAddress string, groupShared bool) (net.Listener, error) {
@@ -24,5 +27,20 @@ func makeSocket(transportAddress string, groupShared bool) (net.Listener, error)
 	// grant full control to the LocalSystem account, administrators, and the
 	// creator owner. They also grant read access to members of the Everyone
 	// group and the anonymous account.
-	return npipe.Listen(transportAddress)
+
+	// Security Descriptor String Format
+	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa379570(v=vs.85).aspx
+
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	c := winio.PipeConfig{
+		SecurityDescriptor: fmt.Sprintf("O:%s", usr.Uid) +
+			fmt.Sprintf("G:%s", usr.Uid) +
+			fmt.Sprintf("D:PAI(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;%s)", usr.Uid),
+	}
+
+	return winio.ListenPipe(transportAddress, &c)
 }
