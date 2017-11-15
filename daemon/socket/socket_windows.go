@@ -4,7 +4,6 @@ package socket
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"os/user"
 
@@ -33,7 +32,8 @@ func makeSocket(transportAddress string, groupShared bool) (net.Listener, error)
 
 	usr, err := user.Current()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("Error getting user SID: %s\n", transportAddress)
+		return nil, err
 	}
 
 	c := winio.PipeConfig{
