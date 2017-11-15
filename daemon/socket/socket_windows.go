@@ -39,7 +39,7 @@ func makeSocket(transportAddress string, groupShared bool) (net.Listener, error)
 	c := winio.PipeConfig{
 		SecurityDescriptor: fmt.Sprintf("O:%s", usr.Uid) +
 			fmt.Sprintf("G:%s", usr.Uid) +
-			fmt.Sprintf("D:PAI(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;%s)", usr.Uid),
+			fmt.Sprintf("D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;%s)", usr.Uid),
 	}
 
 	return winio.ListenPipe(transportAddress, &c)
