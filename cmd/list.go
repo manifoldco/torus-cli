@@ -34,22 +34,21 @@ func init() {
 		Flags: []cli.Flag{
 			stdOrgFlag,
 			stdProjectFlag,
+			envFlag("Use this environment.", false),
+			serviceFlag("Use this service.", "", false),
+			nameFlag("Find secrets with this name."),
 			cli.BoolFlag{
 				Name:  "verbose, v",
 				Usage: "Lists the sources of the secrets (shortcut for --format verbose)",
 			},
 		},
 		Action: chain(
-			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-			setUserEnv, checkRequiredFlags, listCmd,
+			//ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
+			//setUserEnv, checkRequiredFlags, listCmd,
+			ensureDaemon, ensureSession, checkRequiredFlags, listCmd,
 		),
 	}
 	Cmds = append(Cmds, list)
-}
-
-func testCommand(ctx *cli.Context) error {
-	fmt.Println("YOU JUST RAN TOOOOOOOORUS LIST!")
-	return nil
 }
 
 func treeTest(ctx *cli.Context) error {
@@ -96,6 +95,22 @@ func listCmd(ctx *cli.Context) error {
 		verbose = true
 	}
 
+	envFilter := ctx.String("environment")
+	serFilter := ctx.String("service")
+	nameFilter := ctx.String("name")
+
+	fmt.Println("environment filter: ")
+	fmt.Println(envFilter)
+	fmt.Println("")
+
+	fmt.Println("service filter: ")
+	fmt.Println(serFilter)
+	fmt.Println("")
+
+	fmt.Println("name filter: ")
+	fmt.Println(nameFilter)
+	fmt.Println("")
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		//return errs.NewExitError("Failed to retrieve objects")
@@ -139,6 +154,11 @@ func listCmd(ctx *cli.Context) error {
 	fmt.Println("")
 	fmt.Println("Searching for environments...")
 	for _, e := range projectTree.Envs {
+		if envFilter != "" && envFilter != e.Body.Name{
+			continue
+		} else {
+			fmt.Println("Found env match")
+		}
 		envPath := path + e.Body.Name + "/"
 		fmt.Println("env: " + envPath)
 
@@ -157,8 +177,10 @@ func listCmd(ctx *cli.Context) error {
 	fmt.Println("Searching for services:")
 
 	for _, e := range treeHead.children {
-
 		for _, s := range projectTree.Services {
+			if serFilter != "" && serFilter != s.Body.Name{
+				continue
+			}
 			sPath := e.path + s.Body.Name + "/"
 			fmt.Println("service: " + sPath)
 
@@ -177,8 +199,10 @@ func listCmd(ctx *cli.Context) error {
 
 			secrets := []apitypes.CredentialEnvelope{}
 			for _, c := range creds{
-				fmt.Println("spacingsecret: " + (*c.Body).GetName())
-
+				fmt.Println("\tsecret: " + (*c.Body).GetName())
+				if nameFilter != "" && nameFilter != (*c.Body).GetName(){
+					continue
+				}
 				secrets = append(secrets, c)
 			}
 
@@ -202,9 +226,9 @@ func listCmd(ctx *cli.Context) error {
 	fmt.Println("")
 	fmt.Println(treeHead.value)
 
-	envTab := "  "
-	serTab := "    "
-	secTab := "      "
+	envTab := "    "
+	serTab := "        "
+	secTab := "            "
 	for _, e := range treeHead.children{
 		if e.doDisplay == false{
 			continue
@@ -224,6 +248,7 @@ func listCmd(ctx *cli.Context) error {
 				}
 			}
 		}
+		fmt.Println("")
 	}
 
 	return nil
