@@ -3,27 +3,13 @@ package cmd
 import (
 	"fmt"
 	"context"
-	"strings"
 
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/api"
-	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/pathexp"
-	"github.com/manifoldco/torus-cli/registry"
 )
-
-type TreeNode struct {
-	doDisplay bool
-	path string
-	value string
-	secrets []apitypes.CredentialEnvelope //??? Is this stupid?
-	parent *TreeNode
-	children []*TreeNode
-}
-
-
 
 func init() {
 	list := cli.Command{
@@ -51,204 +37,116 @@ func init() {
 	Cmds = append(Cmds, list)
 }
 
-func treeTest(ctx *cli.Context) error {
-
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
-
-	client := api.NewClient(cfg)
-	c := context.Background()
-
-	session, err := client.Session.Who(c)
-	if err != nil {
-		return err
-	}
-
-	identity, err := deriveIdentity(ctx, session)
-	if err != nil {
-		return err
-	}
-
-	parts := []string{
-		"", ctx.String("org"), ctx.String("project"), ctx.String("environment"),
-		ctx.String("service"), identity, ctx.String("instance"),
-	}
-
-	fmt.Println("parts:")
-	fmt.Println(parts)
-
-	return nil
+type ServiceSecretList struct{
+	service string
+	secrets []string
 }
 
 func listCmd(ctx *cli.Context) error {
-
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("*****************************************************************************")
-	fmt.Println("              DEBUG OUTPUT   ")
-	fmt.Println("")
 
 	verbose := false
 	if ctx.Bool("verbose"){
 		verbose = true
 	}
 
+	envToServiceSecret := make(map[string][]ServiceSecretList)
+
+	orgName := ctx.String("org")
+	projectName := ctx.String("project")
 	envFilter := ctx.String("environment")
-	serFilter := ctx.String("service")
-	nameFilter := ctx.String("name")
+	serviceFilter := ctx.String("service")
+	secretFilter := ctx.String("name")
 
-	fmt.Println("environment filter: ")
-	fmt.Println(envFilter)
-	fmt.Println("")
-
-	fmt.Println("service filter: ")
-	fmt.Println(serFilter)
-	fmt.Println("")
-
-	fmt.Println("name filter: ")
-	fmt.Println(nameFilter)
-	fmt.Println("")
+	projectPath := "/" + orgName + "/" + projectName + "/"
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		//return errs.NewExitError("Failed to retrieve objects")
 		return err
 	}
 
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Check to make sure these are valid
-	parts := []string{"", ctx.String("org"), ctx.String("project"), "" }
-
-	path := strings.Join(parts, "/")
-
-	// Begin path tree
-	// Create node for org
-	treeHead := TreeNode{
-		path: path,
-		value: path,
-		doDisplay: true,
-		parent: nil,
-	}
-
-	fmt.Println("")
-	fmt.Println("Listing secrets in project path:")
-	fmt.Println(path)
-
-	// Parse the partial pathexp to be used with matching
-	pexp, err := pathexp.ParsePartial(path)
+	// Get Org
+	org, err := getOrg(c, client, orgName)
 	if err != nil {
 		return err
 	}
 
-	var projectTree registry.ProjectTreeSegment
-	tree, err := projectTreeForOrg(c, client, pexp)
+	// Get Project
+	project, err := getProject(c, client, org.ID, projectName)
 	if err != nil {
 		return err
 	}
-	projectTree = *tree
 
-	fmt.Println("")
-	fmt.Println("Searching for environments...")
-	for _, e := range projectTree.Envs {
-		if envFilter != "" && envFilter != e.Body.Name{
-			continue
-		} else {
-			fmt.Println("Found env match")
+	// Get environment names
+	envNames := []string{}
+	if envFilter != "" {
+		envNames = append(envNames, envFilter)
+	} else {		
+		environments, err := listEnvs(&c, client, org.ID, project.ID, nil)
+		if err != nil {
+			return err
 		}
-		envPath := path + e.Body.Name + "/"
-		fmt.Println("env: " + envPath)
-
-		node := TreeNode{
-			path: envPath,
-			value: e.Body.Name,
-			doDisplay: false,
-			parent: &treeHead,
+		for _, e := range environments{
+			envNames = append(envNames, e.Body.Name)
 		}
-
-		treeHead.children = append(treeHead.children, &node)
-
 	}
 
-	fmt.Println("")
-	fmt.Println("Searching for services:")
+	// Get service names
+	serviceNames := []string{}
+	if serviceFilter != "" {
+		serviceNames = append(serviceNames, serviceFilter)
+	} else {
+		services, err := listServices(&c, client, org.ID, project.ID, nil)
+		if err != nil {
+			return err
+		}
+		for _, s := range services{
+			serviceNames = append(serviceNames, s.Body.Name)
+		}
+	}
 
-	for _, e := range treeHead.children {
-		for _, s := range projectTree.Services {
-			if serFilter != "" && serFilter != s.Body.Name{
-				continue
-			}
-			sPath := e.path + s.Body.Name + "/"
-			fmt.Println("service: " + sPath)
-
-			node := TreeNode{
-				path: sPath,
-				value: s.Body.Name,
-				doDisplay: false,
-				parent: e,
-			}
-
-			secretPath := sPath + "*/*"
-			creds, err := client.Credentials.Search(c, secretPath)
+	// Retrieve secrets under each env/service combo
+	for _, e := range envNames{
+		for _, s := range serviceNames{
+			pexp, err := pathexp.ParsePartial(projectPath + e + "/" + s + "/" + "*/*")
+			credentials, err := client.Credentials.Search(c, pexp.String())
 			if err != nil {
 				return err
 			}
-
-			secrets := []apitypes.CredentialEnvelope{}
-			for _, c := range creds{
-				fmt.Println("\tsecret: " + (*c.Body).GetName())
-				if nameFilter != "" && nameFilter != (*c.Body).GetName(){
+			if len(credentials) == 0 {
+				continue
+			}
+			var credNames []string
+			for _, c := range credentials{
+				credName := (*c.Body).GetName()
+				if secretFilter != "" && (*c.Body).GetName() != secretFilter {
 					continue
 				}
-				secrets = append(secrets, c)
+				if verbose == true{
+					credName = (*c.Body).GetPathExp().String() + "/" + credName
+				}
+				credNames = append(credNames, credName)
 			}
-
-			if len(secrets) != 0 {
-				node.secrets = secrets
-				node.doDisplay = true
-
-				node.parent.doDisplay = true
-				node.parent.parent.doDisplay = true
+			if len(credNames) > 0 {
+				envToServiceSecret[e] = append(envToServiceSecret[e], ServiceSecretList {
+					service: s,
+					secrets: credNames,
+				})
 			}
-
-			e.children = append(e.children, &node)
 		}
 	}
 
-	// Print tree
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println("*****************************************************************************")
-	fmt.Println("")
-	fmt.Println("")
-	fmt.Println(treeHead.value)
-
-	envTab := "    "
-	serTab := "        "
-	secTab := "            "
-	for _, e := range treeHead.children{
-		if e.doDisplay == false{
-			continue
-		}
-		fmt.Println(envTab + e.value + "/")
-
-		for _, s := range e.children{
-			if s.doDisplay == false{
-				continue
-			}
-			fmt.Println(serTab + s.value + "/")
-			for _, sec := range s.secrets{
-				if verbose{
-					fmt.Println(secTab + (*sec.Body).GetPathExp().String() + "/" + (*sec.Body).GetName())
-				} else {
-					fmt.Println(secTab + (*sec.Body).GetName())
-				}
+	fmt.Println(projectPath)
+	for k, v := range envToServiceSecret{
+		fmt.Println("\t", k)
+		for _, s := range v{
+			fmt.Println("\t\t", s.service)
+			for _, secret := range s.secrets{
+				fmt.Println("\t\t\t", secret)
 			}
 		}
-		fmt.Println("")
 	}
 
 	return nil

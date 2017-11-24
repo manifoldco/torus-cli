@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -195,4 +196,19 @@ func createProjectByName(c context.Context, client *api.Client, orgID *identity.
 	}
 	fmt.Printf("Project %s created.\n", name)
 	return project, nil
+}
+
+func getProject(ctx context.Context, client *api.Client, orgID *identity.ID, name string) (*envelope.Project, error) {
+	orgIDs := []identity.ID{*orgID}
+	names := []string{name}
+	projects, err := client.Projects.Search(ctx, orgIDs, names)
+	if projects == nil || len(projects) < 1{
+		fmt.Println("Project", name, "not found.")
+		return nil, errors.New("Project not found.")
+	}
+	if err != nil {
+		return nil, errs.NewErrorExitError("Unable to lookup project.", err)
+	}
+
+	return &projects[0], nil
 }
