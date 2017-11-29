@@ -126,6 +126,39 @@ Credential port has been set at /myorg/myproject/production/default/*/*/PORT
 Credential mysql_url has been set at /myorg/myproject/production/default/*/*/MYSQL_URL
 ```
 
+## export
+###### Added [v0.28.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+
+`torus export [file-path]` or using stdout redirection (e.g. `torus export -e production > config.env`) exports the secrets for a specific project, environment, and service to a file or stdout. The output format can be specified using the `--format, -f` flag supporting `env`, `bash`, `powershell`, `cmd` (windows command prompt), `fish`, and `json`.
+
+**Examples**
+
+All examples assumed the command is ran inside a [linked](./project-structure.md#link) directory.
+
+```bash
+# Exporting secrets from a specific environment to stdin
+$ torus export -e prod
+MYSQLDB_URL="mysql://user:password@host.com:3306/db"
+
+# Exporting secrets from a specific environment to stdin for powershell
+$ torus export -e prod
+$Env:MYSQLDB_URL = "mysql://user:password@host.com:3306/db"
+
+# Exporting secrets from a specific environment piped to a file
+$ torus export -e prod > config.env
+
+# Exporting secrets from a specific environment to a file
+$ torus export -e prod config.env
+
+# Exporting secrets from a specific environment into a bash shell
+$ eval "$(torus export -e prod -f bash)"
+$ echo $MYSQLDB_URL
+mysql://user:password@host.com:3306/db
+
+# Exporting secrets from a specific environment and service into a powershell
+$ torus export -e prod -s api -f powershell
+```
+
 ## view
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 

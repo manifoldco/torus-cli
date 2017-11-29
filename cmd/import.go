@@ -23,7 +23,7 @@ func init() {
 	c := cli.Command{
 		Name:      "import",
 		Usage:     "Import multiple secrets from an env file",
-		ArgsUsage: "<file> or use stdin redirection (eg: torus import < secrets.env)",
+		ArgsUsage: "[path to file] or use stdin redirection (e.g. `torus import < secrets.env`)",
 		Category:  "SECRETS",
 		Flags:     setUnsetFlags,
 		Action: chain(
