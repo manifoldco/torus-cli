@@ -6,8 +6,13 @@ _Unreleased_
 
 **Notable Changes**
 
-- Introduced command `orgs members --org ORG` to list all members within an organization.
-- Changed the output style of `teams members` to match the output style of `orgs members --org ORG`.
+- Introduced command `orgs members --org ORG` to list all members within an
+  organization.
+- Changed the output style of `teams members` to match the output style of
+  `orgs members --org ORG`.
+- Encryption keys, user passwords, and machine secret tokens are now stored in
+  secure and guarded memory making it more difficult to extract data from a
+  running process.
 
 **Fixes**
 

@@ -60,7 +60,7 @@ func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) err
 		return err
 	}
 
-	token := authToken.Body.Token
+	token := []byte(authToken.Body.Token)
 	self, err := s.engine.client.Self.Get(ctx, authToken.Body.Token)
 	if err != nil {
 		return err
@@ -178,16 +178,16 @@ func (s *Session) attemptEdDSALogin(ctx context.Context, loginToken *envelope.To
 // Logout destroys the current session if it exists, otherwise, it returns an
 // error that the request could not be completed.
 func (s *Session) Logout(ctx context.Context) error {
-	tok := s.engine.session.Token()
 
-	if tok == "" {
+	if !s.engine.session.HasToken() {
 		return &apitypes.Error{
 			Type: apitypes.UnauthorizedError,
 			Err:  []string{"You must be logged in, to logout!"},
 		}
 	}
 
-	err := s.engine.client.Tokens.Delete(ctx, tok)
+	tok := s.engine.session.Token()
+	err := s.engine.client.Tokens.Delete(ctx, string(tok[:]))
 	switch err := err.(type) {
 	case *apitypes.Error:
 		switch {

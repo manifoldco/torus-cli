@@ -17,6 +17,7 @@ import (
 	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/crypto/secure"
 	"github.com/manifoldco/torus-cli/daemon/db"
 	"github.com/manifoldco/torus-cli/daemon/logic"
 	"github.com/manifoldco/torus-cli/daemon/session"
@@ -70,12 +71,13 @@ func New(cfg *config.Config, groupShared bool) (*Daemon, error) {
 		return nil, err
 	}
 
-	session := session.NewSession()
-	cryptoEngine := crypto.NewEngine(session)
+	guard := secure.NewGuard()
+	session := session.NewSession(guard)
+	cryptoEngine := crypto.NewEngine(session, guard)
 	transport := utils.CreateHTTPTransport(cfg.CABundle, strings.Split(cfg.RegistryURI.Host, ":")[0])
 	client := registry.NewClient(cfg.RegistryURI.String(), cfg.APIVersion,
 		cfg.Version, session, transport)
-	logic := logic.NewEngine(session, db, cryptoEngine, client)
+	logic := logic.NewEngine(session, db, cryptoEngine, client, guard)
 
 	mTransport := utils.CreateHTTPTransport(cfg.CABundle, strings.Split(cfg.ManifestURI.Host, ":")[0])
 	updates := updates.NewEngine(cfg, mTransport)
