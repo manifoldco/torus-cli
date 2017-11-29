@@ -66,35 +66,18 @@ func viewCmd(ctx *cli.Context) error {
 
 	switch format {
 	case "env":
-		err = writeEnvFormat(w, secrets, path)
+		err = writeFormat(w, secrets, "%s=%s\r\n", uppercase|quotes)
 	case "verbose":
 		err = writeVerboseFormat(w, secrets, path)
 	case "json":
-		err = writeJSONFormat(w, secrets, path)
+		err = writeJSONFormat(w, secrets)
 	default:
 		return errs.NewUsageExitError("Unknown format: "+format, ctx)
 	}
 
-	hints.Display(hints.Link, hints.Run)
+	hints.Display(hints.Link, hints.Run, hints.Export)
 
 	return err
-}
-
-func writeEnvFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path string) error {
-	tw := tabwriter.NewWriter(w, 2, 0, 2, ' ', 0)
-
-	for _, secret := range secrets {
-		value := (*secret.Body).GetValue().String()
-		name := (*secret.Body).GetName()
-		key := strings.ToUpper(name)
-		if strings.Contains(value, " ") {
-			fmt.Fprintf(tw, "%s=%q\n", key, value)
-		} else {
-			fmt.Fprintf(tw, "%s=%s\n", key, value)
-		}
-	}
-
-	return tw.Flush()
 }
 
 func writeVerboseFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path string) error {
@@ -116,7 +99,7 @@ func writeVerboseFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path
 	return tw.Flush()
 }
 
-func writeJSONFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, path string) error {
+func writeJSONFormat(w io.Writer, secrets []apitypes.CredentialEnvelope) error {
 	keyMap := make(map[string]interface{})
 
 	for _, secret := range secrets {

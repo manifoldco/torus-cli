@@ -75,7 +75,7 @@ func setCmd(ctx *cli.Context) error {
 
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, path, name)
 
-	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import)
+	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import, hints.Export)
 	return nil
 }
 

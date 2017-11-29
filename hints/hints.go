@@ -20,6 +20,9 @@ const (
 	// Deny command adds hint to `torus deny`
 	Deny
 
+	// Export command adds hints for `torus export`
+	Export
+
 	// GettingStarted displays helpful hints when a user signs up
 	GettingStarted
 
@@ -111,6 +114,9 @@ func init() {
 		View: {
 			"View secret values which have been set using `torus view`",
 			"See the exact path for each secret set using `torus view -v`",
+		},
+		Export: {
+			"Export secrets for a specific environment and service using `torus export`",
 		},
 	}
 }
