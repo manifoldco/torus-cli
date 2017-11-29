@@ -9,6 +9,7 @@ import (
 	"github.com/manifoldco/go-base64"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/daemon/crypto/secure"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/identity"
 )
@@ -23,19 +24,20 @@ type session struct {
 	identity envelope.Envelope
 	auth     envelope.Envelope
 
-	// sensitive values
-	token      string
-	passphrase []byte
+	// sensitive values and the guard
+	guard      *secure.Guard
+	token      *secure.Secret
+	passphrase *secure.Secret
 }
 
 // Session is the interface for access to secure session details.
 type Session interface {
 	Type() apitypes.SessionType
-	Set(apitypes.SessionType, envelope.Envelope, envelope.Envelope, []byte, string) error
+	Set(apitypes.SessionType, envelope.Envelope, envelope.Envelope, []byte, []byte) error
 	SetIdentity(apitypes.SessionType, envelope.Envelope, envelope.Envelope) error
 	ID() *identity.ID
 	AuthID() *identity.ID
-	Token() string
+	Token() []byte
 	Passphrase() []byte
 	MasterKey() (*base64.Value, error)
 	HasToken() bool
@@ -47,8 +49,12 @@ type Session interface {
 
 // NewSession returns the default implementation of the Session interface
 // for a user or machine depending on the passed type.
-func NewSession() Session {
-	return &session{mutex: &sync.Mutex{}, sessionType: apitypes.NotLoggedIn}
+func NewSession(guard *secure.Guard) Session {
+	return &session{
+		mutex:       &sync.Mutex{},
+		sessionType: apitypes.NotLoggedIn,
+		guard:       guard,
+	}
 }
 
 // Type returns the type of identity this session represents (e.g. user or
@@ -84,11 +90,11 @@ func (s *session) AuthID() *identity.ID {
 }
 
 // Token returns the auth token stored in this session.
-func (s *session) Token() string {
+func (s *session) Token() []byte {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	return s.token
+	return s.token.Buffer()
 }
 
 // Passphrase returns the user's passphrase.
@@ -96,15 +102,15 @@ func (s *session) Passphrase() []byte {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	return s.passphrase
+	return s.passphrase.Buffer()
 }
 
 func (s *session) HasToken() bool {
-	return (len(s.token) > 0)
+	return s.token != nil
 }
 
 func (s *session) HasPassphrase() bool {
-	return (len(s.passphrase) > 0)
+	return s.passphrase != nil
 }
 
 // String implements the fmt.Stringer interface.
@@ -148,7 +154,7 @@ func checkSessionType(sessionType apitypes.SessionType, identity, auth envelope.
 //
 // It returns an error if any values are empty.
 func (s *session) Set(sessionType apitypes.SessionType, identity, auth envelope.Envelope,
-	passphrase []byte, token string) error {
+	passphrase []byte, token []byte) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -166,8 +172,16 @@ func (s *session) Set(sessionType apitypes.SessionType, identity, auth envelope.
 	}
 
 	s.sessionType = sessionType
-	s.passphrase = passphrase
-	s.token = token
+	s.passphrase, err = s.guard.Secret(passphrase)
+	if err != nil {
+		return err
+	}
+
+	s.token, err = s.guard.Secret(token)
+	if err != nil {
+		return err
+	}
+
 	s.identity = identity
 	s.auth = auth
 
@@ -234,7 +248,11 @@ func (s *session) Logout() error {
 	s.sessionType = apitypes.NotLoggedIn
 	s.identity = nil
 	s.auth = nil
-	s.token = ""
-	s.passphrase = []byte{}
+
+	s.token.Destroy()
+	s.passphrase.Destroy()
+	s.token = nil
+	s.passphrase = nil
+
 	return nil
 }

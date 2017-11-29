@@ -1,10 +1,14 @@
-hash: 69bc17d0eb97e74bcefec393a8f35aed1496c478c83e990d13fd00d448ab512d
-updated: 2017-11-06T20:49:25.635505694-04:00
+hash: 6734f567020a1f2b8130dfa57da895bd13fb2eaa103c51a47389ee6185a82bd4
+updated: 2017-11-28T17:02:31.032788-04:00
 imports:
 - name: github.com/asaskevich/govalidator
   version: 7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877
+- name: github.com/awnumar/memguard
+  version: b482b0c828e2eeecbfebb05ca965c8d571afaeff
+  subpackages:
+  - memcall
 - name: github.com/aws/aws-sdk-go
-  version: d46843b92a3a8e377d7fe24b4d70fca37f923d00
+  version: 0c22c3d22be15d3be3d22b8dedabbf5dd4304730
   subpackages:
   - aws
   - aws/awserr
@@ -50,7 +54,7 @@ imports:
 - name: github.com/fullsailor/pkcs7
   version: eb67e7e564b9eae64dc7d95fae0784d6086a5fc4
 - name: github.com/go-ini/ini
-  version: f280b3ba517bf5fc98922624f21fb0e7a92adaec
+  version: 32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a
 - name: github.com/go-zoo/bone
   version: fd0aebc74e908868b09ac140fb5a53cb363884c1
 - name: github.com/golang/protobuf
@@ -127,6 +131,10 @@ imports:
   version: 7fdf09982454086d5570c7db3e11f360194830ca
   subpackages:
   - internal
+- name: golang.org/x/sys
+  version: f3918c30c5c2cb527c0b071a27c35120a6c0719a
+  subpackages:
+  - windows
 - name: google.golang.org/appengine
   version: 170382fa85b10b94728989dfcf6cc818b335c952
   subpackages:

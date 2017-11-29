@@ -19,6 +19,7 @@ import (
 	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/crypto/secure"
 	"github.com/manifoldco/torus-cli/daemon/observer"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
@@ -33,6 +34,7 @@ type Engine struct {
 	db      Database
 	crypto  *crypto.Engine
 	client  *registry.Client
+	guard   *secure.Guard
 
 	Worklog Worklog
 	Machine Machine
@@ -46,12 +48,13 @@ type Database interface {
 
 // NewEngine returns a new Engine
 func NewEngine(s session.Session, db Database, e *crypto.Engine,
-	client *registry.Client) *Engine {
+	client *registry.Client, guard *secure.Guard) *Engine {
 	engine := &Engine{
 		session: s,
 		db:      db,
 		crypto:  e,
 		client:  client,
+		guard:   guard,
 	}
 	engine.Worklog = newWorklog(engine)
 	engine.Machine = Machine{engine: engine}
@@ -128,7 +131,7 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 	// We'll make a new one now.
 	if graph == nil || graph.HasRevocations() {
 		newGraph, err = createCredentialGraph(ctx, cred.Body, graph,
-			sigID, encID, kp, claimtree, e.client, e.crypto)
+			sigID, encID, kp, claimtree, e.client, e.crypto, e.guard)
 		if err != nil {
 			log.Printf("error creating credential graph: %s", err)
 			return nil, err

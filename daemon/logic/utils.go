@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"crypto/rand"
 	"log"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/crypto/secure"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
@@ -61,7 +61,7 @@ func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, org
 func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	parent registry.CredentialGraph, sigID *identity.ID, encID *identity.ID,
 	kp *crypto.KeyPairs, ct *registry.ClaimTree, client *registry.Client,
-	engine *crypto.Engine) (*registry.CredentialGraphV2, error) {
+	engine *crypto.Engine, g *secure.Guard) (*registry.CredentialGraphV2, error) {
 
 	pathExp, err := credBody.PathExp.WithInstance("*")
 	if err != nil {
@@ -79,9 +79,8 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		return nil, err
 	}
 
-	// XXX: sensitive value. protect with OS things.
-	mek := make([]byte, 64)
-	_, err = rand.Read(mek)
+	mek, err := g.Random(64)
+	defer mek.Destroy()
 	if err != nil {
 		return nil, err
 	}
