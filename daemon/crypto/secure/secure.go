@@ -60,7 +60,7 @@ func (g *Guard) remove(s *Secret) error {
 
 	placement := -1
 	for i, v := range g.secrets {
-		if *v == *s {
+		if v == s {
 			placement = i
 			break
 		}
