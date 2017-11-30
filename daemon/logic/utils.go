@@ -2,7 +2,9 @@ package logic
 
 import (
 	"context"
+	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/ed25519"
@@ -54,6 +56,32 @@ func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, org
 	}
 
 	return pubenc, privenc, nil
+}
+
+func packagePlaintextCred(c envelope.CredentialInf, value string) PlaintextCredentialEnvelope {
+	state := "set"
+	return PlaintextCredentialEnvelope{
+		ID:      c.GetID(),
+		Version: c.GetVersion(),
+		Body: &PlaintextCredential{
+			Name:      c.Name(),
+			PathExp:   c.PathExp(),
+			ProjectID: c.ProjectID(),
+			OrgID:     c.OrgID(),
+			Value:     value,
+			State:     &state,
+		},
+	}
+}
+
+func extractCredentialValue(pt []byte) (*apitypes.CredentialValue, error) {
+	cValue := &apitypes.CredentialValue{}
+	err := json.Unmarshal([]byte(strconv.Quote(string(pt))), cValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return cValue, nil
 }
 
 // createCredentialGraph generates, signs, and posts a new CredentialGraph

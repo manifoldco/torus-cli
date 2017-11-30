@@ -27,6 +27,7 @@ func credentialsGetRoute(engine *logic.Engine, o *observer.Observer) http.Handle
 
 		path := q.Get("path")
 		pathexp := q.Get("pathexp")
+		skip := q.Get("skip-decryption") == "true"
 		if path == "" && pathexp == "" {
 			err = errors.New("missing path or pathexp")
 			log.Printf("Error constructing request: %s", err)
@@ -36,9 +37,9 @@ func credentialsGetRoute(engine *logic.Engine, o *observer.Observer) http.Handle
 
 		var creds []logic.PlaintextCredentialEnvelope
 		if path != "" {
-			creds, err = engine.RetrieveCredentials(ctx, n, &path, nil)
+			creds, err = engine.RetrieveCredentials(ctx, n, &path, nil, skip)
 		} else {
-			creds, err = engine.RetrieveCredentials(ctx, n, nil, &pathexp)
+			creds, err = engine.RetrieveCredentials(ctx, n, nil, &pathexp, skip)
 		}
 		if err != nil {
 			// Rely on logs inside engine for debugging
