@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strconv"
+	"unsafe"
 
 	"github.com/dchest/blake2b"
 	"github.com/keybase/go-triplesec"
@@ -19,6 +20,7 @@ import (
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
 
+	"github.com/manifoldco/torus-cli/daemon/crypto/secure"
 	"github.com/manifoldco/torus-cli/daemon/ctxutil"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
@@ -27,6 +29,9 @@ const (
 	nonceSize = 16
 	blakeSize = 16
 )
+
+// ErrMissingPassphrase occurs when a session does not have a passphrase
+var ErrMissingPassphrase = errors.New("Missing passphrase; cannot unseal master key")
 
 // SignatureKeyPair is an ed25519/eddsa digital signature keypair.
 // The private portion of the keypair is encrypted with triplesec.
@@ -59,18 +64,20 @@ type KeyPairs struct {
 // Engine exposes methods to encrypt, unencrypt and sign values, using
 // the logged in user's credentials.
 type Engine struct {
-	sess session.Session
+	sess  session.Session
+	guard *secure.Guard
 }
 
 // NewEngine returns a new Engine
-func NewEngine(sess session.Session) *Engine {
-	return &Engine{sess: sess}
+func NewEngine(sess session.Session, g *secure.Guard) *Engine {
+	return &Engine{sess: sess, guard: g}
 }
 
 // Seal encrypts the plaintext pt bytes with triplesec-v3 using a key derived
 // via blake2b from the user's master key and a nonce (returned).
 func (e *Engine) Seal(ctx context.Context, pt []byte) ([]byte, []byte, error) {
 	mk, err := e.unsealMasterKey(ctx)
+	defer mk.Destroy()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -86,7 +93,7 @@ func (e *Engine) Seal(ctx context.Context, pt []byte) ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	dk, err := deriveKey(ctx, mk, nonce, blakeSize)
+	dk, err := deriveKey(ctx, mk.Buffer(), nonce, blakeSize)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,13 +115,14 @@ func (e *Engine) Seal(ctx context.Context, pt []byte) ([]byte, []byte, error) {
 
 // Unseal decrypts the ciphertext ct, encrypted with triplesec-v3, using the
 // a key derived via blake2b from the user's master key and the provided nonce.
-func (e *Engine) Unseal(ctx context.Context, ct, nonce []byte) ([]byte, error) {
+func (e *Engine) Unseal(ctx context.Context, ct, nonce []byte) (*secure.Secret, error) {
 	mk, err := e.unsealMasterKey(ctx)
+	defer mk.Destroy()
 	if err != nil {
 		return nil, err
 	}
 
-	dk, err := deriveKey(ctx, mk, nonce, blakeSize)
+	dk, err := deriveKey(ctx, mk.Buffer(), nonce, blakeSize)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +137,12 @@ func (e *Engine) Unseal(ctx context.Context, ct, nonce []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	return ts.Decrypt(ct)
+	b, err := ts.Decrypt(ct)
+	if err != nil {
+		return nil, err
+	}
+
+	return e.guard.Secret(b)
 }
 
 // Box encrypts the plaintext pt bytes with Box, using the private key found in
@@ -138,7 +151,7 @@ func (e *Engine) Unseal(ctx context.Context, ct, nonce []byte) ([]byte, error) {
 //
 // It returns the ciphertext, the nonce used for encrypting the plaintext,
 // and an optional error.
-func (e *Engine) Box(ctx context.Context, pt []byte, privKP *EncryptionKeyPair,
+func (e *Engine) Box(ctx context.Context, pt *secure.Secret, privKP *EncryptionKeyPair,
 	pubKey []byte) ([]byte, []byte, error) {
 
 	err := ctxutil.ErrIfDone(ctx)
@@ -156,9 +169,10 @@ func (e *Engine) Box(ctx context.Context, pt []byte, privKP *EncryptionKeyPair,
 	if err != nil {
 		return nil, nil, err
 	}
+	defer privKey.Destroy()
 
-	privkb := [32]byte{}
-	copy(privkb[:], privKey)
+	// Get a pointer to the underlying private key in memory
+	privkb := (*[32]byte)(unsafe.Pointer(&privKey.Buffer()[0]))
 
 	pubkb := [32]byte{}
 	copy(pubkb[:], pubKey)
@@ -168,24 +182,25 @@ func (e *Engine) Box(ctx context.Context, pt []byte, privKP *EncryptionKeyPair,
 		return nil, nil, err
 	}
 
-	return box.Seal([]byte{}, pt, &nonce, &pubkb, &privkb), nonce[:], nil
+	return box.Seal([]byte{}, pt.Buffer(), &nonce, &pubkb, privkb), nonce[:], nil
 }
 
 // Unbox Decrypts and verifies ciphertext ct that was previously encrypted using
 // the provided nonce, and the inverse parts of the provided keypairs.
 func (e *Engine) Unbox(ctx context.Context, ct, nonce []byte,
-	privKP *EncryptionKeyPair, pubKey []byte) ([]byte, error) {
+	privKP *EncryptionKeyPair, pubKey []byte) (*secure.Secret, error) {
 
 	privKey, err := e.Unseal(ctx, privKP.Private, privKP.PNonce)
 	if err != nil {
 		return nil, err
 	}
+	defer privKey.Destroy()
 
 	nonceb := [24]byte{}
 	copy(nonceb[:], nonce)
 
-	privkb := [32]byte{}
-	copy(privkb[:], privKey)
+	// Get a pointer to the underlying private key in memory
+	privkb := (*[32]byte)(unsafe.Pointer(&privKey.Buffer()[0]))
 
 	pubkb := [32]byte{}
 	copy(pubkb[:], pubKey)
@@ -195,12 +210,12 @@ func (e *Engine) Unbox(ctx context.Context, ct, nonce []byte,
 		return nil, err
 	}
 
-	pt, success := box.Open([]byte{}, ct, &nonceb, &pubkb, &privkb)
+	pt, success := box.Open([]byte{}, ct, &nonceb, &pubkb, privkb)
 	if !success {
 		return nil, errors.New("Failed to decrypt ciphertext")
 	}
 
-	return pt, nil
+	return e.guard.Secret(pt)
 }
 
 // BoxCredential encrypts the credential value pt via symmetric secretbox
@@ -239,8 +254,9 @@ func (e *Engine) BoxCredential(ctx context.Context, pt, encMec, mecNonce []byte,
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	defer mek.Destroy()
 
-	cek, err := deriveKey(ctx, mek, cekNonce, 32)
+	cek, err := deriveKey(ctx, mek.Buffer(), cekNonce, 32)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -266,8 +282,9 @@ func (e *Engine) UnboxCredential(ctx context.Context, ct, encMec, mecNonce,
 	if err != nil {
 		return nil, err
 	}
+	defer mek.Destroy()
 
-	cek, err := deriveKey(ctx, mek, cekNonce, 32)
+	cek, err := deriveKey(ctx, mek.Buffer(), cekNonce, 32)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +315,8 @@ type Unsealer interface {
 }
 
 type unsealerImpl struct {
-	privkey []byte
+	engine  *Engine
+	privkey *secure.Secret
 	pubkey  []byte
 }
 
@@ -310,9 +328,8 @@ func (u *unsealerImpl) WithUnboxer(ctx context.Context, encMec, mecNonce []byte,
 	nonce := [24]byte{}
 	copy(nonce[:], mecNonce)
 
-	privkb := [32]byte{}
-	copy(privkb[:], u.privkey)
-
+	// Get a pointer to the private key buffer
+	privkb := (*[32]byte)(unsafe.Pointer(&u.privkey.Buffer()[0]))
 	pubkb := [32]byte{}
 	copy(pubkb[:], u.pubkey)
 
@@ -321,12 +338,18 @@ func (u *unsealerImpl) WithUnboxer(ctx context.Context, encMec, mecNonce []byte,
 		return err
 	}
 
-	mek, success := box.Open([]byte{}, encMec, &nonce, &pubkb, &privkb)
+	mek, success := box.Open([]byte{}, encMec, &nonce, &pubkb, privkb)
 	if !success {
 		return errors.New("Failed to decrypt keyring")
 	}
 
-	unboxer := unboxerImpl{mek: mek}
+	s, err := u.engine.guard.Secret(mek)
+	if err != nil {
+		return err
+	}
+	defer s.Destroy()
+
+	unboxer := unboxerImpl{mek: s}
 	return fn(&unboxer)
 }
 
@@ -336,11 +359,11 @@ type Unboxer interface {
 }
 
 type unboxerImpl struct {
-	mek []byte
+	mek *secure.Secret
 }
 
 func (u *unboxerImpl) Unbox(ctx context.Context, ct, cekNonce, ctNonce []byte) ([]byte, error) {
-	cek, err := deriveKey(ctx, u.mek, cekNonce, 32)
+	cek, err := deriveKey(ctx, u.mek.Buffer(), cekNonce, 32)
 	if err != nil {
 		return nil, err
 	}
@@ -373,6 +396,7 @@ func (e *Engine) WithUnboxer(ctx context.Context, encMec, mecNonce []byte,
 	if err != nil {
 		return err
 	}
+	defer mek.Destroy()
 
 	err = ctxutil.ErrIfDone(ctx)
 	if err != nil {
@@ -380,7 +404,6 @@ func (e *Engine) WithUnboxer(ctx context.Context, encMec, mecNonce []byte,
 	}
 
 	u := unboxerImpl{mek: mek}
-
 	return fn(&u)
 }
 
@@ -393,13 +416,14 @@ func (e *Engine) WithUnsealer(ctx context.Context, privKP *EncryptionKeyPair,
 	if err != nil {
 		return err
 	}
+	defer privKey.Destroy()
 
 	err = ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return err
 	}
 
-	u := unsealerImpl{privkey: privKey, pubkey: pubKey}
+	u := unsealerImpl{privkey: privKey, pubkey: pubKey, engine: e}
 	return fn(&u)
 }
 
@@ -410,6 +434,7 @@ func (e *Engine) CloneMembership(ctx context.Context, encMec, mecNonce []byte, p
 	if err != nil {
 		return nil, nil, err
 	}
+	defer mek.Destroy()
 
 	return e.Box(ctx, mek, privKP, targetPubKey)
 }
@@ -467,13 +492,14 @@ func (e *Engine) Sign(ctx context.Context, s SignatureKeyPair, b []byte) ([]byte
 	if err != nil {
 		return nil, err
 	}
+	defer pk.Destroy()
 
 	err = ctxutil.ErrIfDone(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return ed25519.Sign(pk, b), nil
+	return ed25519.Sign(pk.Buffer(), b), nil
 }
 
 // Verify verifies that sig is the correct signature for b given
@@ -521,8 +547,12 @@ func (e *Engine) signAndID(ctx context.Context, body identity.Immutable,
 
 // unsealMasterKey uses the scrypt stretched password to decrypt the master
 // password, which is encrypted with triplesec-v3
-func (e *Engine) unsealMasterKey(ctx context.Context) ([]byte, error) {
-	ts, err := newTriplesec(ctx, []byte(e.sess.Passphrase()))
+func (e *Engine) unsealMasterKey(ctx context.Context) (*secure.Secret, error) {
+	if !e.sess.HasPassphrase() {
+		return nil, ErrMissingPassphrase
+	}
+
+	ts, err := newTriplesec(ctx, e.sess.Passphrase())
 	if err != nil {
 		return nil, err
 	}
@@ -538,7 +568,10 @@ func (e *Engine) unsealMasterKey(ctx context.Context) ([]byte, error) {
 	}
 
 	mk, err := ts.Decrypt(*masterKey)
-	return mk, err
+	if err != nil {
+		return nil, err
+	}
+	return e.guard.Secret(mk)
 }
 
 func newTriplesec(ctx context.Context, k []byte) (*triplesec.Cipher, error) {
@@ -558,13 +591,15 @@ func newTriplesec(ctx context.Context, k []byte) (*triplesec.Cipher, error) {
 // ChangePassword creates a password object and re-encrypts the master key
 func (e *Engine) ChangePassword(ctx context.Context, newPassword string) (*primitive.UserPassword, *primitive.MasterKey, *primitive.LoginPublicKey, error) {
 	// We need to re-use the master key
-	currentMasterKey, err := e.unsealMasterKey(ctx)
+	cmk, err := e.unsealMasterKey(ctx)
+	defer cmk.Destroy()
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	// Encrypt the new password and re-encrypt the original master key
-	pw, master, err := EncryptPasswordObject(ctx, newPassword, &currentMasterKey)
+	b := cmk.Buffer()
+	pw, master, err := EncryptPasswordObject(ctx, newPassword, &b)
 	if err != nil {
 		return nil, nil, nil, err
 	}

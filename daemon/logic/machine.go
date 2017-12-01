@@ -80,12 +80,12 @@ func (m *Machine) CreateToken(ctx context.Context, notifier *observer.Notifier,
 
 	// Create an "empty" machine session in order to create a Crypto engine on
 	// behalf of the machine for deriving and uploading these keys.
-	sess := session.NewSession()
-	err = sess.Set(apitypes.MachineSession, machine, token, *secret, "")
+	sess := session.NewSession(m.engine.guard)
+	err = sess.Set(apitypes.MachineSession, machine, token, *secret, []byte("hello"))
 	if err != nil {
 		return nil, err
 	}
-	c := crypto.NewEngine(sess)
+	c := crypto.NewEngine(sess, m.engine.guard)
 
 	n.Notify(observer.Progress, "Generating token keypairs", true)
 	kp, err := c.GenerateKeyPairs(ctx)

@@ -19,6 +19,7 @@ import (
 	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/crypto/secure"
 	"github.com/manifoldco/torus-cli/daemon/observer"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
@@ -33,6 +34,7 @@ type Engine struct {
 	db      Database
 	crypto  *crypto.Engine
 	client  *registry.Client
+	guard   *secure.Guard
 
 	Worklog Worklog
 	Machine Machine
@@ -46,12 +48,13 @@ type Database interface {
 
 // NewEngine returns a new Engine
 func NewEngine(s session.Session, db Database, e *crypto.Engine,
-	client *registry.Client) *Engine {
+	client *registry.Client, guard *secure.Guard) *Engine {
 	engine := &Engine{
 		session: s,
 		db:      db,
 		crypto:  e,
 		client:  client,
+		guard:   guard,
 	}
 	engine.Worklog = newWorklog(engine)
 	engine.Machine = Machine{engine: engine}
@@ -128,7 +131,7 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 	// We'll make a new one now.
 	if graph == nil || graph.HasRevocations() {
 		newGraph, err = createCredentialGraph(ctx, cred.Body, graph,
-			sigID, encID, kp, claimtree, e.client, e.crypto)
+			sigID, encID, kp, claimtree, e.client, e.crypto, e.guard)
 		if err != nil {
 			log.Printf("error creating credential graph: %s", err)
 			return nil, err
@@ -228,7 +231,7 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 
 // RetrieveCredentials returns all credentials for the given CPath string
 func (e *Engine) RetrieveCredentials(ctx context.Context,
-	notifier *observer.Notifier, cpath, cpathexp *string) ([]PlaintextCredentialEnvelope, error) {
+	notifier *observer.Notifier, cpath, cpathexp *string, skipDecryption bool) ([]PlaintextCredentialEnvelope, error) {
 	if cpath != nil && cpathexp != nil {
 		panic("cannot use both cpath and cpathexp")
 	}
@@ -278,6 +281,40 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	n := notifier.Notifier(steps)
 	n.Notify(observer.Progress, "Credentials retrieved", true)
 
+	if skipDecryption {
+		encrypted := []PlaintextCredentialEnvelope{}
+		log.Printf("skipping decryption of credentials")
+		for _, graph := range activeGraphs {
+			for _, cred := range graph.GetCredentials() {
+				// If we encounter a v1 credential then we have to decrypt it
+				// to get the credential value.
+				//
+				// Very few v1 credentials exist so we can just decrypt
+				// everything in those cases.
+				if cred.GetVersion() == 1 {
+					log.Printf("encountered a v1 credential; forcing decryption")
+					goto Decryption
+				}
+
+				cValue := apitypes.NewUndecryptedCredentialValue()
+				bv, err := json.Marshal(cValue)
+				if err != nil {
+					log.Printf("could not marshal undecrypted cvalue: %s", err)
+					return nil, err
+				}
+
+				cv, err := strconv.Unquote(string(bv))
+				if err != nil {
+					return nil, err
+				}
+				encrypted = append(encrypted, packagePlaintextCred(cred, cv))
+			}
+		}
+
+		return encrypted, nil
+	}
+
+Decryption:
 	// Loop over the trees and unpack the credentials; later on we will
 	// actually do real work and decrypt each of these credentials but for
 	// now we just need ot return a list of them!
@@ -360,8 +397,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 						// plain text value to check whether or not we should return
 						// the credentials.
 						if cred.GetVersion() == 1 {
-							cValue := apitypes.CredentialValue{}
-							err = json.Unmarshal([]byte(strconv.Quote(string(pt))), &cValue)
+							cValue, err := extractCredentialValue(pt)
 							if err != nil {
 								log.Printf("could not unmarshal credential value from v1 cred: %s", err)
 								return err
@@ -372,22 +408,7 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 							}
 						}
 
-						state := "set"
-						plainCred := PlaintextCredentialEnvelope{
-							ID:      cred.GetID(),
-							Version: cred.GetVersion(),
-							Body: &PlaintextCredential{
-								Name:      cred.Name(),
-								PathExp:   cred.PathExp(),
-								ProjectID: cred.ProjectID(),
-								OrgID:     cred.OrgID(),
-								Value:     string(pt),
-								State:     &state,
-							},
-						}
-
-						creds = append(creds, plainCred)
-
+						creds = append(creds, packagePlaintextCred(cred, string(pt)))
 						n.Notify(observer.Progress, "Credential decrypted", true)
 					}
 					return nil

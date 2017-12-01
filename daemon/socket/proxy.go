@@ -85,8 +85,8 @@ func (p *AuthProxy) Listen() error {
 			r.Host = p.u.Host
 			r.URL.Path = r.URL.Path[6:]
 
-			tok := p.sess.Token()
-			if tok != "" {
+			if p.sess.HasToken() {
+				tok := string(p.sess.Token())
 				r.Header["Authorization"] = []string{"Bearer " + tok}
 			}
 

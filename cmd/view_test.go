@@ -9,29 +9,6 @@ import (
 	"github.com/manifoldco/torus-cli/pathexp"
 )
 
-func TestWriteEnvFormat(t *testing.T) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	creds, path := viewCredentialsHelper(t)
-
-	err := writeEnvFormat(w, creds, path)
-
-	expected := `FOO=bar
-BAZ="two words"
-`
-	w.Flush()
-	got := string(buf.Bytes())
-
-	if err != nil {
-		t.Errorf("writeEnvFormat() expected no errors, got %s", err)
-	}
-
-	if expected != got {
-		t.Errorf("writeEnvFormat() expected\n%q\ngot\n%q\n", expected, got)
-	}
-}
-
 func TestWriteVerboseFormat(t *testing.T) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
@@ -61,9 +38,9 @@ func TestWriteJSONFormat(t *testing.T) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	creds, path := viewCredentialsHelper(t)
+	creds, _ := viewCredentialsHelper(t)
 
-	err := writeJSONFormat(w, creds, path)
+	err := writeJSONFormat(w, creds)
 
 	expected := `{
   "baz": "two words",

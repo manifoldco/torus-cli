@@ -12,7 +12,8 @@ import (
 
 // TokenHolder holds an authorization token
 type TokenHolder interface {
-	Token() string
+	HasToken() bool
+	Token() []byte
 }
 
 // Client exposes the registry REST API.
@@ -110,8 +111,8 @@ func (rt *registryRoundTripper) NewRequest(method, path string,
 		return nil, err
 	}
 
-	if tok := rt.holder.Token(); tok != "" {
-		req.Header.Set("Authorization", "Bearer "+tok)
+	if rt.holder.HasToken() {
+		req.Header.Set("Authorization", "Bearer "+string(rt.holder.Token()))
 	}
 
 	req.Header.Set("User-Agent", "Torus-Daemon/"+rt.version)

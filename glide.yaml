@@ -46,3 +46,4 @@ import:
 - package: github.com/fullsailor/pkcs7
 - package: github.com/google/shlex
 - package: github.com/onsi/gomega
+- package: github.com/awnumar/memguard

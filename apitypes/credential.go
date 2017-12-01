@@ -17,6 +17,7 @@ const (
 	stringCV
 	intCV
 	floatCV
+	undecryptedCV // only used internally to the daemon
 )
 
 // CredentialEnvelope is an unencrypted credential object with a
@@ -77,6 +78,7 @@ func (c *BaseCredential) GetValue() *CredentialValue {
 	if c.Value.cvtype == unsetCV {
 		return nil
 	}
+
 	return c.Value
 }
 
@@ -112,11 +114,20 @@ func (c *CredentialValue) IsUnset() bool {
 	return c.cvtype == unsetCV
 }
 
+// IsUndecrypted returns if this credential has not been decrypted
+func (c *CredentialValue) IsUndecrypted() bool {
+	return c.cvtype == undecryptedCV
+}
+
 // String returns the string representation of this credential. It panics
 // if the credential was deleted.
 func (c *CredentialValue) String() string {
 	if c.cvtype == unsetCV {
 		panic("CredentialValue has been unset")
+	}
+
+	if c.cvtype == undecryptedCV {
+		panic("CredentialValue was not decrypted")
 	}
 
 	return c.value
@@ -152,9 +163,11 @@ func (c *CredentialValue) MarshalJSON() ([]byte, error) {
 		impl.Body.Type = "number"
 	case unsetCV:
 		impl.Body.Type = "undefined"
+	case undecryptedCV:
+		impl.Body.Type = "undecrypted"
 	}
 
-	if c.cvtype != unsetCV {
+	if c.cvtype != unsetCV && c.cvtype != undecryptedCV {
 		v, err := json.Marshal(c.raw)
 		if err != nil {
 			return nil, err
@@ -196,6 +209,8 @@ func (c *CredentialValue) UnmarshalJSON(b []byte) error {
 	switch impl.Body.Type {
 	case "undefined":
 		c.cvtype = unsetCV
+	case "undecrypted":
+		c.cvtype = undecryptedCV
 	case "string":
 		c.cvtype = stringCV
 		var v string
@@ -258,5 +273,13 @@ func NewFloatCredentialValue(f float64) *CredentialValue {
 		cvtype: floatCV,
 		value:  strconv.FormatFloat(f, 'g', -1, 64),
 		raw:    f,
+	}
+}
+
+// NewUndecryptedCredentialValue creates a CredentialValue with an undecrypted
+// value
+func NewUndecryptedCredentialValue() *CredentialValue {
+	return &CredentialValue{
+		cvtype: undecryptedCV,
 	}
 }

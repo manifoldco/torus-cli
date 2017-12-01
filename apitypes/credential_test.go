@@ -84,6 +84,16 @@ func TestCredentialValueUnmarshalJSON(t *testing.T) {
 
 	})
 
+	tc("undecrypted", "", func(t *testing.T, c *CredentialValue) {
+		if c.IsUnset() {
+			t.Error("value is unset")
+		}
+
+		if !c.IsUndecrypted() {
+			t.Error("value is undecrypted")
+		}
+	})
+
 	t.Run("quoted json string", func(t *testing.T) {
 		jsonString := strconv.Quote(`{"version":1,"body":{"type":"string","value":"12345678"}}`)
 		c := CredentialValue{}

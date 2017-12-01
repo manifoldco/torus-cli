@@ -15,10 +15,11 @@ type CredentialsClient struct {
 	client *apiRoundTripper
 }
 
-// Search returns all credentials at the given pathexp.
+// Search returns all credentials at the given pathexp in an undecrypted state
 func (c *CredentialsClient) Search(ctx context.Context, pathexp string) ([]apitypes.CredentialEnvelope, error) {
 	v := &url.Values{}
 	v.Set("pathexp", pathexp)
+	v.Set("skip-decryption", "true")
 
 	return c.listWorker(ctx, v)
 }

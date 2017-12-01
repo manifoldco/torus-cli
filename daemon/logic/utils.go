@@ -2,8 +2,9 @@ package logic
 
 import (
 	"context"
-	"crypto/rand"
+	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/ed25519"
@@ -17,6 +18,7 @@ import (
 	"github.com/manifoldco/torus-cli/registry"
 
 	"github.com/manifoldco/torus-cli/daemon/crypto"
+	"github.com/manifoldco/torus-cli/daemon/crypto/secure"
 	"github.com/manifoldco/torus-cli/daemon/session"
 )
 
@@ -56,12 +58,38 @@ func packageEncryptionKeypair(ctx context.Context, c *crypto.Engine, authID, org
 	return pubenc, privenc, nil
 }
 
+func packagePlaintextCred(c envelope.CredentialInf, value string) PlaintextCredentialEnvelope {
+	state := "set"
+	return PlaintextCredentialEnvelope{
+		ID:      c.GetID(),
+		Version: c.GetVersion(),
+		Body: &PlaintextCredential{
+			Name:      c.Name(),
+			PathExp:   c.PathExp(),
+			ProjectID: c.ProjectID(),
+			OrgID:     c.OrgID(),
+			Value:     value,
+			State:     &state,
+		},
+	}
+}
+
+func extractCredentialValue(pt []byte) (*apitypes.CredentialValue, error) {
+	cValue := &apitypes.CredentialValue{}
+	err := json.Unmarshal([]byte(strconv.Quote(string(pt))), cValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return cValue, nil
+}
+
 // createCredentialGraph generates, signs, and posts a new CredentialGraph
 // to the registry.
 func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 	parent registry.CredentialGraph, sigID *identity.ID, encID *identity.ID,
 	kp *crypto.KeyPairs, ct *registry.ClaimTree, client *registry.Client,
-	engine *crypto.Engine) (*registry.CredentialGraphV2, error) {
+	engine *crypto.Engine, g *secure.Guard) (*registry.CredentialGraphV2, error) {
 
 	pathExp, err := credBody.PathExp.WithInstance("*")
 	if err != nil {
@@ -79,9 +107,8 @@ func createCredentialGraph(ctx context.Context, credBody *PlaintextCredential,
 		return nil, err
 	}
 
-	// XXX: sensitive value. protect with OS things.
-	mek := make([]byte, 64)
-	_, err = rand.Read(mek)
+	mek, err := g.Random(64)
+	defer mek.Destroy()
 	if err != nil {
 		return nil, err
 	}

@@ -145,6 +145,7 @@ func listObjects(ctx *cli.Context) error {
 			pathsErr = err
 			break
 		}
+
 		for _, cred := range creds {
 			body := *cred.Body
 			if body.GetValue() == nil {
