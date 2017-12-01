@@ -1,20 +1,19 @@
 package cmd
 
 import (
-	"fmt"
 	"context"
-	//"strings"
-	"sync"
+	"fmt"
 	"os"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/urfave/cli"
 
-	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
-	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/pathexp"
 )
 
@@ -80,7 +79,7 @@ func listCmd(ctx *cli.Context) error {
 	} else {
 		// If org flag was used, identify the org supplied.
 		org, err = client.Orgs.GetByName(c, orgName)
-		if org == nil {
+		if org == nil || err != nil {
 			return errs.NewExitError("org" + orgName + "not found.")
 		}
 	}
@@ -107,8 +106,8 @@ func listCmd(ctx *cli.Context) error {
 		// Get Project for project name, confirm project exists
 		project, err = getProject(c, client, org.ID, projectName)
 		if err != nil {
-			return errs.NewErrorExitError("Failed to get project info for " +
-				orgName + "/" + projectName, err)
+			return errs.NewErrorExitError("Failed to get project info for "+
+				orgName+"/"+projectName, err)
 		}
 	}
 
@@ -154,13 +153,13 @@ func listCmd(ctx *cli.Context) error {
 	var credentials []apitypes.CredentialEnvelope
 	var eErr, sErr, cErr error
 
-	go func(){
+	go func() {
 		// Get environments
 		environments, eErr = listEnvs(&c, client, org.ID, project.ID, nil)
 		getEnvsServicesCreds.Done()
 	}()
 
-	go func(){
+	go func() {
 		// Get services
 		services, sErr = listServices(&c, client, org.ID, project.ID, nil)
 		getEnvsServicesCreds.Done()
@@ -193,7 +192,7 @@ func listCmd(ctx *cli.Context) error {
 	// search space provided in filterPathExp. If no flags
 	// were set, all environments will pass the following test.
 	for _, e := range environments {
-		if filterPathExp.Envs.Contains(e.Body.Name){
+		if filterPathExp.Envs.Contains(e.Body.Name) {
 			filteredEnvNames = append(filteredEnvNames, e.Body.Name)
 		}
 	}
@@ -229,7 +228,7 @@ func listCmd(ctx *cli.Context) error {
 				}
 				credPathExp := (*cred.Body).GetPathExp()
 				if err != nil {
-					return errs.NewErrorExitError("Failed to parse: " + projectPath + e + "/" + s + "/*/*", err)
+					return errs.NewErrorExitError("Failed to parse: "+projectPath+e+"/"+s+"/*/*", err)
 				}
 				// If cred not contained in any builtPathExps, it is not
 				// within the search space specified by the flags.
@@ -248,17 +247,17 @@ func listCmd(ctx *cli.Context) error {
 	fmt.Println("")
 	w := tabwriter.NewWriter(os.Stdout, 5, 0, 2, ' ', 0)
 	fmt.Fprintf(w, "%s\n", projectPath)
-	for e, _ := range credentialsTree{
-		fmt.Fprintf(w, "\t%s\t\n", e + "/")
-		for s, _ := range credentialsTree[e]{
-			fmt.Fprintf(w, "\t\t%s\t\n", s + "/")
-			if len(credentialsTree[e][s]) == 0 && verbose{
+	for e := range credentialsTree {
+		fmt.Fprintf(w, "\t%s\t\n", e+"/")
+		for s := range credentialsTree[e] {
+			fmt.Fprintf(w, "\t\t%s\t\n", s+"/")
+			if len(credentialsTree[e][s]) == 0 && verbose {
 				fmt.Fprintf(w, "\t\t\t[empty]\n")
 			} else {
-				for c, cred := range credentialsTree[e][s]{
-					if verbose{
+				for c, cred := range credentialsTree[e][s] {
+					if verbose {
 						credPath := (*cred.Body).GetPathExp().String() + "/"
-						fmt.Fprintf(w, "\t\t\t%s\t%s\t\n", c, credPath + c)
+						fmt.Fprintf(w, "\t\t\t%s\t%s\t\n", c, credPath+c)
 					} else {
 						fmt.Fprintf(w, "\t\t\t%s\t\t\n", c)
 					}
@@ -271,7 +270,7 @@ func listCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func isSecretNameInList(secret string, list []string) bool{
+func isSecretNameInList(secret string, list []string) bool {
 	for _, s := range list {
 		if s == secret {
 			return true
