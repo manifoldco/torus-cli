@@ -200,8 +200,8 @@ Each level within the organization can be inspected by changing the options supp
   ---- | ----
   --org, -o | Required flag to specify org.
   --project, -p | Required flag to specify project.
-  --env, -e | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (ie. -e env1 -e env2). This flag is optional.
-  --service, -s | Specify service filter(s) for displayed secrets. To specify multiple services, pass multiple flags (ie. -s ser1 -s ser2). This flag is optional.
+  --env, -e | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
+  --service, -s | Specify service filter(s) for displayed secrets. To specify multiple services, pass multiple flags (eg. `torus list -s ser1 -s ser2`). This flag is optional.
   --verbose, -v | Show which type of path is being displayed, shortcut for --format=verbose
   --format FORMAT, -f FORMAT | Format used to display data (simple, verbose) (default: simple)
 
