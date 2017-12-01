@@ -56,9 +56,19 @@ func envFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("environment, e", "ENV", usage, "", "TORUS_ENVIRONMENT", required)
 }
 
+// envSliceFlag creates a new --environment cli.StringSliceFlag with custom usage string.
+func envSliceFlag(usage string, required bool) cli.Flag {
+	return newSlicePlaceholder("environment, e", "ENV", usage, "", "TORUS_ENVIRONMENT", required)
+}
+
 // serviceFlag creates a new --service cli.Flag with custom usage string.
 func serviceFlag(usage, value string, required bool) cli.Flag {
 	return newPlaceholder("service, s", "SERVICE", usage, value, "TORUS_SERVICE", required)
+}
+
+// serviceSliceFlag creates a new --service cli.StringSliceFlag with custom usage string.
+func serviceSliceFlag(usage, value string, required bool) cli.Flag {
+	return newSlicePlaceholder("service, s", "SERVICE", usage, value, "TORUS_SERVICE", required)
 }
 
 // userFlag creates a new --user cli.Flag with custom usage string.
