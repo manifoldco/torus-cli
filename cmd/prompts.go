@@ -164,6 +164,28 @@ func SelectProjectPrompt(projects []envelope.Project) (int, string, error) {
 	return prompt.Run()
 }
 
+// SelectExistingProjectPrompt prompts the user to select aa project from a list
+func SelectExistingProjectPrompt(projects []envelope.Project) (int, string, error) {
+	preferences, err := prefs.NewPreferences()
+	if err != nil {
+		return 0, "", err
+	}
+
+	names := make([]string, len(projects))
+	for i, p := range projects {
+		names[i] = p.Body.Name
+	}
+
+	// Get the user's org selection
+	prompt := promptui.Select{
+		Label:     "Select project",
+		Items:     names,
+		IsVimMode: preferences.Core.Vim,
+	}
+
+	return prompt.Run()
+}
+
 // SelectOrgPrompt prompts the user to select an org from a list, or enter a new name
 func SelectOrgPrompt(orgs []envelope.Org) (int, string, error) {
 	preferences, err := prefs.NewPreferences()

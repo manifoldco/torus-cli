@@ -187,19 +187,21 @@ To ensure that your command’s arguments and options are passed correctly you m
 $ torus run -e production -s www -- node ./bin/www --app api
 ```
 
-## ls
-###### Added [v0.13.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
+## list
+###### Added [v0.28.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus ls [path]` allows a user to explore the objects and values set within their organization.
+`torus list [name]...` allows a user to explore the objects and values set within their organization. Users can find the location of a particular secret by passing its name as an argument, or view all secrets within different branches of their organization.
 
-Each level within the organization can be inspected by changing the segments supplied in the path. Wildcards cannot be used for the organization or project segments of the [path](../concepts/path.md).
-
-Path is required, and does not support context.
+Each level within the organization can be inspected by changing the options supplied to the command.
 
 ### Command Options
 
   Option | Description
   ---- | ----
+  --org, -o | Required flag to specify org.
+  --project, -p | Required flag to specify project.
+  --env, -e | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (ie. -e env1 -e env2). This flag is optional.
+  --service, -s | Specify service filter(s) for displayed secrets. To specify multiple services, pass multiple flags (ie. -s ser1 -s ser2). This flag is optional.
   --verbose, -v | Show which type of path is being displayed, shortcut for --format=verbose
   --format FORMAT, -f FORMAT | Format used to display data (simple, verbose) (default: simple)
 
@@ -207,36 +209,49 @@ Path is required, and does not support context.
 
 List all secrets in a project:
 ```
-$ torus ls /my-org/landing-page/**
-/my-org/landing-page/dev-*/[api|www]/*/*/port
-/my-org/landing-page/[dev-jeff|dev-sally]/api/*/*/token
+$ torus list
+/org/project/
+    env1/
+        ser1/
+            secret1
+            secret2
+        ser2/
+            secret3
+    env2/
+        ser1/
+            secret1
 ```
 
-List orgs you are a member of:
+Find the location of a particular secret:
 ```
-$ torus ls / -v
-ORGS
-/my-org
-/another-org
-```
-
-List all projects within an org:
-```
-$ torus ls /my-org/
-/my-org/landing-page
-/my-org/other-project
+$ torus list secret1
+/org/project/
+    env1/
+        ser1/
+            secret1      
+        ser2/          
+    env2/
+        ser1/
+            secret1
 ```
 
-List all environments which match the path:
+List all secrets in a specific environment:
 ```
-$ torus ls /my-org/landing-page/dev*
-/my-org/landing-page/dev-jeff
-/my-org/landing-page/dev-sally
+$ torus list -e env2
+/org/project/
+    env2/
+        ser1/
+            secret1
 ```
 
-Expanding the path to view secrets using recursive:
+List all secrets in a specific service:
 ```
-$ torus ls /my-org/landing-page/dev-jeff -r
-/my-org/landing-page/dev-*/[api|www]/*/*/port
-/my-org/landing-page/[dev-jeff|dev-sally]/www/*/*/token
+$ torus list -s ser1
+/org/project/
+    env1/
+        ser1/
+            secret1               
+    env2/
+        ser1/
+            secret1
 ```

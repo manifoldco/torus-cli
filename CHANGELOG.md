@@ -16,6 +16,8 @@ _Unreleased_
 - Encryption keys, user passwords, and machine secret tokens are now stored in
   secure and guarded memory making it more difficult to extract data from a
   running process.
+- Added command `torus list` to display credentials and project structure.
+- Removed `torus ls`
 
 **Fixes**
 

@@ -25,8 +25,8 @@ func init() {
 		Usage:     "List your org's project structure and its secrets.",
 		Category:  "SECRETS",
 		Flags: []cli.Flag{
-			stdOrgFlag,
-			stdProjectFlag,
+			orgFlag("Use this organization.", false),
+			projectFlag("Use this project.", false),
 			envSliceFlag("Use this environment.", false),
 			serviceSliceFlag("Use this service.", "", false),
 			nameFlag("Find secrets with this name."),
@@ -36,15 +36,16 @@ func init() {
 			},
 		},
 		Action: chain(
-			ensureDaemon, ensureSession, checkRequiredFlags, listCmd,
+			ensureDaemon, ensureSession, loadDirPrefs, checkRequiredFlags, listCmd,
 		),
 	}
 	Cmds = append(Cmds, list)
 }
 
 func listCmd(ctx *cli.Context) error {
-
 	verbose := ctx.Bool("verbose")
+
+	args := ctx.Args()
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -59,20 +60,56 @@ func listCmd(ctx *cli.Context) error {
 
 	// Retrieve org and project flag values
 	orgName := ctx.String("org")
-	projectName := ctx.String("project")
+	var org *envelope.Org
+	if orgName == "" {
+		// Retrieve list of available orgs
+		orgs, err := client.Orgs.List(c)
+		if err != nil {
+			return errs.NewExitError("Failed to retrieve orgs list.")
+		}
 
-	// Get Org for org name, confirm org exists
-	org, err := getOrg(c, client, orgName)
-	if err != nil {
-		return errs.NewErrorExitError("Failed to get org info for " +
-			orgName, err)
+		// Prompt user to select from list of existing orgs
+		idx, _, err := SelectExistingOrgPrompt(orgs)
+		if err != nil {
+			return errs.NewExitError("Failed to select org.")
+		}
+
+		org = &orgs[idx]
+		orgName = org.Body.Name
+
+	} else {
+		// If org flag was used, identify the org supplied.
+		org, err = client.Orgs.GetByName(c, orgName)
+		if org == nil {
+			return errs.NewExitError("org" + orgName + "not found.")
+		}
 	}
 
-	// Get Project for project name, confirm project exists
-	project, err := getProject(c, client, org.ID, projectName)
-	if err != nil {
-		return errs.NewErrorExitError("Failed to get project info for " +
-			orgName + "/" + projectName, err)
+	projectName := ctx.String("project")
+	var project *envelope.Project
+	if projectName == "" {
+		// Retrieve list of available projects
+		projects, err := client.Projects.List(c, org.ID)
+		if err != nil {
+			return errs.NewExitError("Failed to retrieve projects list.")
+		}
+
+		// Prompt user to select from list of existing orgs
+		idx, _, err := SelectExistingProjectPrompt(projects)
+		if err != nil {
+			return errs.NewExitError("Failed to select project.")
+		}
+
+		project = &projects[idx]
+		projectName = project.Body.Name
+
+	} else {
+		// Get Project for project name, confirm project exists
+		project, err = getProject(c, client, org.ID, projectName)
+		if err != nil {
+			return errs.NewErrorExitError("Failed to get project info for " +
+				orgName + "/" + projectName, err)
+		}
 	}
 
 	// Retrieve environment flag values
@@ -183,11 +220,14 @@ func listCmd(ctx *cli.Context) error {
 	// any credentials along that path to that env/service branch
 	// of the credentialsTree
 	projectPath := "/" + orgName + "/" + projectName + "/"
-	for _, e := range filteredEnvNames{
-		for _, s := range filteredServiceNames{
-			for _, cred := range credentials{
+	for _, e := range filteredEnvNames {
+		for _, s := range filteredServiceNames {
+			builtPathExp, err := pathexp.Parse(projectPath + e + "/" + s + "/*/*")
+			for _, cred := range credentials {
+				if len(args) > 0 && isSecretNameInList((*cred.Body).GetName(), args) == false {
+					continue
+				}
 				credPathExp := (*cred.Body).GetPathExp()
-				builtPathExp, err := pathexp.Parse(projectPath + e + "/" + s + "/*/*")
 				if err != nil {
 					return errs.NewErrorExitError("Failed to parse: " + projectPath + e + "/" + s + "/*/*", err)
 				}
@@ -229,4 +269,13 @@ func listCmd(ctx *cli.Context) error {
 	w.Flush()
 
 	return nil
+}
+
+func isSecretNameInList(secret string, list []string) bool{
+	for _, s := range list {
+		if s == secret {
+			return true
+		}
+	}
+	return false
 }
