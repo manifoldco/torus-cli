@@ -21,17 +21,16 @@ func init() {
 	list := cli.Command{
 		Name:      "list",
 		ArgsUsage: "",
-		Usage:     "List your org's project structure and its secrets.",
+		Usage:     "List allows you to list and filter all the secrets that you can access inside a project.",
 		Category:  "SECRETS",
 		Flags: []cli.Flag{
 			orgFlag("Use this organization.", false),
 			projectFlag("Use this project.", false),
 			envSliceFlag("Use this environment.", false),
 			serviceSliceFlag("Use this service.", "", false),
-			nameFlag("Find secrets with this name."),
 			cli.BoolFlag{
 				Name:  "verbose, v",
-				Usage: "Lists the sources of the secrets (shortcut for --format verbose)",
+				Usage: "Display the full credential path of each secret.",
 			},
 		},
 		Action: chain(
@@ -40,6 +39,9 @@ func init() {
 	}
 	Cmds = append(Cmds, list)
 }
+
+type serviceCredentialMap map[string]credentialSet
+type credentialTree map[string]serviceCredentialMap
 
 func listCmd(ctx *cli.Context) error {
 	verbose := ctx.Bool("verbose")
@@ -55,7 +57,7 @@ func listCmd(ctx *cli.Context) error {
 	c := context.Background()
 
 	// TODO - Make this a type
-	credentialsTree := make(map[string]map[string]credentialSet)
+	tree := make(credentialTree)
 
 	// Retrieve org and project flag values
 	orgName := ctx.String("org")
@@ -90,13 +92,13 @@ func listCmd(ctx *cli.Context) error {
 		// Retrieve list of available projects
 		projects, err := client.Projects.List(c, org.ID)
 		if err != nil {
-			return errs.NewExitError("Failed to retrieve projects list.")
+			return errs.NewErrorExitError("Failed to retrieve projects list.", err)
 		}
 
 		// Prompt user to select from list of existing orgs
 		idx, _, err := SelectExistingProjectPrompt(projects)
 		if err != nil {
-			return errs.NewExitError("Failed to select project.")
+			return errs.NewErrorExitError("Failed to select project.", err)
 		}
 
 		project = &projects[idx]
@@ -126,8 +128,7 @@ func listCmd(ctx *cli.Context) error {
 	}
 
 	// The following two slices are placeholders necessary to
-	// build the PathExp later. Check that this is true, if I pass
-	// empty slices, will it replace those with wildcards?
+	// build the PathExp later.
 	instanceFilters := []string{"*"}
 	idenityFilters := []string{"*"}
 
@@ -209,9 +210,9 @@ func listCmd(ctx *cli.Context) error {
 	// Create credentialsTree
 	// This will be filled in the following section.
 	for _, eName := range filteredEnvNames {
-		credentialsTree[eName] = make(map[string]credentialSet)
+		tree[eName] = make(serviceCredentialMap)
 		for _, sName := range filteredServiceNames {
-			credentialsTree[eName][sName] = make(credentialSet)
+			tree[eName][sName] = make(credentialSet)
 		}
 	}
 
@@ -222,45 +223,48 @@ func listCmd(ctx *cli.Context) error {
 	for _, e := range filteredEnvNames {
 		for _, s := range filteredServiceNames {
 			builtPathExp, err := pathexp.Parse(projectPath + e + "/" + s + "/*/*")
+			if err != nil {
+				return errs.NewErrorExitError("Failed to parse: "+projectPath+e+"/"+s+"/*/*", err)
+			}
 			for _, cred := range credentials {
-				if len(args) > 0 && isSecretNameInList((*cred.Body).GetName(), args) == false {
+				body := *cred.Body
+				if len(args) > 0 && !isSecretNameInList(body.GetName(), args) {
 					continue
 				}
-				credPathExp := (*cred.Body).GetPathExp()
-				if err != nil {
-					return errs.NewErrorExitError("Failed to parse: "+projectPath+e+"/"+s+"/*/*", err)
-				}
+				credPathExp := body.GetPathExp()
 				// If cred not contained in any builtPathExps, it is not
 				// within the search space specified by the flags.
-				if credPathExp.Contains(builtPathExp) == false {
+				if !credPathExp.Contains(builtPathExp) {
 					continue
 				}
 				// "Add" is defined in 'credential_set.go'. This
 				// handles the case where a secret is redefined in
 				// overlapping spaces.
-				credentialsTree[e][s].Add(cred)
+				tree[e][s].Add(cred)
 			}
 		}
 	}
 
-	// Print credentialsTree
+	// Print credentialTree
 	fmt.Println("")
 	w := tabwriter.NewWriter(os.Stdout, 5, 0, 2, ' ', 0)
 	fmt.Fprintf(w, "%s\n", projectPath)
-	for e := range credentialsTree {
+	for e := range tree {
 		fmt.Fprintf(w, "\t%s\t\n", e+"/")
-		for s := range credentialsTree[e] {
+		for s := range tree[e] {
 			fmt.Fprintf(w, "\t\t%s\t\n", s+"/")
-			if len(credentialsTree[e][s]) == 0 && verbose {
-				fmt.Fprintf(w, "\t\t\t[empty]\n")
-			} else {
-				for c, cred := range credentialsTree[e][s] {
-					if verbose {
-						credPath := (*cred.Body).GetPathExp().String() + "/"
-						fmt.Fprintf(w, "\t\t\t%s\t%s\t\n", c, credPath+c)
-					} else {
-						fmt.Fprintf(w, "\t\t\t%s\t\t\n", c)
-					}
+			if len(tree[e][s]) == 0 {
+				if verbose {
+					fmt.Fprintf(w, "\t\t\t[empty]\n")
+				}
+				continue
+			}
+			for c, cred := range tree[e][s] {
+				if verbose {
+					credPath := (*cred.Body).GetPathExp().String() + "/"
+					fmt.Fprintf(w, "\t\t\t%s\t%s\t\n", c, credPath+c)
+				} else {
+					fmt.Fprintf(w, "\t\t\t%s\t\t\n", c)
 				}
 			}
 		}

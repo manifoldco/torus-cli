@@ -190,9 +190,7 @@ $ torus run -e production -s www -- node ./bin/www --app api
 ## list
 ###### Added [v0.28.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus list [name]...` allows a user to explore the objects and values set within their organization. Users can find the location of a particular secret by passing its name as an argument, or view all secrets within different branches of their organization.
-
-Each level within the organization can be inspected by changing the options supplied to the command.
+`torus list [name]...` allows a user to explore the secrets stored within a project. Users can search for specific secrets by supplying a name as an argument or filter down to specific environments and services using the `--environment, -e` and `--service, -s` flags.
 
 ### Command Options
 
@@ -200,10 +198,9 @@ Each level within the organization can be inspected by changing the options supp
   ---- | ----
   --org, -o | Required flag to specify org.
   --project, -p | Required flag to specify project.
-  --env, -e | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
+  --environment, -e | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
   --service, -s | Specify service filter(s) for displayed secrets. To specify multiple services, pass multiple flags (eg. `torus list -s ser1 -s ser2`). This flag is optional.
-  --verbose, -v | Show which type of path is being displayed, shortcut for --format=verbose
-  --format FORMAT, -f FORMAT | Format used to display data (simple, verbose) (default: simple)
+  --verbose, -v | Show which type of path is being displayed, shortcut for
 
 ### Examples
 
@@ -254,4 +251,13 @@ $ torus list -s ser1
     env2/
         ser1/
             secret1
+```
+
+Filter down to environment "env1" and service "ser1", print in verbose mode:
+```
+$ torus list -e env1 -s ser1 -v
+/org/project/
+    env1/
+        ser1/
+            secret1   /org/project/env1/ser1/*/*/secret1
 ```
