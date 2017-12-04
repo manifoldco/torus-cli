@@ -56,7 +56,6 @@ func listCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// TODO - Make this a type
 	tree := make(credentialTree)
 
 	// Retrieve org and project flag values
