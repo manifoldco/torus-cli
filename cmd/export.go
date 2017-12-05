@@ -13,7 +13,7 @@ import (
 	"github.com/manifoldco/torus-cli/errs"
 )
 
-var formatValues = []string{"env", "bash", "powershell", "fish", "cmd", "json"}
+var formatValues = []string{"env", "bash", "powershell", "fish", "cmd", "json", "tfvars"}
 var formatDescription = "Format of exported secrets (" + strings.Join(formatValues, ", ") + ")"
 
 type mod int
@@ -92,6 +92,8 @@ func exportCmd(ctx *cli.Context) error {
 		err = writeFormat(w, secrets, "set %s=%s\n", quotes)
 	case "fish":
 		err = writeFormat(w, secrets, "set -x %s %s;\n", quotes)
+	case "tfvars":
+		err = writeFormat(w, secrets, "%s = %s\n", quotes)
 	case "json":
 		err = writeJSONFormat(w, secrets)
 	default:

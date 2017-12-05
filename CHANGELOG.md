@@ -13,11 +13,11 @@ _Unreleased_
 - Introduced the `torus export` command making it easy to export secrets from a
   specific environment and service. As a result the `torus view` `--format, -f`
   flas has been deprecated and will be removed on December 31st 2017.
+- Using `torus export`, you can now export secrets to [terraform's](https://terraform.io) `tfvars` file format.
 - Encryption keys, user passwords, and machine secret tokens are now stored in
   secure and guarded memory making it more difficult to extract data from a
   running process.
-- Added command `torus list` to display credentials and project structure.
-- Removed `torus ls`
+- Replace `torus ls` with `torus list` making it easy to list and search for secrets within a project.
 
 **Fixes**
 
@@ -28,7 +28,7 @@ _Unreleased_
 
 ## v0.27.0
 
-_2017-10-08_
+_2017-11-08_
 
 **Notable Changes**
 

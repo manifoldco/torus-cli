@@ -129,7 +129,7 @@ Credential mysql_url has been set at /myorg/myproject/production/default/*/*/MYS
 ## export
 ###### Added [v0.28.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus export [file-path]` or using stdout redirection (e.g. `torus export -e production > config.env`) exports the secrets for a specific project, environment, and service to a file or stdout. The output format can be specified using the `--format, -f` flag supporting `env`, `bash`, `powershell`, `cmd` (windows command prompt), `fish`, and `json`.
+`torus export [file-path]` or using stdout redirection (e.g. `torus export -e production > config.env`) exports the secrets for a specific project, environment, and service to a file or stdout. The output format can be specified using the `--format, -f` flag supporting `env`, `bash`, `powershell`, `cmd` (windows command prompt), `fish`, `json`, `tfvars` (for exporting to [terraform](https://terraform.io) variable files).
 
 **Examples**
 
@@ -157,6 +157,9 @@ mysql://user:password@host.com:3306/db
 
 # Exporting secrets from a specific environment and service into a powershell
 $ torus export -e prod -s api -f powershell
+
+# Exporting secrets to a tfvars file
+$ torus export -e prod -s api -f tfvars secrets.tfvars && terraform plan -var-file=secrets.tfvars
 ```
 
 ## view
@@ -225,8 +228,8 @@ $ torus list secret1
 /org/project/
     env1/
         ser1/
-            secret1      
-        ser2/          
+            secret1
+        ser2/
     env2/
         ser1/
             secret1
@@ -247,7 +250,7 @@ $ torus list -s ser1
 /org/project/
     env1/
         ser1/
-            secret1               
+            secret1
     env2/
         ser1/
             secret1
