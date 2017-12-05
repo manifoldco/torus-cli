@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## Unreleased
+## v0.28.0
 
-_Unreleased_
+_2017-12-05_
 
 **Notable Changes**
 
@@ -17,7 +17,7 @@ _Unreleased_
 - Encryption keys, user passwords, and machine secret tokens are now stored in
   secure and guarded memory making it more difficult to extract data from a
   running process.
-- Replace `torus ls` with `torus list` making it easy to list and search for secrets within a project.
+- Replaced `torus ls` with `torus list` making it easy to list and search for secrets within a project. Listing secrets is now twice as fast as `torus ls`.
 
 **Fixes**
 
