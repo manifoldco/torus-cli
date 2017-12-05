@@ -28,7 +28,7 @@ _Unreleased_
 
 ## v0.27.0
 
-_2017-10-08_
+_2017-11-08_
 
 **Notable Changes**
 
