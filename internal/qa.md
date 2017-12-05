@@ -123,14 +123,9 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 
 ### List
 
-- [ ]   `torus ls`, in an unlinked directory, list all orgs
-- [ ]   `torus ls` works in a linked directory, showing all paths for the
-        context
-- [ ]   `torus ls /` lists all orgs
-- [ ]   `torus ls "/*"` lists all projects
-- [ ]   `torus ls "/*/*"` lists all environments
-- [ ]   `torus ls "/*/*/*"` lists all services
-- [ ]   `torus ls "/$org/$proj/*/*"` lists all secrets for `/$org/$proj/*/*/*`
+- [ ]   `torus list` lists all secrets in a project user can access
+- [ ]   `torus list` allows a user to search for specific secrets
+- [ ]   `torus list` allows a user to filter secrets by environment and service
 
 ### Machines
 
