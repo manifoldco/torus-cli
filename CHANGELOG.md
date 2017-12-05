@@ -22,6 +22,9 @@ _Unreleased_
 **Fixes**
 
 - Fixed a bug preventing old credential values from being decrypted.
+- Previously, expiration of a key was set to be one year, instead, we've set it
+  to be three. This fixes a bug which prevented users from setting secrets as
+  their keys had expired. A corresponding change was made to the torus server.
 
 ## v0.27.0
 
