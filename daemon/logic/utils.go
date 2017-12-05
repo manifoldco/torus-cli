@@ -451,7 +451,7 @@ func packagePublicKey(ctx context.Context, engine *crypto.Engine, ownerID,
 		},
 
 		Created: now,
-		Expires: now.Add(time.Hour * 8760), // one year
+		Expires: now.Add(time.Hour * 8760 * 3), // three years
 	}
 
 	return engine.SignedPublicKey(ctx, &body, sigID, sigKP)
