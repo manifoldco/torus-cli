@@ -1,0 +1,106 @@
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+# ignored = ["golang.org/x/sys/unix"]
+
+[[constraint]]
+  name = "github.com/asaskevich/govalidator"
+  version = "5.0.0"
+
+[[constraint]]
+  name = "github.com/awnumar/memguard"
+  version = "0.13.2"
+
+[[constraint]]
+  name = "github.com/aws/aws-sdk-go"
+  version = "1.5.13"
+
+[[constraint]]
+  name = "github.com/blang/semver"
+  version = "3.3.0"
+
+[[constraint]]
+  name = "github.com/boltdb/bolt"
+  version = "1.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/chzyer/readline"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/dchest/blake2b"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/facebookgo/httpdown"
+
+[[constraint]]
+  name = "github.com/go-ini/ini"
+  version = "1.21.1"
+
+[[constraint]]
+  name = "github.com/go-zoo/bone"
+  version = "1.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/google/shlex"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/keybase/go-triplesec"
+
+[[constraint]]
+  name = "github.com/manifoldco/ansiwrap"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/manifoldco/go-base32"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/manifoldco/go-base64"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/natefinch/lumberjack"
+  version = "2.0.0"
+
+[[constraint]]
+  branch = "v2"
+  name = "github.com/natefinch/npipe"
+
+[[constraint]]
+  name = "github.com/onsi/gomega"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/satori/go.uuid"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/urfave/cli"
+  version = "1.19.1"
+
+[[constraint]]
+  name = "gopkg.in/oleiade/reflections.v1"
+  version = "1.0.0"

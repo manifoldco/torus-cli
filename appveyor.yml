@@ -8,7 +8,7 @@ platform:
 environment:
   GOPATH: c:\gopath
   GOVERSION: 1.9.1
-  GLIDEVERSION: 0.12.3
+  DEPVERSION: 0.3.2
 
 init:
   - git config --global core.autocrlf input
@@ -20,12 +20,12 @@ install:
   - set Path=c:\go\bin;c:\gopath\bin;%Path%
   - go version
   - go env
-  - appveyor DownloadFile https://github.com/Masterminds/glide/releases/download/v%GLIDEVERSION%/glide-v%GLIDEVERSION%-windows-amd64.zip
+  - appveyor DownloadFile https://github.com/golang/dep/releases/download/v%DEPVERSION%/dep-windows-amd64
   - md %GOPATH%\bin
-  - 7z e glide-v%GLIDEVERSION%-windows-amd64.zip -o%GOPATH%\bin *.exe -r
+  - move dep-windows-amd64 %GOPATH%\bin\dep.exe
 
 build_script:
-  - c:\gopath\bin\glide.exe install
+  - c:\gopath\bin\dep.exe ensure
 
 test_script:
   - FOR /f "" %%G in ('go list ./... ^| find /i /v "/vendor/"') DO (go test -run=. -bench=. -v %%G)

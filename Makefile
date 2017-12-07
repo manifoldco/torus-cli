@@ -33,13 +33,13 @@ ci: binary $(LINTERS) cmdlint test
 
 BOOTSTRAP=\
 	github.com/jteeuwen/go-bindata/... \
-	github.com/alecthomas/gometalinter
+	github.com/alecthomas/gometalinter \
+	github.com/golang/dep/cmd/dep
 
 $(BOOTSTRAP):
 	go get -u $@
 bootstrap: $(BOOTSTRAP)
 	gometalinter --install
-	glide -v || curl http://glide.sh/get | sh
 
 .PHONY: bootstrap $(BOOTSTRAP)
 
@@ -77,8 +77,8 @@ data/zz_generated_bindata.go: data/ca_bundle.pem data/public_key.json data/aws_i
 primitive/zz_generated_primitive.go envelope/zz_generated_envelope.go: $(TOOLS)/primitive-boilerplate primitive/primitive.go
 	$^
 
-vendor: glide.lock
-	glide install
+vendor: Gopkg.lock
+	dep ensure
 
 PRIMITIVE_BOILERPLATE=tools/primitive-boilerplate
 $(TOOLS)/primitive-boilerplate: $(wildcard $(PRIMITIVE_BOILERPLATE)/*.go) $(wildcard $(PRIMITIVE_BOILERPLATE)/*.tmpl)
@@ -103,13 +103,13 @@ clean:
 #################################################
 
 test: generated vendor
-	@CGO_ENABLED=0 go test -run=. -bench=. -short $$(glide nv)
+	@CGO_ENABLED=0 go test -run=. -bench=. -short $$(go list ./... | grep -v ./vendor)
 
 METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
 	 . --enable
 
 $(LINTERS):
-	gometalinter --tests --disable-all --vendor --deadline=5m -s data $$(glide nv) --enable $@
+	gometalinter --tests --disable-all --vendor --deadline=5m -s data $$(go list ./... | grep -v ./vendor) --enable $@
 
 $(TOOLS)/cmdlint: $(wildcard tools/cmdlint/*.go) $(wildcard cmd/*.go)
 	$(GO_BUILD) -o $@ ./tools/cmdlint
