@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/Microsoft/go-winio"
+  packages = ["."]
+  revision = "78439966b38d69bf38227fbf57ac8a6fee70f69a"
+  version = "v0.4.5"
+
+[[projects]]
   name = "github.com/asaskevich/govalidator"
   packages = ["."]
   revision = "7b3beb6df3c42abd3509abfc3bcacc0fbfb7c877"
@@ -145,12 +151,6 @@
   version = "v2.1"
 
 [[projects]]
-  branch = "v2"
-  name = "github.com/natefinch/npipe"
-  packages = ["."]
-  revision = "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
-
-[[projects]]
   name = "github.com/nightlyone/lockfile"
   packages = ["."]
   revision = "1d49c987357a327b5b03aa84cbddd582c328615d"
@@ -213,6 +213,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "83214e92dd1ecc902452464c44fec5b53ac7eca53f35f50fe6022b6f6fa0bcb3"
+  inputs-digest = "0e1972d9e0fd96126df65ad2a8eaeddd48e7c051a128dda71434a5b4ded2899a"
   solver-name = "gps-cdcl"
   solver-version = 1
