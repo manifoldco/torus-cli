@@ -1,0 +1,27 @@
+{
+  "product": "torus",
+  "company": "manifoldco",
+  "license": "LICENSE.md",
+  "version": "0.0.1",
+  "upgrade-code": "8615055C-D8E0-404C-93BE-441C503BA6F0",
+  "files": {
+    "guid": "378896D8-6749-4821-870A-44CBBB791D0C",
+    "items": ["torus.exe"]
+  },
+  "directories": ["packaging\\msi\\templates"],
+  "env": {
+    "guid": "0CB88C7F-85A7-4986-B6CE-1CAD5C17EA0E",
+    "vars": [
+      {
+        "name": "PATH",
+        "value": "[INSTALLDIR]",
+        "permanent": "yes",
+        "system": "no",
+        "action": "set",
+        "part": "last"
+      }
+    ]
+  },
+  "shortcuts": {},
+  "choco": {}
+}

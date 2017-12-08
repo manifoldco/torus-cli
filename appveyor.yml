@@ -14,6 +14,13 @@ init:
   - git config --global core.autocrlf input
 
 install:
+  # wix setup
+  - set PATH=%WIX%\bin;%PATH%
+  # go-msi install - static link method
+  - curl -fsSL -o C:\go-msi.msi https://github.com/mh-cbon/go-msi/releases/download/1.0.2/go-msi-amd64.msi
+  - msiexec.exe /i C:\go-msi.msi /quiet
+  - set PATH=C:\Program Files\go-msi\;%PATH% 
+
   - rmdir c:\go /s /q
   - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.msi
   - msiexec /i go%GOVERSION%.windows-amd64.msi /q
@@ -26,6 +33,8 @@ install:
 
 build_script:
   - c:\gopath\bin\dep.exe ensure
+  - go build -o torus.exe
+  - go-msi make --msi torus.msi --version 0.0.1 -s packaging/msi/templates/
 
 test_script:
   - FOR /f "" %%G in ('go list ./... ^| find /i /v "/vendor/"') DO (go test -run=. -bench=. -v %%G)

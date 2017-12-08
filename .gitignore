@@ -4,6 +4,7 @@ torus
 torus.exe
 *.arigato.json
 *.torus.json
+torus.msi
 
 travis/id_rsa*
 builds/*

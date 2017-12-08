@@ -454,3 +454,18 @@ builds/torus-npm-$(VERSION).tar.gz: npm
 	tar czf $@ -C builds npm/
 
 .PHONY: npm
+
+#################################################
+# Generate Windows .msi 
+#################################################
+
+GOMSI := $(shell command -v go-msi 2> /dev/null)
+
+msi: binary 
+	mv torus torus.exe
+ifndef GOMSI 
+	$(error "go-msi binary is not available in your path")
+endif
+	go-msi make --msi torus.msi --version $(VERSION) -s packaging/msi/templates/
+
+.PHONY: msi
