@@ -321,7 +321,7 @@ simplicity sake, we will use environment variables to pass our credentials to
 `run`. A machine identity requires the `TORUS_TOKEN_ID` and `TORUS_TOKEN_SECRET`
 environment variables (grab those from the previous step).
 
-> Note: We **strongly** recommend proper segregation of your TOKEN_ID and TOKEN_SECRET on your non-development machines.
+> Note: We **strongly** recommend [proper segregation of your TOKEN_ID and TOKEN_SECRET on your non-development machines](https://blog.manifold.co/a-better-way-to-deploy-secrets-to-the-cloud-4420de33e00f).
 
 Our application is on Digital Ocean, so let's SSH in and export the read-only credentials.
 
