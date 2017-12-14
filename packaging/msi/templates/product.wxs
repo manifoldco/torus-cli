@@ -35,17 +35,6 @@
                <Component Id="ApplicationFiles" Guid="{{.Files.GUID}}">
                   {{range $i, $e := .Files.Items}}
                     <File Id="ApplicationFile{{$i}}" Source="{{$e}}"/>
-                    <!--
-                    <ServiceInstall Id="ServiceInstaller"
-                    Type="ownProcess"
-                    Name="Torus"
-                    DisplayName="Torus"
-                    Description="A cool service that doesn't afraid of anything."
-                    Start="auto"
-                    ErrorControl="normal"
-                    />
-                    <ServiceControl Id="ServiceInstaller" Start="install" Stop="both" Remove="uninstall" Name="Torus" Wait="yes" />
-                    -->
                   {{end}}
                </Component>
                {{end}}
