@@ -7,7 +7,7 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli"	
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -15,6 +15,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/pathexp"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -249,9 +250,9 @@ func listCmd(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 5, 0, 2, ' ', 0)
 	fmt.Fprintf(w, "%s\n", projectPath)
 	for e := range tree {
-		fmt.Fprintf(w, "\t%s\t\n", e+"/")
+		fmt.Fprintf(w, "\t%s\t\n", ui.Environment(e)+"/")
 		for s := range tree[e] {
-			fmt.Fprintf(w, "\t\t%s\t\n", s+"/")
+			fmt.Fprintf(w, "\t\t%s\t\n", ui.Service(s)+"/")
 			if len(tree[e][s]) == 0 {
 				if verbose {
 					fmt.Fprintf(w, "\t\t\t[empty]\n")
