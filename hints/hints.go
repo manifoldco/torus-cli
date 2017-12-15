@@ -64,6 +64,12 @@ const (
 
 	// View command adds hint to `torus view`
 	View
+
+	// PersonalOrg adds hint to `torus orgs list`
+	PersonalOrg
+
+	// OrgMembers adds hint to `torus invites list`
+	OrgMembers
 )
 
 var commandHints map[Cmd][]string
@@ -117,6 +123,12 @@ func init() {
 		},
 		Export: {
 			"Export secrets for a specific environment and service using `torus export`",
+		},
+		PersonalOrg: {
+			"A personal org is created for you on sign-up.",
+		},
+		OrgMembers: {
+			"Display current members of your organization with `torus orgs members`",
 		},
 	}
 }

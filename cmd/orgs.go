@@ -7,9 +7,10 @@ import (
 	"sort"
 	"strconv"
 	"sync"
-	"text/tabwriter"
+	//"text/tabwriter"
 
 	"github.com/urfave/cli"
+	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -19,6 +20,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -130,10 +132,12 @@ func orgsListCmd(ctx *cli.Context) error {
 
 	withoutPersonal := orgs
 
+	fmt.Println("")
+	fmt.Println("  " + ui.Bold("Name"))
 	if session.Type() == apitypes.UserSession {
 		for i, o := range orgs {
 			if o.Body.Name == session.Username() {
-				fmt.Printf("  %s [personal]\n", o.Body.Name)
+				fmt.Printf("  %s %s\n", o.Body.Name, "(" + ui.Color(ansiterm.DarkGray, "personal") + ")")
 				withoutPersonal = append(orgs[:i], orgs[i+1:]...)
 			}
 		}
@@ -142,6 +146,8 @@ func orgsListCmd(ctx *cli.Context) error {
 	for _, o := range withoutPersonal {
 		fmt.Printf("  %s\n", o.Body.Name)
 	}
+
+	hints.Display(hints.PersonalOrg)
 
 	return nil
 }
@@ -382,12 +388,13 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w, " \tUSERNAME\tNAME\tTEAM\n")
+	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	//fmt.Fprintf(w, " \t%s\t%s\t%s\n", ui.Bold("Username"), ui.Bold("Name"), ui.Bold("Team"))
+	fmt.Fprintf(w, " \t%s\t%s\t%s\n", ui.Bold("Name"), ui.Bold("Username"), ui.Bold("Team"))
 	for _, user := range users {
 		me := ""
 		if session.Username() == user.Body.Username {
-			me = "*"
+			me = ui.Color(ansiterm.DarkGray, "*")
 		}
 
 		// Sort teams by precedence
@@ -405,16 +412,21 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 		}
 		// Remove trailing comma and space character
 		teamString = teamString[:len(teamString)-2]
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Username, user.Body.Name, teamString)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Name, ui.Color(ansiterm.DarkGray, user.Body.Username), teamString)
 	}
 
 	w.Flush()
 
 	count := strconv.Itoa(len(userIDs))
-	countString := "org " + org.Body.Name + " has (" + count + ") members."
+	var countStr string
+	if len(userIDs) == 1 {
+		countStr = "org " + org.Body.Name + " has (" + count + ") member."
+	} else {
+		countStr = "org " + org.Body.Name + " has (" + count + ") members."
+	}
 
 	fmt.Println("")
-	fmt.Println(countString)
+	fmt.Println(countStr)
 	fmt.Println("")
 	return nil
 }

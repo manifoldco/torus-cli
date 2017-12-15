@@ -7,10 +7,12 @@ import (
 )
 
 var (
-  ServiceColor = ansiterm.Magenta
-  EnvironmentColor = ansiterm.Blue
-  SecretColor = ansiterm.Green
+  ServiceColor      = ansiterm.Magenta
+  EnvironmentColor  = ansiterm.BrightRed
+  CredPathColor     = ansiterm.DarkGray
 )
+
+var CredStyle       = ansiterm.Bold
 
 func Bold(s string) string {
   ctx := ansiterm.Context {
@@ -36,20 +38,12 @@ func Service(s string) string {
   return Color(ServiceColor, s)
 }
 
-func Secret(s string) string {
-  return Color(SecretColor, s)
+func Cred(s string) string {
+  return Bold(s)
 }
 
-func SetEnvironmentColor(c ansiterm.Color) {
-  EnvironmentColor = c;
-}
-
-func SetServiceColor(c ansiterm.Color) {
-  ServiceColor = c;
-}
-
-func SetSecretColor(c ansiterm.Color) {
-  SecretColor = c;
+func CredPath(s string) string {
+  return Color(CredPathColor, s)
 }
 
 func BoldColor(c ansiterm.Color, s string) string {

@@ -37,3 +37,14 @@ func NewExitError(message string) error {
 	}
 	return cli.NewExitError(message, -1)
 }
+
+func FilterErrors(errors ...error) cli.MultiError {
+	nonNilErrs := []error{}
+	for _, e := range errors{
+		if e != nil {
+			nonNilErrs = append(nonNilErrs, e)
+		}
+	}
+
+	return cli.NewMultiError(nonNilErrs...)
+}

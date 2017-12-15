@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/urfave/cli"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -39,12 +39,8 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					orgFlag("org to show services for", true),
+					orgFlag("org to show services for", false),
 					projectFlag("project to show services for", false),
-					cli.BoolFlag{
-						Name:  "all",
-						Usage: "Perform command on all projects",
-					},
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -59,15 +55,6 @@ func init() {
 const serviceListFailed = "Could not list services."
 
 func listServicesCmd(ctx *cli.Context) error {
-	if !ctx.Bool("all") {
-		if len(ctx.String("project")) < 1 {
-			return errs.NewUsageExitError("Missing flags: --project", ctx)
-		}
-	} else {
-		if len(ctx.String("project")) > 0 {
-			return errs.NewUsageExitError("Cannot use --project flag with --all", ctx)
-		}
-	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -77,69 +64,91 @@ func listServicesCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Look up the target org
 	var org *envelope.Org
-	org, err = client.Orgs.GetByName(c, ctx.String("org"))
-	if err != nil {
-		return errs.NewErrorExitError(serviceListFailed, err)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found")
-	}
+	var orgs []envelope.Org
 
-	// Identify which projects to list services for
-	var projectID identity.ID
-	var projects []envelope.Project
-	if ctx.Bool("all") {
-		// Pull all projects for the given orgID
-		projects, err = listProjects(&c, client, org.ID, nil)
+	// Retrieve the org name supplied via the --org flag.
+	// This flag is optional. If none was supplied, then
+	// orgFlagArgument will be set to "". In this case,
+	// prompt the user to select an org.
+	orgName := ctx.String("org")
+
+	if orgName == "" {
+		// Retrieve list of available orgs
+		orgs, err = client.Orgs.List(c)
 		if err != nil {
-			return errs.NewErrorExitError(serviceListFailed, err)
+			return errs.NewExitError("Failed to retrieve orgs list.")
 		}
+
+		// Prompt user to select from list of existing orgs
+		idx, _, err := SelectExistingOrgPrompt(orgs)
+		if err != nil {
+			return errs.NewErrorExitError("Failed to select org.", err)
+		}
+
+		org = &orgs[idx]
 
 	} else {
-		// Retrieve only a single project by name
-		projectName := ctx.String("project")
-		projects, err = listProjects(&c, client, org.ID, &projectName)
+		// If org flag was used, identify the org supplied.
+		org, err = client.Orgs.GetByName(c, orgName)
 		if err != nil {
-			return errs.NewErrorExitError(serviceListFailed, err)
+			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
 		}
-		if len(projects) == 1 {
-			projectID = *projects[0].ID
-		} else {
-			return errs.NewExitError("Project not found")
+		if org == nil {
+			return errs.NewExitError("org " + orgName + " not found.")
+		}
+	}
+
+	// Retrieve project by name
+	// If no project was supplied (via flags) prompt the
+	// user to select from a list of existing projects.
+	var project *envelope.Project
+	var projects []envelope.Project
+
+	projectName := ctx.String("project")
+
+	if projectName == "" {
+		// Retrieve list of available projects
+		projects, err = client.Projects.List(c, org.ID)
+		if err != nil {
+			return errs.NewErrorExitError("Failed to retrieve projects list.", err)
+		}
+
+		// Prompt user to select from list of existing orgs
+		idx, _, err := SelectExistingProjectPrompt(projects)
+		if err != nil {
+			return errs.NewErrorExitError("Failed to select project.", err)
+		}
+
+		project = &projects[idx]
+		projectName = project.Body.Name
+
+	} else {
+		// Get Project for project name, confirm project exists
+		project, err = getProject(c, client, org.ID, projectName)
+		if err != nil {
+			return errs.NewErrorExitError("Project " + projectName + " not found.", err)
 		}
 	}
 
 	// Retrieve services for targeted org and project
-	services, err := listServices(&c, client, org.ID, &projectID, nil)
+	services, err := listServices(&c, client, org.ID, project.ID, nil)
 	if err != nil {
 		return errs.NewErrorExitError(serviceListFailed, err)
 	}
 
-	// Build map of services to project
-	pMap := make(map[string]envelope.Project)
-	for _, project := range projects {
-		pMap[project.ID.String()] = project
-	}
-	sMap := make(map[string][]envelope.Service)
-	for _, service := range services {
-		ID := service.Body.ProjectID.String()
-		sMap[ID] = append(sMap[ID], service)
-	}
-
-	// Build output of projects/services
+	// Build output of projects/envs
 	fmt.Println("")
-	for projectID, project := range pMap {
-		count := strconv.Itoa(len(sMap[projectID]))
-		title := project.Body.Name + " (" + count + ")"
-		fmt.Println(title)
-		fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
-		for _, service := range sMap[projectID] {
-			fmt.Println(service.Body.Name)
-		}
-		fmt.Println("")
+	fmt.Printf("  %s\n", ui.Bold("Services"))
+	for _, s := range services {
+		fmt.Printf("  %s\n", s.Body.Name)
 	}
+	fmt.Println("")
+
+	count := strconv.Itoa(len(services))
+	title := "Project /" + org.Body.Name + "/" + project.Body.Name + " has (" + count + ") services."
+	fmt.Println(title)
+	fmt.Println("")
 
 	return nil
 }

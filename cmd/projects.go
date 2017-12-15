@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/urfave/cli"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -38,7 +38,7 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					orgFlag("List projects in an organization", true),
+					orgFlag("List projects in an organization", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -53,21 +53,66 @@ func init() {
 const projectListFailed = "Could not list projects, please try again."
 
 func listProjectsCmd(ctx *cli.Context) error {
-	orgName := ctx.String("org")
-	projects, err := listProjectsByOrgName(nil, nil, orgName)
+
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
 
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	var org *envelope.Org
+	var orgs []envelope.Org
+
+	// Retrieve the org name supplied via the --org flag.
+	// This flag is optional. If none was supplied, then
+	// orgFlagArgument will be set to "". In this case,
+	// prompt the user to select an org.
+	orgName := ctx.String("org")
+
+	if orgName == "" {
+		// Retrieve list of available orgs
+		orgs, err = client.Orgs.List(c)
+		if err != nil {
+			return errs.NewExitError("Failed to retrieve orgs list.")
+		}
+
+		// Prompt user to select from list of existing orgs
+		idx, _, err := SelectExistingOrgPrompt(orgs)
+		if err != nil {
+			return errs.NewErrorExitError("Failed to select org.", err)
+		}
+
+		org = &orgs[idx]
+		orgName = org.Body.Name
+
+	} else {
+		// If org flag was used, identify the org supplied.
+		org, err = client.Orgs.GetByName(c, orgName)
+		if err != nil {
+			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
+		}
+		if org == nil {
+			return errs.NewExitError("org " + orgName + " not found.")
+		}
+	}
+
+	projects, err := client.Projects.List(c, org.ID)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve projects list.", err)
+	}
+
 	fmt.Println("")
-	count := strconv.Itoa(len(projects))
-	title := orgName + " org (" + count + ")"
-	fmt.Println(title)
-	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
+	fmt.Printf("  %s\n", ui.Bold("Projects"))
 	for _, project := range projects {
-		fmt.Println(project.Body.Name)
+		fmt.Printf("  %s\n", project.Body.Name)
 	}
 	fmt.Println("")
+
+	count := strconv.Itoa(len(projects))
+	countStr := "Org " + orgName + " has (" + count + ") projects."
+	fmt.Println(countStr)
 
 	return nil
 }
