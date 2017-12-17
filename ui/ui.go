@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/chzyer/readline"
@@ -102,6 +103,58 @@ func (u *UI) Hint(str string, noPadding bool, label *string) {
 	}
 	rc := ansiwrap.RuneCount(hintLabel)
 	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(hintLabel+str, u.Cols, u.Indent, u.Indent+rc))
+}
+
+// Info calls Info on the default UI
+func Info(format string, args ...interface{}) { defUI.Info(format, args...) }
+
+// Info handles outputting secondary information to the user such as messages
+// about progress but are the actual result of an operation. For example,
+// printing out that we're attempting to log a user in using the specific
+// environment variables.
+//
+// Only printed if stdout is attached to a terminal.
+func (u *UI) Info(format string, args ...interface{}) {
+	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+		return
+	}
+
+	u.Line(format, args...)
+}
+
+// Warn calls Warn on the default UI
+func Warn(format string, args ...interface{}) { defUI.Warn(format, args...) }
+
+// Warn handles outputting warning information to the user such as
+// messages about needing to be logged in.
+//
+// The warning is printed out to stderr if stdout is not attached to a
+// terminal.
+func (u *UI) Warn(format string, args ...interface{}) {
+	var w io.Writer = readline.Stdout
+	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+		w = readline.Stderr
+	}
+
+	o := fmt.Sprintf(format, args...)
+	fmt.Fprintln(w, ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent))
+}
+
+// Error calls Error on the default UI
+func Error(format string, args ...interface{}) { defUI.Error(format, args...) }
+
+// Error handles outputting error information to the user such as the fact they
+// couldn't log in due to an error.
+//
+// The error is printed out to stderr if stdout is not attached to a termainl
+func (u *UI) Error(format string, args ...interface{}) {
+	var w io.Writer = readline.Stdout
+	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+		w = readline.Stderr
+	}
+
+	o := fmt.Sprintf(format, args...)
+	fmt.Fprintln(w, ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent))
 }
 
 // Child calls Child on the default UI
