@@ -493,6 +493,6 @@ endif
 ifndef GOMSI 
 	$(error "go-msi binary is not available in your path. Please download and install http://github.com/mh-cbon/go-msi/releases/download/1.0.2/go-msi-amd64.msi or attempt to run `make bootstrap-windows` to do this for you.") 
 endif
-	go-msi make --msi builds/bin/0.28.0/windows/amd64/torus.msi --version $(VERSION) -s packaging/msi/templates/
+	go-msi make --msi builds/bin/$(VERSION)/windows/amd64/torus.msi --version $(VERSION) -s packaging/msi/templates/
 
 .PHONY: msi
