@@ -12,6 +12,7 @@ environment:
 
 init:
   - git config --global core.autocrlf input
+  - cinst zip                                # zip binary from chocolatey
 
 install:
   - set PATH=%WIX%\bin;%PATH%                # need this on appveyor
