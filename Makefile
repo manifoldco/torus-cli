@@ -2,7 +2,7 @@ PKG_OUT="torus"
 GO_OUT=$(shell if [[ "${OUT}" != "" ]]; then echo ${OUT}; else if [[ "$(word 1, $(subst -, , $*))" == "windows" ]]; then echo ${PKG_OUT}".exe"; else echo ${PKG_OUT}; fi; fi)
 PKG=github.com/manifoldco/torus-cli
 
-GO_REQUIRED_VERSION=1.9.1
+GO_REQUIRED_VERSION=1.9.2
 WINDOWS=\
 	windows-amd64
 LINUX=\
@@ -478,14 +478,13 @@ endif
 # Generate Windows .msi 
 #################################################
 
-msi: binary 
-	mv torus torus.exe
+msi: release-binary
 ifndef WIX 
 	$(error "WiX toolset binaries are not available in your path. Please download and install WiX binaries https://github.com/wixtoolset/wix3/releases/tag/wix311rtm and make them available in your path. )
 endif
 ifndef GOMSI 
 	$(error "go-msi binary is not available in your path. Please download and install http://github.com/mh-cbon/go-msi/releases/download/1.0.2/go-msi-amd64.msi or attempt to run `make bootstrap-windows` to do this for you.") 
 endif
-	go-msi make --msi torus.msi --version $(VERSION) -s packaging/msi/templates/
+	go-msi make --msi builds/bin/0.28.0/windows/amd64/torus.msi --version $(VERSION) -s packaging/msi/templates/
 
 .PHONY: msi

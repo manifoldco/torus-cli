@@ -6,7 +6,7 @@
   "files": {
     "guid": "378896D8-6749-4821-870A-44CBBB791D0C",
     "items": [
-      "torus.exe"
+      "builds/bin/0.28.0/windows/amd64/torus.exe"
     ]
   },
   "directories": [
