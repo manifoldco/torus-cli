@@ -226,7 +226,7 @@ $(addprefix zip-,$(TARGETS)): zip-%: binary-% builds/dist/$(VERSION)
 
 release-binary: $(addprefix zip-,$(TARGETS))
 	@echo $(UNAME)
-ifeq ($(UNAME), MINGW64_NT-10.0)
+ifeq ($(UNAME), MSYS_NT-6.3)
 	pushd builds/dist/$(VERSION) && \
 		sha256deep *.zip > $(PKG_OUT)_$(VERSION)_SHA256SUMS
 else
