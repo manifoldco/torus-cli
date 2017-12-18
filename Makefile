@@ -2,6 +2,8 @@ PKG_OUT="torus"
 GO_OUT=$(shell if [[ "${OUT}" != "" ]]; then echo ${OUT}; else if [[ "$(word 1, $(subst -, , $*))" == "windows" ]]; then echo ${PKG_OUT}".exe"; else echo ${PKG_OUT}; fi; fi)
 PKG=github.com/manifoldco/torus-cli
 
+UNAME := $(shell uname)
+
 GO_REQUIRED_VERSION=1.9.1
 WINDOWS=\
 	windows-amd64
@@ -223,8 +225,13 @@ $(addprefix zip-,$(TARGETS)): zip-%: binary-% builds/dist/$(VERSION)
 		$(BUILD_DIR)/$(GO_OUT)
 
 release-binary: $(addprefix zip-,$(TARGETS))
+ifeq ($(UNAME), MINGW64_NT-10.0)
+	pushd builds/dist/$(VERSION) && \
+		sha256deep *.zip > $(PKG_OUT)_$(VERSION)_SHA256SUMS
+else
 	pushd builds/dist/$(VERSION) && \
 		shasum -a 256 *.zip > $(PKG_OUT)_$(VERSION)_SHA256SUMS
+endif
 
 $(addprefix rpm-,$(LINUX)): rpm-%: binary-% builds/dist/rpm rpm-container
 	docker run -v $(PWD):/torus manifoldco/torus-rpm /bin/bash -c " \

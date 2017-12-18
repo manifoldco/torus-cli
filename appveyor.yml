@@ -13,6 +13,7 @@ environment:
 init:
   - git config --global core.autocrlf input
   - cinst zip                                # zip binary from chocolatey
+  - cinst hashdeep                           # hashdeep for shasum functionality on windows
 
 install:
   - set PATH=%WIX%\bin;%PATH%                # need this on appveyor
