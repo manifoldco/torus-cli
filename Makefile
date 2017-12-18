@@ -2,7 +2,7 @@ PKG_OUT="torus"
 GO_OUT=$(shell if [[ "${OUT}" != "" ]]; then echo ${OUT}; else if [[ "$(word 1, $(subst -, , $*))" == "windows" ]]; then echo ${PKG_OUT}".exe"; else echo ${PKG_OUT}; fi; fi)
 PKG=github.com/manifoldco/torus-cli
 
-GO_REQUIRED_VERSION=1.9.2
+GO_REQUIRED_VERSION=1.9.1
 WINDOWS=\
 	windows-amd64
 LINUX=\
