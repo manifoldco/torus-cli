@@ -4,7 +4,7 @@ PKG=github.com/manifoldco/torus-cli
 
 UNAME := $(shell uname)
 
-GO_REQUIRED_VERSION=1.9.2
+GO_REQUIRED_VERSION=1.9.1
 WINDOWS=\
 	windows-amd64
 LINUX=\
