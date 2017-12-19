@@ -5,6 +5,7 @@ torus.exe
 *.arigato.json
 *.torus.json
 torus.msi
+wix.json
 
 travis/id_rsa*
 builds/*
