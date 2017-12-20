@@ -1,63 +1,11 @@
 package cmd
 
 import (
-	"bufio"
-	"bytes"
 	"testing"
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/pathexp"
 )
-
-func TestWriteVerboseFormat(t *testing.T) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	creds, path := viewCredentialsHelper(t)
-
-	err := writeVerboseFormat(w, creds, path)
-
-	expected := `Credential path: /o/p/e/s/*/i
-
-FOO=bar          /o/p/e/s/*/i/foo
-BAZ="two words"  /o/p/e/s/*/i/baz
-`
-	w.Flush()
-	got := string(buf.Bytes())
-
-	if err != nil {
-		t.Errorf("writeVerboseFormat() expected no errors, got %s", err)
-	}
-
-	if expected != got {
-		t.Errorf("writeVerboseFormat() expected\n%qgot\n%q", expected, got)
-	}
-}
-
-func TestWriteJSONFormat(t *testing.T) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	creds, _ := viewCredentialsHelper(t)
-
-	err := writeJSONFormat(w, creds)
-
-	expected := `{
-  "baz": "two words",
-  "foo": "bar"
-}
-`
-	w.Flush()
-	got := string(buf.Bytes())
-
-	if err != nil {
-		t.Errorf("writeJSONFormat() expected no errors, got %s", err)
-	}
-
-	if expected != got {
-		t.Errorf("writeJSONFormat() expected\n%qgot\n%q", expected, got)
-	}
-}
 
 func viewCredentialsHelper(t *testing.T) ([]apitypes.CredentialEnvelope, string) {
 	var creds []apitypes.CredentialEnvelope
