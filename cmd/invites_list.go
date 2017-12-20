@@ -64,7 +64,7 @@ func invitesList(ctx *cli.Context) error {
 	}
 
 	var states []string
-	if ctx.Bool("approved") {
+	if ctx.Bool("all") {
 		states = []string{"approved"}
 	} else {
 		states = []string{"pending", "associated", "accepted"}

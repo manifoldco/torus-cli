@@ -178,7 +178,7 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 2, ' ', 0)
-	fmt.Fprintf(w, " \t%s\t%s\n", ui.Bold("Team"), ui.Bold("Type"))
+	fmt.Fprintf(w, "\t%s\t%s\n", ui.Bold("Team"), ui.Bold("Type"))
 	for _, t := range teams {
 		if isMachineTeam(t.Body) {
 			continue

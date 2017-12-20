@@ -229,9 +229,9 @@ func listEnvsCmd(ctx *cli.Context) error {
 
 	// Build output of projects/envs
 	fmt.Println("")
-	fmt.Printf("  %s\n", ui.Bold("Environments"))
+	fmt.Printf("%s\n", ui.Bold("Environments"))
 	for _, env := range envs {
-		fmt.Printf("  %s\n", env.Body.Name)
+		fmt.Printf("%s\n", env.Body.Name)
 	}
 	fmt.Println("")
 

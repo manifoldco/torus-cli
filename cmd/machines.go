@@ -14,6 +14,7 @@ import (
 	"github.com/manifoldco/go-base32"
 	"github.com/manifoldco/go-base64"
 	"github.com/urfave/cli"
+	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -24,6 +25,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 const (
@@ -325,12 +327,16 @@ func viewMachineCmd(ctx *cli.Context) error {
 	w1.Flush()
 	fmt.Println("")
 
-	w2 := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintf(w2, "TOKEN ID\tSTATE\tCREATED BY\tCREATED ON\n")
-	fmt.Fprintln(w2, " \t \t \t ")
+	w2 := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", ui.Bold("Token ID"), ui.Bold("State"), ui.Bold("Created By"), ui.Bold("Created On"))
 	for _, token := range machineSegment.Tokens {
 		tokenID := token.Token.ID
-		state := token.Token.Body.State
+		var state string
+		if token.Token.Body.State == "active" {
+			state = ui.Color(ansiterm.Green, token.Token.Body.State)
+		} else {
+			state = ui.Color(ansiterm.Red, token.Token.Body.State)
+		}
 		creator := profileMap[*token.Token.Body.CreatedBy]
 		createdBy := creator.Body.Username + " (" + creator.Body.Name + ")"
 		createdOn := token.Token.Body.Created.Format(time.RFC3339)
@@ -411,9 +417,8 @@ func listMachinesCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tSTATE\tROLE\tCREATION DATE")
-	fmt.Fprintln(w, " \t \t \t \t ")
+	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ui.Bold("ID"), ui.Bold("Name"), ui.Bold("State"), ui.Bold("Role"), ui.Bold("Creation Date"))
 	for _, machine := range machines {
 		mID := machine.Machine.ID.String()
 		m := machine.Machine.Body
@@ -424,7 +429,13 @@ func listMachinesCmd(ctx *cli.Context) error {
 				roleName = role.Name
 			}
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, m.State, roleName, m.Created.Format(time.RFC3339))
+		var state string
+		if m.State == "active" {
+			state = ui.Color(ansiterm.Green, m.State)
+		} else {
+			state = ui.Color(ansiterm.Red, m.State)
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, state, roleName, m.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")

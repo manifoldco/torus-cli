@@ -293,31 +293,6 @@ func listCmd(ctx *cli.Context) error {
 	w.Flush()
 	fmt.Println("")
 
-	// fmt.Println("")
-	// w := ansiterm.NewTabWriter(os.Stdout, 0, 0, 0, ' ', 0)
-	// for e := range tree {
-	// 	fmt.Fprintf(w, fmt.Sprintf("%s\t\t\t\t\n", ui.Bold(e) + "/"))
-	// 	for s := range tree[e] {
-	// 		fmt.Fprintf(w, "\t%s\t\t\t\n", ui.Bold(s) + "/")
-	// 		if len(tree[e][s]) == 0 {
-	// 			if verbose {
-	// 				fmt.Fprintf(w, "\t\t%s\t\t\n", ui.Color(ansiterm.DarkGray, "[empty]"))
-	// 			}
-	// 			continue
-	// 		}
-	// 		for c, cred := range tree[e][s] {
-	// 			if verbose {
-	// 				credPath := (*cred.Body).GetPathExp().String() + "/"
-	// 				fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.CredPath(credPath+c))
-	// 			} else {
-	// 				fmt.Fprintf(w, "\t\t%s\t\t\n", c)
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// w.Flush()
-	// fmt.Println("")
-
 	return nil
 }
 

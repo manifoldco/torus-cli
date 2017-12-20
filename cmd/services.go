@@ -139,9 +139,9 @@ func listServicesCmd(ctx *cli.Context) error {
 
 	// Build output of projects/envs
 	fmt.Println("")
-	fmt.Printf("  %s\n", ui.Bold("Services"))
+	fmt.Printf("%s\n", ui.Bold("Services"))
 	for _, s := range services {
-		fmt.Printf("  %s\n", s.Body.Name)
+		fmt.Printf("%s\n", s.Body.Name)
 	}
 	fmt.Println("")
 

@@ -133,18 +133,18 @@ func orgsListCmd(ctx *cli.Context) error {
 	withoutPersonal := orgs
 
 	fmt.Println("")
-	fmt.Println("  " + ui.Bold("Name"))
+	fmt.Println(ui.Bold("Orgs"))
 	if session.Type() == apitypes.UserSession {
 		for i, o := range orgs {
 			if o.Body.Name == session.Username() {
-				fmt.Printf("  %s %s\n", o.Body.Name, "(" + ui.Color(ansiterm.DarkGray, "personal") + ")")
+				fmt.Printf("%s %s\n", o.Body.Name, "(" + ui.Color(ansiterm.DarkGray, "personal") + ")")
 				withoutPersonal = append(orgs[:i], orgs[i+1:]...)
 			}
 		}
 	}
 
 	for _, o := range withoutPersonal {
-		fmt.Printf("  %s\n", o.Body.Name)
+		fmt.Printf("%s\n", o.Body.Name)
 	}
 
 	hints.Display(hints.PersonalOrg)
@@ -389,8 +389,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	//fmt.Fprintf(w, " \t%s\t%s\t%s\n", ui.Bold("Username"), ui.Bold("Name"), ui.Bold("Team"))
-	fmt.Fprintf(w, " \t%s\t%s\t%s\n", ui.Bold("Name"), ui.Bold("Username"), ui.Bold("Team"))
+	fmt.Fprintf(w, "\t%s\t%s\t%s\n", ui.Bold("Name"), ui.Bold("Username"), ui.Bold("Team"))
 	for _, user := range users {
 		me := ""
 		if session.Username() == user.Body.Username {
