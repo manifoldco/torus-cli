@@ -22,6 +22,8 @@ You will not be able to manage your Torus organization until you have verified y
 
 `torus login` enables you to log into your account. Without a session you cannot interact with your Torus organization. Login prompts for your email address and password.
 
+For commands that need you to be logged in, you can also optionally set `TORUS_EMAIL` and `TORUS_PASSWORD` as environment variables and skip this step. This is especially useful if you're using torus as a part of a CI / CD process. For machines, you can set `TORUS_TOKEN_ID` and `TORUS_TOKEN_SECRET`. 
+
 If you have forgotten your password please contact [support@torus.sh](mailto:support@torus.sh). At this time you cannot willingly reset a forgotten password.
 
 ## logout
