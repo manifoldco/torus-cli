@@ -4,26 +4,34 @@
 
 **Notable Changes**
 
+- Updated formatting and flags of `envs list`
+- Updated formatting and flags of `services list`
+- Updated formatting and output options of `view`
+- Updated formatting and flags of `invites list`
+- Added styling to `list`
+- Added styling to `machines list` and `machines view`
+- Added styling to `orgs members` and `orgs list`
+- Added styling to `projects list`
+- Added styling to `teams list` and `teams members`
+- Added color output to UI package
+
+**Details**
 - Removed "all" flag option from `envs list`
 - Added org and project prompts to `envs list`
-- Updated formatting of output for `envs list`
+- Added styling output for `envs list`
 - Removed "all" flag option from `services list`
 - Added org and project prompts to `services list`
-- Updated formatting of output for `services list`
+- Added styling to output for `services list`
 - Added org and project prompt to `view`
-- Removed JSON and Verbose formatting from `view`, moved JSON format function to `export`
-- Added new "export_test.go" to test JSON formatting
+- Removed JSON and Verbose formatting from `view`
 - Added "-a" shortcut for "--approved" flag in `invites list`
-- Updated formatting of output for `invites list`
-- Updated formatting of output for `list`
+- Adding styling to output for `invites list`
 - Added org prompt to `machines list` and `machines view`
 - Updated formatting of output for `machines list` and `machines view`
-- Updated formatting of output for `orgs members` and `orgs list`
 - Added org prompt to `projects list`
-- Updated formatting of output for `torus projects list`
+- Updated formatting of output for `projects list`
 - Added org prompt to `teams list` and `teams members`
 - Updated formatting of output to `teams list` and `teams members`
-- Added color output to UI package
 
 ## v0.28.1
 
