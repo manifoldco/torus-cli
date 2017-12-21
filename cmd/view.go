@@ -23,8 +23,8 @@ func init() {
 		Usage:    "View secrets for the current service and environment",
 		Category: "SECRETS",
 		Flags: []cli.Flag{
-			stdOrgFlag,
-			stdProjectFlag,
+			orgFlag("Use this organization.", false),
+			projectFlag("Use this project.", false),
 			stdEnvFlag,
 			serviceFlag("Use this service.", "default", true),
 			userFlag("Use this user.", false),
@@ -64,9 +64,9 @@ func viewCmd(ctx *cli.Context) error {
 
 		if verbose {
 			if strings.Contains(value, " ") {
-				fmt.Fprintf(tw, "%s\t=\t%q\t(%s)\n", ui.Bold(name), value, ui.Color(ansiterm.DarkGray, spath))
+				fmt.Fprintf(tw, "%s\t=\t%q\t(%s)\n", ui.Bold(name), value, ui.Faint(spath))
 			} else {
-				fmt.Fprintf(tw, "%s\t=\t%s\t(%s)\n", ui.Bold(name), value, ui.Color(ansiterm.DarkGray, spath))
+				fmt.Fprintf(tw, "%s\t=\t%s\t(%s)\n", ui.Bold(name), value, ui.Faint(spath))
 			}
 		} else {
 			if strings.Contains(value, " ") {
@@ -103,8 +103,18 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 		return nil, "", err
 	}
 
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return nil, "", err
+	}
+
+	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	if err != nil {
+		return nil, "", err
+	}
+
 	parts := []string{
-		"", ctx.String("org"), ctx.String("project"), ctx.String("environment"),
+		"", org.Body.Name, project.Body.Name, ctx.String("environment"),
 		ctx.String("service"), identity, ctx.String("instance"),
 	}
 

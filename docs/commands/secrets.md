@@ -259,8 +259,11 @@ $ torus list -s ser1
 Filter down to environment "env1" and service "ser1", print in verbose mode:
 ```
 $ torus list -e env1 -s ser1 -v
-/org/project/
-    env1/
-        ser1/
-            secret1   /org/project/env1/ser1/*/*/secret1
+
+org: org
+project: project
+
+env1/
+    ser1/
+        secret1   (/org/project/env1/ser1/*/*/secret1)
 ```

@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -153,72 +152,14 @@ func listEnvsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	var org *envelope.Org
-	var orgs []envelope.Org
-
-	// Retrieve the org name supplied via the --org flag.
-	// This flag is optional. If none was supplied, then
-	// orgFlagArgument will be set to "". In this case,
-	// prompt the user to select an org.
-	orgName := ctx.String("org")
-
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err = client.Orgs.List(c)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve orgs list.", err)
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to select org.", err)
-		}
-
-		org = &orgs[idx]
-		orgName = org.Body.Name
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgName)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
-		}
-		if org == nil {
-			return errs.NewExitError("org " + orgName + " not found.")
-		}
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
 	}
 
-	// Retrieve project by name
-	// If no project was supplied (via flags) prompt the
-	// user to select from a list of existing projects.
-	var project *envelope.Project
-	var projects []envelope.Project
-
-	projectName := ctx.String("project")
-
-	if projectName == "" {
-		// Retrieve list of available projects
-		projects, err = client.Projects.List(c, org.ID)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve projects list.", err)
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingProjectPrompt(projects)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to select project.", err)
-		}
-
-		project = &projects[idx]
-		projectName = project.Body.Name
-
-	} else {
-		// Get Project for project name, confirm project exists
-		project, err = getProject(c, client, org.ID, projectName)
-		if err != nil {
-			return errs.NewErrorExitError("Project " + projectName + " not found.", err)
-		}
+	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	if err != nil {
+		return err
 	}
 
 	// Retrieve envs for targeted org and project
@@ -233,12 +174,8 @@ func listEnvsCmd(ctx *cli.Context) error {
 	for _, env := range envs {
 		fmt.Printf("%s\n", env.Body.Name)
 	}
-	fmt.Println("")
 
-	count := strconv.Itoa(len(envs))
-	title := "Project /" + org.Body.Name + "/" + project.Body.Name + " has (" + count + ") environments."
-	fmt.Println(title)
-	fmt.Println("")
+	fmt.Printf("\nProject /%s/%s has (%d) environment%s\n", org.Body.Name, project.Body.Name, len(envs), plural(len(envs)))
 
 	return nil
 }

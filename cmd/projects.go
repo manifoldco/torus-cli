@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -62,40 +61,9 @@ func listProjectsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	var org *envelope.Org
-	var orgs []envelope.Org
-
-	// Retrieve the org name supplied via the --org flag.
-	// This flag is optional. If none was supplied, then
-	// orgFlagArgument will be set to "". In this case,
-	// prompt the user to select an org.
-	orgName := ctx.String("org")
-
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err = client.Orgs.List(c)
-		if err != nil {
-			return errs.NewExitError("Failed to retrieve orgs list.")
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to select org.", err)
-		}
-
-		org = &orgs[idx]
-		orgName = org.Body.Name
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgName)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
-		}
-		if org == nil {
-			return errs.NewExitError("org " + orgName + " not found.")
-		}
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
 	}
 
 	projects, err := client.Projects.List(c, org.ID)
@@ -104,15 +72,12 @@ func listProjectsCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	fmt.Printf("  %s\n", ui.Bold("Projects"))
+	fmt.Printf("%s\n", ui.Bold("Projects"))
 	for _, project := range projects {
-		fmt.Printf("  %s\n", project.Body.Name)
+		fmt.Printf("%s\n", project.Body.Name)
 	}
-	fmt.Println("")
 
-	count := strconv.Itoa(len(projects))
-	countStr := "Org " + orgName + " has (" + count + ") projects."
-	fmt.Println(countStr)
+	fmt.Printf("\nOrg %s has (%d) project%s\n", org.Body.Name, len(projects), plural(len(projects)))
 
 	return nil
 }
@@ -254,4 +219,43 @@ func getProject(ctx context.Context, client *api.Client, orgID *identity.ID, nam
 	}
 
 	return &projects[0], nil
+}
+
+// This functions is intended to be used when a command takes an optional project flag.
+// In the situation where no project is provided in the flags, getProjectWithPrompt prompts the user
+// to select from a list of exisitng project, using SelectExistingProjectPrompt.
+// In the situation where a project is provided in the flags, the function returns the associated
+// project.Envelope structure.
+func getProjectWithPrompt(client *api.Client, c context.Context, org *envelope.Org, projectName string) (*envelope.Project, error) {
+
+	var project *envelope.Project
+
+	if projectName == "" {
+		// Retrieve list of available orgs
+		projects, err := client.Projects.List(c, org.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Prompt user to select from list of existing projects
+		idx, _, err := SelectExistingProjectPrompt(projects)
+		if err != nil {
+			return nil, err
+		}
+
+		project = &projects[idx]
+
+	} else {
+		// Get Project for project name, confirm project exists
+		var err error
+		project, err = getProject(c, client, org.ID, projectName)
+		if err != nil {
+			return nil, err
+		}
+		if project == nil {
+			return nil, errs.NewExitError("project " + projectName + " not found.")
+		}
+	}
+
+	return project, nil
 }

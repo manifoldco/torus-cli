@@ -27,7 +27,7 @@ func init() {
 				Flags: []cli.Flag{
 					orgFlag("org to list invites for", false),
 					cli.BoolFlag{
-						Name:  "all, a",
+						Name:  "approved, a",
 						Usage: "Show only approved invites",
 					},
 				},

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -102,36 +101,9 @@ func teamsListCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	var org *envelope.Org
-	var orgs []envelope.Org
-
-	// Retrieve the org name supplied via the --org flag.
-	// This flag is optional. If none was supplied, then
-	// orgFlagArgument will be set to "". In this case,
-	// prompt the user to select an org.
-	orgName := ctx.String("org")
-
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err = client.Orgs.List(c)
-		if err != nil {
-			return errs.NewExitError("Failed to retrieve orgs list.")
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return errs.NewExitError("Failed to select org.")
-		}
-
-		org = &orgs[idx]
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgName)
-		if org == nil {
-			return errs.NewExitError("org" + orgName + "not found.")
-		}
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
 	}
 
 	var getMemberships, display sync.WaitGroup
@@ -169,13 +141,14 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	display.Wait()
 	if sErr != nil || tErr != nil {
-		return errs.FilterErrors(
+		return errs.MultiError(
 			sErr,
 			tErr,
 			errs.NewExitError("Error fetching teams list"),
 		)
 	}
 
+	numTeams := 0
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 2, ' ', 0)
 	fmt.Fprintf(w, "\t%s\t%s\n", ui.Bold("Team"), ui.Bold("Type"))
@@ -183,6 +156,8 @@ func teamsListCmd(ctx *cli.Context) error {
 		if isMachineTeam(t.Body) {
 			continue
 		}
+
+		numTeams += 1;
 
 		isMember := ""
 		displayTeamType := ""
@@ -197,7 +172,7 @@ func teamsListCmd(ctx *cli.Context) error {
 		}
 
 		if _, ok := memberOf[*t.ID]; ok {
-			isMember = ui.Color(ansiterm.DarkGray, "*")
+			isMember = ui.Faint("*")
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\n", isMember, t.Body.Name, displayTeamType)
@@ -205,17 +180,8 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	w.Flush()
 
-	count := strconv.Itoa(len(teams))
-	var countStr string
-	if len(teams) == 1 {
-		countStr = "org " + org.Body.Name + " has (" + count + ") team."
-	} else {
-		countStr = "org " + org.Body.Name + " has (" + count + ") teams."
-	}
+	fmt.Printf("\nOrg %s has (%d) member%s\n", org.Body.Name, numTeams, plural(numTeams))
 
-	fmt.Println("")
-	fmt.Println(countStr)
-	fmt.Println("")
 	return nil
 }
 
@@ -237,39 +203,9 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	var getMembers sync.WaitGroup
 	getMembers.Add(2)
 
-	var org *envelope.Org
-	var orgs []envelope.Org
-
-	// Retrieve the org name supplied via the --org flag.
-	// This flag is optional. If none was supplied, then
-	// orgFlagArgument will be set to "". In this case,
-	// prompt the user to select an org.
-	orgName := ctx.String("org")
-
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err = client.Orgs.List(c)
-		if err != nil {
-			return errs.NewExitError("Failed to retrieve orgs list.")
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return errs.NewExitError("Failed to select org.")
-		}
-
-		org = &orgs[idx]
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgName)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
-		}
-		if org == nil {
-			return errs.NewExitError("org " + orgName + " not found.")
-		}
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
 	}
 
 	var team envelope.Team
@@ -308,7 +244,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 
 	getMembers.Wait()
 	if mErr != nil || tErr != nil || sErr != nil {
-		return errs.FilterErrors(mErr, tErr, sErr)
+		return errs.MultiError(mErr, tErr, sErr)
 	}
 
 	if len(memberships) == 0 {
@@ -342,22 +278,12 @@ func teamMembersListCmd(ctx *cli.Context) error {
 		if session.Username() == profile.Body.Username {
 			me = "*"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, ui.Color(ansiterm.DarkGray, profile.Body.Username))
+		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, ui.Faint(profile.Body.Username))
 	}
 
 	w.Flush()
 
-	count := strconv.Itoa(len(memberships))
-	var countStr string
-	if len(memberships) == 1 {
-		countStr = "team " + team.Body.Name + " has (" + count + ") member."
-	} else {
-		countStr = "team " + team.Body.Name + " has (" + count + ") members."
-	}
-
-	fmt.Println("")
-	fmt.Println(countStr)
-	fmt.Println("")
+	fmt.Printf("\nTeam %s has (%d) member%s\n", team.Body.Name, len(memberships), plural(len(memberships)))
 
 	return nil
 }

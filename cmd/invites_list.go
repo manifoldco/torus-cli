@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	//"text/tabwriter"
 	"time"
 
 	"github.com/juju/ansiterm"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
-	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
@@ -28,43 +26,13 @@ func invitesList(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	var org *envelope.Org
-	var orgs []envelope.Org
-
-	// Retrieve the org name supplied via the --org flag.
-	// This flag is optional. If none was supplied, then
-	// orgFlagArgument will be set to "". In this case,
-	// prompt the user to select an org.
-	orgName := ctx.String("org")
-
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err = client.Orgs.List(c)
-		if err != nil {
-			return errs.NewExitError("Failed to retrieve orgs list.")
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to select org.", err)
-		}
-
-		org = &orgs[idx]
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgName)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
-		}
-		if org == nil {
-			return errs.NewExitError("org " + orgName + " not found.")
-		}
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
 	}
 
 	var states []string
-	if ctx.Bool("all") {
+	if ctx.Bool("approved") {
 		states = []string{"approved"}
 	} else {
 		states = []string{"pending", "associated", "accepted"}
@@ -102,8 +70,10 @@ func invitesList(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Failed to retrieve invites, please try again.", err)
 	}
 
+	nameByID := make(map[string]string)
 	usernameByID := make(map[string]string)
 	for _, profile := range profiles {
+		nameByID[profile.ID.String()] = profile.Body.Name
 		usernameByID[profile.ID.String()] = profile.Body.Username
 	}
 
@@ -116,21 +86,23 @@ func invitesList(ctx *cli.Context) error {
 	fmt.Println("")
 
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ui.Bold("E-Mail"), ui.Bold("Username"), ui.Bold("State"), ui.Bold("Invited by"), ui.Bold("Creation Date"))
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", ui.Bold("Invited E-Mail"), ui.Bold("Name"), ui.Bold("Username"), ui.Bold("State"), ui.Bold("Invited by"), ui.Bold("Creation Date"))
 	for _, invite := range invites {
-		inviter := usernameByID[invite.Body.InviterID.String()]
+		inviter := nameByID[invite.Body.InviterID.String()]
 		if inviter == "" {
 			continue
 		}
 		identity := invite.Body.Email
-		invitee := "-"
+		inviteeName := "-"
+		inviteeUsername := "-"
 		if invite.Body.InviteeID != nil {
-			invitee = usernameByID[invite.Body.InviteeID.String()]
+			inviteeName = nameByID[invite.Body.InviteeID.String()]
+			inviteeUsername = usernameByID[invite.Body.InviteeID.String()]
 		}
 		var state string
 		switch invite.Body.State {
 		case "pending":
-			state = ui.Color(ansiterm.DarkGray, "awaiting acceptance")
+			state = ui.Faint("awaiting acceptance")
 		case "accepted":
 			state = ui.Color(ansiterm.Yellow, "awaiting approval")
 		case "approved":
@@ -139,7 +111,8 @@ func invitesList(ctx *cli.Context) error {
 			state = "-"
 		}
 
-		fmt.Fprintln(w, identity+"\t"+invitee+"\t"+state+"\t"+inviter+"\t"+invite.Body.Created.Format(time.RFC3339))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", identity, inviteeName, ui.Faint(inviteeUsername), state, inviter, invite.Body.Created.Format(time.RFC3339))
+
 	}
 	w.Flush()
 	fmt.Println("")

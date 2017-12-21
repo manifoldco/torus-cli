@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	//"text/tabwriter"
 
 	"github.com/urfave/cli"
 	"github.com/juju/ansiterm"
@@ -263,8 +262,8 @@ func listCmd(ctx *cli.Context) error {
 	if(verbose){
 		fmt.Println("")
 		projW := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
-		fmt.Fprintf(projW, "Org:\t" + ui.Color(ansiterm.DarkGray, orgName) + "\t\n")
-		fmt.Fprintf(projW, "Project:\t" + ui.Color(ansiterm.DarkGray, projectName) + "\t\n")
+		fmt.Fprintf(projW, "Org:\t" + ui.Faint(orgName) + "\t\n")
+		fmt.Fprintf(projW, "Project:\t" + ui.Faint(projectName) + "\t\n")
 		projW.Flush()
 	}
 
@@ -276,14 +275,14 @@ func listCmd(ctx *cli.Context) error {
 			fmt.Fprintf(w, "\t%s\t\t\t\n", ui.Bold(s) + "/")
 			if len(tree[e][s]) == 0 {
 				if verbose {
-					fmt.Fprintf(w, "\t\t%s\t\t\n", ui.Color(ansiterm.DarkGray, "[empty]"))
+					fmt.Fprintf(w, "\t\t%s\t\t\n", ui.Faint("[empty]"))
 				}
 				continue
 			}
 			for c, cred := range tree[e][s] {
 				if verbose {
 					credPath := (*cred.Body).GetPathExp().String() + "/"
-					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.CredPath(credPath+c))
+					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.Faint(credPath+c))
 				} else {
 					fmt.Fprintf(w, "\t\t%s\t\t\n", c)
 				}

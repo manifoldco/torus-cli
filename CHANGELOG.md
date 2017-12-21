@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## Unreleased
+
+**Notable Changes**
+
+- Removed "all" flag option from `envs list`
+- Added org and project prompts to `envs list`
+- Updated formatting of output for `envs list`
+- Removed "all" flag option from `services list`
+- Added org and project prompts to `services list`
+- Updated formatting of output for `services list`
+- Added org and project prompt to `view`
+- Removed JSON and Verbose formatting from `view`, moved JSON format function to `export`
+- Added new "export_test.go" to test JSON formatting
+- Added "-a" shortcut for "--approved" flag in `invites list`
+- Updated formatting of output for `invites list`
+- Updated formatting of output for `list`
+- Added org prompt to `machines list` and `machines view`
+- Updated formatting of output for `machines list` and `machines view`
+- Updated formatting of output for `orgs members` and `orgs list`
+- Added org prompt to `projects list`
+- Updated formatting of output for `torus projects list`
+- Added org prompt to `teams list` and `teams members`
+- Updated formatting of output to `teams list` and `teams members`
+- Added color output to UI package
+
 ## v0.28.0
 
 _2017-12-05_

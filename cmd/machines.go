@@ -76,7 +76,7 @@ func init() {
 				Name:  "list",
 				Usage: "List machines for an organization",
 				Flags: []cli.Flag{
-					orgFlag("Org the machine belongs to", true),
+					orgFlag("Org the machine belongs to", false),
 					roleFlag("List machines of this role", false),
 					destroyedFlag(),
 				},
@@ -90,7 +90,7 @@ func init() {
 				Usage:     "Show the details of a machine",
 				ArgsUsage: "<id|name>",
 				Flags: []cli.Flag{
-					orgFlag("Org the machine will belongs to", true),
+					orgFlag("Org the machine will belongs to", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -223,9 +223,6 @@ func viewMachineCmd(ctx *cli.Context) error {
 	if len(args) < 1 {
 		return errs.NewUsageExitError("Name or ID is required", ctx)
 	}
-	if ctx.String("org") == "" {
-		return errs.NewUsageExitError("Missing flags: --org", ctx)
-	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -235,13 +232,9 @@ func viewMachineCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Look up the target org
-	org, err := getOrg(c, client, ctx.String("org"))
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
 	if err != nil {
-		return errs.NewErrorExitError("Machine view failed", err)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
+		return err
 	}
 
 	machineID, err := identity.DecodeFromString(args[0])
@@ -363,15 +356,10 @@ func listMachinesCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
 	}
 
-	// Look up the target org
-	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
 	if err != nil {
-		return errs.NewErrorExitError("Failed to retrieve org", err)
+		return err
 	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
-	}
-	orgID := org.ID
 
 	state := primitive.MachineActiveState
 	if ctx.Bool("destroyed") {
@@ -399,7 +387,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 		roleID = roles[0].ID
 	}
 
-	machines, err := client.Machines.List(c, orgID, &state, nil, roleID)
+	machines, err := client.Machines.List(c, org.ID, &state, nil, roleID)
 	if err != nil {
 		return err
 	}
