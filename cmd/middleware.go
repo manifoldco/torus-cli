@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/manifoldco/torus-cli/dirprefs"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 const downloadURL = "https://www.torus.sh/install"
@@ -87,8 +87,7 @@ func ensureDaemon(ctx *cli.Context) error {
 		return errs.NewExitError("The daemon version is incorrect. Check for stale processes.")
 	}
 
-	fmt.Println("The daemon version is out of date and is being restarted.")
-	fmt.Println("You will need to login again.")
+	ui.Warn("The daemon version is out of date and is being restarted. You will need to login again.")
 
 	_, err = stopDaemon(proc)
 	if err != nil {
@@ -134,28 +133,28 @@ func ensureSession(ctx *cli.Context) error {
 	tokenSecret, hasTokenSecret := os.LookupEnv("TORUS_TOKEN_SECRET")
 
 	if hasEmail && hasPassword {
-		fmt.Println("Attempting to login with email: " + email)
+		ui.Info("Attempting to login as a user with email: %s", email)
 
 		err := client.Session.UserLogin(bgCtx, email, password)
 		if err != nil {
-			fmt.Println("Could not log in.\n" + err.Error())
+			ui.Error("Could not log in, encountered an error: %s", err)
 		} else {
 			return nil
 		}
 	}
 
 	if hasTokenID && hasTokenSecret {
-		fmt.Println("Attempting to login with token id: " + tokenID)
+		ui.Info("Attempting to login with machine token id: %s", tokenID)
 
 		err := client.Session.MachineLogin(bgCtx, tokenID, tokenSecret)
 		if err != nil {
-			fmt.Println("Could not log in\n" + err.Error())
+			ui.Error("Could not log in, encountered an error: %s", err)
 		} else {
 			return nil
 		}
 	}
 
-	msg := "You must be logged in to run '" + ctx.Command.FullName() + "'.\n" +
+	msg := "\nYou must be logged in to run '" + ctx.Command.FullName() + "'.\n" +
 		"Login using 'login' or create an account using 'signup'."
 	return errs.NewExitError(msg)
 }
@@ -351,7 +350,7 @@ func checkUpdates(ctx *cli.Context) error {
 	}
 
 	if updateInfo.NeedsUpdate {
-		fmt.Printf("New version %s available! Visit %s to download\n", updateInfo.Version, downloadURL)
+		ui.Info("A new version of Torus is available (%s)! You can download it from %s.", updateInfo.Version, downloadURL)
 	}
 
 	return nil

@@ -25,6 +25,15 @@
 - Updated formatting of output to `teams list` and `teams members`
 - Added color output to UI package
 
+## v0.28.1
+
+**Fixes**
+
+- Torus will only print out secondary information such as when it's attempting
+  to authenticate using credentials from `TORUS_EMAIL`, `TORUS_PASSWORD`,
+  `TORUS_TOKEN_ID`, and `TORUS_TOKEN_SECRET` if stdout is attached to a
+  terminal window.
+
 ## v0.28.0
 
 _2017-12-05_
