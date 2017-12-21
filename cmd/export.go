@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"text/tabwriter"
+	"encoding/json"
 
 	"github.com/urfave/cli"
 
@@ -126,6 +127,31 @@ func writeFormat(w io.Writer, secrets []apitypes.CredentialEnvelope, format stri
 	}
 
 	return tw.Flush()
+}
+
+func writeJSONFormat(w io.Writer, secrets []apitypes.CredentialEnvelope) error {
+	keyMap := make(map[string]interface{})
+
+	for _, secret := range secrets {
+		value := (*secret.Body).GetValue()
+		name := (*secret.Body).GetName()
+		v, err := value.Raw()
+		if err != nil {
+			return err
+		}
+
+		keyMap[name] = v
+	}
+
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+
+	err := enc.Encode(keyMap)
+	if err != nil {
+		return errs.NewErrorExitError("Could not marshal to json", err)
+	}
+
+	return nil
 }
 
 func validFormat(format string) bool {

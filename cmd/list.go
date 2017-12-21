@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"sync"
-	"text/tabwriter"
 
 	"github.com/urfave/cli"
+	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -15,6 +15,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/pathexp"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -80,8 +81,11 @@ func listCmd(ctx *cli.Context) error {
 	} else {
 		// If org flag was used, identify the org supplied.
 		org, err = client.Orgs.GetByName(c, orgName)
-		if org == nil || err != nil {
-			return errs.NewExitError("org" + orgName + "not found.")
+		if err != nil {
+			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
+		}
+		if org == nil {
+			return errs.NewExitError("org " + orgName + " not found.")
 		}
 	}
 
@@ -206,12 +210,16 @@ func listCmd(ctx *cli.Context) error {
 		}
 	}
 
-	// Create credentialsTree
+	// Create credentialsTree for verbose mode
+	// In verbose mode, ALL paths are displayed,
+	// whether they contain credentials or not.
 	// This will be filled in the following section.
-	for _, eName := range filteredEnvNames {
-		tree[eName] = make(serviceCredentialMap)
-		for _, sName := range filteredServiceNames {
-			tree[eName][sName] = make(credentialSet)
+  if verbose {
+		for _, eName := range filteredEnvNames {
+			tree[eName] = make(serviceCredentialMap)
+			for _, sName := range filteredServiceNames {
+				tree[eName][sName] = make(credentialSet)
+			}
 		}
 	}
 
@@ -239,36 +247,50 @@ func listCmd(ctx *cli.Context) error {
 				// "Add" is defined in 'credential_set.go'. This
 				// handles the case where a secret is redefined in
 				// overlapping spaces.
+				if tree[e] == nil {
+					tree[e] = make(serviceCredentialMap)
+				}
+				if tree[e][s] == nil {
+					tree[e][s] = make(credentialSet)
+				}
 				tree[e][s].Add(cred)
 			}
 		}
 	}
 
 	// Print credentialTree
+	if(verbose){
+		fmt.Println("")
+		projW := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
+		fmt.Fprintf(projW, "Org:\t" + ui.Faint(orgName) + "\t\n")
+		fmt.Fprintf(projW, "Project:\t" + ui.Faint(projectName) + "\t\n")
+		projW.Flush()
+	}
+
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 5, 0, 2, ' ', 0)
-	fmt.Fprintf(w, "%s\n", projectPath)
+	w := ansiterm.NewTabWriter(os.Stdout, 0, 0, 0, ' ', 0)
 	for e := range tree {
-		fmt.Fprintf(w, "\t%s\t\n", e+"/")
+		fmt.Fprintf(w, fmt.Sprintf("%s\t\t\t\t\n", ui.Bold(e) + "/"))
 		for s := range tree[e] {
-			fmt.Fprintf(w, "\t\t%s\t\n", s+"/")
+			fmt.Fprintf(w, "\t%s\t\t\t\n", ui.Bold(s) + "/")
 			if len(tree[e][s]) == 0 {
 				if verbose {
-					fmt.Fprintf(w, "\t\t\t[empty]\n")
+					fmt.Fprintf(w, "\t\t%s\t\t\n", ui.Faint("[empty]"))
 				}
 				continue
 			}
 			for c, cred := range tree[e][s] {
 				if verbose {
 					credPath := (*cred.Body).GetPathExp().String() + "/"
-					fmt.Fprintf(w, "\t\t\t%s\t%s\t\n", c, credPath+c)
+					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.Faint(credPath+c))
 				} else {
-					fmt.Fprintf(w, "\t\t\t%s\t\t\n", c)
+					fmt.Fprintf(w, "\t\t%s\t\t\n", c)
 				}
 			}
 		}
 	}
 	w.Flush()
+	fmt.Println("")
 
 	return nil
 }

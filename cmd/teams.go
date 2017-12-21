@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
-	"text/tabwriter"
 
 	"github.com/urfave/cli"
+	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -19,6 +18,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -43,7 +43,7 @@ func init() {
 				Name:  "list",
 				Usage: "List teams in an organization",
 				Flags: []cli.Flag{
-					stdOrgFlag,
+					orgFlag("Use this organization.", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -55,7 +55,7 @@ func init() {
 				Usage:     "List members of a particular team in and organization",
 				ArgsUsage: "<team>",
 				Flags: []cli.Flag{
-					stdOrgFlag,
+					orgFlag("Use this organization.", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -92,7 +92,6 @@ func init() {
 }
 
 func teamsListCmd(ctx *cli.Context) error {
-	orgName := ctx.String("org")
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -100,19 +99,22 @@ func teamsListCmd(ctx *cli.Context) error {
 	}
 
 	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
+	}
 
 	var getMemberships, display sync.WaitGroup
-	getMemberships.Add(2)
+	getMemberships.Add(1)
 	display.Add(2)
 
 	var teams []envelope.Team
-	var org *envelope.Org
 	var session *api.Session
-	var oErr, sErr, tErr error
+	var sErr, tErr error
 
 	memberOf := make(map[identity.ID]bool)
-
-	c := context.Background()
 
 	go func() {
 		session, sErr = client.Session.Who(c)
@@ -120,16 +122,6 @@ func teamsListCmd(ctx *cli.Context) error {
 	}()
 
 	go func() {
-		org, oErr = client.Orgs.GetByName(c, orgName)
-		if org == nil {
-			oErr = errs.NewExitError("Org not found.")
-			getMemberships.Done()
-			display.Done()
-			return
-		}
-
-		getMemberships.Done()
-
 		teams, tErr = client.Teams.GetByOrg(c, org.ID)
 		display.Done()
 	}()
@@ -137,7 +129,7 @@ func teamsListCmd(ctx *cli.Context) error {
 	go func() {
 		getMemberships.Wait()
 		var memberships []envelope.Membership
-		if oErr == nil && sErr == nil {
+		if sErr == nil {
 			memberships, sErr = client.Memberships.List(c, org.ID, nil, session.ID())
 		}
 
@@ -148,38 +140,48 @@ func teamsListCmd(ctx *cli.Context) error {
 	}()
 
 	display.Wait()
-	if oErr != nil || sErr != nil || tErr != nil {
-		return cli.NewMultiError(
-			oErr,
+	if sErr != nil || tErr != nil {
+		return errs.MultiError(
 			sErr,
 			tErr,
 			errs.NewExitError("Error fetching teams list"),
 		)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
+	numTeams := 0
+	fmt.Println("")
+	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 2, ' ', 0)
+	fmt.Fprintf(w, "\t%s\t%s\n", ui.Bold("Team"), ui.Bold("Type"))
 	for _, t := range teams {
 		if isMachineTeam(t.Body) {
 			continue
 		}
+
+		numTeams += 1;
 
 		isMember := ""
 		displayTeamType := ""
 
 		switch teamType := t.Body.TeamType; teamType {
 		case primitive.SystemTeamType:
-			displayTeamType = "[system]"
+			displayTeamType = "system"
+		case primitive.MachineTeamType:
+			displayTeamType = "machine"
+		case primitive.UserTeamType:
+			displayTeamType = "user"
 		}
 
 		if _, ok := memberOf[*t.ID]; ok {
-			isMember = "*"
+			isMember = ui.Faint("*")
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\n", isMember, t.Body.Name, displayTeamType)
 	}
 
 	w.Flush()
-	fmt.Println("\n  (*) member")
+
+	fmt.Printf("\nOrg %s has (%d) member%s\n", org.Body.Name, numTeams, plural(numTeams))
+
 	return nil
 }
 
@@ -201,20 +203,16 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	var getMembers sync.WaitGroup
 	getMembers.Add(2)
 
-	var org *envelope.Org
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
+	}
+
 	var team envelope.Team
 	var teams []envelope.Team
 	var memberships []envelope.Membership
-	var oErr, tErr, mErr, sErr error
+	var tErr, mErr, sErr error
 	go func() {
-		// Identify the org supplied
-		org, oErr = client.Orgs.GetByName(c, ctx.String("org"))
-		if org == nil {
-			oErr = errs.NewExitError("Org not found.")
-			getMembers.Done()
-			return
-		}
-
 		// Retrieve the team by name supplied
 		teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
 		if len(teams) != 1 {
@@ -245,13 +243,8 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	}()
 
 	getMembers.Wait()
-	if oErr != nil || mErr != nil || tErr != nil {
-		return cli.NewMultiError(
-			oErr,
-			mErr,
-			tErr,
-			sErr,
-		)
+	if mErr != nil || tErr != nil || sErr != nil {
+		return errs.MultiError(mErr, tErr, sErr)
 	}
 
 	if len(memberships) == 0 {
@@ -278,23 +271,19 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w, " \tUSERNAME\tNAME\n")
+	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 2, ' ', 0)
+	fmt.Fprintf(w, "\t%s\t%s\n", ui.Bold("Name"), ui.Bold("Username"))
 	for _, profile := range profiles {
 		me := ""
 		if session.Username() == profile.Body.Username {
 			me = "*"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Username, profile.Body.Name)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, ui.Faint(profile.Body.Username))
 	}
 
 	w.Flush()
 
-	count := strconv.Itoa(len(memberships))
-	title := "team " + team.Body.Name + " has (" + count + ") members."
-
-	fmt.Println("")
-	fmt.Println(title)
+	fmt.Printf("\nTeam %s has (%d) member%s\n", team.Body.Name, len(memberships), plural(len(memberships)))
 
 	return nil
 }

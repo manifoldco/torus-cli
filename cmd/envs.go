@@ -3,9 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/urfave/cli"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -38,12 +37,8 @@ func init() {
 				Name:  "list",
 				Usage: "List environments for an organization",
 				Flags: []cli.Flag{
-					orgFlag("org to show environments for", true),
-					projectFlag("project to shows environments for", false),
-					cli.BoolFlag{
-						Name:  "all",
-						Usage: "Perform command on all projects",
-					},
+					orgFlag("org to show environments for", false),
+					projectFlag("project to show environments for", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -148,12 +143,6 @@ func createEnv(ctx *cli.Context) error {
 const envListFailed = "Could not list envs, please try again."
 
 func listEnvsCmd(ctx *cli.Context) error {
-	if !ctx.Bool("all") {
-		if len(ctx.String("project")) < 1 {
-			return errs.NewUsageExitError("Missing flags: --project", ctx)
-		}
-	}
-	// TODO: Error when profile flag is used with --all
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -163,69 +152,30 @@ func listEnvsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Look up the target org
-	var org *envelope.Org
-	org, err = client.Orgs.GetByName(c, ctx.String("org"))
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
 	if err != nil {
-		return errs.NewExitError(envListFailed)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
+		return err
 	}
 
-	// Identify which projects to list envs for
-	var projectID identity.ID
-	var projects []envelope.Project
-	if ctx.Bool("all") {
-		// Pull all projects for the given orgID
-		projects, err = listProjects(&c, client, org.ID, nil)
-		if err != nil {
-			return errs.NewExitError(envListFailed)
-		}
-
-	} else {
-		// Retrieve only a single project by name
-		projectName := ctx.String("project")
-		projects, err = listProjects(&c, client, org.ID, &projectName)
-		if err != nil {
-			return errs.NewExitError(envListFailed)
-		}
-		if len(projects) == 1 {
-			projectID = *projects[0].ID
-		} else {
-			return errs.NewExitError("Project not found.")
-		}
+	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	if err != nil {
+		return err
 	}
 
 	// Retrieve envs for targeted org and project
-	envs, err := listEnvs(&c, client, org.ID, &projectID, nil)
+	envs, err := listEnvs(&c, client, org.ID, project.ID, nil)
 	if err != nil {
 		return errs.NewErrorExitError(envListFailed, err)
 	}
 
-	// Build map of envs to project
-	pMap := make(map[string]envelope.Project)
-	for _, project := range projects {
-		pMap[project.ID.String()] = project
-	}
-	eMap := make(map[string][]envelope.Environment)
-	for _, env := range envs {
-		ID := env.Body.ProjectID.String()
-		eMap[ID] = append(eMap[ID], env)
-	}
-
 	// Build output of projects/envs
 	fmt.Println("")
-	for projectID, project := range pMap {
-		count := strconv.Itoa(len(eMap[projectID]))
-		title := project.Body.Name + " (" + count + ")"
-		fmt.Println(title)
-		fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
-		for _, env := range eMap[projectID] {
-			fmt.Println(env.Body.Name)
-		}
-		fmt.Println("")
+	fmt.Printf("%s\n", ui.Bold("Environments"))
+	for _, env := range envs {
+		fmt.Printf("%s\n", env.Body.Name)
 	}
+
+	fmt.Printf("\nProject /%s/%s has (%d) environment%s\n", org.Body.Name, project.Body.Name, len(envs), plural(len(envs)))
 
 	return nil
 }

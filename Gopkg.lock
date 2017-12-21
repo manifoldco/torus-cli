@@ -116,6 +116,12 @@
   revision = "0b12d6b5"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/juju/ansiterm"
+  packages = [".","tabwriter"]
+  revision = "35c59b9e0fe275705a71bf5d58ee293f27efbbc4"
+
+[[projects]]
   name = "github.com/kardianos/osext"
   packages = ["."]
   revision = "c2c54e542fb797ad986b31721e1baedf214ca413"
@@ -125,6 +131,12 @@
   name = "github.com/keybase/go-triplesec"
   packages = [".","sha3"]
   revision = "b360b8252869a5ac88df3ed7897bc3b6d1e55dd2"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/lunixbochs/vtclean"
+  packages = ["."]
+  revision = "d14193dfc626125c831501c1c42340b4248e1f5a"
 
 [[projects]]
   name = "github.com/manifoldco/ansiwrap"
@@ -143,6 +155,18 @@
   packages = ["."]
   revision = "bb5e620cf51d2bbe78e624a2c27117655ce73acc"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   name = "github.com/natefinch/lumberjack"
@@ -213,6 +237,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0e1972d9e0fd96126df65ad2a8eaeddd48e7c051a128dda71434a5b4ded2899a"
+  inputs-digest = "56e4490583cea88da3618150e8f55e221840449485589f15a540229b9f3a31b9"
   solver-name = "gps-cdcl"
   solver-version = 1

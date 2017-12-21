@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## Unreleased
+
+**Notable Changes**
+
+- Updated formatting and flags of `envs list`, `services list` and `invites list`
+- Added styling, color and org/project prompts throughout commands
+- Removed --format flag option from `view`
+
 ## v0.28.1
 
 **Fixes**

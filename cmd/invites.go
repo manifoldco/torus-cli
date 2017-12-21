@@ -25,9 +25,9 @@ func init() {
 				Name:  "list",
 				Usage: "List outstanding invitations for an organization. These invites have yet to be approved.",
 				Flags: []cli.Flag{
-					orgFlag("org to list invites for", true),
+					orgFlag("org to list invites for", false),
 					cli.BoolFlag{
-						Name:  "approved",
+						Name:  "approved, a",
 						Usage: "Show only approved invites",
 					},
 				},

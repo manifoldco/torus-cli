@@ -3,9 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/urfave/cli"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -38,7 +37,7 @@ func init() {
 				Name:  "list",
 				Usage: "List services for an organization",
 				Flags: []cli.Flag{
-					orgFlag("List projects in an organization", true),
+					orgFlag("List projects in an organization", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -53,21 +52,32 @@ func init() {
 const projectListFailed = "Could not list projects, please try again."
 
 func listProjectsCmd(ctx *cli.Context) error {
-	orgName := ctx.String("org")
-	projects, err := listProjectsByOrgName(nil, nil, orgName)
+
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("")
-	count := strconv.Itoa(len(projects))
-	title := orgName + " org (" + count + ")"
-	fmt.Println(title)
-	fmt.Println(strings.Repeat("-", utf8.RuneCountInString(title)))
-	for _, project := range projects {
-		fmt.Println(project.Body.Name)
+	client := api.NewClient(cfg)
+	c := context.Background()
+
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
 	}
+
+	projects, err := client.Projects.List(c, org.ID)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve projects list.", err)
+	}
+
 	fmt.Println("")
+	fmt.Printf("%s\n", ui.Bold("Projects"))
+	for _, project := range projects {
+		fmt.Printf("%s\n", project.Body.Name)
+	}
+
+	fmt.Printf("\nOrg %s has (%d) project%s\n", org.Body.Name, len(projects), plural(len(projects)))
 
 	return nil
 }
@@ -209,4 +219,43 @@ func getProject(ctx context.Context, client *api.Client, orgID *identity.ID, nam
 	}
 
 	return &projects[0], nil
+}
+
+// This functions is intended to be used when a command takes an optional project flag.
+// In the situation where no project is provided in the flags, getProjectWithPrompt prompts the user
+// to select from a list of exisitng project, using SelectExistingProjectPrompt.
+// In the situation where a project is provided in the flags, the function returns the associated
+// project.Envelope structure.
+func getProjectWithPrompt(client *api.Client, c context.Context, org *envelope.Org, projectName string) (*envelope.Project, error) {
+
+	var project *envelope.Project
+
+	if projectName == "" {
+		// Retrieve list of available orgs
+		projects, err := client.Projects.List(c, org.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Prompt user to select from list of existing projects
+		idx, _, err := SelectExistingProjectPrompt(projects)
+		if err != nil {
+			return nil, err
+		}
+
+		project = &projects[idx]
+
+	} else {
+		// Get Project for project name, confirm project exists
+		var err error
+		project, err = getProject(c, client, org.ID, projectName)
+		if err != nil {
+			return nil, err
+		}
+		if project == nil {
+			return nil, errs.NewExitError("project " + projectName + " not found.")
+		}
+	}
+
+	return project, nil
 }

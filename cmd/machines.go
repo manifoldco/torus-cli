@@ -14,6 +14,7 @@ import (
 	"github.com/manifoldco/go-base32"
 	"github.com/manifoldco/go-base64"
 	"github.com/urfave/cli"
+	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -24,6 +25,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 const (
@@ -74,7 +76,7 @@ func init() {
 				Name:  "list",
 				Usage: "List machines for an organization",
 				Flags: []cli.Flag{
-					orgFlag("Org the machine belongs to", true),
+					orgFlag("Org the machine belongs to", false),
 					roleFlag("List machines of this role", false),
 					destroyedFlag(),
 				},
@@ -88,7 +90,7 @@ func init() {
 				Usage:     "Show the details of a machine",
 				ArgsUsage: "<id|name>",
 				Flags: []cli.Flag{
-					orgFlag("Org the machine will belongs to", true),
+					orgFlag("Org the machine will belongs to", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -221,9 +223,6 @@ func viewMachineCmd(ctx *cli.Context) error {
 	if len(args) < 1 {
 		return errs.NewUsageExitError("Name or ID is required", ctx)
 	}
-	if ctx.String("org") == "" {
-		return errs.NewUsageExitError("Missing flags: --org", ctx)
-	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -233,13 +232,9 @@ func viewMachineCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Look up the target org
-	org, err := getOrg(c, client, ctx.String("org"))
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
 	if err != nil {
-		return errs.NewErrorExitError("Machine view failed", err)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
+		return err
 	}
 
 	machineID, err := identity.DecodeFromString(args[0])
@@ -325,12 +320,16 @@ func viewMachineCmd(ctx *cli.Context) error {
 	w1.Flush()
 	fmt.Println("")
 
-	w2 := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintf(w2, "TOKEN ID\tSTATE\tCREATED BY\tCREATED ON\n")
-	fmt.Fprintln(w2, " \t \t \t ")
+	w2 := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", ui.Bold("Token ID"), ui.Bold("State"), ui.Bold("Created By"), ui.Bold("Created On"))
 	for _, token := range machineSegment.Tokens {
 		tokenID := token.Token.ID
-		state := token.Token.Body.State
+		var state string
+		if token.Token.Body.State == "active" {
+			state = ui.Color(ui.Green, token.Token.Body.State)
+		} else {
+			state = ui.Color(ui.Red, token.Token.Body.State)
+		}
 		creator := profileMap[*token.Token.Body.CreatedBy]
 		createdBy := creator.Body.Username + " (" + creator.Body.Name + ")"
 		createdOn := token.Token.Body.Created.Format(time.RFC3339)
@@ -357,15 +356,10 @@ func listMachinesCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
 	}
 
-	// Look up the target org
-	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
 	if err != nil {
-		return errs.NewErrorExitError("Failed to retrieve org", err)
+		return err
 	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
-	}
-	orgID := org.ID
 
 	state := primitive.MachineActiveState
 	if ctx.Bool("destroyed") {
@@ -393,7 +387,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 		roleID = roles[0].ID
 	}
 
-	machines, err := client.Machines.List(c, orgID, &state, nil, roleID)
+	machines, err := client.Machines.List(c, org.ID, &state, nil, roleID)
 	if err != nil {
 		return err
 	}
@@ -411,9 +405,8 @@ func listMachinesCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintln(w, "ID\tNAME\tSTATE\tROLE\tCREATION DATE")
-	fmt.Fprintln(w, " \t \t \t \t ")
+	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ui.Bold("ID"), ui.Bold("Name"), ui.Bold("State"), ui.Bold("Role"), ui.Bold("Creation Date"))
 	for _, machine := range machines {
 		mID := machine.Machine.ID.String()
 		m := machine.Machine.Body
@@ -424,7 +417,13 @@ func listMachinesCmd(ctx *cli.Context) error {
 				roleName = role.Name
 			}
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, m.State, roleName, m.Created.Format(time.RFC3339))
+		var state string
+		if m.State == "active" {
+			state = ui.Color(ui.Green, m.State)
+		} else {
+			state = ui.Color(ui.Red, m.State)
+		}
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, state, roleName, m.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")

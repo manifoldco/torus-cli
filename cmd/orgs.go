@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"sync"
-	"text/tabwriter"
 
 	"github.com/urfave/cli"
+	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -19,6 +18,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -130,18 +130,22 @@ func orgsListCmd(ctx *cli.Context) error {
 
 	withoutPersonal := orgs
 
+	fmt.Println("")
+	fmt.Println(ui.Bold("Orgs"))
 	if session.Type() == apitypes.UserSession {
 		for i, o := range orgs {
 			if o.Body.Name == session.Username() {
-				fmt.Printf("  %s [personal]\n", o.Body.Name)
+				fmt.Printf("%s %s\n", o.Body.Name, "(" + ui.Faint("personal") + ")")
 				withoutPersonal = append(orgs[:i], orgs[i+1:]...)
 			}
 		}
 	}
 
 	for _, o := range withoutPersonal {
-		fmt.Printf("  %s\n", o.Body.Name)
+		fmt.Printf("%s\n", o.Body.Name)
 	}
+
+	hints.Display(hints.PersonalOrg)
 
 	return nil
 }
@@ -382,12 +386,12 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w, " \tUSERNAME\tNAME\tTEAM\n")
+	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
+	fmt.Fprintf(w, "\t%s\t%s\t%s\n", ui.Bold("Name"), ui.Bold("Username"), ui.Bold("Team"))
 	for _, user := range users {
 		me := ""
 		if session.Username() == user.Body.Username {
-			me = "*"
+			me = ui.Faint("*")
 		}
 
 		// Sort teams by precedence
@@ -405,17 +409,13 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 		}
 		// Remove trailing comma and space character
 		teamString = teamString[:len(teamString)-2]
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Username, user.Body.Name, teamString)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Name, ui.Faint(user.Body.Username), teamString)
 	}
 
 	w.Flush()
 
-	count := strconv.Itoa(len(userIDs))
-	countString := "org " + org.Body.Name + " has (" + count + ") members."
+	fmt.Printf("\nOrg %s has (%d) member%s\n", org.Body.Name, len(userIDs), plural(len(userIDs)))
 
-	fmt.Println("")
-	fmt.Println(countString)
-	fmt.Println("")
 	return nil
 }
 
@@ -426,6 +426,45 @@ func getOrg(ctx context.Context, client *api.Client, name string) (*envelope.Org
 	}
 	if org == nil {
 		return nil, errs.NewExitError("Org not found.")
+	}
+
+	return org, nil
+}
+
+// This functions is intended to be used when a command takes an optional org flag.
+// In the situation where no org is provided in the flags, getOrgWithPrompt prompts the user
+// to select from a list of exisitng orgs, using SelectExistingOrgPrompt.
+// In the situation where an org is provided in the flags, the function returns the associated
+// org.Envelope structure.
+func getOrgWithPrompt(client *api.Client, c context.Context, orgName string) (*envelope.Org, error) {
+
+	var org *envelope.Org
+
+	if orgName == "" {
+		// Retrieve list of available orgs
+		orgs, err := client.Orgs.List(c)
+		if err != nil {
+			return nil, err
+		}
+
+		// Prompt user to select from list of existing orgs
+		idx, _, err := SelectExistingOrgPrompt(orgs)
+		if err != nil {
+			return nil, err
+		}
+
+		org = &orgs[idx]
+
+	} else {
+		// If org flag was used, identify the org supplied.
+		var err error
+		org, err = client.Orgs.GetByName(c, orgName)
+		if err != nil {
+			return nil, err
+		}
+		if org == nil {
+			return nil, errs.NewExitError("org " + orgName + " not found.")
+		}
 	}
 
 	return org, nil
