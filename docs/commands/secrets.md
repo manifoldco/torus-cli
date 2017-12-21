@@ -167,14 +167,13 @@ $ torus export -e prod -s api -f tfvars secrets.tfvars && terraform plan -var-fi
 
 `torus view` displays secrets in the current [context](./project-structure.md#link).
 
-By default items are displayed in environment variable format.
+Items are displayed in environment variable format.
 
 ### Command Options
 
   Option | Description
   ---- | ----
   --verbose, -v | List the sources of the secrets (shortcut for --format verbose)
-  --format FORMAT, -f FORMAT | Format used to display data (json, env, verbose) (default: env)
 
 ## run
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
