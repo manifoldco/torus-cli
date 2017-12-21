@@ -104,9 +104,9 @@ func invitesList(ctx *cli.Context) error {
 		case "pending":
 			state = ui.Faint("awaiting acceptance")
 		case "accepted":
-			state = ui.Color(ansiterm.Yellow, "awaiting approval")
+			state = ui.Color(ui.Yellow, "awaiting approval")
 		case "approved":
-			state = ui.Color(ansiterm.Green, "approved")
+			state = ui.Color(ui.Green, "approved")
 		default:
 			state = "-"
 		}

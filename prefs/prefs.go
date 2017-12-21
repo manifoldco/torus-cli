@@ -50,12 +50,13 @@ type Core struct {
 	RegistryURI        string `ini:"registry_uri,omitempty"`
 	ManifestURI        string `ini:"manifest_uri,omitempty"`
 	GatekeeperAddress  string `ini:"gatekeeper_address"`
-	Context            bool   `ini:"context,omitempty"`
-	AutoConfirm        bool   `ini:"auto_confirm,omitempty"`
+	Context            bool   `ini:"context"`
+	AutoConfirm        bool   `ini:"auto_confirm"`
 	EnableProgress     bool   `ini:"progress"`
 	EnableHints        bool   `ini:"hints"`
-	Vim                bool   `ini:"vim,omitempty"`
+	Vim                bool   `ini:"vim"`
 	EnableCheckUpdates bool   `ini:"check_updates"`
+	EnableColors       bool   `ini:"colors"`
 }
 
 // Defaults contains default values for use in command argument flags
@@ -137,6 +138,7 @@ func NewPreferences() (*Preferences, error) {
 			EnableHints:        true,
 			EnableProgress:     true,
 			EnableCheckUpdates: true,
+			EnableColors:       true,
 		},
 	}
 

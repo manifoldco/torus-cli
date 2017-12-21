@@ -409,7 +409,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 		}
 		// Remove trailing comma and space character
 		teamString = teamString[:len(teamString)-2]
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Name, ui.Color(ansiterm.DarkGray, user.Body.Username), teamString)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Name, ui.Faint(user.Body.Username), teamString)
 	}
 
 	w.Flush()

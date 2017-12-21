@@ -326,9 +326,9 @@ func viewMachineCmd(ctx *cli.Context) error {
 		tokenID := token.Token.ID
 		var state string
 		if token.Token.Body.State == "active" {
-			state = ui.Color(ansiterm.Green, token.Token.Body.State)
+			state = ui.Color(ui.Green, token.Token.Body.State)
 		} else {
-			state = ui.Color(ansiterm.Red, token.Token.Body.State)
+			state = ui.Color(ui.Red, token.Token.Body.State)
 		}
 		creator := profileMap[*token.Token.Body.CreatedBy]
 		createdBy := creator.Body.Username + " (" + creator.Body.Name + ")"
@@ -419,9 +419,9 @@ func listMachinesCmd(ctx *cli.Context) error {
 		}
 		var state string
 		if m.State == "active" {
-			state = ui.Color(ansiterm.Green, m.State)
+			state = ui.Color(ui.Green, m.State)
 		} else {
-			state = ui.Color(ansiterm.Red, m.State)
+			state = ui.Color(ui.Red, m.State)
 		}
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, state, roleName, m.Created.Format(time.RFC3339))
 	}

@@ -18,6 +18,29 @@ const (
 	rightPad    = 2
 )
 
+type UIColor int
+
+const (
+	_ UIColor = iota
+	Default
+	Black
+	Red
+	Green
+	Yellow
+	Blue
+	Magenta
+	Cyan
+	Gray
+	DarkGray
+	BrightRed
+	BrightGreen
+	BrightYellow
+	BrightBlue
+	BrightMagenta
+	BrightCyan
+	White
+)
+
 var bold = promptui.Styler(promptui.FGBold)
 var defUI *UI
 
@@ -29,6 +52,7 @@ func Init(preferences *prefs.Preferences) {
 
 		EnableProgress: preferences.Core.EnableProgress,
 		EnableHints:    preferences.Core.EnableHints,
+		EnableColors:   preferences.Core.EnableColors,
 	}
 }
 
@@ -46,6 +70,9 @@ type UI struct {
 
 	// EnableHints is whether hints should be displayed
 	EnableHints bool
+
+	// EnableColors is whether formatted text should be colored
+	EnableColors bool
 }
 
 // Progress calls Progress on the default UI
