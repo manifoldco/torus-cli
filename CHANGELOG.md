@@ -4,7 +4,7 @@
 
 **Notable Changes**
 
-- Updated formatting and flags of `envs list`, `services list` and `invites list`
+- Updated formatting and flags of `envs list`, `services list`, `invites list`, `policies list` and `policies view`
 - Added styling, color and org/project prompts throughout commands
 - Removed JSON format from `view`
 
