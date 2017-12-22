@@ -46,13 +46,19 @@ var defUI *UI
 
 // Init initializes a default global UI, accessible via the package functions.
 func Init(preferences *prefs.Preferences) {
+	enableColours := preferences.Core.EnableColors
+
+	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+		enableColours = false
+	}
+
 	defUI = &UI{
 		Indent: 0,
 		Cols:   screenWidth(),
 
 		EnableProgress: preferences.Core.EnableProgress,
 		EnableHints:    preferences.Core.EnableHints,
-		EnableColors:   preferences.Core.EnableColors,
+		EnableColors:   enableColours,
 	}
 }
 
