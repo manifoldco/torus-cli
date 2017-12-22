@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/urfave/cli"
 	"github.com/juju/ansiterm"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -157,7 +157,7 @@ func teamsListCmd(ctx *cli.Context) error {
 			continue
 		}
 
-		numTeams += 1;
+		numTeams += 1
 
 		isMember := ""
 		displayTeamType := ""
@@ -427,7 +427,7 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 
 	wait.Wait()
 	if uErr != nil || oErr != nil || tErr != nil {
-		return cli.NewMultiError(
+		return errs.MultiError(
 			oErr,
 			uErr,
 			tErr,
@@ -527,7 +527,7 @@ func teamsAddCmd(ctx *cli.Context) error {
 
 	wait.Wait()
 	if uErr != nil || oErr != nil || tErr != nil {
-		return cli.NewMultiError(
+		return errs.MultiError(
 			oErr,
 			uErr,
 			tErr,

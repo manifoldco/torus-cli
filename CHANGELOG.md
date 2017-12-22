@@ -1,14 +1,21 @@
 # CHANGELOG
 
-## Unreleased
+## v0.29.0
+
+_2017-12-22_
 
 **Notable Changes**
 
-- Updated formatting and flags of `envs list`, `services list`, `invites list`, `policies list` and `policies view`
-- Added styling, color and org/project prompts throughout commands
+- Redesigned the output of `view` and removed the `--format` flag.
+- Updated formatting and flags of `envs list`, `services list`, `invites list`,
+  `machines list`, `machines view`, `policies list` and `policies view`.
+- Added styling, color and org/project prompts throughout commands. Colors can
+  be disable by running `torus prefs set core.colors false`.
 - Removed JSON format from `view`
 
 ## v0.28.1
+
+_2017-12-17_
 
 **Fixes**
 
