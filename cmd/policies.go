@@ -200,7 +200,7 @@ func getOrgPolicyAndTeam(ctx context.Context, client *api.Client, orgName,
 
 	waitPolicy.Wait()
 	if tErr != nil || pErr != nil {
-		return nil, nil, nil, cli.NewMultiError(
+		return nil, nil, nil, errs.MultiError(
 			tErr,
 			pErr,
 		)
@@ -368,7 +368,7 @@ func listPoliciesCmd(ctx *cli.Context) error {
 	}()
 
 	if aErr != nil || pErr != nil || tErr != nil {
-		return cli.NewMultiError(
+		return errs.MultiError(
 			pErr,
 			aErr,
 			tErr,
@@ -525,7 +525,7 @@ func testPolicies(ctx *cli.Context) error {
 	wg.Wait()
 
 	if teamsErr != nil || policiesErr != nil {
-		return cli.NewMultiError(teamsErr, policiesErr,
+		return errs.MultiError(teamsErr, policiesErr,
 			errs.NewExitError(policyTestFailed))
 	}
 
@@ -606,7 +606,7 @@ func getTeamsForUser(c context.Context, client *api.Client, userName *string,
 	wg.Wait()
 
 	if userErr != nil || teamErr != nil {
-		return nil, cli.NewMultiError(userErr, teamErr,
+		return nil, errs.MultiError(userErr, teamErr,
 			errs.NewExitError(policyTestFailed),
 		)
 	}
@@ -680,7 +680,7 @@ func getPoliciesAndAttachments(c context.Context, client *api.Client,
 	wg.Wait()
 
 	if aErr != nil || pErr != nil {
-		return nil, nil, cli.NewMultiError(pErr, aErr,
+		return nil, nil, errs.MultiError(pErr, aErr,
 			errs.NewExitError(policyTestFailed))
 	}
 	return policies, attachments, nil

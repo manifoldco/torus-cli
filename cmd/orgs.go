@@ -7,8 +7,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/urfave/cli"
 	"github.com/juju/ansiterm"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -135,7 +135,7 @@ func orgsListCmd(ctx *cli.Context) error {
 	if session.Type() == apitypes.UserSession {
 		for i, o := range orgs {
 			if o.Body.Name == session.Username() {
-				fmt.Printf("%s %s\n", o.Body.Name, "(" + ui.Faint("personal") + ")")
+				fmt.Printf("%s %s\n", o.Body.Name, "("+ui.Faint("personal")+")")
 				withoutPersonal = append(orgs[:i], orgs[i+1:]...)
 			}
 		}
@@ -323,7 +323,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 
 	getMembersTeamsSession.Wait()
 	if tErr != nil || mErr != nil || sErr != nil {
-		return cli.NewMultiError(
+		return errs.MultiError(
 			tErr,
 			mErr,
 			sErr,
