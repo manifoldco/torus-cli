@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/urfave/cli"
@@ -59,61 +60,14 @@ func listCmd(ctx *cli.Context) error {
 
 	tree := make(credentialTree)
 
-	// Retrieve org and project flag values
-	orgName := ctx.String("org")
-	var org *envelope.Org
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err := client.Orgs.List(c)
-		if err != nil {
-			return errs.NewExitError("Failed to retrieve orgs list.")
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return errs.NewExitError("Failed to select org.")
-		}
-
-		org = &orgs[idx]
-		orgName = org.Body.Name
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgName)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve org " + orgName, err)
-		}
-		if org == nil {
-			return errs.NewExitError("org " + orgName + " not found.")
-		}
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	if err != nil {
+		return err
 	}
 
-	projectName := ctx.String("project")
-	var project *envelope.Project
-	if projectName == "" {
-		// Retrieve list of available projects
-		projects, err := client.Projects.List(c, org.ID)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to retrieve projects list.", err)
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingProjectPrompt(projects)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to select project.", err)
-		}
-
-		project = &projects[idx]
-		projectName = project.Body.Name
-
-	} else {
-		// Get Project for project name, confirm project exists
-		project, err = getProject(c, client, org.ID, projectName)
-		if err != nil {
-			return errs.NewErrorExitError("Failed to get project info for "+
-				orgName+"/"+projectName, err)
-		}
+	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	if err != nil {
+		return err
 	}
 
 	// Retrieve environment flag values
@@ -138,8 +92,8 @@ func listCmd(ctx *cli.Context) error {
 	// Create a PathExp based on flags. This is the search space that
 	// will be used to retrieve credentials.
 	filterPathExp, err := pathexp.New(
-		orgName,
-		projectName,
+		org.Body.Name,
+		project.Body.Name,
 		envFilters,
 		serviceFilters,
 		instanceFilters,
@@ -226,7 +180,8 @@ func listCmd(ctx *cli.Context) error {
 	// Check for each env and service in the filtered list, add
 	// any credentials along that path to that env/service branch
 	// of the credentialsTree
-	projectPath := "/" + orgName + "/" + projectName + "/"
+	credCount := 0
+	projectPath := "/" + org.Body.Name + "/" + project.Body.Name + "/"
 	for _, e := range filteredEnvNames {
 		for _, s := range filteredServiceNames {
 			builtPathExp, err := pathexp.Parse(projectPath + e + "/" + s + "/*/*")
@@ -262,8 +217,8 @@ func listCmd(ctx *cli.Context) error {
 	if(verbose){
 		fmt.Println("")
 		projW := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
-		fmt.Fprintf(projW, "Org:\t" + ui.Faint(orgName) + "\t\n")
-		fmt.Fprintf(projW, "Project:\t" + ui.Faint(projectName) + "\t\n")
+		fmt.Fprintf(projW, "Org:\t" + ui.Bold(org.Body.Name) + "\t\n")
+		fmt.Fprintf(projW, "Project:\t" + ui.Bold(project.Body.Name) + "\t\n")
 		projW.Flush()
 	}
 
@@ -280,6 +235,7 @@ func listCmd(ctx *cli.Context) error {
 				continue
 			}
 			for c, cred := range tree[e][s] {
+				credCount += 1
 				if verbose {
 					credPath := (*cred.Body).GetPathExp().String() + "/"
 					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.Faint(credPath+c))
@@ -290,7 +246,8 @@ func listCmd(ctx *cli.Context) error {
 		}
 	}
 	w.Flush()
-	fmt.Println("")
+
+	fmt.Printf("\n(%s) secrets found\n.", ui.Faint(strconv.Itoa(credCount)))
 
 	return nil
 }

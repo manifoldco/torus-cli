@@ -11,6 +11,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/urfave/cli"
+	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -20,6 +21,7 @@ import (
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/ui"
 	"github.com/manifoldco/torus-cli/validate"
 )
 
@@ -33,7 +35,7 @@ func init() {
 				Name:  "list",
 				Usage: "List all policies for an organization",
 				Flags: []cli.Flag{
-					orgFlag("The org to show policies for", true),
+					orgFlag("The org to show policies for", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -45,7 +47,7 @@ func init() {
 				Usage:     "Display the contents of a policy",
 				ArgsUsage: "<policy>",
 				Flags: []cli.Flag{
-					orgFlag("The org the policy belongs to", true),
+					orgFlag("The org the policy belongs to", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -332,14 +334,9 @@ func listPoliciesCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Look up the target org
-	var org *envelope.Org
-	org, err = client.Orgs.GetByName(c, ctx.String("org"))
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
 	if err != nil {
-		return errs.NewErrorExitError(policyListFailed, err)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
+		return err
 	}
 
 	var getAttachments, display sync.WaitGroup
@@ -400,9 +397,8 @@ func listPoliciesCmd(ctx *cli.Context) error {
 
 	display.Wait()
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 4, ' ', 0)
-	fmt.Fprintln(w, "POLICY NAME\tTYPE\tATTACHED TO")
-	fmt.Fprintln(w, " \t \t ")
+	w := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
+	fmt.Fprintf(w, "%s\t%s\t%s\n", ui.Bold("Policy Name"), ui.Bold("Type"), ui.Bold("Attached To"))
 	for _, name := range sortedNames {
 		teamNames := ""
 		policy := policiesByName[name]
@@ -441,12 +437,9 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := client.Orgs.GetByName(c, ctx.String("org"))
+	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
 	if err != nil {
-		return errs.NewErrorExitError("Unable to lookup org.", err)
-	}
-	if org == nil {
-		return errs.NewExitError("Org not found.")
+		return err
 	}
 
 	policies, err := client.Policies.List(c, org.ID, policyName)
@@ -463,8 +456,8 @@ func viewPolicyCmd(ctx *cli.Context) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 
-	fmt.Fprintf(w, "Name:\t%s\n", p.Name)
-	fmt.Fprintf(w, "Description:\t%s\n", p.Description)
+	fmt.Fprintf(w, "%s\t%s\n", ui.Bold("Name:"), p.Name)
+	fmt.Fprintf(w, "%s\t%s\n", ui.Bold("Description:"), p.Description)
 	fmt.Fprintln(w, "")
 	w.Flush()
 

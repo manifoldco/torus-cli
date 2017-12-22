@@ -14,16 +14,15 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `npm install -g torus-cli` installs `torus`
 - [ ]   `torus help` displays the help prompt after an
         `npm install -g torus-cli`
-- [ ]   `torus prefs list` displays the path to your `public_key_file`
+- [ ]   `torus prefs list` displays your preferences
 - [ ]   `torus signup` prompts you for an verification code username, name and
         email, before verifying and authenticating you
 - [ ]   A user cannot perform any writes without verifying their account
-- [ ]   `torus status` displays your current working context
 - [ ]   `torus logout` logs you out
 - [ ]   `torus login` prompts you for an email and password, before
         authenticating you
 - [ ]   You can login using environment variables (`TORUS_EMAIL` and
-        `TORUS_PASSWORD`)
+        `TORUS_PASSWORD`) through `torus status`
 
 ### Account
 
@@ -37,7 +36,7 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 
 - [ ]   `torus teams list --org [username]` displays `owner` `admin` and
         `member` teams, and you are a member of each
-- [ ]   `torus teams create [name] --org [org-name]` creates an org.
+- [ ]   `torus teams create [name] --org [org-name]` creates a team.
 - [ ]   `torus invites send [email] —org [org-name]` generates an access code
         and sends it to the user
 - [ ]   `torus invites accept —org [org] [email] [code]` prompts a user to
@@ -46,9 +45,9 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus invites list —org [org]` lists the outstanding invite
 - [ ]   `torus invites approve [email] —org [org]` approves the users invite
 - [ ]   The user is now a member of the members team
-- [ ]   `torus teams add [name] [username] —org [org-name]` adds the user to a
+- [ ]   `torus teams add [username] [name] —org [org-name]` adds the user to a
         team
-- [ ]   `torus teams remove [name] [username] —org [org-name]` removes the user
+- [ ]   `torus teams remove [username] [name] —org [org-name]` removes the user
         from a team
 - [ ]   Users cannot remove themselves from system-teams
 

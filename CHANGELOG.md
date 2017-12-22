@@ -8,7 +8,7 @@ _2017-12-22_
 
 - Redesigned the output of `view` and removed the `--format` flag.
 - Updated formatting and flags of `envs list`, `services list`, `invites list`,
-  `machines list`, and `machines view`.
+  `machines list`, `machines view`, `policies list` and `policies view`.
 - Added styling, color and org/project prompts throughout commands. Colors can
   be disable by running `torus prefs set core.colors false`.
 

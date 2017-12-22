@@ -236,6 +236,9 @@ func getProjectWithPrompt(client *api.Client, c context.Context, org *envelope.O
 		if err != nil {
 			return nil, err
 		}
+		if len(projects) < 1 {
+			return nil, errs.NewExitError("No projects found in org " + org.Body.Name)
+		}
 
 		// Prompt user to select from list of existing projects
 		idx, _, err := SelectExistingProjectPrompt(projects)
