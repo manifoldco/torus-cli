@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/urfave/cli"
@@ -216,8 +217,8 @@ func listCmd(ctx *cli.Context) error {
 	if(verbose){
 		fmt.Println("")
 		projW := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
-		fmt.Fprintf(projW, "Org:\t" + ui.Faint(org.Body.Name) + "\t\n")
-		fmt.Fprintf(projW, "Project:\t" + ui.Faint(project.Body.Name) + "\t\n")
+		fmt.Fprintf(projW, "Org:\t" + ui.Bold(org.Body.Name) + "\t\n")
+		fmt.Fprintf(projW, "Project:\t" + ui.Bold(project.Body.Name) + "\t\n")
 		projW.Flush()
 	}
 
@@ -246,7 +247,7 @@ func listCmd(ctx *cli.Context) error {
 	}
 	w.Flush()
 
-	fmt.Printf("\n(%d) secrets found\n.", credCount)
+	fmt.Printf("\n(%s) secrets found\n.", ui.Faint(strconv.Itoa(credCount)))
 
 	return nil
 }
