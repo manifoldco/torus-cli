@@ -11,6 +11,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/ui"
 
 	"github.com/urfave/cli"
 )
@@ -57,13 +58,13 @@ func profileView(ctx *cli.Context) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	if session.Type() == apitypes.MachineSession {
-		fmt.Fprintf(w, "Machine ID:\t%s\n", session.ID())
-		fmt.Fprintf(w, "Machine Token ID:\t%s\n", session.AuthID())
-		fmt.Fprintf(w, "Machine Name:\t%s\n", session.Username())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine ID"), session.ID())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Token ID"), session.AuthID())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Name"), ui.Faint(session.Username()))
 	} else {
-		fmt.Fprintf(w, "Name:\t%s\n", session.Name())
-		fmt.Fprintf(w, "Email:\t%s\n", session.Email())
-		fmt.Fprintf(w, "Username:\t%s\n", session.Username())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Name"), session.Name())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Username"), ui.Faint(session.Username()))
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Email"), session.Email())
 	}
 
 	w.Flush()

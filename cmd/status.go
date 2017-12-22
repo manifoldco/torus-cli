@@ -11,6 +11,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/prefs"
+	"github.com/manifoldco/torus-cli/ui"
 
 	"github.com/urfave/cli"
 )
@@ -93,17 +94,17 @@ func statusCmd(ctx *cli.Context) error {
 	instance := ctx.String("instance")
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "Org:\t%s\n", org)
-	fmt.Fprintf(w, "Project:\t%s\n", project)
-	fmt.Fprintf(w, "Environment:\t%s\n", env)
-	fmt.Fprintf(w, "Service:\t%s\n", service)
-	fmt.Fprintf(w, "Identity:\t%s\n", identity)
-	fmt.Fprintf(w, "Instance:\t%s\n", instance)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Org"), org)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Project"), project)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Environment"), env)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Service"), service)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Identity"), ui.Faint(identity))
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Instance"), instance)
 	w.Flush()
 
 	parts := []string{"", org, project, env, service, identity, instance}
 	credPath := strings.Join(parts, "/")
-	fmt.Printf("\nCredential path: %s\n", credPath)
+	fmt.Printf("\n%s: %s\n", ui.Bold("Credential Path"), credPath)
 
 	return nil
 }
