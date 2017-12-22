@@ -11,7 +11,6 @@ _2017-12-22_
   `machines list`, `machines view`, `policies list` and `policies view`.
 - Added styling, color and org/project prompts throughout commands. Colors can
   be disable by running `torus prefs set core.colors false`.
-- Removed JSON format from `view`
 
 ## v0.28.1
 
