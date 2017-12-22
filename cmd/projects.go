@@ -212,7 +212,7 @@ func getProject(ctx context.Context, client *api.Client, orgID *identity.ID, nam
 	names := []string{name}
 	projects, err := client.Projects.Search(ctx, orgIDs, names)
 	if projects == nil || len(projects) < 1 {
-		return nil, errs.NewErrorExitError("Project not found.", err)
+		return nil, errs.NewExitError("Project not found.")
 	}
 	if err != nil {
 		return nil, errs.NewErrorExitError("Unable to lookup project.", err)
