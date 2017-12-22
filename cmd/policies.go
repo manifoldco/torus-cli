@@ -47,7 +47,7 @@ func init() {
 				Usage:     "Display the contents of a policy",
 				ArgsUsage: "<policy>",
 				Flags: []cli.Flag{
-					orgFlag("The org the policy belongs to", true),
+					orgFlag("The org the policy belongs to", false),
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
