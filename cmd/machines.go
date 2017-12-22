@@ -11,10 +11,10 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/juju/ansiterm"
 	"github.com/manifoldco/go-base32"
 	"github.com/manifoldco/go-base64"
 	"github.com/urfave/cli"
-	"github.com/juju/ansiterm"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -282,7 +282,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 
 	// Created profile
 	creator := profileMap[*machineBody.CreatedBy]
-	createdBy := creator.Body.Username + " (" + creator.Body.Name + ")"
+	createdBy := creator.Body.Name + " (" + ui.Faint(creator.Body.Username) + ")"
 	createdOn := machineBody.Created.Format(time.RFC3339)
 
 	// Destroyed profile
@@ -291,7 +291,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 	if machineBody.State == primitive.MachineDestroyedState {
 		destroyer := profileMap[*machineBody.DestroyedBy]
 		destroyedOn = machineBody.Destroyed.Format(time.RFC3339)
-		destroyedBy = destroyer.Body.Username + " (" + destroyer.Body.Name + ")"
+		destroyedBy = destroyer.Body.Name + " (" + ui.Faint(destroyer.Body.Name) + ")"
 	}
 
 	// Membership info
@@ -309,14 +309,14 @@ func viewMachineCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w1 := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintf(w1, "ID:\t%s\n", machine.ID)
-	fmt.Fprintf(w1, "Name:\t%s\n", machineBody.Name)
-	fmt.Fprintf(w1, "Role:\t%s\n", roleOutput)
-	fmt.Fprintf(w1, "State:\t%s\n", machineBody.State)
-	fmt.Fprintf(w1, "Created By:\t%s\n", createdBy)
-	fmt.Fprintf(w1, "Created On:\t%s\n", createdOn)
-	fmt.Fprintf(w1, "Destroyed By:\t%s\n", destroyedBy)
-	fmt.Fprintf(w1, "Destroyed On:\t%s\n", destroyedOn)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("ID"), machine.ID)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Name"), ui.Faint(machineBody.Name))
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Role"), roleOutput)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("State"), colorizeMachineState(machineBody.State))
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Created By"), createdBy)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Created On"), createdOn)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Destroyed By"), destroyedBy)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Destroyed On"), destroyedOn)
 	w1.Flush()
 	fmt.Println("")
 
@@ -324,14 +324,9 @@ func viewMachineCmd(ctx *cli.Context) error {
 	fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", ui.Bold("Token ID"), ui.Bold("State"), ui.Bold("Created By"), ui.Bold("Created On"))
 	for _, token := range machineSegment.Tokens {
 		tokenID := token.Token.ID
-		var state string
-		if token.Token.Body.State == "active" {
-			state = ui.Color(ui.Green, token.Token.Body.State)
-		} else {
-			state = ui.Color(ui.Red, token.Token.Body.State)
-		}
+		state := colorizeMachineState(token.Token.Body.State)
 		creator := profileMap[*token.Token.Body.CreatedBy]
-		createdBy := creator.Body.Username + " (" + creator.Body.Name + ")"
+		createdBy := creator.Body.Name + " (" + ui.Faint(creator.Body.Username) + ")"
 		createdOn := token.Token.Body.Created.Format(time.RFC3339)
 		fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", tokenID, state, createdBy, createdOn)
 	}
@@ -340,6 +335,17 @@ func viewMachineCmd(ctx *cli.Context) error {
 	fmt.Println("")
 
 	return nil
+}
+
+func colorizeMachineState(state string) string {
+	switch state {
+	case "active":
+		return ui.Color(ui.Green, state)
+	case "destroyed":
+		return ui.Color(ui.Red, state)
+	default:
+		return state
+	}
 }
 
 func listMachinesCmd(ctx *cli.Context) error {
@@ -417,13 +423,9 @@ func listMachinesCmd(ctx *cli.Context) error {
 				roleName = role.Name
 			}
 		}
-		var state string
-		if m.State == "active" {
-			state = ui.Color(ui.Green, m.State)
-		} else {
-			state = ui.Color(ui.Red, m.State)
-		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, m.Name, state, roleName, m.Created.Format(time.RFC3339))
+
+		state := colorizeMachineState(state)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, ui.Faint(m.Name), state, roleName, m.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")
@@ -650,9 +652,9 @@ func createMachine(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 
 	tokenID := machine.Tokens[0].Token.ID
-	fmt.Fprintf(w, "Machine ID:\t%s\n", machine.Machine.ID)
-	fmt.Fprintf(w, "Machine Token ID:\t%s\n", tokenID)
-	fmt.Fprintf(w, "Machine Token Secret:\t%s\n", tokenSecret)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine ID"), machine.Machine.ID)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Token ID"), tokenID)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Token Secret"), tokenSecret)
 
 	w.Flush()
 	hints.Display(hints.Allow, hints.Deny)
