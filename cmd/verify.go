@@ -29,6 +29,20 @@ func verifyEmailCmd(ctx *cli.Context) error {
 	return verifyEmail(ctx, nil, false)
 }
 
+func askToVerify(ctx *cli.Context) error {
+	code, err := VerificationPrompt()
+	if err != nil {
+		return err
+	}
+
+	err = verifyEmail(ctx, &code, true)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func verifyEmail(ctx *cli.Context, code *string, subCommand bool) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -55,7 +69,7 @@ func verifyEmail(ctx *cli.Context, code *string, subCommand bool) error {
 		verifyCode = args[0]
 	}
 
-	err = client.Users.VerifyEmail(c, verifyCode)
+	err = client.Users.Verify(c, verifyCode)
 	if err != nil {
 		if strings.Contains(err.Error(), "wrong user state: active") {
 			return errs.NewExitError("Email already verified :)")

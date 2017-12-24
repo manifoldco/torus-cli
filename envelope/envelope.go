@@ -60,6 +60,7 @@ type UserInf interface {
 	Email() string
 	Password() *primitive.UserPassword
 	Master() *primitive.MasterKey
+	State() string
 }
 
 // StructVersion returns the version of the user object
@@ -92,6 +93,11 @@ func (u *UserV1) Master() *primitive.MasterKey {
 	return u.Body.Master
 }
 
+// State returns the State for this User.
+func (u *UserV1) State() string {
+	return u.Body.State
+}
+
 // StructVersion returns the version of the User object
 func (u *User) StructVersion() uint8 {
 	return u.Version
@@ -120,6 +126,11 @@ func (u *User) Password() *primitive.UserPassword {
 // Master returns the MasterKey for this User.
 func (u *User) Master() *primitive.MasterKey {
 	return u.Body.Master
+}
+
+// State returns the State for this User.
+func (u *User) State() string {
+	return u.Body.State
 }
 
 // ConvertUser converts an unsigned envelope to a UserInf interface which

@@ -44,4 +44,4 @@ Currently accounts can only have one email attached to them. In the event of an 
 ### view
 ###### Added [v0.17.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
-`torus profile view` displays the authenticated user’s profile information.
+`torus profile view` displays the authenticated user’s profile information such as their name, email and account status.

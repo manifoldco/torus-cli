@@ -64,6 +64,15 @@ func (s *Session) Email() string {
 	return s.identity.(envelope.UserInf).Email()
 }
 
+// State returns the status of the machine or user
+func (s *Session) State() string {
+	if s.sessionType == apitypes.MachineSession {
+		return s.identity.(*envelope.Machine).Body.State
+	}
+
+	return s.identity.(envelope.UserInf).State()
+}
+
 // NewSession returns a new session constructed from the payload of the current
 // identity as returned from the Daemon
 func NewSession(resp *apitypes.Self) (*Session, error) {

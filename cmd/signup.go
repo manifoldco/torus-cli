@@ -134,19 +134,13 @@ func signup(ctx *cli.Context, subCommand bool) error {
 		fmt.Println("Please verify your email address by entering the code below.")
 		fmt.Println("")
 
-		code, err := VerificationPrompt()
-		if err != nil {
+		if err = askToVerify(ctx); err != nil {
 			return err
 		}
-		fmt.Println("")
 
-		err = verifyEmail(ctx, &code, true)
-		if err != nil {
-			return err
-		}
+		fmt.Println("")
 	}
 
 	hints.Display(hints.GettingStarted)
-
 	return nil
 }

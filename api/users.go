@@ -39,3 +39,12 @@ func (u *UsersClient) Update(ctx context.Context, delta apitypes.ProfileUpdate) 
 
 	return envelope.ConvertUser(&e)
 }
+
+// Verify verifies the users account using the given code
+func (u *UsersClient) Verify(ctx context.Context, code string) error {
+	verifyEmail := apitypes.VerifyEmail{
+		Code: code,
+	}
+
+	return u.client.DaemonRoundTrip(ctx, "POST", "/verify", nil, &verifyEmail, nil, nil)
+}

@@ -74,6 +74,34 @@ func (s *Session) Login(ctx context.Context, creds apitypes.LoginCredential) err
 	return s.engine.session.Set(self.Type, self.Identity, self.Auth, creds.Passphrase(), token)
 }
 
+// Verify attempts to verify the users account using the
+func (s *Session) Verify(ctx context.Context, code string) error {
+	if s.engine.session.Type() == apitypes.MachineSession {
+		return &apitypes.Error{
+			Type: apitypes.BadRequestError,
+			Err:  []string{"A machine cannot verify it's acccount!"},
+		}
+	}
+
+	err := s.engine.client.Users.VerifyEmail(ctx, code)
+	if err != nil {
+		return err
+	}
+
+	token := s.engine.session.Token()
+	self, err := s.engine.client.Self.Get(ctx, string(token))
+	if err != nil {
+		return err
+	}
+
+	err = s.engine.session.SetIdentity(self.Type, self.Identity, self.Auth)
+	if err != nil {
+		return err
+	}
+
+	return s.engine.session.SetIdentity(self.Type, self.Identity, self.Auth)
+}
+
 // UpdateProfile attempts to update the root password used by a user to log
 // into Torus which also allows them to access their stored and encrypted
 // secrets.
