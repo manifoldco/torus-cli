@@ -10,8 +10,8 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"github.com/urfave/cli"
 	"github.com/juju/ansiterm"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -133,10 +133,10 @@ func attachPolicyCmd(ctx *cli.Context) error {
 	policyName := args[0]
 	teamName := args[1]
 
-	if err := validate.Slug(policyName, "policy", nil); err != nil {
+	if err := validate.PolicyName(policyName); err != nil {
 		return errs.NewUsageExitError("Invalid policy name provided", ctx)
 	}
-	if err := validate.Slug(teamName, "team", nil); err != nil {
+	if err := validate.TeamName(teamName); err != nil {
 		return errs.NewUsageExitError("Invalid team name provided", ctx)
 	}
 
@@ -234,10 +234,10 @@ func detachPolicyCmd(ctx *cli.Context) error {
 	policyName := args[0]
 	teamName := args[1]
 
-	if err := validate.Slug(policyName, "policy", nil); err != nil {
+	if err := validate.PolicyName(policyName); err != nil {
 		return errs.NewUsageExitError("Invalid policy name provided", ctx)
 	}
-	if err := validate.Slug(teamName, "team", nil); err != nil {
+	if err := validate.TeamName(teamName); err != nil {
 		return errs.NewUsageExitError("Invalid team name provided", ctx)
 	}
 
@@ -287,7 +287,7 @@ func deletePolicyCmd(ctx *cli.Context) error {
 	}
 
 	policyName := args[0]
-	if err := validate.Slug(policyName, "policy", nil); err != nil {
+	if err := validate.PolicyName(policyName); err != nil {
 		return errs.NewUsageExitError("Invalid policy name provided", ctx)
 	}
 
@@ -425,7 +425,7 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	}
 
 	policyName := args[0]
-	if err := validate.Slug(policyName, "policy", nil); err != nil {
+	if err := validate.PolicyName(policyName); err != nil {
 		return errs.NewUsageExitError("Invalid policy name provided", ctx)
 	}
 

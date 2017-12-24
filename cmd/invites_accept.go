@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/validate"
 )
 
 const acceptInviteFailed = "Could not accept invitation to org, please try again."
@@ -66,7 +67,7 @@ func invitesAccept(ctx *cli.Context) error {
 
 	email := args[0]
 	code := args[1]
-	err = validateInviteCode(code)
+	err = validate.InviteCode(code)
 	if err != nil {
 		return err
 	}
