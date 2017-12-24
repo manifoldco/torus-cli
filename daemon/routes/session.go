@@ -66,7 +66,6 @@ func loginRoute(engine *logic.Engine) http.HandlerFunc {
 
 func logoutRoute(engine *logic.Engine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		ctx := r.Context()
 		err := engine.Session.Logout(ctx)
 		if err != nil {
@@ -80,19 +79,12 @@ func logoutRoute(engine *logic.Engine) http.HandlerFunc {
 
 func sessionRoute(s session.Session) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		enc := json.NewEncoder(w)
-		if !(s.HasToken() && s.HasPassphrase()) {
-			w.WriteHeader(http.StatusNotFound)
-			err := enc.Encode(&errorMsg{
-				Type:  apitypes.UnauthorizedError,
-				Error: []string{"Not logged in"},
-			})
-			if err != nil {
-				encodeResponseErr(w, err)
-			}
+		if err := checkLoggedIn(s); err != nil {
+			encodeResponseErr(w, err)
 			return
 		}
 
+		enc := json.NewEncoder(w)
 		err := enc.Encode(&apitypes.SessionStatus{
 			Token:      s.HasToken(),
 			Passphrase: s.HasPassphrase(),
@@ -104,16 +96,51 @@ func sessionRoute(s session.Session) http.HandlerFunc {
 	}
 }
 
+func verifyRoute(s session.Session, e *logic.Engine) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c := r.Context()
+		dec := json.NewDecoder(r.Body)
+
+		if err := checkLoggedIn(s); err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		verifyCode := apitypes.VerifyEmail{}
+		err := dec.Decode(&verifyCode)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		err = e.Session.Verify(c, verifyCode.Code)
+		if err != nil {
+			encodeResponseErr(w, err)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func checkLoggedIn(s session.Session) error {
+	if s.Type() == apitypes.NotLoggedIn {
+		return &apitypes.Error{
+			Type: apitypes.UnauthorizedError,
+			Err:  []string{"You must login to perform that action."},
+		}
+	}
+
+	return nil
+}
+
 func updateSelfRoute(client *registry.Client, s session.Session, e *logic.Engine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := r.Context()
 		dec := json.NewDecoder(r.Body)
 
-		if s.Type() == apitypes.NotLoggedIn {
-			encodeResponseErr(w, &apitypes.Error{
-				Type: apitypes.UnauthorizedError,
-				Err:  []string{"invalid login"},
-			})
+		if err := checkLoggedIn(s); err != nil {
+			encodeResponseErr(w, err)
 			return
 		}
 
@@ -149,11 +176,8 @@ func selfRoute(s session.Session) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		enc := json.NewEncoder(w)
 
-		if s.Type() == apitypes.NotLoggedIn {
-			encodeResponseErr(w, &apitypes.Error{
-				Type: apitypes.UnauthorizedError,
-				Err:  []string{"invalid login"},
-			})
+		if err := checkLoggedIn(s); err != nil {
+			encodeResponseErr(w, err)
 			return
 		}
 

@@ -472,26 +472,26 @@ WIX := $(shell command -v torch 2> /dev/null)
 GOMSI := $(shell command -v go-msi 2> /dev/null)
 
 bootstrap-windows: bootstrap
-ifndef WIX 
+ifndef WIX
 	curl --create-dirs -fsSL -k -o C:\Temp\wix311-binaries.zip https://github.com/wixtoolset/wix3/releases/download/wix311rtm/wix311-binaries.zip
 	unzip "C:\Temp\wix311-binaries.zip" -d "C:\Program Files\go-msi"
 endif
-ifndef GOMSI 
+ifndef GOMSI
 	curl --create-dirs -fsSL -k -o C:\Temp\go-msi.msi http://github.com/mh-cbon/go-msi/releases/download/1.0.2/go-msi-amd64.msi
 	msiexec /i C:\Temp\go-msi.msi /q
 endif
 .PHONY: bootstrap-windows
-	
+
 #################################################
-# Generate Windows .msi 
+# Generate Windows .msi
 #################################################
 
 msi: release-binary
-ifndef WIX 
+ifndef WIX
 	$(error "WiX toolset binaries are not available in your path. Please download and install WiX binaries https://github.com/wixtoolset/wix3/releases/tag/wix311rtm and make them available in your path. )
 endif
-ifndef GOMSI 
-	$(error "go-msi binary is not available in your path. Please download and install http://github.com/mh-cbon/go-msi/releases/download/1.0.2/go-msi-amd64.msi or attempt to run `make bootstrap-windows` to do this for you.") 
+ifndef GOMSI
+	$(error "go-msi binary is not available in your path. Please download and install http://github.com/mh-cbon/go-msi/releases/download/1.0.2/go-msi-amd64.msi or attempt to run `make bootstrap-windows` to do this for you.")
 endif
 	sed 's/VERSION/$(VERSION)/' < packaging/msi/wix.json.in > wix.json
 	go-msi make --msi builds/bin/$(VERSION)/windows/amd64/torus.msi --version $(VERSION) -s packaging/msi/templates/

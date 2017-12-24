@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -56,20 +55,44 @@ func profileView(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Error fetching user details", err)
 	}
 
+	printProfile(session)
+	return nil
+}
+
+func printProfile(session *api.Session) {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	if session.Type() == apitypes.MachineSession {
 		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine ID"), session.ID())
 		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Token ID"), session.AuthID())
 		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Name"), ui.Faint(session.Username()))
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine State"), colorizeAccountState(session))
 	} else {
 		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Name"), session.Name())
 		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Username"), ui.Faint(session.Username()))
 		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Email"), session.Email())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Status"), colorizeAccountState(session))
 	}
 
 	w.Flush()
+}
 
-	return nil
+func colorizeAccountState(session *api.Session) string {
+	if session.Type() == apitypes.MachineSession {
+		return colorizeMachineState(session.State())
+	}
+
+	return colorizeUserState(session.State())
+}
+
+func colorizeUserState(state string) string {
+	switch state {
+	case "active":
+		return ui.Color(ui.Green, state)
+	case "unverified":
+		return ui.Color(ui.Yellow, state)
+	default:
+		return state
+	}
 }
 
 // profileEdit is used to update name and email for an account
@@ -120,8 +143,10 @@ func profileEdit(ctx *cli.Context) error {
 
 	// Construct the update payload
 	delta := apitypes.ProfileUpdate{}
+	mustVerify := false
 	if ogEmail != email {
 		delta.Email = email
+		mustVerify = true
 	}
 	if ogName != name {
 		delta.Name = name
@@ -154,6 +179,17 @@ func profileEdit(ctx *cli.Context) error {
 		}
 	}
 
+	if mustVerify {
+		fmt.Println("")
+		fmt.Println("A verification code has been sent to your new email address.")
+		fmt.Println("Please verify this change by entering the code below.")
+		fmt.Println("")
+
+		if err = askToVerify(ctx); err != nil {
+			return err
+		}
+	}
+
 	// Output the final session details
 	updatedSession, err := client.Session.Who(c)
 	if err != nil {
@@ -161,13 +197,8 @@ func profileEdit(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "Name:\t%s\n", updatedSession.Name())
-	fmt.Fprintf(w, "Email:\t%s\n", updatedSession.Email())
-	fmt.Fprintf(w, "Username:\t%s\n", updatedSession.Username())
-	fmt.Fprintf(w, "Password:\t%s\n", strings.Repeat(string(PasswordMask), 10))
-	w.Flush()
 
+	printProfile(updatedSession)
 	return nil
 }
 

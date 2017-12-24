@@ -1,4 +1,3 @@
-// Package apitypes defines types shared between the daemon and its api client.
 package apitypes
 
 import (

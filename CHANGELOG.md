@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Unreleased
+
+_Date_
+
+**Notable Changes**
+
+- The status of your account is now displayed via `torus profile view`
+- When updating your email address via `torus profile update` you are now
+  prompted for the verification code to re-verify your account.
+- More precise errors are returned to users when invalid usernames, org,
+  project, team, or policy names are submitted to a ui prompt.
+
 ## v0.29.0
 
 _2017-12-22_
