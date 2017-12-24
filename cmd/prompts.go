@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -18,24 +17,21 @@ import (
 	"github.com/manifoldco/torus-cli/validate"
 )
 
-const inviteCodePattern = "^[0-9a-ht-zjkmnpqr]{10}$"
-const verifyCodePattern = "^[0-9a-ht-zjkmnpqr]{9}$"
-
-func validateSlug(slugType string) promptui.ValidateFunc {
+func wrapValidateError(fn func(string) error) promptui.ValidateFunc {
 	return func(input string) error {
-		err := validate.Slug(input, slugType, nil)
+		err := fn(input)
 		if err == nil {
 			return nil
 		}
-		return promptui.NewValidationError(err.Error())
-	}
-}
 
-func validateInviteCode(input string) error {
-	if govalidator.StringMatches(input, inviteCodePattern) {
-		return nil
+		switch err.(type) {
+		case *validate.ValidationError:
+			return promptui.NewValidationError(err.Error())
+		default:
+			msg := fmt.Sprintf("Whoops! It looks like we ran into a problem: %s", err.Error())
+			return promptui.NewValidationError(msg)
+		}
 	}
-	return promptui.NewValidationError("Please enter a valid invite code")
 }
 
 // AskPerform prompts the user if they want to do a specified action
@@ -100,8 +96,9 @@ func NamePrompt(override *string, defaultValue string, autoAccept bool) (string,
 		label = *override
 	}
 
+	validator := validate.SlugValidator(strings.ToLower(label))
 	if autoAccept {
-		err := validateSlug(strings.ToLower(label))(defaultValue)
+		err := validator(defaultValue)
 		if err != nil {
 			fmt.Println(promptui.FailedValue(label, defaultValue))
 		} else {
@@ -113,7 +110,7 @@ func NamePrompt(override *string, defaultValue string, autoAccept bool) (string,
 	prompt = promptui.Prompt{
 		Label:     label,
 		Default:   defaultValue,
-		Validate:  validateSlug(strings.ToLower(label)),
+		Validate:  wrapValidateError(validator),
 		IsVimMode: preferences.Core.Vim,
 	}
 	return prompt.Run()
@@ -126,14 +123,8 @@ func VerificationPrompt() (string, error) {
 		return "", err
 	}
 	prompt := promptui.Prompt{
-		Label: "Verification code",
-		Validate: func(input string) error {
-			input = strings.ToLower(input)
-			if govalidator.StringMatches(input, verifyCodePattern) {
-				return nil
-			}
-			return promptui.NewValidationError("Please enter a valid code")
-		},
+		Label:     "Verification code",
+		Validate:  wrapValidateError(validate.VerificationCode),
 		IsVimMode: preferences.Core.Vim,
 	}
 
@@ -157,7 +148,7 @@ func SelectProjectPrompt(projects []envelope.Project) (int, string, error) {
 		Label:     "Select project",
 		Items:     names,
 		AddLabel:  "Create a new project",
-		Validate:  validateSlug("project"),
+		Validate:  wrapValidateError(validate.ProjectName),
 		IsVimMode: preferences.Core.Vim,
 	}
 
@@ -203,7 +194,7 @@ func SelectOrgPrompt(orgs []envelope.Org) (int, string, error) {
 		Label:     "Select organization",
 		Items:     names,
 		AddLabel:  "Create a new organization",
-		Validate:  validateSlug("org"),
+		Validate:  wrapValidateError(validate.OrgName),
 		IsVimMode: preferences.Core.Vim,
 	}
 
@@ -258,7 +249,7 @@ func SelectTeamPrompt(teams []envelope.Team, label, addLabel string) (int, strin
 		Label:     label,
 		Items:     names,
 		AddLabel:  addLabel,
-		Validate:  validateSlug("team"),
+		Validate:  wrapValidateError(validate.TeamName),
 		IsVimMode: preferences.Core.Vim,
 	}
 
@@ -453,18 +444,9 @@ func PasswordPrompt(shouldConfirm bool, labelOverride *string) (string, error) {
 	}
 
 	prompt = promptui.Prompt{
-		Label: "Confirm " + label,
-		Mask:  '●',
-		Validate: func(input string) error {
-			if len(input) > 0 {
-				if input != password {
-					return promptui.NewValidationError("Passwords do not match")
-				}
-				return nil
-			}
-
-			return promptui.NewValidationError("Please confirm your password")
-		},
+		Label:     "Confirm " + label,
+		Mask:      '●',
+		Validate:  wrapValidateError(validate.ConfirmPassword(password)),
 		IsVimMode: preferences.Core.Vim,
 	}
 
@@ -484,14 +466,8 @@ func EmailPrompt(defaultValue string) (string, error) {
 	}
 
 	prompt := promptui.Prompt{
-		Label: "Email",
-		Validate: func(input string) error {
-			err := validate.Email(input)
-			if err == nil {
-				return nil
-			}
-			return promptui.NewValidationError("Please enter a valid email address")
-		},
+		Label:     "Email",
+		Validate:  wrapValidateError(validate.Email),
 		IsVimMode: preferences.Core.Vim,
 	}
 	if defaultValue != "" {
@@ -509,14 +485,8 @@ func UsernamePrompt(un string) (string, error) {
 	}
 
 	prompt := promptui.Prompt{
-		Label: "Username",
-		Validate: func(input string) error {
-			err := validate.Username(input)
-			if err == nil {
-				return nil
-			}
-			return promptui.NewValidationError("Please enter a valid username")
-		},
+		Label:     "Username",
+		Validate:  wrapValidateError(validate.Username),
 		IsVimMode: preferences.Core.Vim,
 	}
 	if un != "" {
@@ -534,14 +504,8 @@ func FullNamePrompt(name string) (string, error) {
 	}
 
 	prompt := promptui.Prompt{
-		Label: "Full Name",
-		Validate: func(input string) error {
-			err := validate.Name(input)
-			if err == nil {
-				return nil
-			}
-			return promptui.NewValidationError("Please enter a valid name")
-		},
+		Label:     "Full Name",
+		Validate:  wrapValidateError(validate.Name),
 		IsVimMode: preferences.Core.Vim,
 	}
 	if name != "" {
@@ -561,7 +525,7 @@ func InviteCodePrompt(defaultValue string) (string, error) {
 	prompt := promptui.Prompt{
 		Label:     "Invite Code",
 		Default:   defaultValue,
-		Validate:  validateInviteCode,
+		Validate:  wrapValidateError(validate.InviteCode),
 		IsVimMode: preferences.Core.Vim,
 	}
 

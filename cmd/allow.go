@@ -92,9 +92,10 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 			time.Now().Format(time.RFC822Z), session.Username())
 	}
 
-	if err := validate.Slug(name, "policy", nil); err != nil {
+	if err := validate.PolicyName(name); err != nil {
 		return errs.NewErrorExitError("Invalid name provided.", err)
 	}
+
 	if err := validate.Description(description, "policy"); err != nil {
 		return errs.NewErrorExitError("Invalid description provided.", err)
 	}
