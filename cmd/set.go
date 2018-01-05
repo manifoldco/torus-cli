@@ -75,6 +75,7 @@ func setCmd(ctx *cli.Context) error {
 	if err != nil {
 		return errs.NewErrorExitError("Could not set credential.", err)
 	}
+	
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, path, name)
 
 	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import, hints.Export)
