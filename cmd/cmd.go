@@ -20,6 +20,16 @@ var progress api.ProgressFunc = func(evt *api.Event, err error) {
 	}
 }
 
+func spinner(text string) (*ui.Spinner, api.ProgressFunc) {
+	s := ui.NewSpinner(text)
+
+	return s, func(evt *api.Event, err error) {
+		if evt != nil {
+			s.Update(evt.Message)
+		}
+	}
+}
+
 // NewAPIClient loads config and creates a new api client
 func NewAPIClient(ctx *context.Context, client *api.Client) (context.Context, *api.Client, error) {
 	if client == nil {

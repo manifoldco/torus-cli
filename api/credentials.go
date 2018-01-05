@@ -16,25 +16,25 @@ type CredentialsClient struct {
 }
 
 // Search returns all credentials at the given pathexp in an undecrypted state
-func (c *CredentialsClient) Search(ctx context.Context, pathexp string) ([]apitypes.CredentialEnvelope, error) {
+func (c *CredentialsClient) Search(ctx context.Context, pathexp string, p ProgressFunc) ([]apitypes.CredentialEnvelope, error) {
 	v := &url.Values{}
 	v.Set("pathexp", pathexp)
 	v.Set("skip-decryption", "true")
 
-	return c.listWorker(ctx, v)
+	return c.listWorker(ctx, v, p)
 }
 
 // Get returns all credentials at the given path.
-func (c *CredentialsClient) Get(ctx context.Context, path string) ([]apitypes.CredentialEnvelope, error) {
+func (c *CredentialsClient) Get(ctx context.Context, path string, p ProgressFunc) ([]apitypes.CredentialEnvelope, error) {
 	v := &url.Values{}
 	v.Set("path", path)
 
-	return c.listWorker(ctx, v)
+	return c.listWorker(ctx, v, p)
 }
 
-func (c *CredentialsClient) listWorker(ctx context.Context, v *url.Values) ([]apitypes.CredentialEnvelope, error) {
+func (c *CredentialsClient) listWorker(ctx context.Context, v *url.Values, p ProgressFunc) ([]apitypes.CredentialEnvelope, error) {
 	var resp []apitypes.CredentialResp
-	err := c.client.DaemonRoundTrip(ctx, "GET", "/credentials", v, nil, &resp, nil)
+	err := c.client.DaemonRoundTrip(ctx, "GET", "/credentials", v, nil, &resp, p)
 	if err != nil {
 		return nil, err
 	}

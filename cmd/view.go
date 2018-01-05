@@ -77,11 +77,9 @@ func viewCmd(ctx *cli.Context) error {
 		}
 	}
 
-	return tw.Flush()
-
 	hints.Display(hints.Link, hints.Run, hints.Export)
 
-	return err
+	return tw.Flush()
 }
 
 func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error) {
@@ -120,7 +118,10 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 
 	path := strings.Join(parts, "/")
 
-	secrets, err := client.Credentials.Get(c, path)
+	s, p := spinner("Decrypting credentials")
+	s.Start()
+	secrets, err := client.Credentials.Get(c, path, p)
+	s.Stop()
 	if err != nil {
 		return nil, "", errs.NewErrorExitError("Error fetching secrets", err)
 	}

@@ -57,10 +57,13 @@ func unsetCmd(ctx *cli.Context) error {
 		return apitypes.NewUnsetCredentialValue()
 	}
 
-	_, err = setCredentials(ctx, pe, makers)
+	s, p := spinner(fmt.Sprintf("Attempting to unset credential %s", name))
+	s.Start()
+	_, err = setCredentials(ctx, pe, makers, p)
 	if err != nil {
 		return errs.NewErrorExitError("Could not unset credential", err)
 	}
+	s.Stop()
 
 	output := fmt.Sprintf("\nCredential %s has been unset at %s/%s.", name, pe, name)
 	fmt.Println(output)
