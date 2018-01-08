@@ -22,11 +22,23 @@ func (u *UI) NewSpinner(text string) *Spinner {
   }
 }
 
-func (s *Spinner) Start() {
+func (s *Spinner) Start() { defUI.StartSpinner(s) }
+
+func (u *UI) StartSpinner(s *Spinner) {
+  if !u.EnableProgress {
+    return
+  }
+
   s.spinner.Start()
 }
 
-func (s *Spinner) Stop() {
+func (s *Spinner) Stop() { defUI.StopSpinner(s) }
+
+func (u *UI) StopSpinner(s *Spinner) {
+  if !u.EnableProgress {
+    return
+  }
+
   s.spinner.Stop()
 }
 

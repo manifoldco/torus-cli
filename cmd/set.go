@@ -71,11 +71,10 @@ func setCmd(ctx *cli.Context) error {
 	s, p := spinner(fmt.Sprintf("Attempting to set credential %s", name))
 	s.Start()
 	_, err = setCredentials(ctx, path, makers, p)
+	s.Stop()
 	if err != nil {
-		s.Stop()
 		return errs.NewErrorExitError("Could not set credential.", err)
 	}
-	s.Stop()
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, path, name)
 
 	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import, hints.Export)
