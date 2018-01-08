@@ -123,13 +123,10 @@ func listCmd(ctx *cli.Context) error {
 		getEnvsServicesCreds.Done()
 	}()
 
-	s, p := spinner("Decrypting credentials")
-	s.Start()
 	go func() {
 		// Get credentials
 		credentials, cErr = client.Credentials.Search(c, filterPathExp.String(), p)
 		getEnvsServicesCreds.Done()
-		s.Stop()
 	}()
 
 	getEnvsServicesCreds.Wait()
