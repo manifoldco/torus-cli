@@ -125,7 +125,7 @@ func listCmd(ctx *cli.Context) error {
 
 	go func() {
 		// Get credentials
-		credentials, cErr = client.Credentials.Search(c, filterPathExp.String(), p)
+		credentials, cErr = client.Credentials.Search(c, filterPathExp.String(), nil)
 		getEnvsServicesCreds.Done()
 	}()
 
