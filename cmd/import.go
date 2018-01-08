@@ -61,10 +61,10 @@ func importCmd(ctx *cli.Context) error {
 	s, p := spinner("Attempting to set credentials...")
 	s.Start()
 	creds, err := setCredentials(ctx, path, makers, p)
+	s.Stop()
 	if err != nil {
 		return errs.NewErrorExitError("Could not set credentials.", err)
 	}
-	s.Stop()
 
 	fmt.Println()
 	for _, cred := range creds {
