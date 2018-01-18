@@ -34,14 +34,31 @@ ci: binary $(LINTERS) cmdlint test
 #################################################
 
 BOOTSTRAP=\
-	github.com/jteeuwen/go-bindata/... \
-	github.com/alecthomas/gometalinter \
-	github.com/golang/dep/cmd/dep
+	github.com/golang/lint/golint \
+	github.com/client9/misspell/cmd/misspell \
+	github.com/gordonklaus/ineffassign \
+	github.com/tsenart/deadcode \
+	github.com/alecthomas/gometalinter
 
-$(BOOTSTRAP):
-	go get -u $@
-bootstrap: $(BOOTSTRAP)
-	gometalinter --install
+define VENDOR_BIN_TMPL
+vendor/bin/$(notdir $(1)): vendor
+	go build -o $$@ ./vendor/$(1)
+VENDOR_BINS += vendor/bin/$(notdir $(1))
+endef
+
+$(foreach pkg,$(BOOTSTRAP),$(eval $(call VENDOR_BIN_TMPL,$(pkg))))
+
+$(patsubst %,%-bin,$(filter-out gofmt vet,$(LINTERS))): %-bin: vendor/bin/%
+gofmt-bin vet-bin:
+
+vendor/bin/go-bindata: vendor
+	go build -o $@ ./vendor/github.com/jteeuwen/go-bindata/go-bindata
+
+bootstrap:
+	which dep || go get github.com/golang/dep/cmd/dep
+
+vendor: Gopkg.lock
+	dep ensure
 
 .PHONY: bootstrap $(BOOTSTRAP)
 
@@ -71,16 +88,14 @@ GENERATED_FILES=\
 	data/zz_generated_bindata.go \
 	envelope/zz_generated_envelope.go \
 	primitive/zz_generated_primitive.go
+
 generated: $(GENERATED_FILES)
 
-data/zz_generated_bindata.go: data/ca_bundle.pem data/public_key.json data/aws_identity_cert.pem
-	go-bindata -pkg data -o $@ $^
+data/zz_generated_bindata.go: vendor/bin/go-bindata data/ca_bundle.pem data/public_key.json data/aws_identity_cert.pem
+	vendor/bin/go-bindata -pkg data -o $@ -ignore .go data
 
 primitive/zz_generated_primitive.go envelope/zz_generated_envelope.go: $(TOOLS)/primitive-boilerplate primitive/primitive.go
 	$^
-
-vendor: Gopkg.lock
-	dep ensure
 
 PRIMITIVE_BOILERPLATE=tools/primitive-boilerplate
 $(TOOLS)/primitive-boilerplate: $(wildcard $(PRIMITIVE_BOILERPLATE)/*.go) $(wildcard $(PRIMITIVE_BOILERPLATE)/*.tmpl)
@@ -107,11 +122,9 @@ clean:
 test: generated vendor
 	@CGO_ENABLED=0 go test -run=. -bench=. -short $$(go list ./... | grep -v ./vendor)
 
-METALINT=gometalinter --tests --disable-all --vendor --deadline=5m -s data \
-	 . --enable
-
-$(LINTERS):
-	gometalinter --tests --disable-all --vendor --deadline=5m -s data $$(go list ./... | grep -v ./vendor) --enable $@
+$(LINTERS): %: vendor/bin/gometalinter %-bin vendor
+	PATH=`pwd`/vendor/bin:$$PATH gometalinter --tests --disable-all --vendor \
+	     --deadline=5m -s data --skip generated --enable $@
 
 $(TOOLS)/cmdlint: $(wildcard tools/cmdlint/*.go) $(wildcard cmd/*.go)
 	$(GO_BUILD) -o $@ ./tools/cmdlint

@@ -4,8 +4,19 @@
 [[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
-  revision = "78439966b38d69bf38227fbf57ac8a6fee70f69a"
-  version = "v0.4.5"
+  revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
+  version = "v0.4.7"
+
+[[projects]]
+  name = "github.com/alecthomas/gometalinter"
+  packages = ["."]
+  revision = "bae2f1293d092fd8167939d5108d1b025eaef9de"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/alecthomas/units"
+  packages = ["."]
+  revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
 
 [[projects]]
   name = "github.com/asaskevich/govalidator"
@@ -22,8 +33,8 @@
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
   packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restxml","private/protocol/xml/xmlutil","service/s3","service/sts"]
-  revision = "0c22c3d22be15d3be3d22b8dedabbf5dd4304730"
-  version = "v1.12.34"
+  revision = "c13a879e75646fe750d21bcb05bf2cabea9791c1"
+  version = "v1.12.65"
 
 [[projects]]
   name = "github.com/blang/semver"
@@ -38,10 +49,15 @@
   version = "v1.3.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/chzyer/readline"
   packages = ["."]
   revision = "41eea22f717c616615e1e59aa06cf831f9901f35"
+
+[[projects]]
+  name = "github.com/client9/misspell"
+  packages = [".","cmd/misspell"]
+  revision = "59894abde931a32630d4e884a09c682ed20c5c7c"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
@@ -50,9 +66,10 @@
   revision = "06006a921c7d13e3fdf63c401cb0e4529a26e6e4"
 
 [[projects]]
+  branch = "master"
   name = "github.com/donovanhide/eventsource"
   packages = ["."]
-  revision = "fd1de70867126402be23c306e1ce32828455d85b"
+  revision = "3ed64d21fb0b6bd8b49bcfec08f3004daee8723d"
 
 [[projects]]
   branch = "master"
@@ -73,9 +90,10 @@
   revision = "1b76add642e42c6ffba7211ad7b3939ce654526e"
 
 [[projects]]
+  branch = "master"
   name = "github.com/fullsailor/pkcs7"
   packages = ["."]
-  revision = "eb67e7e564b9eae64dc7d95fae0784d6086a5fc4"
+  revision = "a009d8d7de53d9503c797cb8ec66fa3b21eed209"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -90,9 +108,16 @@
   version = "1.2"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/golang/lint"
+  packages = [".","golint"]
+  revision = "e14d9b0f1d332b1420c1ffa32562ad2dc84d645d"
+
+[[projects]]
+  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "2bba0603135d7d7f5cb73b2125beeda19c09f4ef"
+  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
   name = "github.com/google/go-github"
@@ -100,9 +125,10 @@
   revision = "466070b0580728e63bd1a415e0019639e55d7148"
 
 [[projects]]
+  branch = "master"
   name = "github.com/google/go-querystring"
   packages = ["query"]
-  revision = "9235644dd9e52eeae6fa48efd539fdc351a0af53"
+  revision = "53e6ce116135b80d037921a7fdd5138cf32d7a8a"
 
 [[projects]]
   branch = "master"
@@ -111,20 +137,33 @@
   revision = "6f45313302b9c56850fc17f99e40caebce98c716"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/gordonklaus/ineffassign"
+  packages = ["."]
+  revision = "7bae11eba15a3285c75e388f77eb6357a2d73ee2"
+
+[[projects]]
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   revision = "0b12d6b5"
 
 [[projects]]
+  name = "github.com/jteeuwen/go-bindata"
+  packages = ["."]
+  revision = "bbd0c6e271208dce66d8fda4bc536453cd27fc4a"
+  version = "v3.0.7"
+
+[[projects]]
   branch = "master"
   name = "github.com/juju/ansiterm"
   packages = [".","tabwriter"]
-  revision = "35c59b9e0fe275705a71bf5d58ee293f27efbbc4"
+  revision = "720a0952cc2ac777afc295d9861263e2a4cf96a1"
 
 [[projects]]
+  branch = "master"
   name = "github.com/kardianos/osext"
   packages = ["."]
-  revision = "c2c54e542fb797ad986b31721e1baedf214ca413"
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
   branch = "master"
@@ -175,21 +214,40 @@
   version = "v2.1"
 
 [[projects]]
+  name = "github.com/nicksnyder/go-i18n"
+  packages = ["i18n","i18n/bundle","i18n/language","i18n/translation"]
+  revision = "0dc1626d56435e9d605a29875701721c54bc9bbd"
+  version = "v1.10.0"
+
+[[projects]]
+  branch = "master"
   name = "github.com/nightlyone/lockfile"
   packages = ["."]
-  revision = "1d49c987357a327b5b03aa84cbddd582c328615d"
+  revision = "6a197d5ea61168f2ac821de2b7f011b250904900"
 
 [[projects]]
   name = "github.com/onsi/gomega"
   packages = [".","format","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
-  revision = "334b8f472b3af5d541c5642701c1e29e2126f486"
-  version = "v1.1.0"
+  revision = "003f63b7f4cff3fc95357005358af2de0f5fe152"
+  version = "v1.3.0"
+
+[[projects]]
+  name = "github.com/pelletier/go-toml"
+  packages = ["."]
+  revision = "16398bac157da96aa88f98a2df640c7f32af1da2"
+  version = "v1.0.1"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
   packages = ["."]
-  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
-  version = "v1.1.0"
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/tsenart/deadcode"
+  packages = ["."]
+  revision = "210d2dc333e90c7e3eedf4f2242507a8e83ed4ab"
 
 [[projects]]
   name = "github.com/urfave/cli"
@@ -198,30 +256,51 @@
   version = "v1.20.0"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = ["curve25519","ed25519","ed25519/internal/edwards25519","nacl/box","nacl/secretbox","pbkdf2","poly1305","salsa20","salsa20/salsa","scrypt","twofish"]
-  revision = "9ef620b9ca2f82b55030ffd4f41327fa9e77a92c"
+  revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/net"
-  packages = ["context"]
-  revision = "d1e1b351919c6738fdeb9893d5c998b161464f0c"
+  packages = ["context","context/ctxhttp","html","html/atom","html/charset"]
+  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [[projects]]
+  branch = "master"
   name = "golang.org/x/oauth2"
   packages = [".","internal"]
-  revision = "7fdf09982454086d5570c7db3e11f360194830ca"
+  revision = "b28fcf2b08a19742b43084fb40ab78ac6c3d8067"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "9167dbfd0f8e88b731dd88cbf73a270701a37bb4"
+  revision = "2c42eef0765b9837fbdab12011af7830f55f88f0"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/text"
+  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/utf8internal","language","runes","transform","unicode/cldr"]
+  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/tools"
+  packages = ["go/gcexportdata","go/gcimporter15","go/types/typeutil"]
+  revision = "af2bfe26b6891a197d033db63786cf8eb6bebd7b"
 
 [[projects]]
   name = "google.golang.org/appengine"
   packages = ["internal","internal/base","internal/datastore","internal/log","internal/remote_api","internal/urlfetch","urlfetch"]
-  revision = "170382fa85b10b94728989dfcf6cc818b335c952"
+  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "gopkg.in/alecthomas/kingpin.v3-unstable"
+  packages = ["."]
+  revision = "63abe20a23e29e80bbef8089bd3dee3ac25e5306"
 
 [[projects]]
   name = "gopkg.in/oleiade/reflections.v1"
@@ -230,13 +309,14 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b"
+  revision = "d670f9405373e636a5a2765eea47fac0c9bc91a4"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "56e4490583cea88da3618150e8f55e221840449485589f15a540229b9f3a31b9"
+  inputs-digest = "3f9c345203976dbfe03e5d1a336d3c3e9832a521ce94ddb58bd570eecaa99824"
   solver-name = "gps-cdcl"
   solver-version = 1
