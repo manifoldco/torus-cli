@@ -10,7 +10,6 @@ import (
 	"github.com/manifoldco/ansiwrap"
 
 	"github.com/manifoldco/torus-cli/prefs"
-	"github.com/manifoldco/torus-cli/promptui"
 )
 
 const (
@@ -41,7 +40,6 @@ const (
 	White
 )
 
-var bold = promptui.Styler(promptui.FGBold)
 var defUI *UI
 
 // Init initializes a default global UI, accessible via the package functions.
@@ -130,9 +128,9 @@ func (u *UI) Hint(str string, noPadding bool, label *string) {
 		fmt.Println()
 	}
 
-	hintLabel := bold("Protip: ")
+	hintLabel := u.Bold("Protip: ")
 	if label != nil {
-		hintLabel = bold(*label)
+		hintLabel = u.Bold(*label)
 	}
 	rc := ansiwrap.RuneCount(hintLabel)
 	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(hintLabel+str, u.Cols, u.Indent, u.Indent+rc))
