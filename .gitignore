@@ -16,6 +16,9 @@ vendor/*
 
 # Code generators
 tools/bin
+data/zz_generated_bindata.go
+envelope/zz_generated_envelope.go
+primitive/zz_generated_primitive.go
 
 # Editor and OS stuff
 .DS_Store
