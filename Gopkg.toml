@@ -21,6 +21,23 @@
 
 # ignored = ["golang.org/x/sys/unix"]
 
+required = [
+  "github.com/alecthomas/gometalinter",
+  "github.com/golang/lint/golint",
+  "github.com/client9/misspell/cmd/misspell",
+  "github.com/gordonklaus/ineffassign",
+  "github.com/tsenart/deadcode",
+  "github.com/jteeuwen/go-bindata"
+]
+
+[[constraint]]
+  name = "github.com/alecthomas/gometalinter"
+  revision = "bae2f1293d092fd8167939d5108d1b025eaef9de"
+
+[[override]]
+  name = "gopkg.in/alecthomas/kingpin.v3-unstable"
+  revision = "63abe20a23e29e80bbef8089bd3dee3ac25e5306"
+
 [[constraint]]
   name = "github.com/asaskevich/govalidator"
   version = "5.0.0"
@@ -42,8 +59,8 @@
   version = "1.3.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/chzyer/readline"
+  revision = "41eea22f717c616615e1e59aa06cf831f9901f35"
 
 [[constraint]]
   branch = "master"
@@ -86,10 +103,6 @@
   version = "2.0.0"
 
 [[constraint]]
-  branch = "v2"
-  name = "github.com/natefinch/npipe"
-
-[[constraint]]
   name = "github.com/onsi/gomega"
   version = "1.1.0"
 
@@ -105,9 +118,10 @@
   name = "gopkg.in/oleiade/reflections.v1"
   version = "1.0.0"
 
-[[constraint]] 
-  name = "github.com/Microsoft/go-winio" 
-  version = "^0.4.5" 
+[[constraint]]
+  name = "github.com/Microsoft/go-winio"
+  version = "^0.4.5"
 
-[[constraint]] 
-  name = "golang.org/x/sys" 
+[[constraint]]
+  name = "github.com/google/go-github"
+  revision = "466070b0580728e63bd1a415e0019639e55d7148"
