@@ -7,6 +7,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/prompts"
 )
 
 func init() {
@@ -47,9 +48,12 @@ func unsetCmd(ctx *cli.Context) error {
 
 	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", pe.String(), name)
 
-	abortErr := ConfirmDialogue(ctx, nil, &preamble, "", true)
-	if abortErr != nil {
-		return abortErr
+	success, err := prompts.Confirm(nil, &preamble, true, true)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
+	}
+	if !success {
+		return errs.ErrAbort
 	}
 
 	makers := valueMakers{}

@@ -21,10 +21,12 @@ import (
 
 const downloadURL = "https://www.torus.sh/install"
 
+type actionFunc func(ctx *cli.Context) error
+
 // chain allows easy sequential calling of BeforeFuncs and AfterFuncs.
 // chain will exit on the first error seen.
-func chain(funcs ...func(*cli.Context) error) func(*cli.Context) error {
-	return func(ctx *cli.Context) error {
+func chain(funcs ...actionFunc) func(*cli.Context) error {
+	return wrap(func(ctx *cli.Context) error {
 
 		for _, f := range funcs {
 			err := f(ctx)
@@ -34,6 +36,14 @@ func chain(funcs ...func(*cli.Context) error) func(*cli.Context) error {
 		}
 
 		return nil
+	})
+}
+
+// wrap wraps the given actionfunc and converts any of the received errors into
+// cli.ExitErrors ensuring that we never have a silent failure.
+func wrap(cmd actionFunc) actionFunc {
+	return func(ctx *cli.Context) error {
+		return errs.ToError(cmd(ctx))
 	}
 }
 

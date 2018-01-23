@@ -18,6 +18,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 )
 
@@ -81,11 +82,10 @@ func orgsCreate(ctx *cli.Context) error {
 		name = args[0]
 	}
 
-	label := "Org name"
 	autoAccept := name != ""
-	name, err = NamePrompt(&label, name, autoAccept)
+	name, err = prompts.OrgName(name, autoAccept)
 	if err != nil {
-		return handleSelectError(err, orgCreateFailed)
+		return err
 	}
 
 	c := context.Background()
@@ -246,36 +246,9 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	var org *envelope.Org
-	var orgs []envelope.Org
-
-	// Retrieve the org name supplied via the --org flag.
-	// This flag is optional. If none was supplied, then
-	// orgFlagArgument will be set to "". In this case,
-	// prompt the user to select an org.
-	orgName := ctx.String("org")
-
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err = client.Orgs.List(c)
-		if err != nil {
-			return errs.NewExitError("Failed to retrieve orgs list.")
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return errs.NewExitError("Failed to select org.")
-		}
-
-		org = &orgs[idx]
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		org, err = client.Orgs.GetByName(c, orgName)
-		if org == nil {
-			return errs.NewExitError("org" + orgName + "not found.")
-		}
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
+	if err != nil {
+		return err
 	}
 
 	// Retrieve teams, memberships and the current session concurrently
@@ -426,45 +399,6 @@ func getOrg(ctx context.Context, client *api.Client, name string) (*envelope.Org
 	}
 	if org == nil {
 		return nil, errs.NewExitError("Org not found.")
-	}
-
-	return org, nil
-}
-
-// This functions is intended to be used when a command takes an optional org flag.
-// In the situation where no org is provided in the flags, getOrgWithPrompt prompts the user
-// to select from a list of existing orgs, using SelectExistingOrgPrompt.
-// In the situation where an org is provided in the flags, the function returns the associated
-// org.Envelope structure.
-func getOrgWithPrompt(c context.Context, client *api.Client, orgName string) (*envelope.Org, error) {
-
-	var org *envelope.Org
-
-	if orgName == "" {
-		// Retrieve list of available orgs
-		orgs, err := client.Orgs.List(c)
-		if err != nil {
-			return nil, err
-		}
-
-		// Prompt user to select from list of existing orgs
-		idx, _, err := SelectExistingOrgPrompt(orgs)
-		if err != nil {
-			return nil, err
-		}
-
-		org = &orgs[idx]
-
-	} else {
-		// If org flag was used, identify the org supplied.
-		var err error
-		org, err = client.Orgs.GetByName(c, orgName)
-		if err != nil {
-			return nil, err
-		}
-		if org == nil {
-			return nil, errs.NewExitError("org " + orgName + " not found.")
-		}
 	}
 
 	return org, nil

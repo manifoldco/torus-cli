@@ -62,39 +62,23 @@ func linkCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Ask the user which org they want to use
-	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	org, oName, newOrg, err := selectOrg(c, client, ctx.String("org"), true)
 	if err != nil {
-		return handleSelectError(err, "Org selection failed.")
-	}
-	if org == nil && !newOrg {
-		fmt.Println("")
-		return errs.NewExitError("Org not found.")
-	}
-	if newOrg && oName == "" {
-		fmt.Println("")
-		return errs.NewExitError("Invalid org name.")
+		return err
 	}
 
 	var orgID *identity.ID
-	if org != nil {
+	if !newOrg {
 		orgID = org.ID
 	}
 
-	// Ask the user which project they want to use
-	project, pName, newProject, err := SelectCreateProject(c, client, orgID, ctx.String("project"))
+	project, pName, newProject, err := selectProject(c, client, org, ctx.String("project"), true)
 	if err != nil {
-		return handleSelectError(err, "Project selection failed.")
-	}
-	if project == nil && !newProject {
-		return errs.NewExitError("Project not found.")
-	}
-	if newProject && pName == "" {
-		return errs.NewExitError("Invalid project name.")
+		return err
 	}
 
 	// Create the org now if needed
-	if org == nil && newOrg {
+	if newOrg {
 		org, err = createOrgByName(c, ctx, client, oName)
 		if err != nil {
 			fmt.Println("")
@@ -104,7 +88,7 @@ func linkCmd(ctx *cli.Context) error {
 	}
 
 	// Create the project now if needed
-	if project == nil && newProject {
+	if newProject {
 		project, err = createProjectByName(c, client, orgID, pName)
 		if err != nil {
 			fmt.Println("")
@@ -132,9 +116,10 @@ func linkCmd(ctx *cli.Context) error {
 
 	// Display the output
 	fmt.Println("\nThis directory and its subdirectories have been linked to:")
+	fmt.Println("")
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "Org:\t%s\n", oName)
-	fmt.Fprintf(w, "Project:\t%s\n", pName)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Org"), oName)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Project"), pName)
 	w.Flush()
 	fmt.Printf("\nUse '%s status' to view your full working context.\n", ctx.App.Name)
 

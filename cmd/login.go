@@ -9,6 +9,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/prompts"
 )
 
 func init() {
@@ -22,12 +23,12 @@ func init() {
 }
 
 func login(ctx *cli.Context) error {
-	email, err := EmailPrompt("")
+	email, err := prompts.Email("", false)
 	if err != nil {
 		return err
 	}
 
-	password, err := PasswordPrompt(false, nil)
+	password, err := prompts.Password(false, nil)
 	if err != nil {
 		return err
 	}

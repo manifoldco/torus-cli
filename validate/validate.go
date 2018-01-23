@@ -5,7 +5,7 @@ import (
 
 	"github.com/asaskevich/govalidator"
 
-	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/promptui"
 )
 
 const slugPattern = "^[a-z][a-z0-9\\-\\_]{0,63}$"
@@ -13,8 +13,8 @@ const namePattern = "^[a-zA-Z\\s,\\.'\\-pL]{3,64}$"
 const inviteCodePattern = "(?i)^[0-9a-ht-zjkmnpqr]{10}$"
 const verifyCodePattern = "(?i)^[0-9a-ht-zjkmnpqr]{9}$"
 
-const slugErrorPattern = "%s must be between 1 and 64 characters in length and only contain letters in the alphabet, numbers, hyphens, and underscores"
-const nameErrorPattern = "%s must be between 3 and 64 characters in length and only contain letters, commas, periods, apostraphes, and hyphens"
+const slugErrorPattern = "%s must be between 1 and 64 characters in length and only contain alphabetical letters, numbers, hyphens, and underscores."
+const nameErrorPattern = "%s must be between 3 and 64 characters in length and only contain letters, commas, periods, apostraphes, and hyphens."
 
 // ProjectName validates whether the input meets the project name requirements
 var ProjectName Func
@@ -24,6 +24,9 @@ var OrgName Func
 
 // TeamName validates whether the input meets the team name requirements
 var TeamName Func
+
+// RoleName validates whether the input meets the role name requirements
+var RoleName Func
 
 // PolicyName validates whether the input meets the policy name requirements
 var PolicyName Func
@@ -35,6 +38,7 @@ func init() {
 	ProjectName = SlugValidator("Project names")
 	OrgName = SlugValidator("Org names")
 	TeamName = SlugValidator("Team names")
+	RoleName = SlugValidator("Machine role names")
 	Username = SlugValidator("Usernames")
 	PolicyName = SlugValidator("Policy names")
 }
@@ -56,6 +60,40 @@ func NewValidationError(msg string) error {
 
 // Func represents a validation function
 type Func promptui.ValidateFunc
+
+// Confirmer returns a confirmation validation function which validates the
+// input depending on whether or not this prompt is default Yes or No.
+func Confirmer(defaultYes bool) Func {
+	return func(input string) error {
+		if defaultYes {
+			if input == "" || input == "y" || input == "N" {
+				return nil
+			}
+
+			return NewValidationError("You must specify either 'y' for yes or 'N' for no.")
+		}
+
+		if input == "" || input == "Y" || input == "n" {
+			return nil
+		}
+
+		return NewValidationError("You must specify either 'Y' for yes or 'n' for no.")
+	}
+}
+
+// OneOf returns a validation function which validates whether or not the input
+// matches one of the given options.
+func OneOf(choices []string) Func {
+	return func(input string) error {
+		for _, v := range choices {
+			if input == v {
+				return nil
+			}
+		}
+
+		return NewValidationError(fmt.Sprintf("%s is not a valid option.", input))
+	}
+}
 
 // SlugValidator returns a validation function
 func SlugValidator(fieldName string) Func {

@@ -101,18 +101,8 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 		return nil, "", err
 	}
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
-	if err != nil {
-		return nil, "", err
-	}
-
-	project, err := getProjectWithPrompt(c, client, org, ctx.String("project"))
-	if err != nil {
-		return nil, "", err
-	}
-
 	parts := []string{
-		"", org.Body.Name, project.Body.Name, ctx.String("environment"),
+		"", ctx.String("org"), ctx.String("project"), ctx.String("environment"),
 		ctx.String("service"), identity, ctx.String("instance"),
 	}
 

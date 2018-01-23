@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/manifoldco/promptui"
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
@@ -12,7 +13,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/primitive"
-	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 )
 
@@ -311,13 +312,12 @@ func worklogResolve(ctx *cli.Context) error {
 			if item.Type() == apitypes.InviteApproveWorklogType && grouped {
 				msg := fmt.Sprintf("%s%s Approve invite for %s", promptui.ResetCode,
 					faint(item.ID.String()), subjectFor(&item))
-				err = AskPerform(msg, "  ")
-				switch err {
-				case nil:
-				case promptui.ErrAbort:
-					continue
-				default:
+				success, err := prompts.Confirm(&msg, nil, false, true)
+				if err != nil {
 					return err
+				}
+				if !success {
+					continue // skip it!
 				}
 			} else if item.Type() == apitypes.SecretRotateWorklogType {
 				displayResult(&item, nil, grouped)

@@ -60,12 +60,12 @@ func listCmd(ctx *cli.Context) error {
 
 	tree := make(credentialTree)
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
 
-	project, err := getProjectWithPrompt(c, client, org, ctx.String("project"))
+	project, _, _, err := selectProject(c, client, org, ctx.String("project"), false)
 	if err != nil {
 		return err
 	}
@@ -211,15 +211,6 @@ func listCmd(ctx *cli.Context) error {
 				tree[e][s].Add(cred)
 			}
 		}
-	}
-
-	// Print credentialTree
-	if verbose {
-		fmt.Println("")
-		projW := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
-		fmt.Fprintf(projW, ui.BoldString("Org")+":\t"+org.Body.Name+"\t\n")
-		fmt.Fprintf(projW, ui.BoldString("Project")+":\t"+project.Body.Name+"\t\n")
-		projW.Flush()
 	}
 
 	fmt.Println("")
