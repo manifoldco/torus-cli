@@ -87,7 +87,6 @@ func createEnv(ctx *cli.Context) error {
 	fmt.Println("")
 	err = client.Environments.Create(c, org.ID, project.ID, environmentName)
 	if err != nil {
-		fmt.Printf("env error: %s\n", err)
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Environment already exists.")
 		}

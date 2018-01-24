@@ -16,6 +16,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/prefs"
+	"github.com/manifoldco/torus-cli/ui"
 )
 
 func init() {
@@ -124,7 +125,7 @@ func linkCmd(ctx *cli.Context) error {
 	fmt.Printf("\nUse '%s status' to view your full working context.\n", ctx.App.Name)
 
 	if !preferences.Core.Context {
-		fmt.Printf("Warning: context is disabled. Use '%s prefs' to enable it.\n", ctx.App.Name)
+		ui.Warn(fmt.Sprintf("Context is disaled. Use '%s prefs' to enable it.", ctx.App.Name))
 	}
 
 	hints.Display(hints.Context, hints.Set, hints.Run, hints.View)
