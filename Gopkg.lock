@@ -49,6 +49,12 @@
   version = "v1.3.1"
 
 [[projects]]
+  name = "github.com/briandowns/spinner"
+  packages = ["."]
+  revision = "48dbb65d7bd5c74ab50d53d04c949f20e3d14944"
+  version = "1.0"
+
+[[projects]]
   name = "github.com/chzyer/readline"
   packages = ["."]
   revision = "41eea22f717c616615e1e59aa06cf831f9901f35"
@@ -88,6 +94,12 @@
   name = "github.com/facebookgo/stats"
   packages = ["."]
   revision = "1b76add642e42c6ffba7211ad7b3939ce654526e"
+
+[[projects]]
+  name = "github.com/fatih/color"
+  packages = ["."]
+  revision = "570b54cabe6b8eb0bc2dfce68d964677d63b5260"
+  version = "v1.5.0"
 
 [[projects]]
   branch = "master"
@@ -317,6 +329,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3f9c345203976dbfe03e5d1a336d3c3e9832a521ce94ddb58bd570eecaa99824"
+  inputs-digest = "a7676fcc388b53a60a57470c500c0c678bfbf8eddb93d072b9e908ab21dfcc98"
   solver-name = "gps-cdcl"
   solver-version = 1

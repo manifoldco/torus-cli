@@ -1,24 +1,25 @@
 package ui
 
 import (
-  "time"
+	"time"
 
-  "github.com/briandowns/spinner"
+	"github.com/briandowns/spinner"
 )
 
+// Spinner struct contains the spinner struct and display text
 type Spinner struct{
-  spinner *spinner.Spinner
-  text string
+	spinner *spinner.Spinner
+	text string
 }
 
 // NewSpinner creates a new Spinner struct
 func NewSpinner(text string) *Spinner {
 	s := spinner.New(spinner.CharSets[9], 100 * time.Millisecond)
-  s.Suffix = " " + text
-  return &Spinner {
-    s,
-    text,
-  }
+	s.Suffix = " " + text
+	return &Spinner {
+		s,
+		text,
+	}
 }
 
 // Start displays the Spinner and starts movement

@@ -12,6 +12,8 @@ _Date_
 - More precise errors are returned to users when invalid usernames, org,
   project, team, or policy names are submitted to a ui prompt.
 - The experimental and hidden `policies test` command has been removed.
+- Added spinners to represent progress. This means fewer lasting print-outs
+  for certain commands.
 
 ## v0.29.0
 

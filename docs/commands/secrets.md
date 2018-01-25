@@ -35,12 +35,6 @@ This is how all secrets are stored in Torus.
 # Setting the port for the production auth service inside myorg's api project.
 $ torus set -o myorg -p api -e production -s auth PORT 3000
 
-Credentials retrieved
-Keypairs retrieved
-Encrypting key retrieved
-Credential encrypted
-Completed Operation
-
 Credential PORT has been set at /myorg/api/production/auth/*/*/PORT
 ```
 
@@ -100,6 +94,16 @@ Credential PORT has been set at /myorg/api/[production|staging]/auth/*/*/PORT
 
 `torus unset <name|path>` unsets the value for the specified name (or [path](../concepts/path.md)).
 
+**Example**
+
+```bash
+$ torus unset port
+You are about to unset "/myorg/myproject/dev-matt/default/*/*/port". This cannot be undone.
+✔ Do you wish to continue? [y/N] y
+
+Credential port has been unset at /myorg/myproject/dev-matt/default/*/*/port.
+```
+
 ## import
 ###### Added [v0.25.0](https://github.com/manifoldco/torus-cli/blob/v0.25.0/CHANGELOG.md)
 
@@ -109,21 +113,13 @@ Credential PORT has been set at /myorg/api/[production|staging]/auth/*/*/PORT
 
 ```bash
 $ cat prod.env
-PORT=4000
-DOMAIN=mydomain.co
-MYSQL_URL=mysql://user:pass@host.com:4321/mydb
+DOMAIN="mydomain.co"
+PORT="4000"
 
-$ torus import -e production test.env
+$ torus import -e production prod.env
 
-Credentials retrieved
-Keypairs retrieved
-Encrypting key retrieved
-Credential encrypted
-Credential encrypted
-Completed Operation
-
-Credential port has been set at /myorg/myproject/production/default/*/*/PORT
-Credential mysql_url has been set at /myorg/myproject/production/default/*/*/MYSQL_URL
+Credential domain has been set at /myorg/myproject/production/default/*/*/domain
+Credential port has been set at /myorg/myproject/production/default/*/*/port
 ```
 
 ## export

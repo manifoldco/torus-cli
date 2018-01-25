@@ -79,10 +79,13 @@ type UI struct {
 	EnableColors bool
 }
 
+// NewSpinner creates a new ui.Spinner struct (spinner.go)
 func (u *UI) NewSpinner(text string) *Spinner {
 	return NewSpinner(text)
 }
 
+// StartSpinner checks to ensure progress is enabled and the output is a
+// terminal. After that, it starts the ui.Spinner spinning.
 func (u *UI) StartSpinner(s *Spinner) {
   if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
     return
@@ -91,6 +94,8 @@ func (u *UI) StartSpinner(s *Spinner) {
 	s.Start()
 }
 
+// StartSpinner checks to ensure progress is enabled and the output is a
+// terminal. After that, it stops the ui.Spinner spinning.
 func (u *UI) StopSpinner(s *Spinner) {
 	if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
     return
