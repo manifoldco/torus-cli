@@ -664,8 +664,11 @@ func createMachine(ctx *cli.Context) error {
 func createMachineByName(c context.Context, client *api.Client,
 	orgID, teamID *identity.ID, name string) (*apitypes.MachineSegment, *base64.Value, error) {
 
+	s, p := spinner("Attempting to create machine.")
+	s.Start()
 	machine, tokenSecret, err := client.Machines.Create(
-		c, orgID, teamID, name, progress)
+		c, orgID, teamID, name, p)
+	s.Stop()
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return nil, nil, errs.NewExitError("Machine already exists")

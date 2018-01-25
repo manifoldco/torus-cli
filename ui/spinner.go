@@ -7,16 +7,16 @@ import (
 )
 
 // Spinner struct contains the spinner struct and display text
-type Spinner struct{
+type Spinner struct {
 	spinner *spinner.Spinner
-	text string
+	text    string
 }
 
 // NewSpinner creates a new Spinner struct
 func NewSpinner(text string) *Spinner {
-	s := spinner.New(spinner.CharSets[9], 100 * time.Millisecond)
+	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Suffix = " " + text
-	return &Spinner {
+	return &Spinner{
 		s,
 		text,
 	}

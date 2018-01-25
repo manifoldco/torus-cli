@@ -87,9 +87,9 @@ func (u *UI) NewSpinner(text string) *Spinner {
 // StartSpinner checks to ensure progress is enabled and the output is a
 // terminal. After that, it starts the ui.Spinner spinning.
 func (u *UI) StartSpinner(s *Spinner) {
-  if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
-    return
-  }
+	if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
+		return
+	}
 
 	s.Start()
 }
@@ -98,10 +98,10 @@ func (u *UI) StartSpinner(s *Spinner) {
 // terminal. After that, it stops the ui.Spinner spinning.
 func (u *UI) StopSpinner(s *Spinner) {
 	if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
-    return
-  }
+		return
+	}
 
-  s.Stop()
+	s.Stop()
 }
 
 // Progress calls Progress on the default UI
