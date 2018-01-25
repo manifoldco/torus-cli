@@ -8,10 +8,11 @@ import (
 	"strings"
 
 	"github.com/google/shlex"
+	"github.com/urfave/cli"
+
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
-	"github.com/urfave/cli"
 )
 
 type secretPair struct {
@@ -57,7 +58,10 @@ func importCmd(ctx *cli.Context) error {
 		}(secret.value)
 	}
 
-	creds, err := setCredentials(ctx, path, makers)
+	s, p := spinner("Attempting to set credentials")
+	s.Start()
+	creds, err := setCredentials(ctx, path, makers, p)
+	s.Stop()
 	if err != nil {
 		return errs.NewErrorExitError("Could not set credentials.", err)
 	}

@@ -61,9 +61,10 @@ A typical application includes at least one service. In a simple app, a service 
 
 ```sh
 $ torus services list
-  knotty-buoy (1)
-  --------------
+  Services
   default
+  
+  Project /skywalker/knotty-buoy has (1) service
 ```
 
 We've used the `link` command to create the `knotty-buoy` project in our personal organization and
@@ -83,18 +84,13 @@ Use `torus set` to encrypt and store two mission-critical secrets.
 
 ```sh
 $ torus set HELLO 👋
-Credentials retrieved
-Keypairs retrieved
-Encrypting key retrieved
-Credential encrypted
-Completed Operation
 
 Credential hello has been set at /skywalker/knotty-buoy/dev-skywalker/default/*/1/hello
 ```
 
 ```
 $ torus set WORLD 🌎
-...
+
 Credential world has been set at /skywalker/knotty-buoy/dev-skywalker/default/*/1/world
 ```
 
@@ -176,9 +172,9 @@ $ torus invites list
 
 Listing all pending and accepted invitations for the skywalker org
 
-EMAIL              USERNAME    STATE           INVITED BY
+Invited Email		Name    Username	State           Invited By 	Creation Date
 
-ren@manifold.co    ren         accepted        creager
+ren@manifold.co		Ren		ren         accepted        creager		2018-01-07T13:13:35-04:00
 ```
 
 Before their keyring membership can be created, we must approve their invitation—we are giving them
@@ -186,13 +182,6 @@ a 🔑 to our secrets after all.
 
 ```sh
 $ torus invites approve ren@manifold.co
-Invite retrieved
-Keypairs retrieved
-Claims retrieved
-Keyrings retrieved
-Keyring memberships created
-Invite approved
-Completed
 
 You have approved the invitation for: ren@manifold.co.
 
@@ -212,7 +201,7 @@ members of your organization has access to.
 
 ```sh
 $ torus set PORT 3001 -e dev-*
-...
+
 Credential port has been set at /skywalker/knotty-buoy/dev-*/default/*/1/port
 ```
 
@@ -243,9 +232,11 @@ List the environments in our organization by project.
 
 ```sh
 $ torus envs list
-knotty-buoy (1)
----- ----------
+
+Environments
 dev-skywalker
+
+Project /skywalker/knotty-buoy has (1) environment
 ```
 
 Create a new staging environment using the `envs create` command.
@@ -273,20 +264,10 @@ $ torus machines create api
 ✔ Select Machine Team: api
 ✔ Enter machine name: api-hw1xd09x
 
-
-Creating machine "api-hw1xd09x"
-Generating machine token
-Generating token keypairs
-Uploading token keypairs
-Creating keyring memberships for token
-Uploading keyring memberships
-Machine created
-
-
 You will only be shown the secret once, please keep it safe.
 
 
-Machine ID:          		04btf1c[redacted]6hnbpt0
+Machine ID:          	04btf1c[redacted]6hnbpt0
 Machine Token ID:     	04cf2pr5h[redacted]uy1yj
 Machine Token Secret: 	tdSc[redacted]J4St
 ```

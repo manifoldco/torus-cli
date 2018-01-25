@@ -188,21 +188,27 @@ func generateKeypairs(ctx *cli.Context) error {
 
 	var rErr error
 
+	s, p := spinner("Attempting to generate keypairs")
+	s.Start()
 	for orgID, name := range regenOrgs {
-		fmt.Println("Generating signing and encryption keypairs for org: " + name)
-		err := client.KeyPairs.Create(c, orgID, progress)
+		s.Update("Generating signing and encryption keypairs for org: " + name)
+		err := client.KeyPairs.Create(c, orgID, p)
 		if err != nil && rErr == nil {
+			s.Stop()
 			rErr = err
 			break
 		}
 	}
+	s.Stop()
 
 	if rErr != nil {
 		return errs.NewExitError("Error while regenerating keypairs.")
 	}
 
 	if len(regenOrgs) > 0 {
-		fmt.Println("Keypair generation successful.")
+		for _, name := range regenOrgs {
+			fmt.Printf("Successfully generated keypairs for %s org\n", name)
+		}
 	} else {
 		fmt.Println("No keypairs missing.")
 	}
@@ -228,7 +234,10 @@ func generateKeypairsForOrg(c context.Context, ctx *cli.Context, client *api.Cli
 		orgID = org.ID
 	}
 
-	err = client.KeyPairs.Create(c, orgID, progress)
+	s, p := spinner("Attempting to generate keypairs")
+	s.Start()
+	err = client.KeyPairs.Create(c, orgID, p)
+	s.Stop()
 	if err != nil {
 		return outputErr
 	}
@@ -276,7 +285,10 @@ func revokeKeypairs(ctx *cli.Context) error {
 		return nil
 	}
 
-	err = client.KeyPairs.Revoke(c, org.ID, progress)
+	s, p := spinner("Attempting to revoke keypairs")
+	s.Start()
+	err = client.KeyPairs.Revoke(c, org.ID, p)
+	s.Stop()
 	if err != nil {
 		return errs.NewErrorExitError("Error while revoking keypairs.", err)
 	}

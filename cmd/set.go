@@ -68,11 +68,14 @@ func setCmd(ctx *cli.Context) error {
 		return apitypes.NewStringCredentialValue(value)
 	}
 
-	_, err = setCredentials(ctx, path, makers)
+	s, p := spinner(fmt.Sprintf("Attempting to set credential %s", name))
+	s.Start()
+	_, err = setCredentials(ctx, path, makers, p)
+	s.Stop()
 	if err != nil {
 		return errs.NewErrorExitError("Could not set credential.", err)
 	}
-
+	
 	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, path, name)
 
 	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import, hints.Export)
@@ -158,7 +161,7 @@ func determinePathFromFlags(ctx *cli.Context) (*pathexp.PathExp, error) {
 type valueMaker func() *apitypes.CredentialValue
 type valueMakers map[string]valueMaker
 
-func setCredentials(ctx *cli.Context, pe *pathexp.PathExp, makers valueMakers) ([]apitypes.CredentialEnvelope, error) {
+func setCredentials(ctx *cli.Context, pe *pathexp.PathExp, makers valueMakers, p api.ProgressFunc) ([]apitypes.CredentialEnvelope, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, err
@@ -207,5 +210,5 @@ func setCredentials(ctx *cli.Context, pe *pathexp.PathExp, makers valueMakers) (
 		})
 	}
 
-	return client.Credentials.Create(c, creds, progress)
+	return client.Credentials.Create(c, creds, p)
 }

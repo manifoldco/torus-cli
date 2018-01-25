@@ -125,7 +125,7 @@ func listCmd(ctx *cli.Context) error {
 
 	go func() {
 		// Get credentials
-		credentials, cErr = client.Credentials.Search(c, filterPathExp.String())
+		credentials, cErr = client.Credentials.Search(c, filterPathExp.String(), nil)
 		getEnvsServicesCreds.Done()
 	}()
 
@@ -217,8 +217,8 @@ func listCmd(ctx *cli.Context) error {
 	if(verbose){
 		fmt.Println("")
 		projW := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
-		fmt.Fprintf(projW, "Org:\t" + ui.Bold(org.Body.Name) + "\t\n")
-		fmt.Fprintf(projW, "Project:\t" + ui.Bold(project.Body.Name) + "\t\n")
+		fmt.Fprintf(projW, ui.Bold("Org") + ":\t" + org.Body.Name + "\t\n")
+		fmt.Fprintf(projW, ui.Bold("Project") + ":\t" + project.Body.Name + "\t\n")
 		projW.Flush()
 	}
 
@@ -247,7 +247,7 @@ func listCmd(ctx *cli.Context) error {
 	}
 	w.Flush()
 
-	fmt.Printf("\n(%s) secrets found\n.", ui.Faint(strconv.Itoa(credCount)))
+	fmt.Printf("\n(%s) secrets found\n", ui.Faint(strconv.Itoa(credCount)))
 
 	return nil
 }
