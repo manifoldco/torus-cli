@@ -53,7 +53,7 @@ func invitesApprove(ctx *cli.Context) error {
 		return errs.NewExitError("Invite not found.")
 	}
 
-	s, p := spinner(fmt.Sprintf("Reviewing invite for %s", email))
+	s, p := spinner(fmt.Sprintf("Attempting to approve invite for %s", email))
 	s.Start()
 	err = client.OrgInvites.Approve(context.Background(), *targetInvite, p)
 	s.Stop()

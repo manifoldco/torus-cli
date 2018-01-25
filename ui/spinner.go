@@ -11,10 +11,9 @@ type Spinner struct{
   text string
 }
 
-func NewSpinner(text string) *Spinner { return defUI.NewSpinner(text) }
-
-func (u *UI) NewSpinner(text string) *Spinner {
-  s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+// NewSpinner creates a new Spinner struct
+func NewSpinner(text string) *Spinner {
+	s := spinner.New(spinner.CharSets[9], 100 * time.Millisecond)
   s.Suffix = " " + text
   return &Spinner {
     s,
@@ -22,26 +21,17 @@ func (u *UI) NewSpinner(text string) *Spinner {
   }
 }
 
-func (s *Spinner) Start() { defUI.StartSpinner(s) }
-
-func (u *UI) StartSpinner(s *Spinner) {
-  if !u.EnableProgress {
-    return
-  }
-
-  s.spinner.Start()
+// Start displays the Spinner and starts movement
+func (s *Spinner) Start() {
+	s.spinner.Start()
 }
 
-func (s *Spinner) Stop() { defUI.StopSpinner(s) }
-
-func (u *UI) StopSpinner(s *Spinner) {
-  if !u.EnableProgress {
-    return
-  }
-
-  s.spinner.Stop()
+// Stop halts the spiner movement and removes it from display
+func (s *Spinner) Stop() {
+	s.spinner.Stop()
 }
 
+// Update changes the Spinner's suffix to 'text'
 func (s *Spinner) Update(text string) {
-  s.spinner.Suffix = " " + text
+	s.spinner.Suffix = " " + text
 }

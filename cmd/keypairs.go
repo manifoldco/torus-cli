@@ -285,7 +285,7 @@ func revokeKeypairs(ctx *cli.Context) error {
 		return nil
 	}
 
-	s, p := spinner("Reviewing keypairs")
+	s, p := spinner("Attempting to revoke keypairs")
 	s.Start()
 	err = client.KeyPairs.Revoke(c, org.ID, p)
 	s.Stop()

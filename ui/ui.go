@@ -79,6 +79,26 @@ type UI struct {
 	EnableColors bool
 }
 
+func (u *UI) NewSpinner(text string) *Spinner {
+	return NewSpinner(text)
+}
+
+func (u *UI) StartSpinner(s *Spinner) {
+  if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
+    return
+  }
+
+	s.Start()
+}
+
+func (u *UI) StopSpinner(s *Spinner) {
+	if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
+    return
+  }
+
+  s.Stop()
+}
+
 // Progress calls Progress on the default UI
 func Progress(str string) { defUI.Progress(str) }
 

@@ -58,7 +58,7 @@ func importCmd(ctx *cli.Context) error {
 		}(secret.value)
 	}
 
-	s, p := spinner("Attempting to set credentials...")
+	s, p := spinner("Attempting to set credentials")
 	s.Start()
 	creds, err := setCredentials(ctx, path, makers, p)
 	s.Stop()

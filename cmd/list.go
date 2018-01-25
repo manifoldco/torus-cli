@@ -247,7 +247,7 @@ func listCmd(ctx *cli.Context) error {
 	}
 	w.Flush()
 
-	fmt.Printf("\n(%s) secrets found\n.", ui.Faint(strconv.Itoa(credCount)))
+	fmt.Printf("\n(%s) secrets found\n", ui.Faint(strconv.Itoa(credCount)))
 
 	return nil
 }
