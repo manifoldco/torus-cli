@@ -77,9 +77,11 @@ func viewCmd(ctx *cli.Context) error {
 		}
 	}
 
+	tw.Flush()
+
 	hints.Display(hints.Link, hints.Run, hints.Export)
 
-	return tw.Flush()
+	return nil
 }
 
 func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error) {
