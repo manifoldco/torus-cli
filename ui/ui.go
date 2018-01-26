@@ -17,26 +17,44 @@ const (
 	rightPad    = 2
 )
 
-type UIColor int
+// Color represents 1 of 16 ANSI color sequences
+type Color int
 
 const (
-	_ UIColor = iota
+	_ Color = iota
+	// Default sets the temrinal text to its default color
 	Default
+	// Black text
 	Black
+	// Red text
 	Red
+	//Green text
 	Green
+	// Yellow text
 	Yellow
+	// Blue text
 	Blue
+	// Magenta text
 	Magenta
+	// Cyan text
 	Cyan
+	// Gray text
 	Gray
+	// DarkGray text
 	DarkGray
+	// BrightRed text
 	BrightRed
+	// BrightGreen text
 	BrightGreen
+	// BrightYellow text
 	BrightYellow
+	// BrightBlue text
 	BrightBlue
+	// BrightMagenta text
 	BrightMagenta
+	// BrightCyan text
 	BrightCyan
+	// White text
 	White
 )
 
@@ -94,7 +112,7 @@ func (u *UI) StartSpinner(s *Spinner) {
 	s.Start()
 }
 
-// StartSpinner checks to ensure progress is enabled and the output is a
+// StopSpinner checks to ensure progress is enabled and the output is a
 // terminal. After that, it stops the ui.Spinner spinning.
 func (u *UI) StopSpinner(s *Spinner) {
 	if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
@@ -153,9 +171,9 @@ func (u *UI) Hint(str string, noPadding bool, label *string) {
 		fmt.Println()
 	}
 
-	hintLabel := u.Bold("Protip: ")
+	hintLabel := u.BoldString("Protip: ")
 	if label != nil {
-		hintLabel = u.Bold(*label)
+		hintLabel = u.BoldString(*label)
 	}
 	rc := ansiwrap.RuneCount(hintLabel)
 	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(hintLabel+str, u.Cols, u.Indent, u.Indent+rc))

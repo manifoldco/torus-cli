@@ -63,12 +63,12 @@ func listServicesCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
 
-	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	project, err := getProjectWithPrompt(c, client, org, ctx.String("project"))
 	if err != nil {
 		return err
 	}
@@ -81,11 +81,11 @@ func listServicesCmd(ctx *cli.Context) error {
 
 	// Build output of projects/envs
 	fmt.Println("")
-	fmt.Printf("%s\n", ui.Bold("Services"))
+	fmt.Printf("%s\n", ui.BoldString("Services"))
 	for _, s := range services {
 		fmt.Printf("%s\n", s.Body.Name)
 	}
-	
+
 	fmt.Printf("\nProject /%s/%s has (%d) service%s\n", org.Body.Name, project.Body.Name, len(services), plural(len(services)))
 
 	return nil
@@ -205,10 +205,9 @@ func createServiceCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func plural(n int) (string) {
+func plural(n int) string {
 	if n == 1 {
 		return ""
-	} else {
-		return "s"
 	}
+	return "s"
 }

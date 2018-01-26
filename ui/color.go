@@ -8,10 +8,12 @@ import (
 	"github.com/juju/ansiterm"
 )
 
-// Progress calls Progress on the default UI
-func Bold(s string) string { return defUI.Bold(s) }
+// BoldString returns a bolded copy of the string (ANSI escape sequenced)
+func BoldString(s string) string { return defUI.BoldString(s) }
 
-func (u *UI) Bold(s string) string {
+// BoldString checks the EnableColors pref and returns a bolded copy
+// of the string (ANSI escape sequenced)
+func (u *UI) BoldString(s string) string {
 	if !u.EnableColors {
 		return s
 	}
@@ -23,19 +25,25 @@ func (u *UI) Bold(s string) string {
 	return createStyledString(ctx, s)
 }
 
-func Faint(s string) string { return defUI.Faint(s) }
+// FaintString returns a faint (ANSI DarkGray) copy of the string (ANSI escape sequenced)
+func FaintString(s string) string { return defUI.FaintString(s) }
 
-func (u *UI) Faint(s string) string {
+// FaintString checks the EnableColors pref and returns a faint (ANSI DarkGrey)
+// copy of the string (ANSI escape sequenced)
+func (u *UI) FaintString(s string) string {
 	if !u.EnableColors {
 		return s
 	}
 
-	return Color(DarkGray, s)
+	return ColorString(DarkGray, s)
 }
 
-func Color(c UIColor, s string) string { return defUI.Color(c, s) }
+// ColorString returns the original string, converted to the provided ANSI color
+func ColorString(c Color, s string) string { return defUI.ColorString(c, s) }
 
-func (u *UI) Color(c UIColor, s string) string {
+// ColorString checks the EnableColors pref and returns a colored
+// copy of the string (ANSI escape sequenced)
+func (u *UI) ColorString(c Color, s string) string {
 	if !u.EnableColors {
 		return s
 	}
@@ -47,9 +55,12 @@ func (u *UI) Color(c UIColor, s string) string {
 	return createStyledString(ctx, s)
 }
 
-func BoldColor(c UIColor, s string) string { return defUI.BoldColor(c, s) }
+// BoldColorString returns a bolded, colored copy of the string (ANSI escape sequenced)
+func BoldColorString(c Color, s string) string { return defUI.BoldColorString(c, s) }
 
-func (u *UI) BoldColor(c UIColor, s string) string {
+// BoldColorString checks the EnableColors pref and returns a bolded, colored
+// copy of the string (ANSI escape sequenced)
+func (u *UI) BoldColorString(c Color, s string) string {
 	if !u.EnableColors {
 		return s
 	}

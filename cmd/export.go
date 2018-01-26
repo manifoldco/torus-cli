@@ -1,12 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
-	"encoding/json"
 
 	"github.com/urfave/cli"
 

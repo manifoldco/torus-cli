@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/urfave/cli"
 	"github.com/juju/ansiterm"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -60,12 +60,12 @@ func listCmd(ctx *cli.Context) error {
 
 	tree := make(credentialTree)
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
 
-	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	project, err := getProjectWithPrompt(c, client, org, ctx.String("project"))
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func listCmd(ctx *cli.Context) error {
 	// In verbose mode, ALL paths are displayed,
 	// whether they contain credentials or not.
 	// This will be filled in the following section.
-  if verbose {
+	if verbose {
 		for _, eName := range filteredEnvNames {
 			tree[eName] = make(serviceCredentialMap)
 			for _, sName := range filteredServiceNames {
@@ -214,31 +214,31 @@ func listCmd(ctx *cli.Context) error {
 	}
 
 	// Print credentialTree
-	if(verbose){
+	if verbose {
 		fmt.Println("")
 		projW := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
-		fmt.Fprintf(projW, ui.Bold("Org") + ":\t" + org.Body.Name + "\t\n")
-		fmt.Fprintf(projW, ui.Bold("Project") + ":\t" + project.Body.Name + "\t\n")
+		fmt.Fprintf(projW, ui.BoldString("Org")+":\t"+org.Body.Name+"\t\n")
+		fmt.Fprintf(projW, ui.BoldString("Project")+":\t"+project.Body.Name+"\t\n")
 		projW.Flush()
 	}
 
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 0, 0, 0, ' ', 0)
 	for e := range tree {
-		fmt.Fprintf(w, fmt.Sprintf("%s\t\t\t\t\n", ui.Bold(e) + "/"))
+		fmt.Fprintf(w, fmt.Sprintf("%s\t\t\t\t\n", ui.BoldString(e)+"/"))
 		for s := range tree[e] {
-			fmt.Fprintf(w, "\t%s\t\t\t\n", ui.Bold(s) + "/")
+			fmt.Fprintf(w, "\t%s\t\t\t\n", ui.BoldString(s)+"/")
 			if len(tree[e][s]) == 0 {
 				if verbose {
-					fmt.Fprintf(w, "\t\t%s\t\t\n", ui.Faint("[empty]"))
+					fmt.Fprintf(w, "\t\t%s\t\t\n", ui.FaintString("[empty]"))
 				}
 				continue
 			}
 			for c, cred := range tree[e][s] {
-				credCount += 1
+				credCount++
 				if verbose {
 					credPath := (*cred.Body).GetPathExp().String() + "/"
-					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.Faint(credPath+c))
+					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.FaintString(credPath+c))
 				} else {
 					fmt.Fprintf(w, "\t\t%s\t\t\n", c)
 				}
@@ -247,7 +247,7 @@ func listCmd(ctx *cli.Context) error {
 	}
 	w.Flush()
 
-	fmt.Printf("\n(%s) secrets found\n", ui.Faint(strconv.Itoa(credCount)))
+	fmt.Printf("\n(%s) secrets found\n", ui.FaintString(strconv.Itoa(credCount)))
 
 	return nil
 }

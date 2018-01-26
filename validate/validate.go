@@ -17,19 +17,19 @@ const slugErrorPattern = "%s must be between 1 and 64 characters in length and o
 const nameErrorPattern = "%s must be between 3 and 64 characters in length and only contain letters, commas, periods, apostraphes, and hyphens"
 
 // ProjectName validates whether the input meets the project name requirements
-var ProjectName ValidateFunc
+var ProjectName Func
 
 // OrgName validates whether the input meets the org name requirements
-var OrgName ValidateFunc
+var OrgName Func
 
 // TeamName validates whether the input meets the team name requirements
-var TeamName ValidateFunc
+var TeamName Func
 
 // PolicyName validates whether the input meets the policy name requirements
-var PolicyName ValidateFunc
+var PolicyName Func
 
 // Username validates whether the input meets the username requirements
-var Username ValidateFunc
+var Username Func
 
 func init() {
 	ProjectName = SlugValidator("Project names")
@@ -54,11 +54,11 @@ func NewValidationError(msg string) error {
 	return &ValidationError{msg: msg}
 }
 
-// ValidateFunc represents a validation function
-type ValidateFunc promptui.ValidateFunc
+// Func represents a validation function
+type Func promptui.ValidateFunc
 
 // SlugValidator returns a validation function
-func SlugValidator(fieldName string) ValidateFunc {
+func SlugValidator(fieldName string) Func {
 	return func(input string) error {
 		if govalidator.StringMatches(input, slugPattern) {
 			return nil
@@ -128,7 +128,7 @@ func Password(input string) error {
 
 // ConfirmPassword ensures the input meets the password requirements and
 // matches the previously provided password
-func ConfirmPassword(previous string) ValidateFunc {
+func ConfirmPassword(previous string) Func {
 	return func(input string) error {
 		err := Password(input)
 		if err != nil {

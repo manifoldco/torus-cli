@@ -101,7 +101,7 @@ func teamsListCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -151,13 +151,13 @@ func teamsListCmd(ctx *cli.Context) error {
 	numTeams := 0
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 2, ' ', 0)
-	fmt.Fprintf(w, "\t%s\t%s\n", ui.Bold("Team"), ui.Bold("Type"))
+	fmt.Fprintf(w, "\t%s\t%s\n", ui.BoldString("Team"), ui.BoldString("Type"))
 	for _, t := range teams {
 		if isMachineTeam(t.Body) {
 			continue
 		}
 
-		numTeams += 1
+		numTeams++
 
 		isMember := ""
 		displayTeamType := ""
@@ -172,7 +172,7 @@ func teamsListCmd(ctx *cli.Context) error {
 		}
 
 		if _, ok := memberOf[*t.ID]; ok {
-			isMember = ui.Faint("*")
+			isMember = ui.FaintString("*")
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\n", isMember, t.Body.Name, displayTeamType)
@@ -203,7 +203,7 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	var getMembers sync.WaitGroup
 	getMembers.Add(2)
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -272,13 +272,13 @@ func teamMembersListCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 2, ' ', 0)
-	fmt.Fprintf(w, "\t%s\t%s\n", ui.Bold("Name"), ui.Bold("Username"))
+	fmt.Fprintf(w, "\t%s\t%s\n", ui.BoldString("Name"), ui.BoldString("Username"))
 	for _, profile := range profiles {
 		me := ""
 		if session.Username() == profile.Body.Username {
 			me = "*"
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, ui.Faint(profile.Body.Username))
+		fmt.Fprintf(w, "%s\t%s\t%s\n", me, profile.Body.Name, ui.FaintString(profile.Body.Username))
 	}
 
 	w.Flush()

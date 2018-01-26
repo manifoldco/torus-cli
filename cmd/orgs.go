@@ -131,11 +131,11 @@ func orgsListCmd(ctx *cli.Context) error {
 	withoutPersonal := orgs
 
 	fmt.Println("")
-	fmt.Println(ui.Bold("Orgs"))
+	fmt.Println(ui.BoldString("Orgs"))
 	if session.Type() == apitypes.UserSession {
 		for i, o := range orgs {
 			if o.Body.Name == session.Username() {
-				fmt.Printf("%s %s\n", o.Body.Name, "("+ui.Faint("personal")+")")
+				fmt.Printf("%s %s\n", o.Body.Name, "("+ui.FaintString("personal")+")")
 				withoutPersonal = append(orgs[:i], orgs[i+1:]...)
 			}
 		}
@@ -387,11 +387,11 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w, "\t%s\t%s\t%s\n", ui.Bold("Name"), ui.Bold("Username"), ui.Bold("Team"))
+	fmt.Fprintf(w, "\t%s\t%s\t%s\n", ui.BoldString("Name"), ui.BoldString("Username"), ui.BoldString("Team"))
 	for _, user := range users {
 		me := ""
 		if session.Username() == user.Body.Username {
-			me = ui.Faint("*")
+			me = ui.FaintString("*")
 		}
 
 		// Sort teams by precedence
@@ -409,7 +409,7 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 		}
 		// Remove trailing comma and space character
 		teamString = teamString[:len(teamString)-2]
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Name, ui.Faint(user.Body.Username), teamString)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", me, user.Body.Name, ui.FaintString(user.Body.Username), teamString)
 	}
 
 	w.Flush()
@@ -433,10 +433,10 @@ func getOrg(ctx context.Context, client *api.Client, name string) (*envelope.Org
 
 // This functions is intended to be used when a command takes an optional org flag.
 // In the situation where no org is provided in the flags, getOrgWithPrompt prompts the user
-// to select from a list of exisitng orgs, using SelectExistingOrgPrompt.
+// to select from a list of existing orgs, using SelectExistingOrgPrompt.
 // In the situation where an org is provided in the flags, the function returns the associated
 // org.Envelope structure.
-func getOrgWithPrompt(client *api.Client, c context.Context, orgName string) (*envelope.Org, error) {
+func getOrgWithPrompt(c context.Context, client *api.Client, orgName string) (*envelope.Org, error) {
 
 	var org *envelope.Org
 

@@ -61,7 +61,7 @@ func listProjectsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func listProjectsCmd(ctx *cli.Context) error {
 	}
 
 	fmt.Println("")
-	fmt.Printf("%s\n", ui.Bold("Projects"))
+	fmt.Printf("%s\n", ui.BoldString("Projects"))
 	for _, project := range projects {
 		fmt.Printf("%s\n", project.Body.Name)
 	}
@@ -99,41 +99,6 @@ func listProjects(ctx *context.Context, client *api.Client, orgID *identity.ID, 
 	}
 
 	return client.Projects.Search(c, orgIDs, projectNames)
-}
-
-func listProjectsByOrgID(ctx *context.Context, client *api.Client, orgIDs []identity.ID) ([]envelope.Project, error) {
-	c, client, err := NewAPIClient(ctx, client)
-	if err != nil {
-		return nil, cli.NewExitError(projectListFailed, -1)
-	}
-
-	return client.Projects.Search(c, orgIDs, nil)
-}
-
-func listProjectsByOrgName(ctx *context.Context, client *api.Client, orgName string) ([]envelope.Project, error) {
-	c, client, err := NewAPIClient(ctx, client)
-	if err != nil {
-		return nil, cli.NewExitError(projectListFailed, -1)
-	}
-
-	// Look up the target org
-	var org *envelope.Org
-	org, err = client.Orgs.GetByName(c, orgName)
-	if err != nil {
-		return nil, errs.NewExitError(projectListFailed)
-	}
-	if org == nil {
-		return nil, errs.NewExitError("Org not found.")
-	}
-
-	// Pull all projects for the given orgID
-	orgIDs := []identity.ID{*org.ID}
-	projects, err := listProjectsByOrgID(&c, client, orgIDs)
-	if err != nil {
-		return nil, errs.NewExitError(projectListFailed)
-	}
-
-	return projects, nil
 }
 
 const projectCreateFailed = "Could not create project."
@@ -223,10 +188,10 @@ func getProject(ctx context.Context, client *api.Client, orgID *identity.ID, nam
 
 // This functions is intended to be used when a command takes an optional project flag.
 // In the situation where no project is provided in the flags, getProjectWithPrompt prompts the user
-// to select from a list of exisitng project, using SelectExistingProjectPrompt.
+// to select from a list of existing project, using SelectExistingProjectPrompt.
 // In the situation where a project is provided in the flags, the function returns the associated
 // project.Envelope structure.
-func getProjectWithPrompt(client *api.Client, c context.Context, org *envelope.Org, projectName string) (*envelope.Project, error) {
+func getProjectWithPrompt(c context.Context, client *api.Client, org *envelope.Org, projectName string) (*envelope.Project, error) {
 
 	var project *envelope.Project
 

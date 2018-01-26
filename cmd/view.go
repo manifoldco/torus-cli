@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/urfave/cli"
 	"github.com/juju/ansiterm"
+	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/apitypes"
@@ -64,15 +64,15 @@ func viewCmd(ctx *cli.Context) error {
 
 		if verbose {
 			if strings.Contains(value, " ") {
-				fmt.Fprintf(tw, "%s\t=\t%q\t(%s)\n", ui.Bold(name), value, ui.Faint(spath))
+				fmt.Fprintf(tw, "%s\t=\t%q\t(%s)\n", ui.BoldString(name), value, ui.FaintString(spath))
 			} else {
-				fmt.Fprintf(tw, "%s\t=\t%s\t(%s)\n", ui.Bold(name), value, ui.Faint(spath))
+				fmt.Fprintf(tw, "%s\t=\t%s\t(%s)\n", ui.BoldString(name), value, ui.FaintString(spath))
 			}
 		} else {
 			if strings.Contains(value, " ") {
-				fmt.Fprintf(tw, "%s\t=\t%q\n", ui.Bold(name), value)
+				fmt.Fprintf(tw, "%s\t=\t%q\n", ui.BoldString(name), value)
 			} else {
-				fmt.Fprintf(tw, "%s\t=\t%s\n", ui.Bold(name), value)
+				fmt.Fprintf(tw, "%s\t=\t%s\n", ui.BoldString(name), value)
 			}
 		}
 	}
@@ -101,12 +101,12 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 		return nil, "", err
 	}
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return nil, "", err
 	}
 
-	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	project, err := getProjectWithPrompt(c, client, org, ctx.String("project"))
 	if err != nil {
 		return nil, "", err
 	}

@@ -62,15 +62,15 @@ func profileView(ctx *cli.Context) error {
 func printProfile(session *api.Session) {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 	if session.Type() == apitypes.MachineSession {
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine ID"), session.ID())
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Token ID"), session.AuthID())
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Name"), ui.Faint(session.Username()))
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine State"), colorizeAccountState(session))
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Machine ID"), session.ID())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Machine Token ID"), session.AuthID())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Machine Name"), ui.FaintString(session.Username()))
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Machine State"), colorizeAccountState(session))
 	} else {
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Name"), session.Name())
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Username"), ui.Faint(session.Username()))
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Email"), session.Email())
-		fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Status"), colorizeAccountState(session))
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Name"), session.Name())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Username"), ui.FaintString(session.Username()))
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Email"), session.Email())
+		fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Status"), colorizeAccountState(session))
 	}
 
 	w.Flush()
@@ -87,9 +87,9 @@ func colorizeAccountState(session *api.Session) string {
 func colorizeUserState(state string) string {
 	switch state {
 	case "active":
-		return ui.Color(ui.Green, state)
+		return ui.ColorString(ui.Green, state)
 	case "unverified":
-		return ui.Color(ui.Yellow, state)
+		return ui.ColorString(ui.Yellow, state)
 	default:
 		return state
 	}
