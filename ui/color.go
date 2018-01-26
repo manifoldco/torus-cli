@@ -55,24 +55,6 @@ func (u *UI) ColorString(c Color, s string) string {
 	return createStyledString(ctx, s)
 }
 
-// BoldColorString returns a bolded, colored copy of the string (ANSI escape sequenced)
-func BoldColorString(c Color, s string) string { return defUI.BoldColorString(c, s) }
-
-// BoldColorString checks the EnableColors pref and returns a bolded, colored
-// copy of the string (ANSI escape sequenced)
-func (u *UI) BoldColorString(c Color, s string) string {
-	if !u.EnableColors {
-		return s
-	}
-
-	ctx := ansiterm.Context{
-		Foreground: ansiterm.Color(c),
-		Styles:     []ansiterm.Style{ansiterm.Bold},
-	}
-
-	return createStyledString(ctx, s)
-}
-
 func createStyledString(ctx ansiterm.Context, s string) string {
 	if !readline.IsTerminal(int(os.Stdout.Fd())) {
 		return s
