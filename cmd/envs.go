@@ -152,12 +152,12 @@ func listEnvsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
 
-	project, err := getProjectWithPrompt(client, c, org, ctx.String("project"))
+	project, err := getProjectWithPrompt(c, client, org, ctx.String("project"))
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func listEnvsCmd(ctx *cli.Context) error {
 
 	// Build output of projects/envs
 	fmt.Println("")
-	fmt.Printf("%s\n", ui.Bold("Environments"))
+	fmt.Printf("%s\n", ui.BoldString("Environments"))
 	for _, env := range envs {
 		fmt.Printf("%s\n", env.Body.Name)
 	}

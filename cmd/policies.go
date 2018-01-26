@@ -316,7 +316,7 @@ func listPoliciesCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -380,7 +380,7 @@ func listPoliciesCmd(ctx *cli.Context) error {
 	display.Wait()
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 0, 0, 4, ' ', 0)
-	fmt.Fprintf(w, "%s\t%s\t%s\n", ui.Bold("Policy Name"), ui.Bold("Type"), ui.Bold("Attached To"))
+	fmt.Fprintf(w, "%s\t%s\t%s\n", ui.BoldString("Policy Name"), ui.BoldString("Type"), ui.BoldString("Attached To"))
 	for _, name := range sortedNames {
 		teamNames := ""
 		policy := policiesByName[name]
@@ -419,7 +419,7 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -438,8 +438,8 @@ func viewPolicyCmd(ctx *cli.Context) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 
-	fmt.Fprintf(w, "%s\t%s\n", ui.Bold("Name:"), p.Name)
-	fmt.Fprintf(w, "%s\t%s\n", ui.Bold("Description:"), p.Description)
+	fmt.Fprintf(w, "%s\t%s\n", ui.BoldString("Name:"), p.Name)
+	fmt.Fprintf(w, "%s\t%s\n", ui.BoldString("Description:"), p.Description)
 	fmt.Fprintln(w, "")
 	w.Flush()
 

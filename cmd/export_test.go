@@ -1,8 +1,8 @@
 package cmd
 
 import (
-  "bufio"
-  "bytes"
+	"bufio"
+	"bytes"
 	"testing"
 )
 

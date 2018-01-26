@@ -26,7 +26,7 @@ func invitesList(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func invitesList(ctx *cli.Context) error {
 	fmt.Println("")
 
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", ui.Bold("Invited E-Mail"), ui.Bold("Name"), ui.Bold("Username"), ui.Bold("State"), ui.Bold("Invited by"), ui.Bold("Creation Date"))
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", ui.BoldString("Invited E-Mail"), ui.BoldString("Name"), ui.BoldString("Username"), ui.BoldString("State"), ui.BoldString("Invited by"), ui.BoldString("Creation Date"))
 	for _, invite := range invites {
 		inviter := nameByID[invite.Body.InviterID.String()]
 		if inviter == "" {
@@ -102,16 +102,16 @@ func invitesList(ctx *cli.Context) error {
 		var state string
 		switch invite.Body.State {
 		case "pending":
-			state = ui.Faint("awaiting acceptance")
+			state = ui.FaintString("awaiting acceptance")
 		case "accepted":
-			state = ui.Color(ui.Yellow, "awaiting approval")
+			state = ui.ColorString(ui.Default, "awaiting approval")
 		case "approved":
-			state = ui.Color(ui.Green, "approved")
+			state = ui.ColorString(ui.Green, "approved")
 		default:
 			state = "-"
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", identity, inviteeName, ui.Faint(inviteeUsername), state, inviter, invite.Body.Created.Format(time.RFC3339))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n", identity, inviteeName, ui.FaintString(inviteeUsername), state, inviter, invite.Body.Created.Format(time.RFC3339))
 
 	}
 	w.Flush()

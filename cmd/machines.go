@@ -232,7 +232,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -282,7 +282,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 
 	// Created profile
 	creator := profileMap[*machineBody.CreatedBy]
-	createdBy := creator.Body.Name + " (" + ui.Faint(creator.Body.Username) + ")"
+	createdBy := creator.Body.Name + " (" + ui.FaintString(creator.Body.Username) + ")"
 	createdOn := machineBody.Created.Format(time.RFC3339)
 
 	// Destroyed profile
@@ -291,7 +291,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 	if machineBody.State == primitive.MachineDestroyedState {
 		destroyer := profileMap[*machineBody.DestroyedBy]
 		destroyedOn = machineBody.Destroyed.Format(time.RFC3339)
-		destroyedBy = destroyer.Body.Name + " (" + ui.Faint(destroyer.Body.Name) + ")"
+		destroyedBy = destroyer.Body.Name + " (" + ui.FaintString(destroyer.Body.Name) + ")"
 	}
 
 	// Membership info
@@ -309,24 +309,24 @@ func viewMachineCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w1 := tabwriter.NewWriter(os.Stdout, 0, 0, 8, ' ', 0)
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("ID"), machine.ID)
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Name"), ui.Faint(machineBody.Name))
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Role"), roleOutput)
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("State"), colorizeMachineState(machineBody.State))
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Created By"), createdBy)
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Created On"), createdOn)
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Destroyed By"), destroyedBy)
-	fmt.Fprintf(w1, "%s:\t%s\n", ui.Bold("Destroyed On"), destroyedOn)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("ID"), machine.ID)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("Name"), ui.FaintString(machineBody.Name))
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("Role"), roleOutput)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("State"), colorizeMachineState(machineBody.State))
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("Created By"), createdBy)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("Created On"), createdOn)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("Destroyed By"), destroyedBy)
+	fmt.Fprintf(w1, "%s:\t%s\n", ui.BoldString("Destroyed On"), destroyedOn)
 	w1.Flush()
 	fmt.Println("")
 
 	w2 := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", ui.Bold("Token ID"), ui.Bold("State"), ui.Bold("Created By"), ui.Bold("Created On"))
+	fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", ui.BoldString("Token ID"), ui.BoldString("State"), ui.BoldString("Created By"), ui.BoldString("Created On"))
 	for _, token := range machineSegment.Tokens {
 		tokenID := token.Token.ID
 		state := colorizeMachineState(token.Token.Body.State)
 		creator := profileMap[*token.Token.Body.CreatedBy]
-		createdBy := creator.Body.Name + " (" + ui.Faint(creator.Body.Username) + ")"
+		createdBy := creator.Body.Name + " (" + ui.FaintString(creator.Body.Username) + ")"
 		createdOn := token.Token.Body.Created.Format(time.RFC3339)
 		fmt.Fprintf(w2, "%s\t%s\t%s\t%s\n", tokenID, state, createdBy, createdOn)
 	}
@@ -340,9 +340,9 @@ func viewMachineCmd(ctx *cli.Context) error {
 func colorizeMachineState(state string) string {
 	switch state {
 	case "active":
-		return ui.Color(ui.Green, state)
+		return ui.ColorString(ui.Green, state)
 	case "destroyed":
-		return ui.Color(ui.Red, state)
+		return ui.ColorString(ui.Red, state)
 	default:
 		return state
 	}
@@ -362,7 +362,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
 	}
 
-	org, err := getOrgWithPrompt(client, c, ctx.String("org"))
+	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
 	if err != nil {
 		return err
 	}
@@ -412,7 +412,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 
 	fmt.Println("")
 	w := ansiterm.NewTabWriter(os.Stdout, 2, 0, 3, ' ', 0)
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ui.Bold("ID"), ui.Bold("Name"), ui.Bold("State"), ui.Bold("Role"), ui.Bold("Creation Date"))
+	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", ui.BoldString("ID"), ui.BoldString("Name"), ui.BoldString("State"), ui.BoldString("Role"), ui.BoldString("Creation Date"))
 	for _, machine := range machines {
 		mID := machine.Machine.ID.String()
 		m := machine.Machine.Body
@@ -425,7 +425,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 		}
 
 		state := colorizeMachineState(state)
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, ui.Faint(m.Name), state, roleName, m.Created.Format(time.RFC3339))
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, ui.FaintString(m.Name), state, roleName, m.Created.Format(time.RFC3339))
 	}
 	w.Flush()
 	fmt.Println("")
@@ -652,9 +652,9 @@ func createMachine(ctx *cli.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 2, 0, 1, ' ', 0)
 
 	tokenID := machine.Tokens[0].Token.ID
-	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine ID"), machine.Machine.ID)
-	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Token ID"), tokenID)
-	fmt.Fprintf(w, "%s:\t%s\n", ui.Bold("Machine Token Secret"), tokenSecret)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Machine ID"), machine.Machine.ID)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Machine Token ID"), tokenID)
+	fmt.Fprintf(w, "%s:\t%s\n", ui.BoldString("Machine Token Secret"), tokenSecret)
 
 	w.Flush()
 	hints.Display(hints.Allow, hints.Deny)

@@ -124,7 +124,7 @@ test: generated vendor
 
 $(LINTERS): %: vendor/bin/gometalinter %-bin vendor
 	PATH=`pwd`/vendor/bin:$$PATH gometalinter --tests --disable-all --vendor \
-	     --deadline=5m -s data --skip generated --enable $@
+	     --deadline=5m -s data --enable $@ ./...
 
 $(TOOLS)/cmdlint: $(wildcard tools/cmdlint/*.go) $(wildcard cmd/*.go)
 	$(GO_BUILD) -o $@ ./tools/cmdlint
