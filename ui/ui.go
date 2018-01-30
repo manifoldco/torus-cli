@@ -64,7 +64,7 @@ var defUI *UI
 func Init(preferences *prefs.Preferences) {
 	enableColours := preferences.Core.EnableColors
 
-	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+	if !Attached() {
 		enableColours = false
 	}
 
@@ -154,6 +154,12 @@ func (u *UI) LineIndent(indent int, format string, a ...interface{}) {
 	fmt.Fprintln(readline.Stdout, ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent+indent))
 }
 
+// Attached return a boolean representing whether or not the current session is
+// attached to a terminal or not.
+func Attached() bool {
+	return readline.IsTerminal(int(os.Stdout.Fd()))
+}
+
 // Hint calls hint on the default UI
 func Hint(str string, noPadding bool, label *string) { defUI.Hint(str, noPadding, label) }
 
@@ -163,7 +169,7 @@ func (u *UI) Hint(str string, noPadding bool, label *string) {
 		return
 	}
 
-	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+	if !Attached() {
 		return
 	}
 
@@ -189,7 +195,7 @@ func Info(format string, args ...interface{}) { defUI.Info(format, args...) }
 //
 // Only printed if stdout is attached to a terminal.
 func (u *UI) Info(format string, args ...interface{}) {
-	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+	if !Attached() {
 		return
 	}
 
@@ -206,11 +212,13 @@ func Warn(format string, args ...interface{}) { defUI.Warn(format, args...) }
 // terminal.
 func (u *UI) Warn(format string, args ...interface{}) {
 	var w io.Writer = readline.Stdout
-	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+	icon := u.BoldColorString(Yellow, "⚠ ")
+	if !Attached() {
 		w = readline.Stderr
+		icon = ""
 	}
 
-	o := fmt.Sprintf(format, args...)
+	o := fmt.Sprintf(icon+format, args...)
 	fmt.Fprintln(w, ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent))
 }
 
@@ -223,11 +231,13 @@ func Error(format string, args ...interface{}) { defUI.Error(format, args...) }
 // The error is printed out to stderr if stdout is not attached to a termainl
 func (u *UI) Error(format string, args ...interface{}) {
 	var w io.Writer = readline.Stdout
-	if !readline.IsTerminal(int(os.Stdout.Fd())) {
+	icon := u.BoldColorString(Red, "✗ Error: ")
+	if !Attached() {
+		icon = ""
 		w = readline.Stderr
 	}
 
-	o := fmt.Sprintf(format, args...)
+	o := fmt.Sprintf(icon+format, args...)
 	fmt.Fprintln(w, ansiwrap.WrapIndent(o, u.Cols, u.Indent, u.Indent))
 }
 

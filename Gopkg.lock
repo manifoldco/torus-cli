@@ -55,9 +55,10 @@
   version = "1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/chzyer/readline"
   packages = ["."]
-  revision = "41eea22f717c616615e1e59aa06cf831f9901f35"
+  revision = "f6d7a1f6fbf35bbf9beb80dc63c56a29dcfb759f"
 
 [[projects]]
   name = "github.com/client9/misspell"
@@ -208,6 +209,11 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/manifoldco/promptui"
+  packages = [".","list","screenbuf"]
+  revision = "4baa1188b83a2bbddbbc4745baf85aec26edb526"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -329,6 +335,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a7676fcc388b53a60a57470c500c0c678bfbf8eddb93d072b9e908ab21dfcc98"
+  inputs-digest = "fb2eff86fdbcff1bbb1782545d172e12f1d68b2b3375e1c860d592169309da3c"
   solver-name = "gps-cdcl"
   solver-version = 1

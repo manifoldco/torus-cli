@@ -12,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 )
 
@@ -61,7 +62,7 @@ func listProjectsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
@@ -112,17 +113,9 @@ func createProjectCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, orgName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
-		return errs.NewErrorExitError(projectCreateFailed, err)
-	}
-
-	var orgID *identity.ID
-	if !newOrg {
-		if org == nil {
-			return errs.NewExitError("Org not found.")
-		}
-		orgID = org.ID
+		return err
 	}
 
 	args := ctx.Args()
@@ -131,29 +124,12 @@ func createProjectCmd(ctx *cli.Context) error {
 		name = args[0]
 	}
 
-	label := "Project name"
-	autoAccept := name != ""
-	name, err = NamePrompt(&label, name, autoAccept)
+	name, err = prompts.ProjectName(name, true)
 	if err != nil {
-		return handleSelectError(err, projectCreateFailed)
+		return err
 	}
 
-	if newOrg {
-		org, err := client.Orgs.Create(c, orgName)
-		orgID = org.ID
-		if err != nil {
-			return errs.NewErrorExitError("Could not create org", err)
-		}
-
-		err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Org %s created.\n\n", orgName)
-	}
-
-	_, err = createProjectByName(c, client, orgID, name)
+	_, err = createProjectByName(c, client, org.ID, name)
 	return err
 }
 
@@ -169,61 +145,5 @@ func createProjectByName(c context.Context, client *api.Client, orgID *identity.
 		return nil, errs.NewErrorExitError(projectCreateFailed, err)
 	}
 	fmt.Printf("Project %s created.\n", name)
-	return project, nil
-}
-
-func getProject(ctx context.Context, client *api.Client, orgID *identity.ID, name string) (*envelope.Project, error) {
-	orgIDs := []identity.ID{*orgID}
-	names := []string{name}
-	projects, err := client.Projects.Search(ctx, orgIDs, names)
-	if projects == nil || len(projects) < 1 {
-		return nil, errs.NewExitError("Project not found.")
-	}
-	if err != nil {
-		return nil, errs.NewErrorExitError("Unable to lookup project.", err)
-	}
-
-	return &projects[0], nil
-}
-
-// This functions is intended to be used when a command takes an optional project flag.
-// In the situation where no project is provided in the flags, getProjectWithPrompt prompts the user
-// to select from a list of existing project, using SelectExistingProjectPrompt.
-// In the situation where a project is provided in the flags, the function returns the associated
-// project.Envelope structure.
-func getProjectWithPrompt(c context.Context, client *api.Client, org *envelope.Org, projectName string) (*envelope.Project, error) {
-
-	var project *envelope.Project
-
-	if projectName == "" {
-		// Retrieve list of available orgs
-		projects, err := client.Projects.List(c, org.ID)
-		if err != nil {
-			return nil, err
-		}
-		if len(projects) < 1 {
-			return nil, errs.NewExitError("No projects found in org " + org.Body.Name)
-		}
-
-		// Prompt user to select from list of existing projects
-		idx, _, err := SelectExistingProjectPrompt(projects)
-		if err != nil {
-			return nil, err
-		}
-
-		project = &projects[idx]
-
-	} else {
-		// Get Project for project name, confirm project exists
-		var err error
-		project, err = getProject(c, client, org.ID, projectName)
-		if err != nil {
-			return nil, err
-		}
-		if project == nil {
-			return nil, errs.NewExitError("project " + projectName + " not found.")
-		}
-	}
-
 	return project, nil
 }

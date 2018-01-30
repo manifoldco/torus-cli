@@ -9,7 +9,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
-	"github.com/manifoldco/torus-cli/promptui"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/validate"
 )
 
@@ -37,11 +37,12 @@ func invitesAccept(ctx *cli.Context) error {
 
 	_, err = client.Session.Get(c)
 	if err != nil {
-		_, value, err := SelectAcceptAction()
+		_, value, err := prompts.SelectAcceptAction()
 		if err != nil {
-			if err == promptui.ErrEOF || err == promptui.ErrInterrupt {
+			if err == errs.ErrAbort {
 				return err
 			}
+
 			return errs.NewExitError(acceptInviteFailed)
 		}
 

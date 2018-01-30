@@ -2,16 +2,34 @@ package errs
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/urfave/cli"
 )
 
-// Word without punctuation or space
-var wordRegex = regexp.MustCompile(`\w`)
+// ErrAbort represents a situation where a user has been asked to perform an
+// action but they've decided to abort.
+var ErrAbort = NewExitError("Aborted.")
 
-func usageString(ctx *cli.Context) string {
-	spacer := "    "
-	return "Usage:\n" + spacer + ctx.App.HelpName + " " + ctx.Command.Name + " [command options] " + ctx.Command.ArgsUsage
+// ErrTerminalRequired represents a situation where a connected terminal is
+// required to perform the action.
+var ErrTerminalRequired = NewExitError("This action must be performed in an attached terminal or all arguments must be passed.")
+
+// ToError converts the given error into a cli.ExitError
+func ToError(err error) error {
+	switch e := err.(type) {
+	case *cli.ExitError:
+		return e
+	case nil:
+		return nil
+	default:
+		return cli.NewExitError(err.Error(), -1)
+	}
+}
+
+// NewNotFound returns an error representing a NotFound error
+func NewNotFound(name string) error {
+	return NewExitError("Could not find " + strings.ToLower(name))
 }
 
 // NewUsageExitError creates an ExitError with appended usage text
@@ -38,8 +56,8 @@ func NewExitError(message string) error {
 	return cli.NewExitError(message, -1)
 }
 
-// MultiError takes a list of possible errors, filters out
-// nil values, and returns a new cli.MultiError
+// MultiError loops over all given errors unpacks them and then creates a new
+// MultiError for non-nil entries.
 func MultiError(errors ...error) cli.MultiError {
 	nonNilErrs := []error{}
 	for _, e := range errors {
@@ -50,3 +68,11 @@ func MultiError(errors ...error) cli.MultiError {
 
 	return cli.NewMultiError(nonNilErrs...)
 }
+
+func usageString(ctx *cli.Context) string {
+	spacer := "    "
+	return "Usage:\n" + spacer + ctx.App.HelpName + " " + ctx.Command.Name + " [command options] " + ctx.Command.ArgsUsage
+}
+
+// Word without punctuation or space
+var wordRegex = regexp.MustCompile(`\w`)

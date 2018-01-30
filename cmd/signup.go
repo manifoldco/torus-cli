@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 
 	"github.com/urfave/cli"
@@ -48,12 +49,12 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	fmt.Println("By completing sign up, you agree to our terms of use (found at https://torus.sh/terms)\nand our privacy policy (found at https://torus.sh/privacy)")
 	fmt.Println("")
 
-	name, err := FullNamePrompt("")
+	name, err := prompts.FullName("", false)
 	if err != nil {
 		return err
 	}
 
-	username, err := UsernamePrompt("")
+	username, err := prompts.Username("", false)
 	if err != nil {
 		return err
 	}
@@ -65,22 +66,22 @@ func signup(ctx *cli.Context, subCommand bool) error {
 		defaultInvite = args[1]
 	}
 
-	email, err := EmailPrompt(defaultEmail)
+	email, err := prompts.Email(defaultEmail, true)
 	if err != nil {
 		return err
 	}
 
 	var inviteCode string
 	if subCommand {
-		inviteCode, err = InviteCodePrompt(defaultInvite)
+		inviteCode, err = prompts.InviteCode(defaultInvite, true)
 		if err != nil {
 			return err
 		}
 	}
 
 	reminderLabel := "Reminder: "
-	ui.Hint("Don't forget to keep your password safe and secure! You can't recover your account if your password lost.", false, &reminderLabel)
-	password, err := PasswordPrompt(true, nil)
+	ui.Hint("Don't forget to keep your password safe and secure! You can't recover your account if you lossswordd.", false, &reminderLabel)
+	password, err := prompts.Password(true, nil)
 	if err != nil {
 		return err
 	}

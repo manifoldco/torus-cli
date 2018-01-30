@@ -12,6 +12,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 )
 
@@ -67,68 +68,24 @@ func createEnv(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Ask the user which org they want to use
-	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
-		return handleSelectError(err, "Org selection failed.")
-	}
-	if org == nil && !newOrg {
-		fmt.Println("")
-		return errs.NewExitError("Org not found.")
-	}
-	if newOrg && oName == "" {
-		fmt.Println("")
-		return errs.NewExitError("Invalid org name.")
+		return err
 	}
 
-	var orgID *identity.ID
-	if org != nil {
-		orgID = org.ID
-	}
-
-	// Ask the user which project they want to use
-	project, pName, newProject, err := SelectCreateProject(c, client, orgID, ctx.String("project"))
+	project, _, _, err := selectProject(c, client, org, ctx.String("project"), false)
 	if err != nil {
-		return handleSelectError(err, "Project selection failed.")
-	}
-	if project == nil && !newProject {
-		fmt.Println("")
-		return errs.NewExitError("Project not found.")
-	}
-	if newProject && pName == "" {
-		fmt.Println("")
-		return errs.NewExitError("Invalid project name.")
+		return err
 	}
 
-	label := "Environment name"
-	autoAccept := environmentName != ""
-	environmentName, err = NamePrompt(&label, environmentName, autoAccept)
+	environmentName, err = prompts.EnvName(environmentName, true)
 	if err != nil {
-		return handleSelectError(err, envCreateFailed)
-	}
-
-	// Create the org now if needed
-	if org == nil && newOrg {
-		org, err = createOrgByName(c, ctx, client, oName)
-		if err != nil {
-			fmt.Println("")
-			return err
-		}
-		orgID = org.ID
-	}
-
-	// Create the project now if needed
-	if project == nil && newProject {
-		project, err = createProjectByName(c, client, orgID, pName)
-		if err != nil {
-			fmt.Println("")
-			return err
-		}
+		return err
 	}
 
 	// Create our new environment
 	fmt.Println("")
-	err = client.Environments.Create(c, orgID, project.ID, environmentName)
+	err = client.Environments.Create(c, org.ID, project.ID, environmentName)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Environment already exists.")
@@ -143,7 +100,6 @@ func createEnv(ctx *cli.Context) error {
 const envListFailed = "Could not list envs, please try again."
 
 func listEnvsCmd(ctx *cli.Context) error {
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -152,12 +108,12 @@ func listEnvsCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
 
-	project, err := getProjectWithPrompt(c, client, org, ctx.String("project"))
+	project, _, _, err := selectProject(c, client, org, ctx.String("project"), false)
 	if err != nil {
 		return err
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 
 	"github.com/urfave/cli"
@@ -114,20 +115,25 @@ func profileEdit(ctx *cli.Context) error {
 	}
 
 	ogName := session.Name()
-	name, err := FullNamePrompt(ogName)
+	name, err := prompts.FullName(ogName, false)
 	if err != nil {
 		return err
 	}
 
 	ogEmail := session.Email()
-	email, err := EmailPrompt(ogEmail)
+	email, err := prompts.Email(ogEmail, false)
 	if err != nil {
 		return err
 	}
 
+	question := "Would you like to change your password"
+	success, err := prompts.Confirm(&question, nil, false, false)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to answer question", err)
+	}
+
 	var newPassword string
-	err = AskPerform("Would you like to change your password", "")
-	if err == nil {
+	if success {
 		password, err := changePassword(&c, client, session)
 		if err != nil {
 			return err
@@ -159,9 +165,12 @@ func profileEdit(ctx *cli.Context) error {
 	if email != ogEmail {
 		preamble = "\nYou will be required to re-verify your email address before taking any further actions within Torus."
 	}
-	abortErr := ConfirmDialogue(ctx, nil, &preamble, "", false)
-	if abortErr != nil {
-		return abortErr
+	success, err = prompts.Confirm(nil, &preamble, false, true)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
+	}
+	if !success {
+		return errs.ErrAbort
 	}
 
 	// Update the profile
@@ -205,7 +214,7 @@ func profileEdit(ctx *cli.Context) error {
 func changePassword(c *context.Context, client *api.Client, session *api.Session) (string, error) {
 	// Retrieve current password value
 	oldLabel := "Current Password"
-	currentPassword, err := PasswordPrompt(false, &oldLabel)
+	currentPassword, err := prompts.Password(false, &oldLabel)
 	if err != nil {
 		return "", err
 	}
@@ -218,5 +227,5 @@ func changePassword(c *context.Context, client *api.Client, session *api.Session
 
 	// Obtain new value for password
 	newLabel := "New Password"
-	return PasswordPrompt(true, &newLabel)
+	return prompts.Password(true, &newLabel)
 }

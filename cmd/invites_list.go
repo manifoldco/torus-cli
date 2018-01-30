@@ -26,7 +26,7 @@ func invitesList(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}

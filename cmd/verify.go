@@ -10,6 +10,7 @@ import (
 	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/prompts"
 )
 
 func init() {
@@ -30,7 +31,7 @@ func verifyEmailCmd(ctx *cli.Context) error {
 }
 
 func askToVerify(ctx *cli.Context) error {
-	code, err := VerificationPrompt()
+	code, err := prompts.VerificationCode("", false)
 	if err != nil {
 		return err
 	}

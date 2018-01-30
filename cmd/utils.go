@@ -1,8 +1,15 @@
 package cmd
 
 import (
+	"context"
+
+	"github.com/urfave/cli"
+
+	"github.com/manifoldco/torus-cli/api"
 	"github.com/manifoldco/torus-cli/envelope"
+	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/prompts"
 )
 
 // ByTeamPrecedence will implement the sort Interface
@@ -44,4 +51,157 @@ func (tp ByTeamPrecedence) Less(i, j int) bool {
 		return false
 	}
 	return tp[i].Body.Name[0] < tp[j].Body.Name[0]
+}
+
+func selectOrg(ctx context.Context, client *api.Client, provided string, allowCreate bool) (*envelope.Org, string, bool, error) {
+	orgs, err := client.Orgs.List(ctx)
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	var idx int
+	var oName string
+	if allowCreate {
+		idx, oName, err = prompts.SelectCreateOrg(toOrgNames(orgs), provided)
+	} else {
+		idx, oName, err = prompts.SelectOrg(toOrgNames(orgs), provided)
+	}
+
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	if idx == prompts.SelectedAdd {
+		return nil, oName, true, nil
+	}
+
+	return &orgs[idx], oName, false, nil
+}
+
+func selectProject(ctx context.Context, client *api.Client, org *envelope.Org, provided string, allowCreate bool) (*envelope.Project, string, bool, error) {
+	var projects []envelope.Project
+	var err error
+	if org != nil {
+		projects, err = client.Projects.List(ctx, org.ID)
+		if err != nil {
+			return nil, "", false, err
+		}
+	}
+
+	var idx int
+	var pName string
+	if allowCreate {
+		idx, pName, err = prompts.SelectCreateProject(toProjectNames(projects), provided)
+	} else {
+		idx, pName, err = prompts.SelectProject(toProjectNames(projects), provided)
+	}
+
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	if idx == prompts.SelectedAdd {
+		return nil, pName, true, nil
+	}
+
+	return &projects[idx], pName, false, nil
+}
+
+func selectRole(ctx context.Context, client *api.Client, org *envelope.Org, provided string, allowCreate bool) (*envelope.Team, string, bool, error) {
+	teams, err := client.Teams.List(ctx, org.ID, "", primitive.MachineTeamType)
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	var idx int
+	var name string
+	if allowCreate {
+		idx, name, err = prompts.SelectCreateRole(toTeamNames(teams), provided)
+	} else {
+		idx, name, err = prompts.SelectRole(toTeamNames(teams), provided)
+	}
+
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	if idx == prompts.SelectedAdd {
+		return nil, name, true, nil
+	}
+
+	return &teams[idx], name, false, nil
+}
+
+func selectTeam(ctx context.Context, client *api.Client, org *envelope.Org, provided string, allowCreate bool) (*envelope.Team, string, bool, error) {
+	teams, err := client.Teams.List(ctx, org.ID, "", primitive.AnyTeamType)
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	// XXX: This is because there isn't a good way to just get "user" teams
+	// right now..
+	filtered := []envelope.Team{}
+	for _, team := range teams {
+		if !isMachineTeam(team.Body) {
+			filtered = append(filtered, team)
+		}
+	}
+
+	var idx int
+	var name string
+	if allowCreate {
+		idx, name, err = prompts.SelectCreateTeam(toTeamNames(teams), provided)
+	} else {
+		idx, name, err = prompts.SelectTeam(toTeamNames(teams), provided)
+	}
+
+	if err != nil {
+		return nil, "", false, err
+	}
+
+	if idx == prompts.SelectedAdd {
+		return nil, name, true, nil
+	}
+
+	return &teams[idx], name, false, nil
+}
+
+func toOrgNames(orgs []envelope.Org) []string {
+	out := make([]string, len(orgs), len(orgs))
+	for i, o := range orgs {
+		out[i] = o.Body.Name
+	}
+
+	return out
+}
+
+func toProjectNames(projects []envelope.Project) []string {
+	out := make([]string, len(projects), len(projects))
+	for i, p := range projects {
+		out[i] = p.Body.Name
+	}
+
+	return out
+}
+
+func toTeamNames(teams []envelope.Team) []string {
+	out := make([]string, len(teams), len(teams))
+	for i, t := range teams {
+		out[i] = t.Body.Name
+	}
+
+	return out
+}
+
+func argCheck(ctx *cli.Context, possible, required int) error {
+	given := len(ctx.Args())
+	if given > possible {
+		return errs.NewUsageExitError("Too many arguments provided", ctx)
+	}
+
+	if given < required {
+		return errs.NewUsageExitError("Too few arguments provided", ctx)
+	}
+
+	return nil
 }

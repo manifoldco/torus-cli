@@ -18,6 +18,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 )
 
@@ -92,7 +93,6 @@ func init() {
 }
 
 func teamsListCmd(ctx *cli.Context) error {
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -101,7 +101,7 @@ func teamsListCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
@@ -186,11 +186,16 @@ func teamsListCmd(ctx *cli.Context) error {
 }
 
 func teamMembersListCmd(ctx *cli.Context) error {
-	args := ctx.Args()
-	if len(args) < 1 || args[0] == "" {
-		return errs.NewUsageExitError("Missing team name", ctx)
+	if err := argCheck(ctx, 1, 0); err != nil {
+		return err
 	}
-	teamName := args[0]
+
+	args := ctx.Args()
+
+	teamName := ""
+	if len(args) == 1 {
+		teamName = args[0]
+	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -200,36 +205,22 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	var getMembers sync.WaitGroup
-	getMembers.Add(2)
-
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
 
-	var team envelope.Team
-	var teams []envelope.Team
+	team, _, _, err := selectTeam(c, client, org, teamName, false)
+	if err != nil {
+		return err
+	}
+
+	var getMembers sync.WaitGroup
+	getMembers.Add(2)
+
 	var memberships []envelope.Membership
-	var tErr, mErr, sErr error
+	var mErr, sErr error
 	go func() {
-		// Retrieve the team by name supplied
-		teams, tErr = client.Teams.GetByName(c, org.ID, teamName)
-		if len(teams) != 1 {
-			tErr = errs.NewExitError("Team not found.")
-			getMembers.Done()
-			return
-		}
-		team = teams[0]
-
-		// Hide machine teams from the teams list; as we use them to represent
-		// machine roles in the system.
-		if isMachineTeam(team.Body) {
-			tErr = errs.NewExitError("Team not found.")
-			getMembers.Done()
-			return
-		}
-
 		// Pull all memberships for supplied org/team
 		memberships, mErr = client.Memberships.List(c, org.ID, team.ID, nil)
 		getMembers.Done()
@@ -243,8 +234,8 @@ func teamMembersListCmd(ctx *cli.Context) error {
 	}()
 
 	getMembers.Wait()
-	if mErr != nil || tErr != nil || sErr != nil {
-		return errs.MultiError(mErr, tErr, sErr)
+	if mErr != nil || sErr != nil {
+		return errs.MultiError(mErr, sErr)
 	}
 
 	if len(memberships) == 0 {
@@ -296,6 +287,10 @@ func createTeamCmd(ctx *cli.Context) error {
 		return errs.NewErrorExitError(teamCreateFailed, err)
 	}
 
+	if err := argCheck(ctx, 1, 0); err != nil {
+		return err
+	}
+
 	args := ctx.Args()
 	teamName := ""
 	if len(args) > 0 {
@@ -305,45 +300,19 @@ func createTeamCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	// Ask the user which org they want to use
-	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
-		return handleSelectError(err, "Org selection failed")
-	}
-	if org == nil && !newOrg {
-		fmt.Println("")
-		return errs.NewExitError("Org not found.")
-	}
-	if newOrg && oName == "" {
-		fmt.Println("")
-		return errs.NewExitError("Invalid org name")
+		return err
 	}
 
-	var orgID *identity.ID
-	if org != nil {
-		orgID = org.ID
-	}
-
-	label := "Team name"
-	autoAccept := teamName != ""
-	teamName, err = NamePrompt(&label, teamName, autoAccept)
+	teamName, err = prompts.TeamName(teamName, false)
 	if err != nil {
-		return handleSelectError(err, teamCreateFailed)
-	}
-
-	// Create the org now if needed
-	if org == nil && newOrg {
-		org, err = createOrgByName(c, ctx, client, oName)
-		if err != nil {
-			fmt.Println("")
-			return err
-		}
-		orgID = org.ID
+		return err
 	}
 
 	// Create our new team
 	fmt.Println("")
-	_, err = client.Teams.Create(c, orgID, teamName, primitive.UserTeamType)
+	_, err = client.Teams.Create(c, org.ID, teamName, primitive.UserTeamType)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Team already exists")
@@ -360,28 +329,18 @@ func createTeamCmd(ctx *cli.Context) error {
 const teamRemoveFailed = "Failed to remove team member."
 
 func teamsRemoveCmd(ctx *cli.Context) error {
-	args := ctx.Args()
-	if len(args) > 2 {
-		return errs.NewUsageExitError("Too many arguments", ctx)
-	}
-	if len(args) < 2 {
-		return errs.NewUsageExitError("Too few arguments", ctx)
-	}
-
-	username := args[0]
-	teamName := args[1]
-
-	if username == "" {
-		return errs.NewUsageExitError("Invalid username", ctx)
-	}
-	if teamName == "" {
-		return errs.NewUsageExitError("Invalid team naem", ctx)
-	}
-
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
+
+	if err := argCheck(ctx, 2, 2); err != nil {
+		return err
+	}
+
+	args := ctx.Args()
+	username := args[0]
+	teamName := args[1]
 
 	client := api.NewClient(cfg)
 	c := context.Background()
@@ -459,23 +418,13 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 const teamAddFailed = "Failed to add team member, please try again"
 
 func teamsAddCmd(ctx *cli.Context) error {
-	args := ctx.Args()
-	if len(args) > 2 {
-		return errs.NewUsageExitError("Too many arguments", ctx)
-	}
-	if len(args) < 2 {
-		return errs.NewUsageExitError("Too few arguments", ctx)
+	if err := argCheck(ctx, 2, 2); err != nil {
+		return err
 	}
 
+	args := ctx.Args()
 	username := args[0]
 	teamName := args[1]
-
-	if username == "" {
-		return errs.NewUsageExitError("Invalid username", ctx)
-	}
-	if teamName == "" {
-		return errs.NewUsageExitError("Invalid team name", ctx)
-	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {

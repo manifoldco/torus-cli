@@ -17,6 +17,7 @@ import (
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/identity"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 	"github.com/manifoldco/torus-cli/validate"
 )
@@ -293,9 +294,12 @@ func deletePolicyCmd(ctx *cli.Context) error {
 	policy := policies[0]
 	preamble := fmt.Sprintf("You are about to delete the %s policy and all "+
 		"of it's attachments. This cannot be undone.", policyName)
-	err = ConfirmDialogue(ctx, nil, &preamble, "", true) // Will error if user does not confirm
+	success, err := prompts.Confirm(nil, &preamble, true, true)
 	if err != nil {
-		return err
+		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
+	}
+	if !success {
+		return errs.ErrAbort
 	}
 
 	err = client.Policies.Delete(c, policy.ID)
@@ -316,7 +320,7 @@ func listPoliciesCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
@@ -419,7 +423,7 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}

@@ -25,6 +25,7 @@ import (
 	"github.com/manifoldco/torus-cli/hints"
 	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/primitive"
+	"github.com/manifoldco/torus-cli/prompts"
 	"github.com/manifoldco/torus-cli/ui"
 )
 
@@ -102,7 +103,7 @@ func init() {
 				Usage:     "Destroy a machine in the specified organization",
 				ArgsUsage: "<id|name>",
 				Flags: []cli.Flag{
-					orgFlag("Org the machine will belongs to", true),
+					orgFlag("Org the machine will belongs to", false),
 					stdAutoAcceptFlag,
 				},
 				Action: chain(
@@ -120,7 +121,7 @@ func init() {
 						Usage:     "Create a machine role for an organization",
 						ArgsUsage: "<name>",
 						Flags: []cli.Flag{
-							orgFlag("Org the machine role will belong to", true),
+							orgFlag("Org the machine role will belong to", false),
 						},
 						Action: chain(
 							ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -131,7 +132,7 @@ func init() {
 						Name:  "list",
 						Usage: "List all machine roles for an organization",
 						Flags: []cli.Flag{
-							orgFlag("Org the machine roles belongs to", true),
+							orgFlag("Org the machine roles belongs to", false),
 						},
 						Action: chain(
 							ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
@@ -201,9 +202,12 @@ func destroyMachineCmd(ctx *cli.Context) error {
 	}
 
 	preamble := "You are about to destroy a machine. This cannot be undone."
-	abortErr := ConfirmDialogue(ctx, nil, &preamble, "", true)
-	if abortErr != nil {
-		return abortErr
+	success, err := prompts.Confirm(nil, &preamble, true, true)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
+	}
+	if !success {
+		return errs.ErrAbort
 	}
 
 	err = client.Machines.Destroy(c, &machineID)
@@ -232,7 +236,7 @@ func viewMachineCmd(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
@@ -362,7 +366,7 @@ func listMachinesCmd(ctx *cli.Context) error {
 		return errs.NewUsageExitError("Too many arguments supplied.", ctx)
 	}
 
-	org, err := getOrgWithPrompt(c, client, ctx.String("org"))
+	org, _, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
 		return err
 	}
@@ -520,39 +524,15 @@ func createMachineRole(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, oName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	org, oName, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
-		return handleSelectError(err, "Org selection failed")
-	}
-	if org == nil && !newOrg {
-		fmt.Println("")
-		return errs.NewExitError("Org not found.")
-	}
-	if newOrg && oName == "" {
-		fmt.Println("")
-		return errs.NewExitError("Invalid org name.")
+		return err
 	}
 
-	var orgID *identity.ID
-	if org != nil {
-		orgID = org.ID
-	}
-
-	label := "Role name"
-	autoAccept := teamName != ""
-	teamName, err = NamePrompt(&label, teamName, autoAccept)
+	orgID := org.ID
+	teamName, err = prompts.RoleName(teamName, true)
 	if err != nil {
-		return handleSelectError(err, "Role creation failed.")
-	}
-
-	if org == nil && newOrg {
-		org, err = createOrgByName(c, ctx, client, oName)
-		if err != nil {
-			fmt.Println("")
-			return err
-		}
-
-		orgID = org.ID
+		return err
 	}
 
 	fmt.Println("")
@@ -565,7 +545,7 @@ func createMachineRole(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Role creation failed.", err)
 	}
 
-	fmt.Printf("Role %s created.\n", teamName)
+	fmt.Printf("Machine role %s created for org %s.\n", teamName, oName)
 	hints.Display(hints.Allow, hints.Deny, hints.Policies)
 	return nil
 }
@@ -579,30 +559,14 @@ func createMachine(ctx *cli.Context) error {
 	client := api.NewClient(cfg)
 	c := context.Background()
 
-	org, orgName, newOrg, err := SelectCreateOrg(c, client, ctx.String("org"))
+	org, oName, _, err := selectOrg(c, client, ctx.String("org"), false)
 	if err != nil {
-		return handleSelectError(err, "Org selection failed.")
+		return err
 	}
 
-	var orgID *identity.ID
-	if !newOrg {
-		if org == nil {
-			return errs.NewExitError("Org not found.")
-		}
-		orgID = org.ID
-	}
-
-	team, teamName, newTeam, err := SelectCreateRole(c, client, orgID, ctx.String("role"))
+	role, roleName, newRole, err := selectRole(c, client, org, ctx.String("role"), true)
 	if err != nil {
-		return handleSelectError(err, "Role selection failed.")
-	}
-
-	var teamID *identity.ID
-	if !newTeam {
-		if org == nil {
-			return errs.NewExitError("Role not found.")
-		}
-		teamID = team.ID
+		return err
 	}
 
 	args := ctx.Args()
@@ -611,38 +575,22 @@ func createMachine(ctx *cli.Context) error {
 		name = args[0]
 	}
 
-	name, err = promptForMachineName(name, teamName)
+	name, err = promptForMachineName(name, roleName)
 	fmt.Println()
 	if err != nil {
 		return errs.NewErrorExitError(machineCreateFailed, err)
 	}
 
-	if newOrg {
-		org, err := client.Orgs.Create(c, orgName)
-		if err != nil {
-			return errs.NewErrorExitError("Could not create org", err)
-		}
-
-		orgID = org.ID
-		err = generateKeypairsForOrg(c, ctx, client, org.ID, false)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Org %s created.\n\n", orgName)
-	}
-
-	if newTeam {
-		team, err := client.Teams.Create(c, orgID, teamName, primitive.MachineTeamType)
+	if newRole {
+		role, err = client.Teams.Create(c, org.ID, roleName, primitive.MachineTeamType)
 		if err != nil {
 			return errs.NewErrorExitError("Could not create machine role", err)
 		}
 
-		teamID = team.ID
-		fmt.Printf("Machine role %s created for org %s.\n\n", teamName, orgName)
+		fmt.Printf("Machine role %s created for org %s.\n\n", roleName, oName)
 	}
 
-	machine, tokenSecret, err := createMachineByName(c, client, orgID, teamID, name)
+	machine, tokenSecret, err := createMachineByName(c, client, org.ID, role.ID, name)
 	if err != nil {
 		return err
 	}
@@ -694,9 +642,7 @@ func promptForMachineName(providedName, teamName string) (string, error) {
 		name = providedName
 	}
 
-	label := "Enter machine name"
-	autoAccept := providedName != ""
-	return NamePrompt(&label, name, autoAccept)
+	return prompts.MachineName(name, false)
 }
 
 func deriveMachineName(teamName string) (string, error) {
