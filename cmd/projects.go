@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -78,7 +79,8 @@ func listProjectsCmd(ctx *cli.Context) error {
 		fmt.Printf("%s\n", project.Body.Name)
 	}
 
-	fmt.Printf("\nOrg %s has (%d) project%s\n", org.Body.Name, len(projects), plural(len(projects)))
+	fmt.Printf("\nOrg %s has (%s) project%s\n", org.Body.Name,
+		ui.FaintString(strconv.Itoa(len(projects))), plural(len(projects)))
 
 	return nil
 }

@@ -80,7 +80,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	reminderLabel := "Reminder: "
-	ui.Hint("Don't forget to keep your password safe and secure! You can't recover your account if you lossswordd.", false, &reminderLabel)
+	ui.Hint("Don't forget to keep your password safe and secure! You can't recover your account if you lose your password.", false, &reminderLabel)
 	password, err := prompts.Password(true, nil)
 	if err != nil {
 		return err

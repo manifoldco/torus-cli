@@ -6,6 +6,47 @@ import (
 	"github.com/juju/ansiterm"
 )
 
+// Color represents 1 of 16 ANSI color sequences
+type Color int
+
+const (
+	_ Color = iota
+	// Default sets the temrinal text to its default color
+	Default
+	// Black text
+	Black
+	// Red text
+	Red
+	//Green text
+	Green
+	// Yellow text
+	Yellow
+	// Blue text
+	Blue
+	// Magenta text
+	Magenta
+	// Cyan text
+	Cyan
+	// Gray text
+	Gray
+	// DarkGray text
+	DarkGray
+	// BrightRed text
+	BrightRed
+	// BrightGreen text
+	BrightGreen
+	// BrightYellow text
+	BrightYellow
+	// BrightBlue text
+	BrightBlue
+	// BrightMagenta text
+	BrightMagenta
+	// BrightCyan text
+	BrightCyan
+	// White text
+	White
+)
+
 // BoldString returns a bolded copy of the string (ANSI escape sequenced)
 func BoldString(s string) string { return defUI.BoldString(s) }
 

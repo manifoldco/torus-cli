@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -336,8 +337,10 @@ func viewMachineCmd(ctx *cli.Context) error {
 	}
 
 	w2.Flush()
-	fmt.Println("")
 
+	fmt.Printf("\nMachine %s has (%s) token%s\n",
+		machineBody.Name, ui.FaintString(strconv.Itoa(len(machineSegment.Tokens))),
+		plural(len(machineSegment.Tokens)))
 	return nil
 }
 
@@ -432,7 +435,9 @@ func listMachinesCmd(ctx *cli.Context) error {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mID, ui.FaintString(m.Name), state, roleName, m.Created.Format(time.RFC3339))
 	}
 	w.Flush()
-	fmt.Println("")
+
+	fmt.Printf("\nOrg %s has (%s) machine%s\n", org.Body.Name,
+		ui.FaintString(strconv.Itoa(len(machines))), plural(len(machines)))
 
 	return nil
 }

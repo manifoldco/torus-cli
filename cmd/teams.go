@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -180,7 +181,8 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	w.Flush()
 
-	fmt.Printf("\nOrg %s has (%d) member%s\n", org.Body.Name, numTeams, plural(numTeams))
+	fmt.Printf("\nOrg %s has (%s) member%s\n", org.Body.Name,
+		ui.FaintString(strconv.Itoa(numTeams)), plural(numTeams))
 
 	return nil
 }
@@ -274,7 +276,8 @@ func teamMembersListCmd(ctx *cli.Context) error {
 
 	w.Flush()
 
-	fmt.Printf("\nTeam %s has (%d) member%s\n", team.Body.Name, len(memberships), plural(len(memberships)))
+	fmt.Printf("\nTeam %s has (%s) member%s\n", team.Body.Name,
+		ui.FaintString(strconv.Itoa(len(memberships))), plural(len(memberships)))
 
 	return nil
 }
