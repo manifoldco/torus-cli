@@ -21,16 +21,32 @@ Each organization name is globally unique and must adhere to the system naming s
 
 `torus orgs remove [username]` removes the specified user from the specified organization.
 
+#### Command Options
+
+`torus orgs removes` accepts the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org to remove the user from
+
 ### members
 ###### Added [v0.28.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
 `torus orgs members` lists all members within an organization, including their username, name and all the teams they belong to.
 
-**Example**
+#### Command Options
+
+`torus orgs members` accepts the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org to display users from
+
+#### Examples
 
 ```
 $ torus orgs members
-✔ Select organization: matt
+✔ Org: matt
 
     USERNAME   NAME          TEAM
 *   matt       Matt Wright   owner, admin, member
@@ -56,6 +72,14 @@ The keys are used to sign and encrypt the objects you interact with inside Torus
 
 ## worklog
 Torus worklog facilitates maintenance tasks which are generated as a result of actions taken throughout your organization (for example: a secret needs to be rotated due to a user being removed from the org).
+
+#### Command Options
+
+All worklog commands accept the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org to display users from
 
 ### list
 ###### Added [v0.12.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -86,6 +110,14 @@ Inviting a user to an organization is a multi-step process:
 3.  Admin must approve the invite and complete their induction to the org
 
 Only organization administrators (including owners) may send invitations.
+
+#### Command Options
+
+All invites commands accept the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org the invite belongs to
 
 ### send
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -127,6 +159,14 @@ Machines are a method of authenticating systems which are not owned by an indivi
 Each machine is given an ID and Token value which are synonymous with a user’s email and password. These are used to authenticate the CLI on a per-system basis.
 
 Machine roles are assigned to each machine for [access control](./access-control.md).
+
+#### Command Options
+
+All machines commands accept the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ---- | ---- 
+  --org ORG, -o ORG | TORUS_ORG | The org the machine or machine role belongs to
 
 ### create
 ###### Added [v0.15.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)

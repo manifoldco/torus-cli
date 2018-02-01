@@ -49,7 +49,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, teamsListCmd,
+					checkRequiredFlags, teamsListCmd,
 				),
 			},
 			{
@@ -61,7 +61,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, teamMembersListCmd,
+					checkRequiredFlags, teamMembersListCmd,
 				),
 			},
 			{
@@ -73,7 +73,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, teamsAddCmd,
+					checkRequiredFlags, teamsAddCmd,
 				),
 			},
 			{
@@ -85,7 +85,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, teamsRemoveCmd,
+					checkRequiredFlags, teamsRemoveCmd,
 				),
 			},
 		},
@@ -181,7 +181,7 @@ func teamsListCmd(ctx *cli.Context) error {
 
 	w.Flush()
 
-	fmt.Printf("\nOrg %s has (%s) member%s\n", org.Body.Name,
+	fmt.Printf("\nOrg %s has (%s) team%s\n", org.Body.Name,
 		ui.FaintString(strconv.Itoa(numTeams)), plural(numTeams))
 
 	return nil

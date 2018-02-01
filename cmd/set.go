@@ -23,10 +23,6 @@ var setUnsetFlags = []cli.Flag{
 		"", "TORUS_ENVIRONMENT", true),
 	newSlicePlaceholder("service, s", "SERVICE", "Use this service.",
 		"default", "TORUS_SERVICE", true),
-	newSlicePlaceholder("user, u", "USER", "Use this user.", "*", "TORUS_USER", false),
-	newSlicePlaceholder("machine, m", "MACHINE", "Use this machine.", "*", "TORUS_MACHINE", false),
-	newSlicePlaceholder("instance, i", "INSTANCE", "Use this instance.",
-		"*", "TORUS_INSTANCE", true),
 }
 
 func init() {
@@ -76,7 +72,7 @@ func setCmd(ctx *cli.Context) error {
 		return errs.NewErrorExitError("Could not set credential.", err)
 	}
 
-	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, path, name)
+	fmt.Printf("\nCredential %s has been set at %s/%s\n", name, displayPathExp(path), name)
 
 	hints.Display(hints.View, hints.Run, hints.Unset, hints.Import, hints.Export)
 	return nil
@@ -95,7 +91,7 @@ func parseSetArgs(args []string) (key string, value string, err error) {
 		return "", "", errors.New("Too many arguments were provided")
 	}
 
-	key = args[0]
+	key = strings.ToLower(args[0])
 	value = args[1]
 
 	if key == "" || value == "" {
@@ -118,7 +114,7 @@ func determinePath(ctx *cli.Context, path string) (*pathexp.PathExp, *string, er
 	var err error
 	if idx != -1 {
 		path := path[:idx]
-		pe, err = pathexp.ParsePartial(path)
+		pe, err = parsePathExp(path)
 		if err != nil {
 			return nil, nil, errs.NewExitError(err.Error())
 		}
@@ -143,18 +139,13 @@ func determinePathFromFlags(ctx *cli.Context) (*pathexp.PathExp, error) {
 		return nil, err
 	}
 
-	identity, err := deriveIdentitySlice(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	return pathexp.New(
 		ctx.String("org"),
 		ctx.String("project"),
 		ctx.StringSlice("environment"),
 		ctx.StringSlice("service"),
-		identity,
-		ctx.StringSlice("instance"),
+		[]string{"*"},
+		[]string{"*"},
 	)
 }
 

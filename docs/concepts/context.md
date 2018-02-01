@@ -7,23 +7,12 @@ Typically this information is passed through command options (also known as flag
 For example, when we want to set a secret we could use:
 
 ```
-torus set -o manifold -p guides -s www -e staging port 80 -u * -i *
+torus set -o manifold -p guides -s www -e staging port 80
 ```
 
 Typing each of these command options for every interaction becomes a pain, so the Torus CLI uses context to help infer which resource you're interacting with.
 
 Context is a cascade of values which ultimately determine which resource you're acting upon. Starting with system defaults, then your linked context followed by any command options.
-
-### System default
-
-Each command has its own system default values, where applicable. A definition of the command options can be found either through `torus help` or in the command's documentation.
-
-For example, with `torus set`:
-
-Command Option | Default Value
----- | ----
-Identity | Currently authenticated username or machine name
-Instance | `*`
 
 ### Preference defaults
 

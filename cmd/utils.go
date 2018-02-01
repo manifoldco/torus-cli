@@ -2,12 +2,16 @@ package cmd
 
 import (
 	"context"
+	"errors"
+	"strings"
 
 	"github.com/urfave/cli"
 
 	"github.com/manifoldco/torus-cli/api"
+	"github.com/manifoldco/torus-cli/apitypes"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/primitive"
 	"github.com/manifoldco/torus-cli/prompts"
 )
@@ -204,4 +208,60 @@ func argCheck(ctx *cli.Context, possible, required int) error {
 	}
 
 	return nil
+}
+
+func displayPathExp(pe *pathexp.PathExp) string {
+	if pe.Identities.String() == "*" && pe.Instances.String() == "*" {
+		return strings.Join([]string{"", pe.Org.String(), pe.Project.String(),
+			pe.Envs.String(),
+			pe.Services.String(),
+		}, "/")
+	}
+
+	return pe.String()
+}
+
+func displayResourcePath(path string) (string, error) {
+	idx := strings.LastIndex(path, "/")
+	if idx == -1 {
+		return "", errors.New("invalid resource path provided")
+	}
+
+	pe, err := parsePathExp(path[:idx])
+	if err != nil {
+		return "", err
+	}
+
+	return displayPathExp(pe) + "/" + path[idx+1:], nil
+}
+
+func parsePathExp(path string) (*pathexp.PathExp, error) {
+	parts := strings.Split(path, "/")
+	if parts[0] != "" {
+		return nil, errors.New("path expressions must start with '/'")
+	}
+
+	parts = parts[1:] // meove leading empty section
+
+	switch len(parts) {
+	case 5:
+		if parts[4] == "**" {
+			return pathexp.Parse(path)
+		}
+
+		parts = append(parts, "*", "*")
+		path = "/" + strings.Join(parts, "/")
+
+		return pathexp.Parse(path)
+	default:
+		return pathexp.ParsePartial(path)
+	}
+}
+
+func deriveIdentity(session *api.Session) string {
+	if session.Type() == apitypes.MachineSession {
+		return "machine-" + session.Username()
+	}
+
+	return session.Username()
 }

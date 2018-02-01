@@ -7,30 +7,21 @@ The path begins with a forward slash and has seven slash-delimited segments, mos
 - Project
 - Environment
 - Service
-- Identity
-- Instance
 - Secret  
 
 A complete path:
 
 ```
-/org/project/environment/service/identity/instance/secret
+/org/project/environment/service/secret
 ```
 
-Some segments are unique to the path:
-
-Name | Description | Default value
----- | ---- | ----
-Identity | A globally unique username or machine name | Current authenticated username or machine name
-Instance | Unique ID of the accessing process | `*`
 **For example:**
-`/manifoldco/torus-cli/production/docs/cdn/1/token`
+`/manifoldco/torus-cli/production/docs/token`
 
-Commands that take advantage of the path:
+Commands that accept the path:
 
 - [set](../commands/secrets.md#set)
 - [unset](../commands/secrets.md#unset)
-- [ls](../commands/secrets.md#ls)
 - [allow](../commands/access-control.md#allow)
 - [deny](../commands/access-control.md#deny)
 
@@ -40,7 +31,7 @@ Path segments may contain wildcards (with the exception of Organization and Proj
 Wildcards support prefixes, so that you can namespace objects:
 
 ```
-/org/project/env-*/service/identity/instance/secret
+/org/project/env-*/service/secret
 ```
 
 So the value of "secret" is available to all applicable environments that match the wildcard such as: "env-1", "env-development", "env-ironment".
@@ -53,7 +44,7 @@ The following paths are equivalent when supplied to a command:
 
 ```
 /org/project/**/name
-/org/project/*/*/*/*/name
+/org/project/*/*/name
 ```
 
 ## Alternations
@@ -72,11 +63,11 @@ An alternation for the names "one" and "two" is:
 The following would make "secret" available to the "development" and "staging" environments: 
 
 ```
-/org/project/[development|staging]/service/identity/instance/secret
+/org/project/[development|staging]/service/secret
 ```
 
 We can also use wildcards in a segment making "secret" available to the "development" as well as "dev-\*” environments (such as "dev-jane" and "dev-john"):
 
 ```
-/org/project/[dev-*|development]/service/identity/instance/secret
+/org/project/[dev-*|development]/service/secret
 ```

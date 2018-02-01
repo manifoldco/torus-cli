@@ -7,17 +7,13 @@ import (
 	"strings"
 
 	"github.com/urfave/cli"
-
-	"github.com/manifoldco/torus-cli/api"
-	"github.com/manifoldco/torus-cli/errs"
 )
 
 // Standard flags with generic descriptions
 var (
-	stdOrgFlag      = orgFlag("Use this organization.", true)
-	stdProjectFlag  = projectFlag("Use this project.", true)
-	stdEnvFlag      = envFlag("Use this environment.", true)
-	stdInstanceFlag = instanceFlag("Use this instance.", true)
+	stdOrgFlag     = orgFlag("Use this organization.", true)
+	stdProjectFlag = projectFlag("Use this project.", true)
+	stdEnvFlag     = envFlag("Use this environment.", true)
 
 	stdAutoAcceptFlag = cli.BoolFlag{
 		Name:  "yes, y",
@@ -71,19 +67,9 @@ func serviceSliceFlag(usage, value string, required bool) cli.Flag {
 	return newSlicePlaceholder("service, s", "SERVICE", usage, value, "TORUS_SERVICE", required)
 }
 
-// userFlag creates a new --user cli.Flag with custom usage string.
-func userFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("user, u", "USER", usage, "", "TORUS_USER", required)
-}
-
 // machineFlag creates a new --machine cli.Flag with custom usage string.
 func machineFlag(usage string, required bool) cli.Flag {
 	return newPlaceholder("machine, m", "MACHINE", usage, "", "TORUS_MACHINE", required)
-}
-
-// instanceFlag creates a new --instance cli.Flag with custom usage string.
-func instanceFlag(usage string, required bool) cli.Flag {
-	return newPlaceholder("instance, i", "INSTANCE", usage, "1", "TORUS_INSTANCE", required)
 }
 
 // roleFlag creates a new --role cli.Flag with custom usage string.
@@ -197,81 +183,4 @@ func prefixFor(name string) (prefix string) {
 	}
 
 	return
-}
-
-func identityString(identityType, identity string) (string, error) {
-	if identityType == "user" {
-		return identity, nil
-	}
-
-	if strings.HasPrefix(identity, "machine-") {
-		return "", errs.NewExitError(
-			"Do not prepend 'machine-' when using --machine")
-	}
-
-	return "machine-" + identity, nil
-}
-
-func deriveIdentity(ctx *cli.Context, session *api.Session) (string, error) {
-	if ctx.String("user") != "" && ctx.String("machine") != "" {
-		return "", errs.NewExitError(
-			"You can only supply --user or --machine, not both.")
-	}
-
-	identity := ""
-	if ctx.String("user") != "" {
-		identity = ctx.String("user")
-	}
-
-	var err error
-	if ctx.String("machine") != "" {
-		identity, err = identityString("machine", ctx.String("machine"))
-		if err != nil {
-			return "", err
-		}
-	}
-
-	if identity == "" {
-		identity, err = identityString(string(session.Type()), session.Username())
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return identity, nil
-}
-
-// Derives a slice of identity segments for us in building a PathExp object.
-func deriveIdentitySlice(ctx *cli.Context) ([]string, error) {
-	users := ctx.StringSlice("user")
-	machines := ctx.StringSlice("machine")
-
-	var identities []string
-	for _, u := range users {
-		identity, err := identityString("user", u)
-		if err != nil {
-			return identities, err
-		}
-
-		if identity == "*" {
-			return []string{"*"}, nil
-		}
-
-		identities = append(identities, identity)
-	}
-
-	for _, m := range machines {
-		identity, err := identityString("machine", m)
-		if err != nil {
-			return identities, err
-		}
-
-		if identity == "*" {
-			return []string{"*"}, nil
-		}
-
-		identities = append(identities, identity)
-	}
-
-	return identities, nil
 }

@@ -85,5 +85,33 @@ func TestTeamPrecedenceSort(t *testing.T) {
 	}
 
 	gm.Expect(foundOrder).Should(gm.Equal(expectedOrder))
+}
 
+func TestPathExpParsing(t *testing.T) {
+	gm.RegisterTestingT(t)
+
+	t.Run("handles **", func(t *testing.T) {
+		gm.RegisterTestingT(t)
+
+		pe, err := parsePathExp("/org/silly/**")
+		gm.Expect(err).To(gm.BeNil())
+		gm.Expect(pe.String()).To(gm.Equal("/org/silly/*/*/*/*"))
+	})
+
+	t.Run("handles no path with instance or identity", func(t *testing.T) {
+		gm.RegisterTestingT(t)
+
+		pe, err := parsePathExp("/org/silly/env/service")
+		gm.Expect(err).To(gm.BeNil())
+		gm.Expect(pe.String()).To(gm.Equal("/org/silly/env/service/*/*"))
+	})
+
+	t.Run("handles full path", func(t *testing.T) {
+		gm.RegisterTestingT(t)
+
+		path := "/org/silly/env/service/identity/instance"
+		pe, err := parsePathExp(path)
+		gm.Expect(err).To(gm.BeNil())
+		gm.Expect(pe.String()).To(gm.Equal(path))
+	})
 }

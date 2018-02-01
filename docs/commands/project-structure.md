@@ -4,6 +4,14 @@ Torus secrets are part of a hierarchy, which is represented by a [path](../conce
 ## projects
 A project is a grouping of services, environments and secrets typically synonymous with a codebase. It is the first level of segmentation inside of an organization.
 
+#### Command Options
+
+All projects commands accept the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org the project belongs to
+
 ### create
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
@@ -23,6 +31,15 @@ A service is an entity synonymous with an application process.
 
 With the advent of micro-service architectures, projects are having more than one application process and in a lot of cases these need unique configuration.
 
+#### Command Options
+
+All services commands accept the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org the service belongs to
+  --project PROJECT, -p PROJECT | TORUS_PROJECT | The project the service belongs to
+
 ### create
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
 
@@ -41,6 +58,15 @@ An environment is a grouping of services that live within a project which have t
 By default every user in an organization is given a `dev-$username` environment (where $username is the user’s profile username). This is synonymous will a user’s local environment.
 
 Users are also given access to share credentials across all users using the `dev-*` environment. This is a paradigm that exists through the default [access controls](./access-control.md) (and doesn’t actually exist as an environment object for the organization).
+
+#### Command Options
+
+All envs commands accept the following flags:
+
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org the environment belongs to
+  --project PROJECT, -p PROJECT | TORUS_PROJECT | The project the environment belongs to
 
 ### create
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)

@@ -4,6 +4,18 @@
 
 _Date_
 
+**Breaking Changes**
+
+The concept of instance and identity as a part of the secret path has been
+deprecated. Existing secrets set with non `*` identity and instance values can
+still be set and unset by providing the full 7 segment path (e.g. `torus set
+/org/project/environment/service/identity/instance/secret`).
+
+Torus will only display the full 7 segment path if identity or instance is a
+non `*` value (e.g. `/org/project/environment/service/machine-api/1/secret`).
+In all other cases, a 5 segment path will be displayed (e.g.
+`/org/project/environment/service/secret`).
+
 **Notable Changes**
 
 - The status of your account is now displayed via `torus profile view`
@@ -14,6 +26,20 @@ _Date_
 - The experimental and hidden `policies test` command has been removed.
 - Added spinners to represent progress. This means fewer lasting print-outs
   for certain commands.
+- The `user`, `machine`, and `instance` flags have been removed from `torus
+  set`, `torus unset`, `torus import`, `torus export`, and `torus view`.
+- Instance and identity values are no longer displayed via `torus status`.
+- `torus allow` and `torus deny` now accept a 5 segment path along with the
+  deprecated 7 path version (e.g. `torus allow crudl
+  /org/project/env/service/secret <team>`).
+- `torus policies view` will only display the full 7 segment path if the
+  `identity` or `identity` components are not a `*`.
+- `torus view` and `torus list` will only display the full 7 segment path in
+  verbose mode if the `instance` and `identity` components are not a `*`.
+
+**Fixes**
+
+- `torus list` did not display secrets which were not set with an instance of `*`.
 
 ## v0.29.0
 

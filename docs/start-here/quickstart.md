@@ -36,17 +36,18 @@ The `link` command will prompt you to select or create an organization and proje
 
 ```sh
 $ torus link
-? Select organization:
-+  Create a new organization
+? Select an org:
++  Create a new org
  ☞ skywalker [personal]
 ```
 
 ```sh
-✔ Select organization: skywalker
-?  Select project: knotty-buoy
+✔ Org: skywalker
+✔ Project: knotty-buoy
 Project knotty-buoy created.
 
 This directory and its subdirectories have been linked to:
+
 Org:     skywalker
 Project: knotty-buoy
 
@@ -63,7 +64,7 @@ A typical application includes at least one service. In a simple app, a service 
 $ torus services list
   Services
   default
-  
+
   Project /skywalker/knotty-buoy has (1) service
 ```
 
@@ -85,21 +86,21 @@ Use `torus set` to encrypt and store two mission-critical secrets.
 ```sh
 $ torus set HELLO 👋
 
-Credential hello has been set at /skywalker/knotty-buoy/dev-skywalker/default/*/1/hello
+Credential hello has been set at /skywalker/knotty-buoy/dev-skywalker/default/hello
 ```
 
 ```
 $ torus set WORLD 🌎
 
-Credential world has been set at /skywalker/knotty-buoy/dev-skywalker/default/*/1/world
+Credential world has been set at /skywalker/knotty-buoy/dev-skywalker/default/world
 ```
 
 Decrypt and view your new secrets.
 
 ```sh
 $ torus view
-HELLO=👋
-WORLD=🌎
+HELLO = 👋
+WORLD = 🌎
 ```
 
 > 😂  &nbsp;Emojis do not make your secrets more secure, but they do make them more entertaining.
@@ -142,11 +143,13 @@ and member. The (*) denotes teams to which we belong.
 
 ```sh
 $ torus teams list
-* owner  [system]
-* admin  [system]
-* member [system]
 
-(*) member
+   Team       Type
+*  owner      system
+*  admin      system
+*  member     system
+
+Org skywalker has (3) teams
 ```
 
 When a user joins your organization, they become a member and are added to the `member` team, which
@@ -200,9 +203,9 @@ Specify the shared `dev-*` environment instead, this is an environment that ever
 members of your organization has access to.
 
 ```sh
-$ torus set PORT 3001 -e dev-*
+$ torus set -e dev-* PORT 3001
 
-Credential port has been set at /skywalker/knotty-buoy/dev-*/default/*/1/port
+Credential port has been set at /skywalker/knotty-buoy/dev-*/default/port
 ```
 
 `PORT` is now a shared secret with a value of `3001` and is available to any member of our
@@ -210,9 +213,9 @@ organization.
 
 ```sh
 $ torus view
-HELLO=👋
-WORLD=🌎
-PORT=3001
+HELLO = 👋
+WORLD = 🌎
+PORT = 3001
 ```
 
 This is a great way to provide a set of default development secrets for an application, as the `run` command
@@ -243,8 +246,8 @@ Create a new staging environment using the `envs create` command.
 
 ```sh
 $ torus envs create staging
-✔ Org name:         skywalker
-✔ Project name:     knotty-buoy
+✔ Org:         skywalker
+✔ Project:     knotty-buoy
 ✔ Environment name: staging
 
 Environment staging created.
@@ -260,8 +263,8 @@ During the create process we will be asked to select or create a team, we create
 
 ```sh
 $ torus machines create api
-✔ Org name: skywalker
-✔ Select Machine Team: api
+✔ Org: skywalker
+✔ Machine Team: api
 ✔ Enter machine name: api-hw1xd09x
 
 You will only be shown the secret once, please keep it safe.
@@ -277,13 +280,13 @@ We make note of the Token ID and Token Secret as we’ll be using those later wh
 Next, we want to restrict the access that our API machines have. Using `torus allow` we’re able to specify access restrictions for our API machines.
 
 ```sh
-$ torus allow rl /skywalker/knotty-buoy/staging/default/*/*/* api
+$ torus allow rl /skywalker/knotty-buoy/staging/default/* api
 Policy generated and attached to the api team.
 
 
 Effect:    allow
 Action(s): read, list
-Resource:  /skywalker/knotty-buoy/staging/default/*/*/*
+Resource:  /skywalker/knotty-buoy/staging/default/*
 
 
 Necessary permissions (read, list) have also been granted

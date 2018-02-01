@@ -70,7 +70,7 @@ func importCmd(ctx *cli.Context) error {
 	for _, cred := range creds {
 		name := (*cred.Body).GetName()
 		pe := (*cred.Body).GetPathExp()
-		fmt.Printf("Credential %s has been set at %s/%s\n", name, pe, name)
+		fmt.Printf("Credential %s has been set at %s/%s\n", name, displayPathExp(pe), name)
 	}
 
 	hints.Display(hints.View, hints.Set)
