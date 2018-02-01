@@ -46,7 +46,7 @@ func unsetCmd(ctx *cli.Context) error {
 		name = *cname
 	}
 
-	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", pe.String(), name)
+	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", displayPathExp(pe), name)
 
 	success, err := prompts.Confirm(nil, &preamble, true, true)
 	if err != nil {
@@ -69,7 +69,7 @@ func unsetCmd(ctx *cli.Context) error {
 	}
 	s.Stop()
 
-	output := fmt.Sprintf("\nCredential %s has been unset at %s/%s.", name, pe, name)
+	output := fmt.Sprintf("\nCredential %s has been unset at %s/%s.", name, displayPathExp(pe), name)
 	fmt.Println(output)
 
 	return nil

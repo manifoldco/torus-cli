@@ -22,10 +22,7 @@ func init() {
 			stdOrgFlag,
 			stdProjectFlag,
 			stdEnvFlag,
-			userFlag("Use this user.", false),
-			machineFlag("Use this machine.", false),
 			serviceFlag("Use this service.", "default", true),
-			stdInstanceFlag,
 		},
 		Action: chain(
 			ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,

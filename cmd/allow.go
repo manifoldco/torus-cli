@@ -146,10 +146,15 @@ func doCrudl(ctx *cli.Context, effect primitive.PolicyEffect, extra primitive.Po
 	fmt.Fprintf(w, "Description:\t%s\n", description)
 
 	for _, s := range res.Body.Policy.Statements {
+		rpath, err := displayResourcePath(s.Resource)
+		if err != nil {
+			return errs.NewErrorExitError("Could not parse resource path", err)
+		}
+
 		fmt.Fprintln(w, "")
 		fmt.Fprintf(w, "Effect:\t%s\n", s.Effect.String())
 		fmt.Fprintf(w, "Action(s):\t%s\n", s.Action.String())
-		fmt.Fprintf(w, "Resource:\t%s\n", s.Resource)
+		fmt.Fprintf(w, "Resource:\t%s\n", rpath)
 	}
 	w.Flush()
 
@@ -176,7 +181,7 @@ func parseRawPath(rawPath string) (*pathexp.PathExp, *string, error) {
 		return nil, nil, errs.NewExitError("Invalid secret name " + secret)
 	}
 
-	pe, err := pathexp.Parse(path)
+	pe, err := parsePathExp(path)
 	if err != nil {
 		return nil, nil, errs.NewErrorExitError("Invalid path expression", err)
 	}

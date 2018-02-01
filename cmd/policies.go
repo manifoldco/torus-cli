@@ -36,7 +36,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, listPoliciesCmd,
+					checkRequiredFlags, listPoliciesCmd,
 				),
 			},
 			{
@@ -48,7 +48,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, viewPolicyCmd,
+					checkRequiredFlags, viewPolicyCmd,
 				),
 			},
 
@@ -61,7 +61,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, detachPolicyCmd,
+					checkRequiredFlags, detachPolicyCmd,
 				),
 			},
 
@@ -74,7 +74,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, attachPolicyCmd,
+					checkRequiredFlags, attachPolicyCmd,
 				),
 			},
 
@@ -88,7 +88,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, deletePolicyCmd,
+					checkRequiredFlags, deletePolicyCmd,
 				),
 			},
 		},
@@ -448,7 +448,12 @@ func viewPolicyCmd(ctx *cli.Context) error {
 	w.Flush()
 
 	for _, stmt := range p.Statements {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", stmt.Effect.String(), stmt.Action.ShortString(), stmt.Resource)
+		rpath, err := displayResourcePath(stmt.Resource)
+		if err != nil {
+			return errs.NewErrorExitError("Could not parse resource path", err)
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%s\n", stmt.Effect.String(), stmt.Action.ShortString(), rpath)
 	}
 	w.Flush()
 

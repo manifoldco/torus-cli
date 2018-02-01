@@ -7,17 +7,16 @@ Torus exposes your decrypted secrets to your process through environment variabl
 
 ### Command Options
 
-  Option | Description
-  ---- | ----
-  --org, ORG, -o ORG | Executing the command for the specified org.
-  --project PROJECT, -p PROJECT | Executing the command for the specified project.
-  --environment ENV, -e ENV | Executing the command for the specified environment.
-  --service SERVICE, -s SERVICE | Execute the command for the specified environment. (default: default)
-  --user USER, -u USER | Execute the command for the specified user identity. (default: *)
-  --machine MACHINE, -m MACHINE | Execute the command for the specified machine identity. (default: *)
-  --instance INSTANCE, -i INSTANCE | Execute the command for the specified instance identity. (default: *)
+  Option | Environmant Variable | Description
+  ---- | ---- | ----
+  --org, ORG, -o ORG | TORUS_ORG | Executing the command for the specified org.
+  --project PROJECT, -p PROJECT | TORUS_PROJECT | Executing the command for the specified project.
+  --environment ENV, -e ENV | TORUS_ENVIRONMENT | Executing the command for the specified environment.
+  --service SERVICE, -s SERVICE | TORUS_SERVICE | Execute the command for the specified environment. (default: default)
 
-The `--environment`, `--service`, `--user`, `--machine`, and `--instance` flags can be specified many times when setting, unsetting, or importing secrets.
+The `--environment`, and `--service` flags can be specified many times when setting, unsetting, or importing secrets.
+
+By default, the environment will be set to the user's development environment for the specified (or linked) project (e.g. if the user's username is `joe` the environment will be `dev-joe`). An environment must always be supplied for a machine.
 
 ## set
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -35,7 +34,7 @@ This is how all secrets are stored in Torus.
 # Setting the port for the production auth service inside myorg's api project.
 $ torus set -o myorg -p api -e production -s auth PORT 3000
 
-Credential PORT has been set at /myorg/api/production/auth/*/*/PORT
+Credential port has been set at /myorg/api/production/auth/port
 ```
 
 **Using flags inside a linked directory**
@@ -46,13 +45,7 @@ You can link a directory to an org and project using the [`torus link`](./projec
 # Setting the port for the auth service in staging
 $ torus set -e staging -s auth PORT 8080
 
-Credentials retrieved
-Keypairs retrieved
-Encrypting key retrieved
-Credential encrypted
-Completed Operation
-
-Credential PORT has been set at /myorg/api/staging/auth/*/*/PORT
+Credential port has been set at /myorg/api/staging/auth/port
 ```
 
 **Using multiple flags to share a secret between environments**
@@ -63,13 +56,7 @@ You can specify the environment, service, user, machine, and instance flags many
 # Setting the same port for production and staging for the auth service
 $ torus set -e production -e staging -s auth PORT 8080
 
-Credentials retrieved
-Keypairs retrieved
-Encrypting key retrieved
-Credential encrypted
-Completed Operation
-
-Credential PORT has been set at /myorg/api/[production|staging]/auth/*/*/PORT
+Credential port has been set at /myorg/api/[production|staging]/auth/port
 ```
 
 **Setting a secret with a `*` value**
@@ -78,15 +65,9 @@ You can set a secret to be shared across all environments, or services by specif
 
 ```bash
 # Setting the same port across all environments for the auth service
-$ torus set -e * -s auth PORT 8080
+$ torus set -e * -s auth port 8080
 
-Credentials retrieved
-Keypairs retrieved
-Encrypting key retrieved
-Credential encrypted
-Completed Operation
-
-Credential PORT has been set at /myorg/api/[production|staging]/auth/*/*/PORT
+Credential port has been set at /myorg/api/*/auth/port
 ```
 
 ## unset
@@ -94,14 +75,30 @@ Credential PORT has been set at /myorg/api/[production|staging]/auth/*/*/PORT
 
 `torus unset <name|path>` unsets the value for the specified name (or [path](../concepts/path.md)).
 
-**Example**
+The explicit values used to set the secret must be provided to unset it.
+
+#### Examples
+
+**Unsetting a secret set using default values**
 
 ```bash
 $ torus unset port
-You are about to unset "/myorg/myproject/dev-matt/default/*/*/port". This cannot be undone.
+You are about to unset "/myorg/myproject/dev-matt/default/port". This cannot be undone.
 ✔ Do you wish to continue? [y/N] y
 
-Credential port has been unset at /myorg/myproject/dev-matt/default/*/*/port.
+Credential port has been unset at /myorg/myproject/dev-matt/default/port.
+```
+
+**Unsetting a secret by providing its full path**
+
+It's easiest to unset a secret by providing its full path. You can get a secrets full path by passing the `-v, --verbose` flag to [`torus view`](#view) or [`torus list`](#list).
+
+```bash
+$ torus unset /myorg/myproject/dev-matt/default/port
+You are about to unset "/myorg/myproject/dev-matt/default/port". This cannot be undone.
+✔ Do you wish to continue? [y/N] y
+
+Credential port has been unset at /myorg/myproject/dev-matt/default/port.
 ```
 
 ## import
@@ -118,8 +115,8 @@ PORT="4000"
 
 $ torus import -e production prod.env
 
-Credential domain has been set at /myorg/myproject/production/default/*/*/domain
-Credential port has been set at /myorg/myproject/production/default/*/*/port
+Credential domain has been set at /myorg/myproject/production/default/domain
+Credential port has been set at /myorg/myproject/production/default/port
 ```
 
 ## export
@@ -127,35 +124,53 @@ Credential port has been set at /myorg/myproject/production/default/*/*/port
 
 `torus export [file-path]` or using stdout redirection (e.g. `torus export -e production > config.env`) exports the secrets for a specific project, environment, and service to a file or stdout. The output format can be specified using the `--format, -f` flag supporting `env`, `bash`, `powershell`, `cmd` (windows command prompt), `fish`, `json`, `tfvars` (for exporting to [terraform](https://terraform.io) variable files).
 
-**Examples**
+#### Examples
 
 All examples assumed the command is ran inside a [linked](./project-structure.md#link) directory.
 
+**Exporting secrets from a specific environment to stdin**
+
 ```bash
-# Exporting secrets from a specific environment to stdin
 $ torus export -e prod
 MYSQLDB_URL="mysql://user:password@host.com:3306/db"
+```
 
-# Exporting secrets from a specific environment to stdin for powershell
+**Exporting secrets from a specific environment to stdout for powershell**
+
+```bash
 $ torus export -e prod
 $Env:MYSQLDB_URL = "mysql://user:password@host.com:3306/db"
+```
 
-# Exporting secrets from a specific environment piped to a file
+**Exporting secrets from a specific environment piped to a file**
+
+```bash
 $ torus export -e prod > config.env
+$ cat config.env
+MYSQLDB_URL="mysql://user:password@host.com:3306/db"
+```
 
-# Exporting secrets from a specific environment to a file
+**Exporting secrets from a specific environment to a file**
+
+```bash
 $ torus export -e prod config.env
+$ cat config.env
+MYSQLDB_URL="mysql://user:password@host.com:3306/db"
+```
 
-# Exporting secrets from a specific environment into a bash shell
+**Exporting secrets from a specific environment into a bash shell**
+
+```bash
 $ eval "$(torus export -e prod -f bash)"
 $ echo $MYSQLDB_URL
 mysql://user:password@host.com:3306/db
+```
 
-# Exporting secrets from a specific environment and service into a powershell
-$ torus export -e prod -s api -f powershell
+**Exporting secrets to a tfvars file**
 
-# Exporting secrets to a tfvars file
-$ torus export -e prod -s api -f tfvars secrets.tfvars && terraform plan -var-file=secrets.tfvars
+```bash
+$ torus export -e prod -s api -f tfvars secrets.tfvars
+$ terraform plan -var-file=secrets.tfvars
 ```
 
 ## view
@@ -180,9 +195,18 @@ By prefixing your process execution with `torus run` we are able to fetch, decry
 
 To ensure that your command’s arguments and options are passed correctly you may need to separate your `torus run` definition from your command definition with `--`, for example:
 
+#### Examples
+
+**Injecting secrets into a process using flags**
+
 ```
-# Inject secrets into the process from the production environment and www service.
-$ torus run -e production -s www -- node ./bin/www --app api
+$ torus run -e production -s www -- node ./bin/www --log_level=error
+```
+
+**Injecting secrets into a process using environment variables**
+
+```
+$ TORUS_ENVIRONMENT=production TORUS_SERVICE=www torus run -- node ./bin/www --log_level=error
 ```
 
 ## list
@@ -192,73 +216,90 @@ $ torus run -e production -s www -- node ./bin/www --app api
 
 ### Command Options
 
-  Option | Description
-  ---- | ----
-  --org, -o | Required flag to specify org.
-  --project, -p | Required flag to specify project.
-  --environment, -e | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
-  --service, -s | Specify service filter(s) for displayed secrets. To specify multiple services, pass multiple flags (eg. `torus list -s ser1 -s ser2`). This flag is optional.
-  --verbose, -v | Show which type of path is being displayed, shortcut for
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org, -o | TORUS_ORG | Required flag to specify org.
+  --project, -p | TORUS_PROJECT | Required flag to specify project.
+  --environment, -e | TORUS_ENVIRONMENT | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
+  --service, -s | TORUS_SERVICE | Specify service filter(s) for displayed secrets. To specify multiple services, pass multiple flags (eg. `torus list -s ser1 -s ser2`). This flag is optional.
+  --verbose, -v | TORUS_VERBOSE | Show which type of path is being displayed, shortcut for
 
 ### Examples
 
-List all secrets in a project:
+**List all secrets inside a project from a linked directory**
+
 ```
 $ torus list
-/org/project/
-    env1/
-        ser1/
-            secret1
-            secret2
-        ser2/
-            secret3
-    env2/
-        ser1/
-            secret1
-```
-
-Find the location of a particular secret:
-```
-$ torus list secret1
-/org/project/
-    env1/
-        ser1/
-            secret1
-        ser2/
-    env2/
-        ser1/
-            secret1
-```
-
-List all secrets in a specific environment:
-```
-$ torus list -e env2
-/org/project/
-    env2/
-        ser1/
-            secret1
-```
-
-List all secrets in a specific service:
-```
-$ torus list -s ser1
-/org/project/
-    env1/
-        ser1/
-            secret1
-    env2/
-        ser1/
-            secret1
-```
-
-Filter down to environment "env1" and service "ser1", print in verbose mode:
-```
-$ torus list -e env1 -s ser1 -v
-
-org: org
-project: project
 
 env1/
     ser1/
-        secret1   (/org/project/env1/ser1/*/*/secret1)
+        secret1
+        secret2
+    ser2/
+        secret3
+env2/
+    ser1/
+        secret1
+```
+
+**List all secrets inside a project using flags**
+
+```bash
+$ torus list -o myorg -p api
+
+env1/
+    ser1/
+        secret1
+        secret2
+    ser2/
+        secret3
+env2/
+    ser1/
+        secret1
+```
+
+**List all instances of a secret from a linked directory**
+
+```bash
+$ torus list secret1
+
+env1/
+    ser1/
+        secret1
+    ser2/
+env2/
+    ser1/
+        secret1
+```
+
+**List all secrets in a specific environment from a linked directory**
+
+```bash
+$ torus list -e env2
+
+env2/
+    ser1/
+        secret1
+```
+
+**List all secrets in a specific service from a linked directory**
+
+```bash
+$ torus list -s ser1
+env1/
+    ser1/
+        secret1
+env2/
+    ser1/
+        secret1
+```
+
+**List all secrets in a specific environment for a specific service in verbose mode from a linked directory**
+
+```bash
+$ torus list -e env1 -s ser1 -v
+
+env1/
+    ser1/
+        secret1   (/org/project/env1/ser1/secret1)
 ```

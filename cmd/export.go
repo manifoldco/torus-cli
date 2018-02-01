@@ -36,9 +36,6 @@ func init() {
 			stdProjectFlag,
 			stdEnvFlag,
 			serviceFlag("Use this service.", "default", true),
-			userFlag("Use this user.", false),
-			machineFlag("Use this machine.", false),
-			stdInstanceFlag,
 			formatFlag(formatValues[0], formatDescription),
 		},
 		Action: chain(

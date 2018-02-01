@@ -7,6 +7,7 @@ Users in Torus can be grouped into Teams inside an Organization. These teams hav
 Each command within this group must be supplied an Organization flag using `--org <name>`, or `-o <name>` for short. The organization can also be supplied by executing these commands within a [linked directory](./project-structure.md#link).
 
 Organizations have three default teams:
+
 - Member
 - Admin
 - Owner
@@ -19,9 +20,9 @@ Only users who are a member of the "admin" team can manage resources within an o
 
 All teams commands accept the following flags:
 
-  Option | Description
-  ---- | ----
-  --org, ORG, -o ORG | The org the team or teams belong to
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org, ORG, -o ORG | TORUS_ORG | The org the team or teams belong to
 
 ### create
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -86,9 +87,9 @@ Each command within this group must be supplied an Organization flag using `--or
 
 All policies commands accept the following flags:
 
-  Option | Description
-  ---- | ----
-  --org, ORG, -o ORG | The org the policy or policies belong to
+  Option | Environment Variable | Description
+  ---- | ---- | ----
+  --org, ORG, -o ORG | TORUS_ORG | The org the policy or policies belong to
 
 ### list
 ###### Added [v0.1.0](https://github.com/manifoldco/torus-cli/blob/master/CHANGELOG.md)
@@ -146,11 +147,11 @@ If a name (`--name` flag) is not provided, one will be automatically generated.
 
 The `allow` command accepts the following flags:
 
-  Option | Description
-  ----   | -----
-  --org ORG, -o ORG | The org to generate the policy for
-  --name NAME, -n NAME | The name to give the generated policy (e.g. allow-prod-env)
-  --description DESCRIPTION, -d DESCRIPTION | A sentence or two explaining the purpose of the policy
+  Option | Environment Variable | Description
+  ----   | ----- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org to generate the policy for
+  --name NAME, -n NAME | TORUS_NAME | The name to give the generated policy (e.g. allow-prod-env)
+  --description DESCRIPTION, -d DESCRIPTION | TORUS_DESCRIPTION | A sentence or two explaining the purpose of the policy
 
 **Example**
 
@@ -158,7 +159,7 @@ The `allow` command accepts the following flags:
 # Create a policy allowing it's subjects to read secrets from prod environment
 # in the api project which belongs to the myorg organization and attach it to
 # the api-prod-machines machine role.
-$ torus allow -n read-api-prod-env rl /myorg/api/prod/*/*/*/* api-prod-machines
+$ torus allow -n read-api-prod-env rl /myorg/api/prod/** api-prod-machines
 ```
 
 ## deny
@@ -174,9 +175,8 @@ If a name (`--name` flag) is not provided, one will be automatically generated.
 
 The `deny` command accepts the following flags:
 
-  Option | Description
-  ----   | -----
-  --org ORG, -o ORG | The org to generate the policy for
-  --name NAME, -n NAME | The name to give the generated policy (e.g. allow-prod-env)
-  --description DESCRIPTION, -d DESCRIPTION | A sentence or two explaining the purpose of the policy
-
+  Option | Environment Variable | Description
+  ----   | ----- | ----
+  --org ORG, -o ORG | TORUS_ORG | The org to generate the policy for
+  --name NAME, -n NAME | TORUS_NAME | The name to give the generated policy (e.g. allow-prod-env)
+  --description DESCRIPTION, -d DESCRIPTION | TORUS_DESCRIPTION | A sentence or two explaining the purpose of the policy

@@ -14,6 +14,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/errs"
 	"github.com/manifoldco/torus-cli/hints"
+	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/ui"
 )
 
@@ -27,9 +28,6 @@ func init() {
 			projectFlag("Use this project.", false),
 			stdEnvFlag,
 			serviceFlag("Use this service.", "default", true),
-			userFlag("Use this user.", false),
-			machineFlag("Use this machine.", false),
-			stdInstanceFlag,
 			cli.BoolFlag{
 				Name:  "verbose, v",
 				Usage: "Lists the sources of the secrets (shortcut for --format verbose)",
@@ -54,13 +52,13 @@ func viewCmd(ctx *cli.Context) error {
 
 	w := os.Stdout
 
-	fmt.Fprintf(w, "Credential path: %s\n\n", path)
+	fmt.Fprintf(w, "Credential path: %s\n\n", displayPathExp(path))
 
 	tw := ansiterm.NewTabWriter(w, 2, 0, 2, ' ', 0)
 	for _, secret := range secrets {
 		value := (*secret.Body).GetValue().String()
 		name := (*secret.Body).GetName()
-		spath := (*secret.Body).GetPathExp().String() + "/" + name
+		spath := displayPathExp((*secret.Body).GetPathExp()) + "/" + name
 
 		if verbose {
 			if strings.Contains(value, " ") {
@@ -84,10 +82,10 @@ func viewCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error) {
+func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, *pathexp.PathExp, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
 	client := api.NewClient(cfg)
@@ -95,35 +93,41 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, string, error)
 
 	session, err := client.Session.Who(c)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
 
-	identity, err := deriveIdentity(ctx, session)
+	identity := deriveIdentity(session)
+	path, err := deriveExplicitPathExp(ctx.String("org"), ctx.String("project"),
+		ctx.String("environment"), ctx.String("service"), identity)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, errs.NewErrorExitError("Error deriving credential path", err)
 	}
-
-	parts := []string{
-		"", ctx.String("org"), ctx.String("project"), ctx.String("environment"),
-		ctx.String("service"), identity, ctx.String("instance"),
-	}
-
-	path := strings.Join(parts, "/")
 
 	s, p := spinner("Decrypting credentials")
 	s.Start()
-	secrets, err := client.Credentials.Get(c, path, p)
+	secrets, err := client.Credentials.Get(c, path.String(), p)
 	s.Stop()
 	if err != nil {
-		return nil, "", errs.NewErrorExitError("Error fetching secrets", err)
+		return nil, nil, errs.NewErrorExitError("Error fetching secrets", err)
 	}
 
 	cset := credentialSet{}
 	for _, c := range secrets {
 		if err := cset.Add(c); err != nil {
-			return nil, "", errs.NewErrorExitError("Error compacting secrets", err)
+			return nil, nil, errs.NewErrorExitError("Error compacting secrets", err)
 		}
 	}
 
-	return cset.ToSlice(), path, nil
+	out, err := pathexp.New(ctx.String("org"), ctx.String("project"),
+		[]string{ctx.String("environment")}, []string{ctx.String("service")},
+		[]string{"*"}, []string{"*"})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return cset.ToSlice(), out, nil
+}
+
+func deriveExplicitPathExp(org, project, env, service, identity string) (*pathexp.PathExp, error) {
+	return pathexp.New(org, project, []string{env}, []string{service}, []string{identity}, []string{"1"})
 }

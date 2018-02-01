@@ -56,8 +56,8 @@ If you have `torus` installed, start fresh `npm uninstall -g torus-cli`
 - [ ]   `torus status` will not display a context outside of a linked directory
 - [ ]   `torus link` prompts you to select or create an org, and project
 - [ ]   `torus link -f` will over-write a previous `torus link`
-- [ ]   `torus status` now displays a valid: org, project, environment, service,
-        instance and path
+- [ ]   `torus status` now displays a valid: org, project, environment,
+          service, and path
 - [ ]   Commands can now be executed without the `—org` and `--project` flags
 
 ### Access Controls

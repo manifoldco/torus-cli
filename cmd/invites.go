@@ -18,7 +18,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setSliceDefaults, setUserEnv, checkRequiredFlags, invitesSend,
+					setSliceDefaults, checkRequiredFlags, invitesSend,
 				),
 			},
 			{
@@ -33,7 +33,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, invitesList,
+					checkRequiredFlags, invitesList,
 				),
 			},
 			{
@@ -45,7 +45,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs,
-					loadPrefDefaults, setUserEnv, checkRequiredFlags, invitesApprove,
+					loadPrefDefaults, checkRequiredFlags, invitesApprove,
 				),
 			},
 			{
@@ -57,7 +57,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, loadDirPrefs,
-					loadPrefDefaults, setUserEnv, checkRequiredFlags, invitesAccept,
+					loadPrefDefaults, checkRequiredFlags, invitesAccept,
 				),
 			},
 		},

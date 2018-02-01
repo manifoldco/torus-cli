@@ -31,7 +31,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, listKeypairs,
+					checkRequiredFlags, listKeypairs,
 				),
 			},
 			{
@@ -46,7 +46,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, generateKeypairs,
+					checkRequiredFlags, generateKeypairs,
 				),
 			},
 			{
@@ -58,7 +58,7 @@ func init() {
 				},
 				Action: chain(
 					ensureDaemon, ensureSession, loadDirPrefs, loadPrefDefaults,
-					setUserEnv, checkRequiredFlags, revokeKeypairs,
+					checkRequiredFlags, revokeKeypairs,
 				),
 				Hidden: true,
 			},

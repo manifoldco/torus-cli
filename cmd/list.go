@@ -70,6 +70,13 @@ func listCmd(ctx *cli.Context) error {
 		return err
 	}
 
+	session, err := client.Session.Who(c)
+	if err != nil {
+		return err
+	}
+
+	identity := deriveIdentity(session)
+
 	// Retrieve environment flag values
 	// If no values were set, use a full glob
 	envFilters := ctx.StringSlice("environment")
@@ -181,18 +188,19 @@ func listCmd(ctx *cli.Context) error {
 	// any credentials along that path to that env/service branch
 	// of the credentialsTree
 	credCount := 0
-	projectPath := "/" + org.Body.Name + "/" + project.Body.Name + "/"
 	for _, e := range filteredEnvNames {
 		for _, s := range filteredServiceNames {
-			builtPathExp, err := pathexp.Parse(projectPath + e + "/" + s + "/*/*")
+			builtPathExp, err := deriveExplicitPathExp(org.Body.Name, project.Body.Name,
+				e, s, identity)
 			if err != nil {
-				return errs.NewErrorExitError("Failed to parse: "+projectPath+e+"/"+s+"/*/*", err)
+				return errs.NewErrorExitError("Failed to derive path exp", err)
 			}
 			for _, cred := range credentials {
 				body := *cred.Body
 				if len(args) > 0 && !isSecretNameInList(body.GetName(), args) {
 					continue
 				}
+
 				credPathExp := body.GetPathExp()
 				// If cred not contained in any builtPathExps, it is not
 				// within the search space specified by the flags.
@@ -228,7 +236,7 @@ func listCmd(ctx *cli.Context) error {
 			for c, cred := range tree[e][s] {
 				credCount++
 				if verbose {
-					credPath := (*cred.Body).GetPathExp().String() + "/"
+					credPath := displayPathExp((*cred.Body).GetPathExp()) + "/"
 					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.FaintString(credPath+c))
 				} else {
 					fmt.Fprintf(w, "\t\t%s\t\t\n", c)

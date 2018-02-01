@@ -174,12 +174,12 @@ func find(values []string, name string) int {
 }
 
 func init() {
-	SelectOrg = selectPrompt("Select an Org", "Org", validate.OrgName)
-	SelectCreateOrg = selectCreatePrompt("Select an Org", "Create an Org", "Org", validate.OrgName)
+	SelectOrg = selectPrompt("Select an org", "Org", validate.OrgName)
+	SelectCreateOrg = selectCreatePrompt("Select an org", "Create a new org", "Org", validate.OrgName)
 	SelectRole = selectPrompt("Select a Role", "Machine Role", validate.RoleName)
-	SelectCreateRole = selectCreatePrompt("Select a Role", "Create a Role", "Machine Role", validate.RoleName)
-	SelectTeam = selectPrompt("Select a Team", "Team", validate.TeamName)
-	SelectCreateTeam = selectCreatePrompt("Select a Team", "Create a Team", "Team", validate.TeamName)
-	SelectProject = selectPrompt("Select a Project", "Project", validate.ProjectName)
-	SelectCreateProject = selectCreatePrompt("Select a Project", "Create a Project", "Project", validate.ProjectName)
+	SelectCreateRole = selectCreatePrompt("Select a role", "Create a new role", "Machine Role", validate.RoleName)
+	SelectTeam = selectPrompt("Select a team", "Team", validate.TeamName)
+	SelectCreateTeam = selectCreatePrompt("Select a team", "Create a new team", "Team", validate.TeamName)
+	SelectProject = selectPrompt("Select a project", "Project", validate.ProjectName)
+	SelectCreateProject = selectCreatePrompt("Select a project", "Create a new project", "Project", validate.ProjectName)
 }
