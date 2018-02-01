@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strconv"
 	"sync"
 
 	"github.com/juju/ansiterm"
@@ -145,8 +146,10 @@ func orgsListCmd(ctx *cli.Context) error {
 		fmt.Printf("%s\n", o.Body.Name)
 	}
 
-	hints.Display(hints.PersonalOrg)
+	fmt.Printf("\nYou are a member of (%s) org%s\n",
+		ui.FaintString(strconv.Itoa(len(orgs))), plural(len(orgs)))
 
+	hints.Display(hints.PersonalOrg)
 	return nil
 }
 
@@ -387,7 +390,8 @@ func orgsMembersListCmd(ctx *cli.Context) error {
 
 	w.Flush()
 
-	fmt.Printf("\nOrg %s has (%d) member%s\n", org.Body.Name, len(userIDs), plural(len(userIDs)))
+	fmt.Printf("\nOrg %s has (%s) member%s\n", org.Body.Name,
+		ui.FaintString(strconv.Itoa(len(userIDs))), plural(len(userIDs)))
 
 	return nil
 }

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli"
@@ -131,7 +132,7 @@ func listEnvsCmd(ctx *cli.Context) error {
 		fmt.Printf("%s\n", env.Body.Name)
 	}
 
-	fmt.Printf("\nProject /%s/%s has (%d) environment%s\n", org.Body.Name, project.Body.Name, len(envs), plural(len(envs)))
+	fmt.Printf("\nProject /%s/%s has (%s) environment%s\n", org.Body.Name, project.Body.Name, ui.FaintString(strconv.Itoa(len(envs))), plural(len(envs)))
 
 	return nil
 }
