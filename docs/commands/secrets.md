@@ -239,8 +239,9 @@ service: default
   ---- | ---- | ----
   --org, -o | TORUS_ORG | Required flag to specify org.
   --project, -p | TORUS_PROJECT | Required flag to specify project.
-  --environment, -e | TORUS_ENVIRONMENT | Specify environment filter(s) for displayed secrets. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
-  --service, -s | TORUS_SERVICE | Specify service filter(s) for displayed secrets. To specify multiple services, pass multiple flags (eg. `torus list -s ser1 -s ser2`). This flag is optional.
+  --environment, -e | TORUS_ENVIRONMENT | Only show secrets within the environment(s) specified. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
+  --service, -s | TORUS_SERVICE | Only show secrets within the services(s) specified. To specify multiple services, pass multiple flags (eg. `torus list -s ser1 -s ser2`). This flag is optional.
+  --team, -t | TORUS_TEAM | Only show secrets that the specified team(s) can access. To specify multiple teams, pass multiple flags (eg. `torus list -t team1 -t team2`). This flag is optional.
   --verbose, -v | TORUS_VERBOSE | Show which type of path is being displayed, shortcut for
 
 ### Examples
@@ -321,4 +322,29 @@ $ torus list -e env1 -s ser1 -v
 env1/
     ser1/
         secret1   (/org/project/env1/ser1/secret1)
+```
+
+**Use `--team` flag to limit the secrets displayed by list.**
+In this example, the team "team1" only has access to the secrets in "staging"
+
+```bash
+$ torus list
+
+prod/
+    default/
+        secret1
+	secret2
+	secret3
+staging/
+    default/
+        secret4
+
+(4) secrets found
+$ torus list -t team1
+
+staging/
+    default/
+        secret4
+
+(1) secrets found
 ```

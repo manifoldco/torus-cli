@@ -257,7 +257,7 @@ func createKeyringMemberships(ctx context.Context, c *crypto.Engine, client *reg
 	var graphs []registry.CredentialGraph
 	for _, project := range projects {
 		projGraphs, err := client.CredentialGraph.Search(ctx,
-			"/"+org.Body.Name+"/"+project.Body.Name+"/*/*/*/*", s.AuthID())
+			"/"+org.Body.Name+"/"+project.Body.Name+"/*/*/*/*", s.AuthID(), nil)
 		if err != nil {
 			log.Printf("Error retrieving credential graphs: %s", err)
 			return nil, nil, err

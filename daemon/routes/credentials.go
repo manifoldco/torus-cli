@@ -10,6 +10,7 @@ import (
 
 	"github.com/manifoldco/torus-cli/daemon/logic"
 	"github.com/manifoldco/torus-cli/daemon/observer"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 func credentialsGetRoute(engine *logic.Engine, o *observer.Observer) http.HandlerFunc {
@@ -35,11 +36,25 @@ func credentialsGetRoute(engine *logic.Engine, o *observer.Observer) http.Handle
 			return
 		}
 
+		teamStrIDs := q["team_id"]
+
+		var teamIDs []identity.ID
+		for _, i := range teamStrIDs {
+			id, err := identity.DecodeFromString(i)
+			if err != nil {
+				err = errors.New("Failed to decode ID " + i)
+				log.Printf("Failed to decode ID "+i, err)
+				encodeResponseErr(w, err)
+				return
+			}
+			teamIDs = append(teamIDs, id)
+		}
+
 		var creds []logic.PlaintextCredentialEnvelope
 		if path != "" {
-			creds, err = engine.RetrieveCredentials(ctx, n, &path, nil, skip)
+			creds, err = engine.RetrieveCredentials(ctx, n, &path, nil, teamIDs, skip)
 		} else {
-			creds, err = engine.RetrieveCredentials(ctx, n, nil, &pathexp, skip)
+			creds, err = engine.RetrieveCredentials(ctx, n, nil, &pathexp, teamIDs, skip)
 		}
 		if err != nil {
 			// Rely on logs inside engine for debugging

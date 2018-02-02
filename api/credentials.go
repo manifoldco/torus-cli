@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/manifoldco/torus-cli/apitypes"
+	"github.com/manifoldco/torus-cli/identity"
 )
 
 // CredentialsClient provides access to unencrypted credentials for viewing,
@@ -16,10 +17,14 @@ type CredentialsClient struct {
 }
 
 // Search returns all credentials at the given pathexp in an undecrypted state
-func (c *CredentialsClient) Search(ctx context.Context, pathexp string, p ProgressFunc) ([]apitypes.CredentialEnvelope, error) {
+func (c *CredentialsClient) Search(ctx context.Context, pathexp string, teamIDs []identity.ID, p ProgressFunc) ([]apitypes.CredentialEnvelope, error) {
 	v := &url.Values{}
 	v.Set("pathexp", pathexp)
 	v.Set("skip-decryption", "true")
+
+	for _, id := range teamIDs {
+		v.Add("team_id", id.String())
+	}
 
 	return c.listWorker(ctx, v, p)
 }

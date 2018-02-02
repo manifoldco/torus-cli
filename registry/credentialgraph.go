@@ -131,7 +131,7 @@ func (c *CredentialGraphClient) Post(ctx context.Context, t *CredentialGraph) (C
 // Members, and Credentials) that match the given name, path, or path
 // expression.
 func (c *CredentialGraphClient) List(ctx context.Context, path string,
-	pathExp *pathexp.PathExp, ownerID *identity.ID) ([]CredentialGraph, error) {
+	pathExp *pathexp.PathExp, ownerID *identity.ID, teamIDs []identity.ID) ([]CredentialGraph, error) {
 
 	query := url.Values{}
 
@@ -147,6 +147,9 @@ func (c *CredentialGraphClient) List(ctx context.Context, path string,
 	if ownerID != nil {
 		query.Set("owner_id", ownerID.String())
 	}
+	for _, id := range teamIDs {
+		query.Add("team_id", id.String())
+	}
 
 	return c.getGraph(ctx, query)
 }
@@ -155,13 +158,17 @@ func (c *CredentialGraphClient) List(ctx context.Context, path string,
 // Members, and Credentials) that are contained within the given loose path
 // expression. It is loose in that it can have * for projects.
 func (c *CredentialGraphClient) Search(ctx context.Context, pathExp string,
-	ownerID *identity.ID) ([]CredentialGraph, error) {
+	ownerID *identity.ID, teamIDs []identity.ID) ([]CredentialGraph, error) {
 
 	query := url.Values{}
 
 	query.Set("pathexp", pathExp)
 	query.Set("owner_id", ownerID.String())
 	query.Set("mode", "contains")
+
+	for _, id := range teamIDs {
+		query.Add("team_id", id.String())
+	}
 
 	return c.getGraph(ctx, query)
 }

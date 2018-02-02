@@ -15,6 +15,7 @@ import (
 	"github.com/manifoldco/torus-cli/config"
 	"github.com/manifoldco/torus-cli/envelope"
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/identity"
 	"github.com/manifoldco/torus-cli/pathexp"
 	"github.com/manifoldco/torus-cli/ui"
 )
@@ -30,6 +31,7 @@ func init() {
 			projectFlag("Use this project.", false),
 			envSliceFlag("Use this environment.", false),
 			serviceSliceFlag("Use this service.", "", false),
+			teamSliceFlag("Filter credentials against this team.", false),
 			cli.BoolFlag{
 				Name:  "verbose, v",
 				Usage: "Display the full credential path of each secret.",
@@ -75,7 +77,7 @@ func listCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	identity := deriveIdentity(session)
+	ident := deriveIdentity(session)
 
 	// Retrieve environment flag values
 	// If no values were set, use a full glob
@@ -89,6 +91,35 @@ func listCmd(ctx *cli.Context) error {
 	serviceFilters := ctx.StringSlice("service")
 	if len(serviceFilters) == 0 {
 		serviceFilters = append(serviceFilters, "*")
+	}
+
+	// Retrieve team flag values
+	// If no values were set, use a full glob
+	teamFilter := ctx.StringSlice("team")
+
+	// Retrieve teams from team names
+	var teams []envelope.Team
+	var teamIDs []identity.ID
+
+	if len(teamFilter) != 0 {
+
+		// Retrieve all teams for the current org
+		orgTeams, err := client.Teams.GetByOrg(c, org.ID)
+		if err != nil {
+			return errs.NewErrorExitError("Failed to retrieve teams for org "+org.Body.Name+".", err)
+		}
+		if len(orgTeams) == 0 {
+			return errs.NewExitError("No teams for org " + org.Body.Name + ".")
+		}
+
+		teams, err = filterTeamsByNames(teamFilter, orgTeams)
+		if err != nil {
+			return err
+		}
+
+		for _, t := range teams {
+			teamIDs = append(teamIDs, *t.ID)
+		}
 	}
 
 	// The following two slices are placeholders necessary to
@@ -120,19 +151,19 @@ func listCmd(ctx *cli.Context) error {
 
 	go func() {
 		// Get environments
-		environments, eErr = listEnvs(&c, client, org.ID, project.ID, nil)
+		environments, eErr = listEnvs(&c, client, org.ID, project.ID, teamIDs, nil)
 		getEnvsServicesCreds.Done()
 	}()
 
 	go func() {
 		// Get services
-		services, sErr = listServices(&c, client, org.ID, project.ID, nil)
+		services, sErr = listServices(&c, client, org.ID, project.ID, teamIDs, nil)
 		getEnvsServicesCreds.Done()
 	}()
 
 	go func() {
 		// Get credentials
-		credentials, cErr = client.Credentials.Search(c, filterPathExp.String(), nil)
+		credentials, cErr = client.Credentials.Search(c, filterPathExp.String(), teamIDs, nil)
 		getEnvsServicesCreds.Done()
 	}()
 
@@ -191,7 +222,7 @@ func listCmd(ctx *cli.Context) error {
 	for _, e := range filteredEnvNames {
 		for _, s := range filteredServiceNames {
 			builtPathExp, err := deriveExplicitPathExp(org.Body.Name, project.Body.Name,
-				e, s, identity)
+				e, s, ident)
 			if err != nil {
 				return errs.NewErrorExitError("Failed to derive path exp", err)
 			}

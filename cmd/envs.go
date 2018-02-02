@@ -120,7 +120,7 @@ func listEnvsCmd(ctx *cli.Context) error {
 	}
 
 	// Retrieve envs for targeted org and project
-	envs, err := listEnvs(&c, client, org.ID, project.ID, nil)
+	envs, err := listEnvs(&c, client, org.ID, project.ID, nil, nil)
 	if err != nil {
 		return errs.NewErrorExitError(envListFailed, err)
 	}
@@ -137,7 +137,7 @@ func listEnvsCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]envelope.Environment, error) {
+func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, teamIDs []identity.ID, name *string) ([]envelope.Environment, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(envListFailed, -1)
@@ -158,5 +158,5 @@ func listEnvs(ctx *context.Context, client *api.Client, orgID, projID *identity.
 		names = []string{*name}
 	}
 
-	return client.Environments.List(c, orgIDs, projectIDs, names)
+	return client.Environments.List(c, orgIDs, projectIDs, teamIDs, names)
 }

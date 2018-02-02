@@ -42,13 +42,16 @@ func (e *EnvironmentsClient) Create(ctx context.Context, orgID, projectID *ident
 }
 
 // List retrieves relevant envs by name and/or orgID and/or projectID
-func (e *EnvironmentsClient) List(ctx context.Context, orgIDs, projectIDs []identity.ID, names []string) ([]envelope.Environment, error) {
+func (e *EnvironmentsClient) List(ctx context.Context, orgIDs, projectIDs, teamIDs []identity.ID, names []string) ([]envelope.Environment, error) {
 	v := &url.Values{}
 	for _, id := range orgIDs {
 		v.Add("org_id", id.String())
 	}
 	for _, id := range projectIDs {
 		v.Add("project_id", id.String())
+	}
+	for _, id := range teamIDs {
+		v.Add("team_id", id.String())
 	}
 	for _, n := range names {
 		v.Add("name", n)
