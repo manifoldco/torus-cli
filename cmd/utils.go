@@ -265,3 +265,26 @@ func deriveIdentity(session *api.Session) string {
 
 	return session.Username()
 }
+
+func filterTeamsByNames(names []string, teams []envelope.Team) ([]envelope.Team, error) {
+	teamNamesToTeam := toTeamNameMap(teams)
+	filteredTeams := make([]envelope.Team, len(names))
+
+	for i, name := range names {
+		if team, ok := teamNamesToTeam[name]; ok {
+			filteredTeams[i] = team
+		} else {
+			return []envelope.Team{}, errs.NewExitError("No such team " + name)
+		}
+	}
+
+	return filteredTeams, nil
+}
+
+func toTeamNameMap(teams []envelope.Team) map[string]envelope.Team {
+	teamNamesToTeam := make(map[string]envelope.Team)
+	for _, t := range teams {
+		teamNamesToTeam[t.Body.Name] = t
+	}
+	return teamNamesToTeam
+}

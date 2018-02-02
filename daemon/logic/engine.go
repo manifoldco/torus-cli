@@ -86,7 +86,7 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 
 	// Ensure we have an existing keyring for this credential's pathexp
 	graphs, err := e.client.CredentialGraph.List(ctx, "", cred.Body.PathExp,
-		e.session.AuthID())
+		e.session.AuthID(), nil)
 	if err != nil {
 		log.Printf("Error retrieving credential graphs: %s", err)
 		return nil, err
@@ -231,7 +231,7 @@ func (e *Engine) AppendCredentials(ctx context.Context, notifier *observer.Notif
 
 // RetrieveCredentials returns all credentials for the given CPath string
 func (e *Engine) RetrieveCredentials(ctx context.Context,
-	notifier *observer.Notifier, cpath, cpathexp *string, skipDecryption bool) ([]PlaintextCredentialEnvelope, error) {
+	notifier *observer.Notifier, cpath, cpathexp *string, teamIDs []identity.ID, skipDecryption bool) ([]PlaintextCredentialEnvelope, error) {
 	if cpath != nil && cpathexp != nil {
 		panic("cannot use both cpath and cpathexp")
 	}
@@ -242,9 +242,9 @@ func (e *Engine) RetrieveCredentials(ctx context.Context,
 	var graphs []registry.CredentialGraph
 	var err error
 	if cpath != nil {
-		graphs, err = e.client.CredentialGraph.List(ctx, *cpath, nil, e.session.AuthID())
+		graphs, err = e.client.CredentialGraph.List(ctx, *cpath, nil, e.session.AuthID(), teamIDs)
 	} else if cpathexp != nil {
-		graphs, err = e.client.CredentialGraph.Search(ctx, *cpathexp, e.session.AuthID())
+		graphs, err = e.client.CredentialGraph.Search(ctx, *cpathexp, e.session.AuthID(), teamIDs)
 	}
 
 	if err != nil {

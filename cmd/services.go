@@ -76,7 +76,7 @@ func listServicesCmd(ctx *cli.Context) error {
 	}
 
 	// Retrieve services for targeted org and project
-	services, err := listServices(&c, client, org.ID, project.ID, nil)
+	services, err := listServices(&c, client, org.ID, project.ID, nil, nil)
 	if err != nil {
 		return errs.NewErrorExitError(serviceListFailed, err)
 	}
@@ -93,7 +93,7 @@ func listServicesCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func listServices(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, name *string) ([]envelope.Service, error) {
+func listServices(ctx *context.Context, client *api.Client, orgID, projID *identity.ID, teamIDs []identity.ID, name *string) ([]envelope.Service, error) {
 	c, client, err := NewAPIClient(ctx, client)
 	if err != nil {
 		return nil, cli.NewExitError(serviceListFailed, -1)
@@ -114,7 +114,7 @@ func listServices(ctx *context.Context, client *api.Client, orgID, projID *ident
 		names = []string{*name}
 	}
 
-	return client.Services.List(c, orgIDs, projectIDs, names)
+	return client.Services.List(c, orgIDs, projectIDs, nil, names)
 }
 
 const serviceCreateFailed = "Could not create service."

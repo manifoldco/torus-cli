@@ -144,7 +144,7 @@ func (h *secretRotateHandler) list(ctx context.Context, org *envelope.Org) ([]ap
 	for _, project := range projects {
 		graphs, err := h.engine.client.CredentialGraph.Search(ctx,
 			"/"+org.Body.Name+"/"+project.Body.Name+"/*/*/*/*",
-			h.engine.session.AuthID())
+			h.engine.session.AuthID(), nil)
 		if err != nil {
 			return nil, err
 		}
@@ -350,7 +350,7 @@ func (h *keyringMembersHandler) list(ctx context.Context, org *envelope.Org) ([]
 		//
 		// This happens when a user is removed from an org and their dev
 		// environment is deleted.
-		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", pe, nil)
+		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", pe, nil, nil)
 		if err != nil {
 			log.Printf("Skipping inspection of graph due to error: %s", err)
 			continue
@@ -500,7 +500,7 @@ func (h *keyringMembersHandler) resolve(ctx context.Context, n *observer.Notifie
 		//
 		// This happens when a user is removed from an org and their dev
 		// environment is deleted.
-		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", &pe, nil)
+		graphs, err := h.engine.client.CredentialGraph.List(ctx, "", &pe, nil, nil)
 		if err != nil {
 			log.Printf("Skipping inspection of graph due to error: %s", err)
 			continue
