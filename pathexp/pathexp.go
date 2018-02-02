@@ -64,6 +64,7 @@ type PathExp struct {
 type segment interface {
 	String() string
 	Contains(subject string) bool
+	Components() []string
 }
 
 type literal string
@@ -75,10 +76,16 @@ func (l literal) String() string { return string(l) }
 func (l literal) Contains(subject string) bool {
 	return string(l) == subject
 }
+func (l literal) Components() []string {
+	return []string{string(l)}
+}
 
 func (g glob) String() string { return string(g) + "*" }
 func (g glob) Contains(subject string) bool {
 	return strings.Index(subject, string(g)) == 0
+}
+func (g glob) Components() []string {
+	return []string{string(g)}
 }
 
 // GlobContains returns whether a glob, built from the value, contains the subject
@@ -90,6 +97,9 @@ func GlobContains(value, subject string) bool {
 func (f fullglob) String() string { return "*" }
 func (f fullglob) Contains(subject string) bool {
 	return true
+}
+func (f fullglob) Components() []string {
+	return []string{"*"}
 }
 
 func (a alternation) String() string {
@@ -112,6 +122,14 @@ func (a alternation) Contains(subject string) bool {
 		}
 	}
 	return false
+}
+func (a alternation) Components() []string {
+	out := make([]string, len(a))
+	for i, v := range a {
+		out[i] = v.String()
+	}
+
+	return out
 }
 
 // compareSegmentType ranks the segments by their type specificity

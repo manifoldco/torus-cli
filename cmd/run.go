@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/manifoldco/torus-cli/errs"
+	"github.com/manifoldco/torus-cli/pathexp"
 
 	"github.com/urfave/cli"
 )
@@ -42,7 +43,7 @@ func runCmd(ctx *cli.Context) error {
 		args = strings.Split(args[0], " ")
 	}
 
-	secrets, _, err := getSecrets(ctx)
+	secrets, path, err := getSecrets(ctx)
 	if err != nil {
 		return err
 	}
@@ -52,7 +53,7 @@ func runCmd(ctx *cli.Context) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Env = filterEnv()
+	cmd.Env = manipulateEnv(path)
 
 	// Add the secrets into the env
 	for _, secret := range secrets {
@@ -96,6 +97,25 @@ func runCmd(ctx *cli.Context) error {
 	return nil
 }
 
+// manipulateEnv removes any sensitive torus environment variables and sets
+// `TORUS_ORG`, `TORUS_PROJECT`, `TORUS_ENVIRONMENT`, and `TORUS_SERVICE` for
+// use by the running process.
+func manipulateEnv(path *pathexp.PathExp) []string {
+	env := filterEnv()
+
+	org := path.Org.Components()
+	project := path.Project.Components()
+	envs := path.Envs.Components()
+	services := path.Services.Components()
+
+	env = append(env, "TORUS_ORG="+org[0])
+	env = append(env, "TORUS_PROJECT="+project[0])
+	env = append(env, "TORUS_ENVIRONMENT="+envs[0])
+	env = append(env, "TORUS_SERVICE="+services[0])
+
+	return env
+}
+
 func filterEnv() []string {
 	env := []string{}
 	for _, e := range os.Environ() {
@@ -105,6 +125,5 @@ func filterEnv() []string {
 		}
 		env = append(env, e)
 	}
-
 	return env
 }

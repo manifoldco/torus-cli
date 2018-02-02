@@ -36,6 +36,8 @@ In all other cases, a 5 segment path will be displayed (e.g.
   `identity` or `identity` components are not a `*`.
 - `torus view` and `torus list` will only display the full 7 segment path in
   verbose mode if the `instance` and `identity` components are not a `*`.
+- The current org, project, environment, and service is now injected into the
+  process started by `torus run`.
 
 **Fixes**
 

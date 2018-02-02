@@ -193,20 +193,39 @@ Items are displayed in environment variable format.
 
 By prefixing your process execution with `torus run` we are able to fetch, decrypt and inject your secrets into the process environment based on the [context](./project-structure.md#link) of the Torus client.
 
-To ensure that your command’s arguments and options are passed correctly you may need to separate your `torus run` definition from your command definition with `--`, for example:
+To ensure that your command’s arguments and options are passed correctly you may need to separate your `torus run` definition from your command definition with `--`.
+
+Torus will inject the current org, project, environment, and service into the processes through the `TORUS_ORG`, `TORUS_PROJECT`, `TORUS_ENVIRONMENT`, and `TORUS_SERVICE` environment variables.
 
 #### Examples
 
 **Injecting secrets into a process using flags**
 
-```
+```bash
 $ torus run -e production -s www -- node ./bin/www --log_level=error
 ```
 
 **Injecting secrets into a process using environment variables**
 
-```
+```bash
 $ TORUS_ENVIRONMENT=production TORUS_SERVICE=www torus run -- node ./bin/www --log_level=error
+```
+
+**Using the project structure environment variables**
+
+```bash
+$ cat example.sh
+#!/usr/bin/bash
+
+echo "org: $TORUS_ORG"
+echo "project: $TORUS_PROJECT"
+echo "env: $TORUS_ENV"
+echo "service: $TORUS_SERVICE"
+$ torus run -- bash example.sh
+org: test
+project: api
+env: dev-test
+service: default
 ```
 
 ## list
