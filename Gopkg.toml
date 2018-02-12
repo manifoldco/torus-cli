@@ -128,3 +128,7 @@ required = [
 [[constraint]]
   name = "github.com/google/go-github"
   revision = "466070b0580728e63bd1a415e0019639e55d7148"
+
+[prune]
+  non-go = true
+  go-tests = true

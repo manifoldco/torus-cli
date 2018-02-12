@@ -8,7 +8,7 @@ platform:
 environment:
   GOPATH: c:\gopath
   GOVERSION: 1.9.1
-  DEPVERSION: 0.3.2
+  DEPVERSION: 0.4.1
 
 init:
   - git config --global core.autocrlf input
