@@ -14,7 +14,10 @@ TARGETS=\
 	$(LINUX) \
 	$(WINDOWS)
 
-VERSION?=$(shell git describe --tags --abbrev=0 | sed 's/^v//')
+VERSION=$(shell [ -d .git ] && git describe --tags --abbrev=0 | sed 's/^v//')
+ifeq (,$(VERSION))
+    VERSION=dev
+endif
 
 LINTERS=\
 	gofmt \
@@ -178,7 +181,7 @@ else ifeq (prod,$(RELEASE_ENV))
 endif
 
 tagcheck:
-ifneq (v$(VERSION),$(shell git describe --tags --dirty))
+ifneq (v$(VERSION),$(shell [ -d .git ] && git describe --tags --dirty))
 	$(error "VERSION $(VERSION) is not git HEAD")
 endif
 
