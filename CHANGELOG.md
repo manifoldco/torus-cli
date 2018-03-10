@@ -44,6 +44,10 @@ In all other cases, a 5 segment path will be displayed (e.g.
 
 - `torus list` did not display secrets which were not set with an instance of `*`.
 
+**Build**
+
+- Torus is now built using `go1.10`
+
 ## v0.29.0
 
 _2017-12-22_
