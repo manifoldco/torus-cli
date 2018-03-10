@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## Unreleased
+## v0.30.0
 
-_Date_
+_2018-03-10_
 
 **Breaking Changes**
 
