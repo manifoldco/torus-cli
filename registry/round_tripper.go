@@ -109,7 +109,7 @@ func checkResponseCode(r *http.Response) error {
 		return nil
 	}
 
-	rErr := &apitypes.Error{StatusCode: r.StatusCode}
+	rErr := &apitypes.Error{Type: apitypes.LookupErrorType(r.StatusCode)}
 	if r.ContentLength != 0 {
 		dec := json.NewDecoder(r.Body)
 		err := dec.Decode(rErr)

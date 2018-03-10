@@ -19,23 +19,55 @@ const (
 	BadRequestError     = "bad_request"
 	UnauthorizedError   = "unauthorized"
 	NotFoundError       = "not_found"
+	RequestTimeoutError = "request_timeout"
 	InternalServerError = "internal_server"
 	NotImplementedError = "not_implemented"
+	UnknownError        = "unknown_error"
 )
+
+var errorTypeToStatusCodeMap = map[ErrorType]int{
+	BadRequestError:     400,
+	UnauthorizedError:   401,
+	NotFoundError:       404,
+	RequestTimeoutError: 408,
+	InternalServerError: 500,
+	NotImplementedError: 501,
+	UnknownError:        0,
+}
+
+// LookupErrorType returns the ErrorType for the given HTTP StatusCode,
+// UnknownError is returned if the error type could not be found.
+func LookupErrorType(code int) ErrorType {
+	for t, c := range errorTypeToStatusCodeMap {
+		if c == code {
+			return t
+		}
+	}
+
+	return UnknownError
+}
 
 // Error represents standard formatted API errors from the daemon or registry.
 type Error struct {
-	StatusCode int
-
-	Type string   `json:"type"`
-	Err  []string `json:"error"`
+	Type ErrorType `json:"type"`
+	Err  []string  `json:"error"`
 }
 
 // Error implements the error interface for formatted API errors.
 func (e *Error) Error() string {
-	segments := strings.Split(e.Type, "_")
+	segments := strings.Split(string(e.Type), "_")
 	errType := strings.Join(segments, " ")
 	return strings.Title(errType) + ": " + strings.Join(e.Err, " ")
+}
+
+// StatusCode returns the http status code associated with the underlying error type
+func (e *Error) StatusCode() int {
+	code, ok := errorTypeToStatusCodeMap[e.Type]
+	if !ok || code == 0 {
+		return 500
+	}
+
+	return code
 }
 
 // FormatError updates an error to contain more context
@@ -53,9 +85,8 @@ func FormatError(err error) error {
 			}
 
 			return &Error{
-				StatusCode: 401,
-				Type:       UnauthorizedError,
-				Err:        []string{"You are unauthorized to perform this action."},
+				Type: UnauthorizedError,
+				Err:  []string{"You are unauthorized to perform this action."},
 			}
 		}
 	}
@@ -66,8 +97,7 @@ func FormatError(err error) error {
 // NewUnverifiedError returns a message telling the user to verify their account before continuing
 func NewUnverifiedError() *Error {
 	return &Error{
-		StatusCode: 401,
-		Type:       UnauthorizedError,
+		Type: UnauthorizedError,
 		Err: []string{"Your account has not yet been verified.\n\n" +
 			"Please check your email for your verification code and follow the enclosed instructions.\n" +
 			"Once you have verified your account you may retry this operation."},

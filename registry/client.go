@@ -133,9 +133,8 @@ func (rt *registryRoundTripper) Do(ctx context.Context, r *http.Request,
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			err = &apitypes.Error{
-				StatusCode: http.StatusRequestTimeout,
-				Type:       "request_timeout",
-				Err:        []string{"Request timed out"},
+				Type: apitypes.RequestTimeoutError,
+				Err:  []string{"Request timed out"},
 			}
 		}
 

@@ -268,7 +268,7 @@ func listCmd(ctx *cli.Context) error {
 				credCount++
 				if verbose {
 					credPath := displayPathExp((*cred.Body).GetPathExp()) + "/"
-					fmt.Fprintf(w, "\t\t%s\t(%s)\t\n", c, ui.FaintString(credPath+c))
+					fmt.Fprintf(w, "\t\t%s\t (%s)\t\n", c, ui.FaintString(credPath+c))
 				} else {
 					fmt.Fprintf(w, "\t\t%s\t\t\n", c)
 				}

@@ -1,8 +1,6 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/manifoldco/torus-cli/apitypes"
 )
 
@@ -12,7 +10,6 @@ type errorMsg struct {
 }
 
 var notFoundError = &apitypes.Error{
-	StatusCode: http.StatusNotFound,
-	Type:       apitypes.NotFoundError,
-	Err:        []string{"Not found"},
+	Type: apitypes.NotFoundError,
+	Err:  []string{"Not found"},
 }

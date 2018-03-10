@@ -81,7 +81,7 @@ func encodeResponseErr(w http.ResponseWriter, err interface{}) {
 
 	rErr, ok := err.(*apitypes.Error)
 	if ok {
-		w.WriteHeader(rErr.StatusCode)
+		w.WriteHeader(rErr.StatusCode())
 		enc.Encode(rErr)
 	} else {
 		w.WriteHeader(http.StatusInternalServerError)
