@@ -393,7 +393,11 @@ release-all: githubcheck envcheck tagcheck $(RELEASE_TARGETS) $(TOOLS)/cdn-index
 		--exclude "*/repomd.xml" \
 		$(foreach distro,debian ubuntu,$(foreach dir,conf db dists,--exclude "$(distro)/$(dir)/*"))
 	AWS_REGION=us-east-1 $(TOOLS)/cdn-indexer -bucket s3://$(TORUS_S3_BUCKET)
-	$(TOOLS)/gh-releaser
+	$(TOOLS)/gh-releaser reindex
+
+ifeq (prod,$(RELEASE_ENV))
+	$(TOOLS)/gh-releaser upload $(VERSION) builds/dist/$(VERSION)
+endif
 
 	@echo
 	@printf "=%.0s" {1..$(COLS)}

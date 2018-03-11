@@ -1,15 +1,18 @@
 package main
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/blang/semver"
 	"github.com/google/go-github/github"
+	"github.com/urfave/cli"
 	"golang.org/x/oauth2"
 )
 
@@ -28,37 +31,118 @@ type section struct {
 }
 
 func main() {
-	c := newGithubClient()
-	changelog := loadChangelog()
-	tags := fetchTags(c)
-	releases := fetchReleases(c)
+	app := cli.NewApp()
+	app.Name = "gh-releaser"
+	app.HelpName = "gh-releaser"
+	app.Usage = "Simple tooling for creating and modifying github releases"
+	app.Commands = []cli.Command{
+		{
+			Name:   "reindex",
+			Usage:  "Create all missing production releases based on the CHANGELOG.md",
+			Action: reindex,
+		},
+		{
+			Name:      "upload",
+			ArgsUsage: "<version> <asset-folder>",
+			Usage:     "Attach files in the given folder to the specified release",
+			Action:    upload,
+		},
+	}
+	app.Run(os.Args)
+}
+
+var (
+	owner = "manifoldco"
+	repo  = "torus-cli"
+)
+
+func reindex(_ *cli.Context) error {
+	c, err := newGithubClient()
+	if err != nil {
+		return cli.NewExitError(err.Error(), -1)
+	}
+
+	changelog, err := loadChangelog()
+	if err != nil {
+		return cli.NewExitError(err.Error(), -1)
+	}
+
+	tags, err := fetchTags(c)
+	if err != nil {
+		return cli.NewExitError(err.Error(), -1)
+	}
+
+	releases, err := fetchReleases(c)
+	if err != nil {
+		return cli.NewExitError(err.Error(), -1)
+	}
 
 	sort.Sort(tagSorter(tags))
 	sort.Sort(releaseSorter(releases))
 
 	tagsWithNoRelease := pruneExistingReleases(releases, tags)
-	createMissingReleases(c, tagsWithNoRelease, changelog)
+	err = createMissingReleases(c, tagsWithNoRelease, changelog)
+	if err != nil {
+		return cli.NewExitError(err.Error(), -1)
+	}
+
+	return nil
 }
 
-func newGithubClient() *github.Client {
+func upload(ctx *cli.Context) error {
+	args := ctx.Args()
+	if len(args) != 2 {
+		return cli.NewExitError("Two arguments must be provided", -1)
+	}
+
+	version := args[0]
+	folder := args[1]
+
+	if isPrerelease(version) {
+		return cli.NewExitError("Must specify valid semver or release cannot be a release candidate", -1)
+	}
+
+	c, err := newGithubClient()
+	if err != nil {
+		return err
+	}
+
+	releases, err := fetchReleases(c)
+	if err != nil {
+		return cli.NewExitError(err.Error(), -1)
+	}
+	release := findRelease(version, releases)
+	if release == nil {
+		return cli.NewExitError("Could not find release for tag: "+version, -1)
+	}
+
+	err = attachToRelease(c, release, folder)
+	if err != nil {
+		return cli.NewExitError("Could not upload assets: "+err.Error(), -1)
+	}
+
+	return nil
+}
+
+func newGithubClient() (*github.Client, error) {
 	tok, ok := os.LookupEnv("GITHUB_TOKEN")
 	if !ok {
-		log.Fatal("Please set GITHUB_TOKEN")
+		return nil, errors.New("Missing GITHUB_TOKEN environment variable")
 	}
 
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: tok})
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 
-	return github.NewClient(tc)
+	return github.NewClient(tc), nil
 }
 
-func loadChangelog() []section {
+func loadChangelog() ([]section, error) {
+	var changelog []section
 	cl, err := ioutil.ReadFile("CHANGELOG.md")
 	if err != nil {
-		log.Fatal(err)
+		return changelog, err
 	}
 
-	var changelog []section
 	parts := sectionHeader.FindAllSubmatchIndex(cl, -1)
 	for i, part := range parts {
 		var end int
@@ -75,16 +159,16 @@ func loadChangelog() []section {
 		changelog = append([]section{sec}, changelog...)
 	}
 
-	return changelog
+	return changelog, nil
 }
 
-func fetchTags(c *github.Client) []*github.RepositoryTag {
+func fetchTags(c *github.Client) ([]*github.RepositoryTag, error) {
 	var tags []*github.RepositoryTag
 	opt := &github.ListOptions{PerPage: 100}
 	for {
-		tagPage, resp, err := c.Repositories.ListTags("manifoldco", "torus-cli", opt)
+		tagPage, resp, err := c.Repositories.ListTags(owner, repo, opt)
 		if err != nil {
-			log.Fatal(err)
+			return tags, err
 		}
 
 		tags = append(tags, tagPage...)
@@ -96,16 +180,16 @@ func fetchTags(c *github.Client) []*github.RepositoryTag {
 		opt.Page = resp.NextPage
 	}
 
-	return tags
+	return tags, nil
 }
 
-func fetchReleases(c *github.Client) []*github.RepositoryRelease {
+func fetchReleases(c *github.Client) ([]*github.RepositoryRelease, error) {
 	var releases []*github.RepositoryRelease
 	opt := &github.ListOptions{PerPage: 100}
 	for {
-		releasePage, resp, err := c.Repositories.ListReleases("manifoldco", "torus-cli", opt)
+		releasePage, resp, err := c.Repositories.ListReleases(owner, repo, opt)
 		if err != nil {
-			log.Fatal(err)
+			return releases, err
 		}
 
 		releases = append(releases, releasePage...)
@@ -116,7 +200,8 @@ func fetchReleases(c *github.Client) []*github.RepositoryRelease {
 
 		opt.Page = resp.NextPage
 	}
-	return releases
+
+	return releases, nil
 }
 
 func pruneExistingReleases(releases []*github.RepositoryRelease, tags []*github.RepositoryTag) []*github.RepositoryTag {
@@ -147,7 +232,17 @@ outerLoop:
 	return tagsWithNoRelease
 }
 
-func createMissingReleases(c *github.Client, tagsWithNoRelease []*github.RepositoryTag, changelog []section) {
+func findRelease(tag string, releases []*github.RepositoryRelease) *github.RepositoryRelease {
+	for _, r := range releases {
+		if semverCmp(tag, *r.TagName) == 0 {
+			return r
+		}
+	}
+
+	return nil
+}
+
+func createMissingReleases(c *github.Client, tagsWithNoRelease []*github.RepositoryTag, changelog []section) error {
 	for _, tag := range tagsWithNoRelease {
 		body := "*No changelog entry*"
 		for _, sec := range changelog {
@@ -157,29 +252,56 @@ func createMissingReleases(c *github.Client, tagsWithNoRelease []*github.Reposit
 			}
 		}
 
-		ver, err := semver.ParseTolerant(*tag.Name)
-		if err != nil { // If its not a valid semver, its not a tag we release
-			continue
-		}
-
-		prerelease := len(ver.Pre) > 0
-		if prerelease { // We don't create real releases for release candidates.
+		if isPrerelease(*tag.Name) { // we don't create releases for RCs
 			continue
 		}
 
 		rel := &github.RepositoryRelease{
 			Name:       github.String(*tag.Name),
 			TagName:    github.String(*tag.Name),
-			Prerelease: github.Bool(prerelease),
+			Prerelease: github.Bool(false),
 			Body:       github.String(body),
 		}
 
 		log.Println("Creating release", *rel.Name)
-		_, _, err = c.Repositories.CreateRelease("manifoldco", "torus-cli", rel)
+		_, _, err := c.Repositories.CreateRelease(owner, repo, rel)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+
+	return nil
+}
+
+func attachToRelease(c *github.Client, release *github.RepositoryRelease, folder string) error {
+	files, err := ioutil.ReadDir(folder)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		fd, err := os.Open(path.Join(folder, f.Name()))
+		if err != nil {
+			return err
+		}
+
+		opts := &github.UploadOptions{Name: f.Name()}
+		_, _, err = c.Repositories.UploadReleaseAsset(owner, repo, *release.ID, opts, fd)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func isPrerelease(name string) bool {
+	ver, err := semver.ParseTolerant(name)
+	if err != nil { // if we can't parse then its not a release tag
+		return true
+	}
+
+	return len(ver.Pre) > 0
 }
 
 func semverCmp(v1s, v2s string) int {
