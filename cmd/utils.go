@@ -288,3 +288,10 @@ func toTeamNameMap(teams []envelope.Team) map[string]envelope.Team {
 	}
 	return teamNamesToTeam
 }
+
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
+}

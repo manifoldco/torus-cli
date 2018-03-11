@@ -203,7 +203,7 @@ func destroyMachineCmd(ctx *cli.Context) error {
 	}
 
 	preamble := "You are about to destroy a machine. This cannot be undone."
-	success, err := prompts.Confirm(nil, &preamble, true, true)
+	success, err := prompts.Confirm(nil, &preamble, true, false)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
 	}

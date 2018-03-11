@@ -396,6 +396,16 @@ func teamsRemoveCmd(ctx *cli.Context) error {
 		)
 	}
 
+	preamble := fmt.Sprintf("You are about to remove %s from the %s team in the %s org.",
+		ui.FaintString(user.Body.Username), team.Body.Name, org.Body.Name)
+	success, err := prompts.Confirm(nil, &preamble, true, false)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
+	}
+	if !success {
+		return errs.ErrAbort
+	}
+
 	// Lookup their membership row
 	memberships, mErr := client.Memberships.List(c, org.ID, team.ID, user.ID)
 	if mErr != nil || len(memberships) < 1 {
