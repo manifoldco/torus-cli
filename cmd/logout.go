@@ -33,7 +33,7 @@ func logoutCmd(ctx *cli.Context) error {
 	err = client.Session.Logout(context.Background())
 	if err != nil {
 		if herr, ok := err.(*apitypes.Error); ok {
-			if herr.StatusCode == 404 {
+			if herr.Type == apitypes.NotFoundError {
 				fmt.Println("You are not logged in.")
 				return nil
 			}

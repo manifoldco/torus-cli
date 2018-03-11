@@ -218,13 +218,14 @@ func (s *Session) Logout(ctx context.Context) error {
 	err := s.engine.client.Tokens.Delete(ctx, string(tok[:]))
 	switch err := err.(type) {
 	case *apitypes.Error:
-		switch {
-		case err.StatusCode >= 500:
+		switch err.Type {
+		case apitypes.InternalServerError:
+
 			// On a 5XX response, we don't know for sure that the server
 			// has successfully removed the auth token. Keep the copy in
 			// the daemon, so the user may try again.
 			return err
-		case err.StatusCode >= 400:
+		case apitypes.NotFoundError, apitypes.BadRequestError, apitypes.UnauthorizedError:
 			// A 4XX error indicates either the token isn't found, or we're
 			// not allowed to remove it (or the server is a teapot).
 			//
