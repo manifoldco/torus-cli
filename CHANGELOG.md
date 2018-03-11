@@ -42,7 +42,11 @@ In all other cases, a 5 segment path will be displayed (e.g.
 
 **Fixes**
 
-- When asking for a user's complete name, we now refer to it as `Full Name` instead of `Fullname`
+- `torus orgs remove` will now prompt the user to confirm the action before proceed
+- `torus machines destroy` and `torus unset` will default to No instead of Yes
+  when prompting the user to confirm the action.
+- When asking for a user's complete name, we now refer to it as `Full Name`
+  instead of `Fullname`
 - `torus list` did not display secrets which were not set with an instance of `*`.
 
 **Build**

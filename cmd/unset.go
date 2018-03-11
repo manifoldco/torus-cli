@@ -48,7 +48,7 @@ func unsetCmd(ctx *cli.Context) error {
 
 	preamble := fmt.Sprintf("You are about to unset \"%s/%s\". This cannot be undone.", displayPathExp(pe), name)
 
-	success, err := prompts.Confirm(nil, &preamble, true, true)
+	success, err := prompts.Confirm(nil, &preamble, true, false)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
 	}

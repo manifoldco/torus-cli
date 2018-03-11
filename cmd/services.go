@@ -162,10 +162,3 @@ func createServiceCmd(ctx *cli.Context) error {
 	fmt.Printf("Service %s created.\n", serviceName)
 	return nil
 }
-
-func plural(n int) string {
-	if n == 1 {
-		return ""
-	}
-	return "s"
-}

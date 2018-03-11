@@ -226,6 +226,15 @@ func orgsRemove(ctx *cli.Context) error {
 		return errs.NewExitError(userNotFound)
 	}
 
+	preamble := fmt.Sprintf("You are about to remove %s from the org %s.", ui.FaintString(profile.Body.Username), org.Body.Name)
+	success, err := prompts.Confirm(nil, &preamble, true, false)
+	if err != nil {
+		return errs.NewErrorExitError("Failed to retrieve confirmation", err)
+	}
+	if !success {
+		return errs.ErrAbort
+	}
+
 	err = client.Orgs.RemoveMember(c, *org.ID, *profile.ID)
 	if apitypes.IsNotFoundError(err) {
 		fmt.Println("User is not a member of the org.")
