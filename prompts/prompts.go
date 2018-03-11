@@ -173,7 +173,7 @@ func init() {
 	Email = stringPrompt("Email", validate.Email)
 	InviteCode = stringPrompt("Invite Code", validate.InviteCode)
 	VerificationCode = stringPrompt("Verification Code", validate.VerificationCode)
-	FullName = stringPrompt("Fullname", validate.Name)
+	FullName = stringPrompt("Full Name", validate.Name)
 	Username = stringPrompt("Username", validate.SlugValidator("Usernames"))
 	OrgName = stringPrompt("Org Name", validate.SlugValidator("Org names"))
 	TeamName = stringPrompt("Team Name", validate.SlugValidator("Team names"))
