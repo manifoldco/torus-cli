@@ -7,11 +7,13 @@ Torus exposes your decrypted secrets to your process through environment variabl
 
 ### Command Options
 
+All secrets commands accept the following flags:
+
   Option | Environmant Variable | Description
   ---- | ---- | ----
-  --org, ORG, -o ORG | TORUS_ORG | Executing the command for the specified org.
-  --project PROJECT, -p PROJECT | TORUS_PROJECT | Executing the command for the specified project.
-  --environment ENV, -e ENV | TORUS_ENVIRONMENT | Executing the command for the specified environment.
+  --org, ORG, -o ORG | TORUS_ORG | Execute the command for the specified org.
+  --project PROJECT, -p PROJECT | TORUS_PROJECT | Execute the command for the specified project.
+  --environment ENV, -e ENV | TORUS_ENVIRONMENT | Execute the command for the specified environment.
   --service SERVICE, -s SERVICE | TORUS_SERVICE | Execute the command for the specified environment. (default: default)
 
 The `--environment`, and `--service` flags can be specified many times when setting, unsetting, or importing secrets.
@@ -235,12 +237,10 @@ service: default
 
 ### Command Options
 
+The list command accepts the following flags in addition to flags supported by all secret commands.
+
   Option | Environment Variable | Description
   ---- | ---- | ----
-  --org, -o | TORUS_ORG | Required flag to specify org.
-  --project, -p | TORUS_PROJECT | Required flag to specify project.
-  --environment, -e | TORUS_ENVIRONMENT | Only show secrets within the environment(s) specified. To specify multiple environments, pass multiple flags (eg.`torus list -e env1 -e env2`). This flag is optional.
-  --service, -s | TORUS_SERVICE | Only show secrets within the services(s) specified. To specify multiple services, pass multiple flags (eg. `torus list -s ser1 -s ser2`). This flag is optional.
   --team, -t | TORUS_TEAM | Only show secrets that the specified team(s) can access. To specify multiple teams, pass multiple flags (eg. `torus list -t team1 -t team2`). This flag is optional.
   --verbose, -v | TORUS_VERBOSE | Show which type of path is being displayed, shortcut for
 
@@ -325,6 +325,7 @@ env1/
 ```
 
 **Use `--team` flag to limit the secrets displayed by list.**
+
 In this example, the team "team1" only has access to the secrets in "staging"
 
 ```bash
