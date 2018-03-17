@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## Unreleased
+
+_YYYY-MM-DD_
+
+**Fixes**
+
+- The spinners released in `v0.30.0` can now be disabled by setting the
+  `core.progress` preference to false via `torus prefs set core.progress
+  false`.
+- Fixed a bug where the spinner during `torus run`, `torus view`, or `torus
+  export` would not be removed resulting in a stuck state for users.
+
 ## v0.30.0
 
 _2018-03-11_

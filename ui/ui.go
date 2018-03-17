@@ -56,40 +56,14 @@ type UI struct {
 	EnableColors bool
 }
 
+// NewSpinner calls NewSpinner on the default UI
+func NewSpinner(text string) *Spinner {
+	return defUI.NewSpinner(text)
+}
+
 // NewSpinner creates a new ui.Spinner struct (spinner.go)
 func (u *UI) NewSpinner(text string) *Spinner {
-	return NewSpinner(text)
-}
-
-// StartSpinner checks to ensure progress is enabled and the output is a
-// terminal. After that, it starts the ui.Spinner spinning.
-func (u *UI) StartSpinner(s *Spinner) {
-	if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
-		return
-	}
-
-	s.Start()
-}
-
-// StopSpinner checks to ensure progress is enabled and the output is a
-// terminal. After that, it stops the ui.Spinner spinning.
-func (u *UI) StopSpinner(s *Spinner) {
-	if !u.EnableProgress || !readline.IsTerminal(int(os.Stdout.Fd())) {
-		return
-	}
-
-	s.Stop()
-}
-
-// Progress calls Progress on the default UI
-func Progress(str string) { defUI.Progress(str) }
-
-// Progress handles the ui output for progress events, when enabled
-func (u *UI) Progress(str string) {
-	if !u.EnableProgress {
-		return
-	}
-	u.Line(str)
+	return newSpinner(text, u.EnableProgress && Attached())
 }
 
 // Line calls Line on the default UI

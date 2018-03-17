@@ -10,25 +10,35 @@ import (
 type Spinner struct {
 	spinner *spinner.Spinner
 	text    string
+	enabled bool
 }
 
-// NewSpinner creates a new Spinner struct
-func NewSpinner(text string) *Spinner {
+// newSpinner creates a new Spinner struct
+func newSpinner(text string, enabled bool) *Spinner {
 	s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 	s.Suffix = " " + text
 	return &Spinner{
 		s,
 		text,
+		enabled,
 	}
 }
 
 // Start displays the Spinner and starts movement
 func (s *Spinner) Start() {
+	if !s.enabled {
+		return
+	}
+
 	s.spinner.Start()
 }
 
 // Stop halts the spiner movement and removes it from display
 func (s *Spinner) Stop() {
+	if !s.enabled {
+		return
+	}
+
 	s.spinner.Stop()
 }
 
