@@ -106,7 +106,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	c := context.Background()
 
 	fmt.Println("")
-	user, err := client.Users.Create(c, &signup, &progress)
+	user, err := client.Users.Create(c, &signup, nil)
 	if err != nil {
 		if strings.Contains(err.Error(), "resource exists") {
 			return errs.NewExitError("Username or email address in use.")
@@ -115,7 +115,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	// Log the user in
-	err = performLogin(c, client, user.Email(), password, true)
+	err = performLogin(c, client, user.Email(), password, false)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func signup(ctx *cli.Context, subCommand bool) error {
 	}
 
 	fmt.Println("")
-	fmt.Println("Your account has been created!")
+	fmt.Println("Your account has been created, and you've been logged in!")
 
 	if !subCommand {
 		fmt.Println("")

@@ -105,8 +105,8 @@ func getSecrets(ctx *cli.Context) ([]apitypes.CredentialEnvelope, *pathexp.PathE
 
 	s, p := spinner("Decrypting credentials")
 	s.Start()
+	defer s.Stop()
 	secrets, err := client.Credentials.Get(c, path.String(), p)
-	s.Stop()
 	if err != nil {
 		return nil, nil, errs.NewErrorExitError("Error fetching secrets", err)
 	}

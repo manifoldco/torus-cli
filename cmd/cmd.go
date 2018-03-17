@@ -14,12 +14,6 @@ import (
 // Cmds is the list of all cli commands
 var Cmds []cli.Command
 
-var progress api.ProgressFunc = func(evt *api.Event, err error) {
-	if evt != nil {
-		ui.Progress(evt.Message)
-	}
-}
-
 func spinner(text string) (*ui.Spinner, api.ProgressFunc) {
 	s := ui.NewSpinner(text)
 
