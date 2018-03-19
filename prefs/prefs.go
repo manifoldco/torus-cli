@@ -2,8 +2,6 @@ package prefs
 
 import (
 	"os"
-	"os/user"
-	"path"
 	"reflect"
 	"strings"
 
@@ -118,15 +116,6 @@ func findElemByName(values reflect.Value, iniField string) string {
 	return fieldName
 }
 
-// RcPath returns the torusrc filepath
-func RcPath() (string, error) {
-	u, err := user.Current()
-	if err != nil {
-		return "", err
-	}
-	return path.Join(u.HomeDir, rcFilename), nil
-}
-
 // NewPreferences returns a new instance of preferences struct
 func NewPreferences() (*Preferences, error) {
 	prefs := &Preferences{
@@ -152,7 +141,6 @@ func NewPreferences() (*Preferences, error) {
 		return prefs, err
 	}
 
-	rcPath, _ := RcPath()
-	err = ini.MapTo(prefs, rcPath)
+	err = ini.MapTo(prefs, filePath)
 	return prefs, err
 }

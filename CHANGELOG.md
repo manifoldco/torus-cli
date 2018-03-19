@@ -9,8 +9,12 @@ _YYYY-MM-DD_
 - The spinners released in `v0.30.0` can now be disabled by setting the
   `core.progress` preference to false via `torus prefs set core.progress
   false`.
+- Fixed a bug where spinners were enabled for sessions not attached to a
+  terminal such as in a CI environment or on a server.
 - Fixed a bug where the spinner during `torus run`, `torus view`, or `torus
   export` would not be removed resulting in a stuck state for users.
+- Fixed a bug preventing non-Mac OS X users from setting preferences via `torus
+  prefs set`.
 
 ## v0.30.0
 
