@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## Unreleased
+## v0.30.1
 
-_YYYY-MM-DD_
+_2018-03-19_
 
 **Fixes**
 
