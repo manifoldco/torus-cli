@@ -133,7 +133,11 @@ func setPrefByName(key, value string) error {
 	}
 
 	// Save updated ini to filePath
-	rcPath, _ := prefs.RcPath()
+	rcPath, err := prefs.RcPath()
+	if err != nil {
+		return errs.NewErrorExitError("Faled to save preferences.", err)
+	}
+
 	err = cfg.SaveTo(rcPath)
 	if err != nil {
 		return errs.NewErrorExitError("Failed to save preferences.", err)
