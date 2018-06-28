@@ -16,14 +16,9 @@ A secure, shared workspace for secrets.
 
 ![](./graphic.png)
 
-## Installation & signup
+## Installation
 
 [Manifold](https://www.manifold.co) provides binaries of `torus-cli` for OS X, Linux and Windows on `amd64`.
-
-After installing, create an account with:
-```
-torus signup
-```
 
 ### OS X
 
