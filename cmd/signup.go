@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"errors"
+	"fmt"
+	"os"
 
 	"github.com/urfave/cli"
 )
@@ -24,5 +25,7 @@ func signupCmd(ctx *cli.Context) error {
 // a particular action. the subCommand boolean signifies it is running as such
 // and not as a generic signup
 func signup(ctx *cli.Context, subCommand bool) error {
-	return errors.New("Torus is no longer accepting signups.")
+	fmt.Println("Torus is no longer accepting signups.")
+	os.Exit(-1)
+	return nil
 }
