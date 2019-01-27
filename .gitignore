@@ -24,3 +24,6 @@ primitive/zz_generated_primitive.go
 .DS_Store
 *.sw[mnop]
 *.orig
+
+# coverage reporting
+all-cover.txt

@@ -28,7 +28,7 @@ LINTERS=\
 	deadcode
 
 all: binary
-ci: binary $(LINTERS) cmdlint test
+ci: binary $(LINTERS) cmdlint cover
 
 .PHONY: all ci
 
@@ -136,6 +136,21 @@ cmdlint: $(TOOLS)/cmdlint
 	$(TOOLS)/cmdlint
 
 .PHONY: $(LINTERS) $(TOOLS)/cmdlint test
+
+COVER_TEST_PKGS:=$(shell find . -type f -name '*_test.go' | grep -v vendor | grep -v generated | rev | cut -d "/" -f 2- | rev | sort -u)
+$(COVER_TEST_PKGS:=-cover): %-cover: all-cover.txt
+	@CGO_ENABLED=0 go test -coverprofile=$@.out -covermode=atomic ./$*
+	@if [ -f $@.out ]; then \
+	    grep -v "mode: atomic" < $@.out >> all-cover.txt; \
+	    rm $@.out; \
+	fi
+
+all-cover.txt:
+	echo "mode: atomic" > all-cover.txt
+
+cover: generated vendor all-cover.txt $(COVER_TEST_PKGS:=-cover)
+
+.PHONY: cover $(LINTERS) $(COVER_TEST_PKGS:=-cover)
 
 #################################################
 # Docker targets

@@ -18,3 +18,5 @@ script:
 notifications:
   slack:
     secure: tVqhEylsmLVEJD8U/Yot0wcvVxLdka7YFIKv4s4UuHc0fWvMsEL+KURnLlfEod9+0rwVAy7j9jqmFQiyq2MzIL/aEmGP23+mEnFQbrpqxY+4wu5MYLNIa8BXWoFrZPxndLjVyIWsps4oJi01fs8cYnFkvCI999ABBU2Pq5etqAg6Vcw4SdR772j0cIe+dipZr+7YuIiArxCq5kjBKhs1cF0py1PyJLLV2n4yED5DmOe/1f1ZnprH9hAYur2a0oYZfV3wNqOpROTJzYdArQro+XpUuhrqH+TmZDNvdYHZMKNqryRRrJF764k/yQ3AjZJu4/GQp8Tm4khwX+6NSDJzEi6xboeeP/4Gl+PW5v2hkNWQR+LU/GmtJj1WuaIBRC02EbTcOjSTINYRA+BXK5ZvovW6H8WBsOu60KC21OhrcUmq/FqBbaXKuiFjjX3giStf7wQhV9bsBoflANETvZ0uYVPJnuT6568L+qcNVCUtqVWluMs895m00bsAmho6NZNIElBuBL0ZM81QwVRLxpb1J9DxSXrVaVrLsMEK9+o9SPuAV/BuktnpyZk1MZ4ufwLkSCqQxn4bTcpjQJSVIXBRdz7Hh2NhEAKbinNnECx1RAeu4S7SopP0IbfT53+JRojSA2i4up8w4+bBNIDwbGU96f6HdamQJ/aCPlHN+840wPg=
+after_success:
+  - bash <(curl -s https://codecov.io/bash) -f cover-all.txt
